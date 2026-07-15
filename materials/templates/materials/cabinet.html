@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Особистий кабінет | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    /* Шапка кабінету */
+    .cabinet-header {
+        background-color: var(--brand-blue);
+        color: white;
+        padding: 30px;
+        border-radius: 16px;
+        margin-top: 40px;
+        margin-bottom: 40px;
+        box-shadow: 8px 8px 0px var(--brand-yellow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .cabinet-title {
+        font-size: 2rem;
+        font-weight: 900;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .balance-badge {
+        background-color: var(--brand-yellow);
+        color: var(--brand-blue);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 900;
+        font-size: 1.2rem;
+        border: 2px solid var(--brand-blue);
+    }
+
+    /* Основна сітка екрану */
+    .cabinet-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 40px;
+        align-items: start;
+        margin-bottom: 60px;
+    }
+
+    @media (max-width: 900px) {
+        .cabinet-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Стилі для карток куплених матеріалів */
+    .library-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+    }
+
+    .mac-card {
+        background: white;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 4px 4px 0px var(--brand-yellow);
+        transition: transform 0.2s;
+    }
+
+    .mac-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .mac-header-sm {
+        background-color: var(--brand-blue);
+        padding: 8px 12px;
+        display: flex;
+        gap: 6px;
+    }
+
+    .mac-dot-sm {
+        width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .card-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .btn-download {
+        display: block;
+        text-align: center;
+        background-color: #27c93f;
+        color: white;
+        text-decoration: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 900;
+        margin-top: auto;
+        border: 2px solid #1e9e30;
+        transition: background 0.2s;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .btn-download:hover {
+        background-color: #1e9e30;
+    }
+
+    /* === НОВЕ: Блок поповнення балансу === */
+    .topup-section {
+        background: white;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 4px 4px 0px var(--brand-yellow);
+    }
+
+    .topup-form {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .topup-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--brand-blue);
+        border-radius: 6px;
+        font-family: inherit;
+        font-weight: 700;
+        box-sizing: border-box;
+    }
+
+    .btn-topup {
+        background-color: #000;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: 0.2s;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .btn-topup:hover {
+        background-color: #333;
+    }
+
+    /* Стилі форми налаштувань профілю */
+    .profile-section {
+        background: #f8f9fa;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        padding: 25px;
+    }
+
+    .profile-section p {
+        margin-bottom: 15px;
+        font-weight: 700;
+        color: var(--brand-blue);
+    }
+
+    .profile-section input, .profile-section select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 2px solid var(--brand-blue);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .btn-save {
+        width: 100%;
+        background-color: var(--brand-blue);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 6px;
+        font-weight: 900;
+        cursor: pointer;
+        text-transform: uppercase;
+        margin-top: 10px;
+    }
+
+    .btn-save:hover {
+        opacity: 0.9;
+    }
+</style>
+
+<!-- ШАПКА КАБІНЕТУ -->
+<div class="cabinet-header">
+    <div>
+        <h1 class="cabinet-title">Привіт, {{ user.first_name|default:user.username }}! 👋</h1>
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 1.1rem; opacity: 0.9;">Це твій навчальний простір ДО КВАДРАТУ</p>
+    </div>
+    <div class="balance-badge">
+        Баланс: {{ user.balance|default:"0.00" }} ₴
+    </div>
+</div>
+
+<div class="cabinet-grid">
+    <!-- ЛІВА КОЛОНКА: БІБЛІОТЕКА -->
+    <div>
+        <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">📚 Моя бібліотека</h2>
+
+        {% if purchased_materials %}
+            <div class="library-grid">
+                {% for item in purchased_materials %}
+                <div class="mac-card">
+                    <div class="mac-header-sm">
+                        <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
+                        <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
+                        <div class="mac-dot-sm" style="background-color: #27c93f;"></div>
+                    </div>
+                    <div class="card-body">
+                        {% if item.is_bundle %}
+                            <span style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); font-size: 0.7rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--brand-blue);">📦 ПАКЕТ</span>
+                        {% endif %}
+                        <h3 style="font-size: 1.1rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 15px; line-height: 1.3;">
+                            {{ item.title }}
+                        </h3>
+                        <a href="{% url 'download_material' item.id %}" class="btn-download">
+                            ⬇ Завантажити PDF
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Стан, коли ще нічого не куплено -->
+            <div style="background: white; border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 12px;">
+                <h3 style="color: var(--text-dark); margin-bottom: 15px;">Тут поки порожньо 😔</h3>
+                <p style="margin-bottom: 20px;">Час це виправити! Переходь на вітрину і обирай найкращі матеріали для підготовки до НМТ.</p>
+                <a href="{% url 'materials_list' %}" style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); padding: 12px 25px; border-radius: 8px; font-weight: 900; text-decoration: none; text-transform: uppercase; border: 2px solid var(--brand-blue);">
+                    Перейти на вітрину
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ПРАВА КОЛОНКА: ДІЇ ТА НАЛАШТУВАННЯ -->
+    <div>
+
+        <!-- НОВИЙ БЛОК: ПОПОВНЕННЯ БАЛАНСУ -->
+        <div class="topup-section">
+            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; text-transform: uppercase;">💳 Поповнити</h2>
+            <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0;">Швидка оплата через Monobank</p>
+
+            <form action="{% url 'topup_balance' %}" method="POST" class="topup-form">
+                {% csrf_token %}
+                <input type="number" name="amount" min="1" step="1" placeholder="Сума, ₴" required class="topup-input">
+                <button type="submit" class="btn-topup">
+                    Оплатити
+                </button>
+            </form>
+        </div>
+
+        <!-- ІСНУЮЧИЙ БЛОК: НАЛАШТУВАННЯ -->
+        <div class="profile-section">
+            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; text-transform: uppercase;">⚙️ Налаштування</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <button type="submit" class="btn-save">Зберегти зміни</button>
+            </form>
+
+            <div style="margin-top: 25px; text-align: center; border-top: 1px solid #dee2e6; padding-top: 15px;">
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" style="background: none; border: none; color: #ff5f56; font-weight: 800; cursor: pointer; text-decoration: underline; font-family: inherit;">
+                        Вийти з акаунта
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

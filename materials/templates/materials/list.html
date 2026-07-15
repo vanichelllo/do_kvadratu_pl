@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Вітрина | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<!-- Додаткові стилі спеціально для Вітрини -->
+<style>
+    .search-box {
+        background: #ffffff;
+        padding: 25px;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        box-shadow: 6px 6px 0px var(--brand-yellow);
+        margin-bottom: 25px; /* Трохи зменшив відступ, бо нижче будуть фільтри */
+    }
+
+    .search-input, .search-select {
+        padding: 12px 20px;
+        border: 2px solid var(--brand-blue);
+        border-radius: 8px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 1rem;
+        outline: none;
+    }
+
+    .search-input:focus, .search-select:focus {
+        border-color: var(--brand-yellow);
+    }
+
+    /* Швидкі фільтри під пошуком */
+    .quick-filters {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 50px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        padding: 10px 20px;
+        border: 2px solid var(--brand-blue);
+        border-radius: 8px;
+        font-weight: 800;
+        text-decoration: none;
+        color: var(--brand-blue);
+        background: #ffffff;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        box-shadow: 3px 3px 0px var(--brand-blue);
+    }
+
+    .filter-pill:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--brand-blue);
+    }
+
+    .filter-pill.active {
+        background: var(--brand-yellow);
+    }
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 35px;
+    }
+
+    /* Картка конспекту */
+    .mac-window {
+        background-color: var(--brand-blue);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 8px 8px 0px var(--brand-yellow);
+        border: 2px solid var(--brand-blue);
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative; /* Додано для правильного позиціювання елементів */
+    }
+
+    .mac-window:hover {
+        transform: translate(-3px, -3px);
+        box-shadow: 11px 11px 0px var(--brand-yellow);
+    }
+
+    .mac-header {
+        background-color: #2b4170;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 2px solid rgba(255,255,255,0.05);
+    }
+
+    .mac-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+    }
+
+    .mac-body {
+        padding: 30px 25px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Стилі для нових бейджиків */
+    .badge {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .badge-free { background-color: #27c93f; color: #ffffff; }
+    .badge-bundle { background-color: var(--brand-yellow); color: var(--brand-blue); }
+
+    .btn-detail {
+        background-color: var(--brand-yellow);
+        color: var(--brand-blue);
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 900;
+        border: 2px solid var(--brand-yellow);
+        transition: all 0.2s;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    .btn-detail:hover {
+        background-color: #ffffff;
+        border-color: #ffffff;
+    }
+</style>
+
+<div style="text-align: center; margin-bottom: 40px; margin-top: 20px;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ВІТРИНА КОНСПЕКТІВ</h2>
+    <p style="color: var(--text-dark); font-weight: 600; font-size: 1.1rem;">Обери свій ідеальний матеріал для підготовки</p>
+</div>
+
+<!-- Пошук -->
+<div class="search-box">
+    <form method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+        <input type="text" name="search" class="search-input" placeholder="Пошук за назвою..." value="{{ request.GET.search }}" style="flex: 2; min-width: 200px;">
+
+        <select name="category" class="search-select" style="flex: 1; min-width: 150px; cursor: pointer;">
+            <option value="">Всі категорії</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <!-- Зберігаємо тип, якщо він вже обраний у фільтрах -->
+        {% if request.GET.type %}
+            <input type="hidden" name="type" value="{{ request.GET.type }}">
+        {% endif %}
+
+        <button type="submit" class="btn-brand" style="flex: 1; min-width: 150px; padding: 14px 20px;">ШУКАТИ</button>
+    </form>
+</div>
+
+<!-- Швидкі фільтри для Пакетів та Безкоштовних файлів -->
+<div class="quick-filters">
+    <a href="{% url 'materials_list' %}" class="filter-pill {% if not request.GET.type %}active{% endif %}">Всі матеріали</a>
+    <a href="?type=bundle" class="filter-pill {% if request.GET.type == 'bundle' %}active{% endif %}" style="border-color: var(--brand-yellow); color: var(--brand-blue); {% if request.GET.type == 'bundle' %}background: var(--brand-yellow);{% endif %}">📦 Пакети</a>
+    <a href="?type=free" class="filter-pill {% if request.GET.type == 'free' %}active{% endif %}" style="border-color: #27c93f; color: {% if request.GET.type == 'free' %}white{% else %}#27c93f{% endif %}; {% if request.GET.type == 'free' %}background: #27c93f; box-shadow: 3px 3px 0px #1e9e30;{% else %}box-shadow: 3px 3px 0px #27c93f;{% endif %}">🎁 Безкоштовні</a>
+</div>
+
+<!-- Сітка конспектів -->
+<div class="materials-grid">
+    {% for material in materials %}
+        <!-- Картка -->
+        <div class="mac-window">
+
+            <!-- Шапка з крапками -->
+            <div class="mac-header">
+                <div class="mac-dot" style="background-color: #ff5f56;"></div>
+                <div class="mac-dot" style="background-color: #ffbd2e;"></div>
+                <div class="mac-dot" style="background-color: #27c93f;"></div>
+
+                <div style="margin-left: auto; color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: 800; letter-spacing: 1px;">
+                    ДО КВАДРАТУ
+                </div>
+            </div>
+
+            <!-- Тіло картки -->
+            <div class="mac-body">
+
+                <!-- Верхній рядок: Категорія + Бейджик (Пакет/Безкоштовно) -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    {% if material.category %}
+                    <span style="background-color: rgba(255, 255, 255, 0.15); color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                        {{ material.category.name }}
+                    </span>
+                    {% else %}
+                    <span></span> <!-- Пустий span для вирівнювання бейджика по правому краю, якщо категорії немає -->
+                    {% endif %}
+
+                    {% if material.is_free %}
+                        <span class="badge badge-free">FREE</span>
+                    {% elif material.is_bundle %}
+                        <span class="badge badge-bundle">ПАКЕТ</span>
+                    {% endif %}
+                </div>
+
+                <!-- Назва -->
+                <h3 style="color: #ffffff; margin: 0 0 15px 0; font-size: 1.4rem; line-height: 1.4; letter-spacing: 0.5px;">
+                    {{ material.title }}
+                </h3>
+
+                <!-- Теги -->
+                {% if material.tags.exists %}
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                        {% for tag in material.tags.all %}
+                            <span style="border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">
+                                #{{ tag.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Опис -->
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; flex-grow: 1;">
+                    {{ material.description|truncatewords:12 }}
+                </p>
+
+                <!-- Ціна та кнопка -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; flex-wrap: wrap; gap: 15px;">
+                    <div style="line-height: 1;">
+                        {% if material.is_free %}
+                            <span style="font-size: 1.25rem; font-weight: 900; color: #27c93f; letter-spacing: -0.5px;">БЕЗКОШТОВНО</span>
+                        {% else %}
+                            <span style="font-size: 2.2rem; font-weight: 900; color: var(--brand-yellow);">{{ material.price }}</span>
+                            <span style="font-size: 1rem; font-weight: 800; margin-left: 4px; color: var(--brand-yellow);">UAH</span>
+                        {% endif %}
+                    </div>
+
+                    <a href="{% url 'material_detail' material.id %}" class="btn-detail" style="padding: 10px 18px; font-size: 0.85rem; flex-shrink: 0;">
+                        Деталі ➔
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <!-- Якщо нічого не знайдено -->
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px; background: #ffffff; border: 3px dashed var(--brand-blue); border-radius: 12px;">
+            <h3 style="color: var(--brand-blue); font-size: 1.8rem; margin-bottom: 15px;">Конспектів не знайдено 🧮</h3>
+            <p style="font-size: 1.1rem; font-weight: 600;">Спробуйте змінити критерії пошуку.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Сторінку не знайдено | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 100px 20px; max-width: 600px; margin: 0 auto;">
+    <h1 style="font-size: 6rem; color: #ff4757; margin: 0; font-weight: 900;">404</h1>
+    <h2 style="color: var(--brand-blue); font-size: 2rem; margin-top: 10px; font-weight: 900;">Змінну не знайдено!</h2>
+    <p style="font-size: 1.2rem; color: var(--text-dark); margin-bottom: 40px; font-weight: 500; line-height: 1.6;">
+        Ой! Схоже, ця сторінка випала з нашого рівняння, або ви перейшли за неправильним посиланням.
+    </p>
+    <a href="{% url 'home' %}" style="display: inline-block; background-color: var(--brand-yellow); color: var(--brand-blue); font-size: 1.2rem; font-weight: 900; padding: 18px 35px; border-radius: 8px; text-decoration: none; text-transform: uppercase; border: 3px solid var(--brand-blue); box-shadow: 6px 6px 0px var(--brand-blue); transition: transform 0.2s, box-shadow 0.2s;">
+        Повернутися додому ➔
+    </a>
+</div>
+
+<style>
+    /* Легка анімація для кнопки на випадок наведення */
+    a[href="{% url 'home' %}"]:hover {
+        transform: translate(-2px, -2px) !important;
+        box-shadow: 8px 8px 0px var(--brand-blue) !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Мій кошик | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .cart-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #ffffff;
+        border: 3px solid var(--brand-blue);
+        border-radius: 16px;
+        box-shadow: 12px 12px 0px var(--brand-yellow);
+        overflow: hidden;
+    }
+
+    .mac-header-dark {
+        background-color: var(--brand-blue);
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cart-body {
+        padding: 40px;
+    }
+
+    .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 2px solid var(--brand-blue);
+        border-radius: 12px;
+        margin-bottom: 15px;
+    }
+
+    .item-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--brand-blue);
+        margin: 0 0 5px 0;
+    }
+
+    .item-price {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--brand-blue);
+    }
+
+    .btn-remove {
+        background: #ff5f56;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-weight: 800;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
+    }
+    .btn-remove:hover { opacity: 0.8; }
+
+    .cart-total {
+        margin-top: 30px;
+        padding: 25px;
+        background: var(--brand-yellow);
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        text-align: right;
+    }
+
+    .payment-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    @media (max-width: 600px) {
+        .payment-options { grid-template-columns: 1fr; }
+        .cart-item { flex-direction: column; text-align: center; gap: 15px; }
+    }
+
+    .btn-pay-mono {
+        background: #000000;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 12px;
+        font-weight: 900;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        text-decoration: none;
+        border: 3px solid var(--brand-blue);
+        box-shadow: 4px 4px 0px var(--brand-blue);
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-pay-mono:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--brand-blue); }
+
+    .btn-pay-balance {
+        background: #27c93f;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-radius: 12px;
+        font-weight: 900;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        text-decoration: none;
+        border: 3px solid var(--brand-blue);
+        box-shadow: 4px 4px 0px var(--brand-blue);
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-pay-balance:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--brand-blue); }
+</style>
+
+<div class="cart-container">
+    <div class="mac-header-dark">
+        <div style="width: 14px; height: 14px; border-radius: 50%; background-color: #ff5f56;"></div>
+        <div style="width: 14px; height: 14px; border-radius: 50%; background-color: #ffbd2e;"></div>
+        <div style="width: 14px; height: 14px; border-radius: 50%; background-color: #27c93f;"></div>
+        <div style="margin-left: auto; color: #ffffff; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px;">КОШИК</div>
+    </div>
+
+    <div class="cart-body">
+        <h1 style="margin-top: 0; font-size: 2.2rem; margin-bottom: 30px;">🛒 ВАШ КОШИК</h1>
+
+        {% if cart.items.all %}
+            <!-- Список товарів -->
+            {% for item in cart.items.all %}
+                <div class="cart-item">
+                    <div>
+                        <h3 class="item-title">{{ item.material.title }}</h3>
+                        {% if item.material.is_bundle %}
+                            <span style="background: var(--brand-yellow); color: var(--brand-blue); font-size: 0.7rem; font-weight: 900; padding: 3px 6px; border-radius: 4px;">📦 ПАКЕТ</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <span class="item-price">{{ item.material.price }} ₴</span>
+                        <a href="{% url 'remove_from_cart' item.id %}" class="btn-remove">✖ Видалити</a>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Підсумок -->
+            <div class="cart-total">
+                <span style="font-size: 1.2rem; font-weight: 800; color: var(--brand-blue); text-transform: uppercase;">До сплати:</span>
+                <span style="font-size: 2.5rem; font-weight: 900; color: var(--brand-blue); display: block;">{{ cart.get_total_price }} ₴</span>
+            </div>
+
+            <!-- Вибір оплати -->
+            <h3 style="text-align: center; margin-top: 40px; color: var(--text-dark);">💳 Оберіть спосіб оплати:</h3>
+            
+            <div class="payment-options">
+                <!-- Кнопка Монобанк -->
+                <a href="{% url 'pay_with_mono' %}" class="btn-pay-mono">
+                    <span style="font-size: 1.5rem;">🐈</span>
+                    Оплатити картою
+                    <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
+                </a>
+
+                <!-- Кнопка Баланс -->
+                <!-- Було: <a href="#" class="btn-pay-balance"> -->
+                <!-- Стало: -->
+                <a href="{% url 'pay_from_balance' %}" class="btn-pay-balance">
+                    <span style="font-size: 1.5rem;">💵</span>
+                    Списати з балансу
+                    <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0.00" }} ₴</span>
+                </a>
+            </div>
+
+        {% else %}
+            <!-- Якщо кошик порожній -->
+            <div style="text-align: center; padding: 40px 0;">
+                <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🎒</span>
+                <h2 style="color: var(--text-dark);">Тут поки порожньо</h2>
+                <p style="margin-bottom: 30px; font-size: 1.1rem;">Перейдіть на вітрину, щоб додати матеріали для підготовки.</p>
+                <a href="{% url 'materials_list' %}" style="background: var(--brand-blue); color: white; padding: 15px 30px; border-radius: 8px; font-weight: 900; text-decoration: none; text-transform: uppercase;">Відкрити вітрину</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

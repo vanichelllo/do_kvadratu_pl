@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+
+{% block title %}ДО КВАДРАТУ | Сучасна математика{% endblock %}
+
+{% block content %}
+<style>
+    /* Головний банер (Hero Section) */
+    .hero-section {
+        background-color: var(--brand-blue);
+        color: white;
+        padding: 70px 40px;
+        border-radius: 16px;
+        margin-top: 40px;
+        margin-bottom: 60px;
+        box-shadow: 12px 12px 0px var(--brand-yellow);
+        text-align: center;
+        border: 4px solid var(--brand-blue);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        line-height: 1.1;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 40px;
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+        opacity: 0.9;
+    }
+
+    .hero-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .hero-btn {
+        display: inline-block;
+        background-color: var(--brand-yellow);
+        color: var(--brand-blue);
+        font-size: 1.2rem;
+        font-weight: 900;
+        padding: 18px 35px;
+        border-radius: 8px;
+        text-decoration: none;
+        text-transform: uppercase;
+        border: 3px solid var(--brand-blue);
+        box-shadow: 6px 6px 0px #ffffff;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0px #ffffff;
+    }
+
+    .hero-btn-test {
+        background-color: #ff4757;
+        color: #ffffff;
+        border-color: #c0392b;
+    }
+
+    /* Блок "Про формат" */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 25px;
+        margin-bottom: 60px;
+    }
+
+    .feature-card {
+        background: #ffffff;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 6px 6px 0px var(--brand-yellow);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feature-card-test {
+        border-color: #ff4757;
+        box-shadow: 6px 6px 0px #ff4757;
+        background-color: #fff9f9;
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    /* НОВІ БАНЕРИ (Актуальні пропозиції) */
+    .banners-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .promo-banner {
+        border-radius: 16px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 3px solid var(--brand-blue);
+    }
+
+    .promo-nmt {
+        background-color: #fff3f3;
+        box-shadow: 8px 8px 0px #ff4757;
+    }
+
+    .promo-bot {
+        background-color: #f0f9ff;
+        border-color: #0088cc;
+        box-shadow: 8px 8px 0px #0088cc;
+    }
+
+    .promo-tag {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    /* Блок "Про автора" */
+    .about-author {
+        background: #f8f9fa;
+        border: 3px solid var(--brand-blue);
+        border-radius: 16px;
+        padding: 0;
+        display: flex;
+        overflow: hidden;
+        margin-bottom: 60px;
+    }
+
+    .author-mac-header {
+        background: var(--brand-blue);
+        padding: 12px 18px;
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+
+    /* Блок Соцмереж */
+    .socials-section {
+        background: var(--bg-light);
+        border: 4px dashed var(--brand-blue);
+        border-radius: 16px;
+        padding: 50px 30px;
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .social-links {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .social-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 25px;
+        border-radius: 30px;
+        color: white;
+        font-weight: 800;
+        text-decoration: none;
+        font-size: 1.1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .bg-insta { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+    .bg-threads { background: #000000; }
+    .bg-tg { background: #0088cc; }
+    .bg-fb { background: #1877f2; }
+</style>
+
+<!-- HERO SECTION -->
+<div class="hero-section">
+    <h1 class="hero-title">Математика<br><span style="color: var(--brand-yellow);">До Квадрату</span></h1>
+    <p class="hero-subtitle">
+        Авторські конспекти та матеріали для підготовки до НМТ і вивчення шкільної програми (5-11 класи).
+        Жодної води — лише чітка структура, формули та практика.
+    </p>
+
+    <div class="hero-buttons">
+        <a href="{% url 'diagnostic_test' %}" class="hero-btn hero-btn-test">🔥 Пройти діагностику</a>
+        <a href="{% url 'materials_list' %}" class="hero-btn">Відкрити вітрину ➔</a>
+    </div>
+</div>
+
+<!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ ТА БОТ -->
+<div class="banners-grid">
+    <!-- Банер 1: Набір НМТ 2027 -->
+    <div class="promo-banner promo-nmt">
+        <div class="promo-tag" style="background: #ff4757;">Серпень / Вересень</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Запис на НМТ 2027</h3>
+        <p style="color: var(--text-dark); font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
+            Відкрито набір на комплексну підготовку. Робота в міні-групах <span style="color: #ff4757; font-weight: 900;">(лише 4 учні)</span>. Заняття 2 рази на тиждень. Індивідуальний підхід та гарантія результату.
+        </p>
+        <a href="https://instagram.com/do_kvadratu" target="_blank" class="btn-brand" style="background: white; align-self: flex-start;">
+            Забронювати місце 💬
+        </a>
+    </div>
+
+    <!-- Банер 2: Telegram Бот -->
+    <div class="promo-banner promo-bot">
+        <div class="promo-tag" style="background: #0088cc;">Зручний доступ</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Telegram-бот</h3>
+        <p style="color: var(--text-dark); font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
+            Кишеньковий помічник <span style="color: #0088cc; font-weight: 900;">@do_kvadratu_bot</span>.
+            Твій особистий кабінет, усі придбані конспекти та швидкий зв'язок прямо у твоєму улюбленому месенджері.
+        </p>
+        <a href="https://t.me/do_kvadratu_bot" target="_blank" class="btn-brand" style="background: #0088cc; color: white; border-color: #0077b3; align-self: flex-start;">
+            Перейти в бот ➔
+        </a>
+    </div>
+</div>
+
+<!-- FEATURES -->
+<h2 style="text-align: center; color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 40px; font-weight: 900;">Чому саме цей формат?</h2>
+<div class="features-grid">
+    <div class="feature-card feature-card-test">
+        <div class="feature-icon">📊</div>
+        <h3 style="color: #ff4757; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Розумна Діагностика</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Безкоштовний тест НМТ. Система аналізує "сліпі зони" та рекомендує конспекти саме для ваших слабких тем.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Бездоганний дизайн</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Усі конспекти та буклети мають ідеальну верстку. Графіки, фігури та складні формули виглядають естетично.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🎁</div>
+        <h3 style="color: #27c93f; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Вільний доступ</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Завантажте наші безкоштовні матеріали на вітрині, щоб особисто оцінити якість та зручність формату.</p>
+    </div>
+</div>
+
+<!-- ABOUT AUTHOR -->
+<div style="position: relative; box-shadow: 8px 8px 0px var(--brand-yellow); border-radius: 16px; margin-bottom: 60px;">
+    <div class="about-author" style="margin-bottom: 0; box-shadow: none; flex-direction: column;">
+        <div class="author-mac-header">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ff5f56;"></div>
+            <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #ffbd2e;"></div>
+            <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #27c93f;"></div>
+            <div style="margin-left: auto; color: white; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px;">ABOUT_AUTHOR.EXE</div>
+        </div>
+        <div style="padding: 40px; display: grid; grid-template-columns: 1fr; gap: 30px;">
+            <div>
+                <h2 style="color: var(--brand-blue); font-weight: 900; font-size: 2rem; margin-top: 0; margin-bottom: 10px;">Іван Вікторович Склянчук</h2>
+                <div style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 0.9rem; text-transform: uppercase; border: 2px solid var(--brand-blue); margin-bottom: 25px;">
+                    Керівник проєкту
+                </div>
+
+                <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-dark); line-height: 1.8; font-size: 1.1rem;">
+                    <li style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <span style="color: #27c93f; font-weight: 900;">✔</span>
+                        <span><b>7 років</b> досвіду у сфері освіти та приватного репетиторства.</span>
+                    </li>
+                    <li style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <span style="color: #27c93f; font-weight: 900;">✔</span>
+                        <span>Асистент вчителя та викладач математики з практичним досвідом у школі.</span>
+                    </li>
+                    <li style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <span style="color: #27c93f; font-weight: 900;">✔</span>
+                        <span>Створюю навчальні матеріали без "води", з фокусом на логіку та розуміння.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- СОЦМЕРЕЖІ (Екосистема) -->
+<div class="socials-section">
+    <h2 style="color: var(--brand-blue); font-weight: 900; font-size: 2.2rem; margin-top: 0; margin-bottom: 15px;">Приєднуйся до нашої спільноти!</h2>
+    <p style="font-size: 1.1rem; color: var(--text-dark); font-weight: 600; max-width: 600px; margin: 0 auto;">
+        Розбори складних задач, анонси нових конспектів, математичні лайфхаки та корисні матеріали в зручному для тебе форматі.
+    </p>
+
+    <div class="social-links">
+        <a href="https://instagram.com/do_kvadratu" target="_blank" class="social-btn bg-insta">
+            📸 Instagram
+        </a>
+        <a href="https://www.threads.net/@do_kvadratu" target="_blank" class="social-btn bg-threads">
+            🧵 Threads
+        </a>
+        <a href="https://t.me/do_kvadratu" target="_blank" class="social-btn bg-tg">
+            ✈️ Telegram Канал
+        </a>
+        <a href="https://facebook.com/do_kvadratu/" target="_blank" class="social-btn bg-fb">
+            📘 Facebook
+        </a>
+    </div>
+</div>
+{% endblock %}

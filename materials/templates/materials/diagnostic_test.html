@@ -1,0 +1,114 @@
+{% extends 'base.html' %} <!-- Замініть на ваш базовий шаблон, якщо він називається інакше -->
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <h1 style="text-align: center; margin-bottom: 30px;">Діагностичний тест у форматі НМТ</h1>
+
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        {% for question in questions %}
+        <div class="nmt-question-card" style="background: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;">
+
+            <!-- Вивід тексту питання (MathJax обробить формули) -->
+            <div class="nmt-question-text" style="font-size: 16px; margin-bottom: 15px;">
+                <strong>{{ forloop.counter }}.</strong> {{ question.text }}
+            </div>
+
+            <!-- Якщо це завдання з однією правильною відповіддю (1-15) -->
+            {% if question.question_type == 'CHOICE' %}
+                <table class="nmt-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">А</th>
+                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Б</th>
+                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">В</th>
+                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Г</th>
+                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Д</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for option in question.options.all %}
+                            <td style="border: 1px solid #000; padding: 10px;">
+                                <label style="display: block; cursor: pointer;">
+                                    <div style="margin-bottom: 8px;">{{ option.text }}</div>
+                                    <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" style="transform: scale(1.2);">
+                                </label>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+
+            <!-- Якщо це завдання на відповідність (16-18) -->
+            {% elif question.question_type == 'MATCH' %}
+                <div style="margin-bottom: 20px;">
+                    <!-- Спочатку виводимо варіанти А-Д для ознайомлення -->
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            {% for option in question.options.all %}
+                                <div style="font-size: 15px; color: #2c3e50;">{{ option.text }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Сама матриця (сітка) для відповідей -->
+                    <table class="nmt-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef; width: 40%;">Умова</th>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">А</th>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Б</th>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">В</th>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Г</th>
+                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Д</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in question.match_items.all %}
+                            <tr>
+                                <td style="border: 1px solid #ccc; padding: 10px; text-align: left; font-weight: 600;">{{ item.text }}</td>
+                                {% for option in question.options.all %}
+                                <td style="border: 1px solid #ccc; padding: 10px;">
+                                    <input type="radio" name="match_{{ item.id }}" value="{{ option.id }}" style="transform: scale(1.3); cursor: pointer;">
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            <!-- Якщо це завдання відкритої форми (19-22) -->
+            {% elif question.question_type == 'SHORT' %}
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: bold;">Відповідь:</label>
+                    <input type="text" name="question_{{ question.id }}" placeholder="Наприклад: -12.5"
+                           style="padding: 10px; font-size: 16px; border: 1px solid #000; border-radius: 4px; width: 200px; margin-left: 10px;">
+                </div>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="submit" style="background-color: #007bff; color: white; padding: 15px 40px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer;">
+                Завершити тест та отримати результат
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Налаштування для розпізнавання одинарних $...$ у MathJax -->
+<script>
+    MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+        }
+    };
+</script>
+
+<!-- Скрипт для рендеру математичних формул LaTeX (MathJax) -->
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}

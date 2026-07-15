@@ -1,0 +1,58 @@
+{% extends 'base.html' %} <!-- Ваш базовий шаблон -->
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Arial', sans-serif;">
+    
+    <h1 style="text-align: center; color: #333; margin-bottom: 20px;">Твій результат діагностики НМТ</h1>
+    
+    <!-- Головний бал -->
+    <div style="background-color: #f0f7ff; border-left: 5px solid #007bff; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 40px;">
+        <div style="font-size: 20px; color: #555;">Твій бал:</div>
+        <div style="font-size: 48px; font-weight: bold; color: #007bff; margin: 10px 0;">
+            {{ total_score }} / {{ max_score }}
+        </div>
+        <div style="font-size: 16px; color: #666;">Правильно виконано {{ percent_total }}% тесту</div>
+    </div>
+
+    <!-- Аналіз "Сліпих зон" -->
+    <h2 style="font-size: 22px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+        📊 Аналіз твоїх "сліпих зон"
+    </h2>
+    
+    {% if weak_topics %}
+        <div style="background-color: #fff3f3; border: 1px solid #ffcccc; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <p style="color: #d9534f; font-weight: bold; margin-top: 0;">Тобі потрібно терміново підтягнути ці теми:</p>
+            <ul style="color: #333; font-size: 16px; line-height: 1.6;">
+                {% for topic in weak_topics %}
+                    <li><strong>{{ topic.name }}</strong></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% else %}
+        <div style="background-color: #f4fdf4; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <p style="color: #28a745; font-weight: bold; margin: 0; text-align: center;">Блискуче! У тебе немає відверто слабких тем. Ти готовий до НМТ!</p>
+        </div>
+    {% endif %}
+
+    <!-- Детальна статистика по кожній темі -->
+    <h3 style="font-size: 18px; color: #555; margin-bottom: 15px;">Детальна розгортка:</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+        {% for stat in topics_stats %}
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 16px; color: #333;">{{ stat.topic.name }}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; color: #555;">
+                    {{ stat.correct }} з {{ stat.total }}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Кнопка повернення -->
+    <div style="text-align: center;">
+        <a href="{% url 'diagnostic_test' %}" style="display: inline-block; background-color: #333; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.3s;">
+            Пройти тест ще раз
+        </a>
+    </div>
+
+</div>
+{% endblock %}

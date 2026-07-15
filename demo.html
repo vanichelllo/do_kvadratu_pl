@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Платформа @do_kvadratu | Демо</title>
+    <style>
+        /* Базові стилі та скидання */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; color: #333; }
+
+        /* Шапка сайту */
+        header { background: #1a252f; color: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
+        .logo span { color: #f39c12; }
+        .user-panel { display: flex; align-items: center; gap: 20px; }
+        .balance { background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2); }
+        .balance strong { color: #2ecc71; }
+        .avatar { width: 40px; height: 40px; background: #f39c12; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1a252f; }
+
+        /* Головний банер */
+        .hero { text-align: center; padding: 4rem 2rem; background: white; border-bottom: 1px solid #e0e0e0; }
+        .hero h1 { font-size: 2.5rem; color: #2c3e50; margin-bottom: 1rem; }
+        .hero p { color: #7f8c8d; font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; }
+        .search-bar { max-width: 500px; margin: 0 auto; display: flex; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 30px; overflow: hidden; }
+        .search-bar input { flex: 1; padding: 15px 20px; border: none; outline: none; font-size: 1rem; }
+        .search-bar button { padding: 15px 30px; background: #f39c12; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .search-bar button:hover { background: #e67e22; }
+
+        /* Вітрина матеріалів */
+        .container { max-width: 1200px; margin: 0 auto; padding: 3rem 5%; }
+        .section-title { font-size: 1.5rem; color: #2c3e50; margin-bottom: 2rem; border-left: 4px solid #f39c12; padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+
+        /* Картка конспекту */
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.3s ease; border: 1px solid #eee; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .card-cover { height: 160px; background: linear-gradient(135deg, #34495e, #2c3e50); display: flex; align-items: center; justify-content: center; position: relative; }
+        .card-cover h2 { color: white; font-size: 1.8rem; font-weight: 800; opacity: 0.9; }
+        .card-content { padding: 1.5rem; }
+        .tags { margin-bottom: 15px; }
+        .tag { display: inline-block; padding: 4px 10px; background: #ecf0f1; color: #7f8c8d; font-size: 0.75rem; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        .card-title { font-size: 1.2rem; color: #2c3e50; margin-bottom: 10px; line-height: 1.4; height: 40px; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
+        .price { font-size: 1.3rem; font-weight: 800; color: #2c3e50; }
+
+        /* Кнопки дії */
+        .btn { padding: 10px 20px; border-radius: 6px; font-weight: bold; text-decoration: none; cursor: pointer; transition: 0.2s; border: none; }
+        .btn-buy { background: #3498db; color: white; }
+        .btn-buy:hover { background: #2980b9; }
+        .btn-open { background: #2ecc71; color: white; }
+        .btn-open:hover { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">do<span>_</span>kvadratu</div>
+        <div class="user-panel">
+            <div class="balance">Баланс: <strong>150 UAH</strong></div>
+            <div class="avatar">ІВ</div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Професійні матеріали для підготовки</h1>
+        <p>Авторські конспекти та практичні гайди для учнів 5-11 класів. Купуй, завантажуй та готуйся ефективно.</p>
+        <div class="search-bar">
+            <input type="text" placeholder="Знайти тему (наприклад, Вектори)...">
+            <button>Знайти</button>
+        </div>
+    </section>
+
+    <div class="container">
+        <h2 class="section-title">Нові матеріали</h2>
+        <div class="grid">
+
+            <!-- Картка 1: Доступно до покупки -->
+            <div class="card">
+                <div class="card-cover" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
+                    <h2>{ x, y }</h2>
+                </div>
+                <div class="card-content">
+                    <div class="tags">
+                        <span class="tag">10-11 клас</span>
+                        <span class="tag">Алгебра</span>
+                    </div>
+                    <h3 class="card-title">Параметри. Частина 1 (Основи)</h3>
+                    <div class="card-footer">
+                        <span class="price">300 UAH</span>
+                        <button class="btn btn-buy">Придбати</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Картка 2: Вже куплено учнем -->
+            <div class="card">
+                <div class="card-cover" style="background: linear-gradient(135deg, #16a085, #1abc9c);">
+                    <h2>△</h2>
+                </div>
+                <div class="card-content">
+                    <div class="tags">
+                        <span class="tag">7-9 клас</span>
+                        <span class="tag">Геометрія</span>
+                    </div>
+                    <h3 class="card-title">Властивості трикутників. Шпаргалка</h3>
+                    <div class="card-footer">
+                        <span class="price">150 UAH</span>
+                        <button class="btn btn-open">Відкрити PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Картка 3 -->
+            <div class="card">
+                <div class="card-cover" style="background: linear-gradient(135deg, #d35400, #e67e22);">
+                    <h2>ƒ(x)</h2>
+                </div>
+                <div class="card-content">
+                    <div class="tags">
+                        <span class="tag">НМТ</span>
+                        <span class="tag">Інтенсив</span>
+                    </div>
+                    <h3 class="card-title">Функції та графіки. Повний розбір</h3>
+                    <div class="card-footer">
+                        <span class="price">450 UAH</span>
+                        <button class="btn btn-buy">Придбати</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
