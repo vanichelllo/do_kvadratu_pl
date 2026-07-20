@@ -1,68 +1,64 @@
 import os
-import re
 from django.core.management.base import BaseCommand
 from django.core.files import File
-from django.conf import settings
+from openpyxl import load_workbook
+
+# Імпортуємо модель з вашого додатку materials
 from materials.models import StudyMaterial
 
 
 class Command(BaseCommand):
-    help = 'Автоматично імпортує 46 конспектів з папки import_files'
+    help = 'Примусове завантаження матеріалів з Excel-матриці'
 
-    def handle(self, *args, **options):
-        folder_path = os.path.join(settings.BASE_DIR, 'import_files')
+    def handle(self, *args, **kwargs):
+        excel_path = 'matrix.xlsx'
+        pdf_folder = 'import_files'
 
-        if not os.path.exists(folder_path):
-            self.stdout.write(self.style.ERROR(f'Папку {folder_path} не знайдено!'))
+        if not os.path.exists(excel_path):
+            self.stdout.write(self.style.ERROR(f'Файл {excel_path} не знайдено!'))
             return
 
-        # СЛОВНИК ЦІН: вкажіть номер матеріалу та його ціну.
-        # Усі, кого немає в цьому списку, автоматично стануть безкоштовними (0 грн).
-        PRICES_MAP = {
-            2: 19,
-            3: 19,
-            # Додайте сюди інші платні номери за аналогією:
-            # 4: 29,
-            # 5: 29,
-        }
+        wb = load_workbook(excel_path)
+        ws = wb.active
 
-        files = [f for f in os.listdir(folder_path) if f.endswith('.pdf')]
-        self.stdout.write(self.style.SUCCESS(f'Знайдено {len(files)} файлів для імпорту.'))
+        self.stdout.write(f"Починаємо імпорт {ws.max_row - 1} матеріалів...")
 
-        count = 0
-        for file_name in files:
-            # Витягуємо номер конспекту з початку назви файлу
-            match = re.match(r'^(\d+)', file_name)
-            if not match:
+        # Пропускаємо перший рядок (заголовки)
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            title, price, filename, is_free, is_bundle = row
+
+            if not title or not filename:
                 continue
 
-            file_number = int(match.group(1))
+            pdf_path = os.path.join(pdf_folder, filename)
 
-            # Очищаємо назву матеріалу від розширення .pdf для гарного відображення на вітрині
-            title = os.path.splitext(file_name)[0]
-
-            # Визначаємо ціну: якщо номера немає в словнику — ставимо 0
-            price = PRICES_MAP.get(file_number, 0)
-
-            # Перевіряємо, чи такий матеріал уже є в базі, щоб не дублювати
-            if StudyMaterial.objects.filter(title=title).exists():
-                self.stdout.write(self.style.WARNING(f'«{title}» вже є в базі, пропускаємо.'))
+            if not os.path.exists(pdf_path):
+                self.stdout.write(self.style.WARNING(f'Пропущено: файл не знайдено ({pdf_path})'))
                 continue
 
-            full_file_path = os.path.join(folder_path, file_name)
-
-            # Створюємо об'єкт у базі даних
-            material = StudyMaterial(
+            # Знаходимо існуючий запис у базі або створюємо новий
+            material, created = StudyMaterial.objects.get_or_create(
                 title=title,
-                price=price,
-                is_published=True
+                defaults={
+                    'price': price,
+                    'is_free': bool(is_free),
+                    'is_bundle': bool(is_bundle),
+                    'is_published': True
+                }
             )
 
-            # Безпечно відкриваємо і прив'язуємо фізичний PDF-файл до моделі Django
-            with open(full_file_path, 'rb') as f:
-                material.file.save(file_name, File(f), save=True)
+            # Оновлюємо дані (якщо ви, наприклад, змінили ціну в таблиці)
+            material.price = price
+            material.is_free = bool(is_free)
+            material.is_bundle = bool(is_bundle)
+            material.is_published = True
 
-            count += 1
-            self.stdout.write(self.style.SUCCESS(f'Успішно імпортовано: {title} ({price} грн)'))
+            self.stdout.write(f"Зшиваю та завантажую в Cloudinary: {title} ...")
 
-        self.stdout.write(self.style.SUCCESS(f'Роботу завершено! Додано нових матеріалів: {count}'))
+            # ПРИМУСОВО додаємо PDF (це викличе склеювання з intro.pdf)
+            with open(pdf_path, 'rb') as f:
+                material.file.save(filename, File(f), save=True)
+
+            self.stdout.write(self.style.SUCCESS(f'Успішно оновлено: {title}'))
+
+        self.stdout.write(self.style.SUCCESS('Усі матеріали успішно завантажено в базу та на Cloudinary!'))
