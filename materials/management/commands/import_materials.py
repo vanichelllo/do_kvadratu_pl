@@ -2,63 +2,76 @@ import os
 from django.core.management.base import BaseCommand
 from django.core.files import File
 from openpyxl import load_workbook
-
-# Імпортуємо модель з вашого додатку materials
-from materials.models import StudyMaterial
+from materials.models import StudyMaterial, Category
 
 
 class Command(BaseCommand):
-    help = 'Примусове завантаження матеріалів з Excel-матриці'
+    help = 'Розумний імпорт з новими правилами цін, категорій та збереженням PDF'
 
     def handle(self, *args, **kwargs):
         excel_path = 'matrix.xlsx'
         pdf_folder = 'import_files'
 
-        if not os.path.exists(excel_path):
-            self.stdout.write(self.style.ERROR(f'Файл {excel_path} не знайдено!'))
-            return
+        # 1. Створюємо категорію (система перевірить, як названо поле у вашій базі: name чи title)
+        try:
+            category, _ = Category.objects.get_or_create(name="Підготовка до НМТ")
+        except:
+            category, _ = Category.objects.get_or_create(title="Підготовка до НМТ")
 
         wb = load_workbook(excel_path)
         ws = wb.active
 
-        self.stdout.write(f"Починаємо імпорт {ws.max_row - 1} матеріалів...")
+        self.stdout.write("Починаємо оновлення бази даних...")
 
-        # Пропускаємо перший рядок (заголовки)
         for row in ws.iter_rows(min_row=2, values_only=True):
-            title, price, filename, is_free, is_bundle = row
+            excel_title, original_price, filename, is_free, is_bundle = row
 
-            if not title or not filename:
+            if not excel_title or not filename:
                 continue
 
-            pdf_path = os.path.join(pdf_folder, filename)
+            # 2. Формуємо нові назви та ціни за вашими правилами
+            new_title = excel_title
+            price = 25  # Всі окремі теми по 25 грн
 
-            if not os.path.exists(pdf_path):
-                self.stdout.write(self.style.WARNING(f'Пропущено: файл не знайдено ({pdf_path})'))
-                continue
+            # Правила для пакетів
+            if is_bundle:
+                price = original_price  # Пакети зберігають свою стару ціну з Excel
+                if "Пакет 1" in excel_title:
+                    new_title = "Вся алгебра для НМТ"
+                elif "Пакет 2" in excel_title:
+                    new_title = "Вся геометрія для НМТ"
+                elif "Пакет 3" in excel_title:
+                    new_title = "Весь курс для НМТ"
 
-            # Знаходимо існуючий запис у базі або створюємо новий
-            material, created = StudyMaterial.objects.get_or_create(
-                title=title,
-                defaults={
-                    'price': price,
-                    'is_free': bool(is_free),
-                    'is_bundle': bool(is_bundle),
-                    'is_published': True
-                }
-            )
+            # 3. Шукаємо матеріал у базі (за старою або новою назвою)
+            material = StudyMaterial.objects.filter(title=excel_title).first()
+            if not material:
+                material = StudyMaterial.objects.filter(title=new_title).first()
 
-            # Оновлюємо дані (якщо ви, наприклад, змінили ціну в таблиці)
+            created = False
+            if not material:
+                material = StudyMaterial(title=new_title)
+                created = True
+
+            # 4. Оновлюємо текст, ціни та прив'язуємо категорію
+            material.title = new_title
             material.price = price
             material.is_free = bool(is_free)
             material.is_bundle = bool(is_bundle)
             material.is_published = True
+            material.category = category
+            material.save()
 
-            self.stdout.write(f"Зшиваю та завантажую в Cloudinary: {title} ...")
+            # 5. ФАЙЛИ БІЛЬШЕ НЕ ПЕРЕЗАПИСУЮТЬСЯ!
+            # Скрипт приклеїть і завантажить PDF тільки якщо це новий запис,
+            # або якщо файл випадково порожній.
+            if created or not material.file:
+                pdf_path = os.path.join(pdf_folder, filename)
+                if os.path.exists(pdf_path):
+                    with open(pdf_path, 'rb') as f:
+                        material.file.save(filename, File(f), save=True)
+                    self.stdout.write(self.style.SUCCESS(f'Створено з PDF: {new_title}'))
+            else:
+                self.stdout.write(f'Оновлено текст і ціну: {new_title} (PDF не чіпали)')
 
-            # ПРИМУСОВО додаємо PDF (це викличе склеювання з intro.pdf)
-            with open(pdf_path, 'rb') as f:
-                material.file.save(filename, File(f), save=True)
-
-            self.stdout.write(self.style.SUCCESS(f'Успішно оновлено: {title}'))
-
-        self.stdout.write(self.style.SUCCESS('Усі матеріали успішно завантажено в базу та на Cloudinary!'))
+        self.stdout.write(self.style.SUCCESS('Готово! Базу оновлено, ваші старі файли у безпеці.'))
