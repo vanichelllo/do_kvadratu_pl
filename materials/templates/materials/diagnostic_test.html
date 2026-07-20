@@ -1,106 +1,119 @@
-{% extends 'base.html' %} <!-- Замініть на ваш базовий шаблон, якщо він називається інакше -->
+{% extends 'base.html' %}
+
+{% block title %}Діагностика НМТ - ДО КВАДРАТУ{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
-    <h1 style="text-align: center; margin-bottom: 30px;">Діагностичний тест у форматі НМТ</h1>
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+
+    <!-- Заголовок -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: var(--brand-blue); font-size: 2.5rem; margin-bottom: 10px;">🔥 ДІАГНОСТИЧНИЙ ТЕСТ НМТ</h1>
+        <p style="color: #666; font-size: 1.1rem; font-weight: 600;">22 завдання. Перевір свій рівень перед екзаменом.</p>
+    </div>
 
     <form method="POST" action="">
         {% csrf_token %}
 
         {% for question in questions %}
-        <div class="nmt-question-card" style="background: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;">
+        <div style="background: #ffffff; border: 2px dashed var(--brand-blue); padding: 30px; margin-bottom: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
 
             <!-- Вивід тексту питання (MathJax обробить формули) -->
-            <div class="nmt-question-text" style="font-size: 16px; margin-bottom: 15px;">
-                <strong>{{ forloop.counter }}.</strong> {{ question.text }}
+            <div style="font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 25px; line-height: 1.6;">
+                <span style="display: inline-block; background: var(--brand-blue); color: white; padding: 5px 12px; border-radius: 8px; margin-right: 10px;">{{ forloop.counter }}</span>
+                {{ question.text }}
             </div>
 
-            <!-- Якщо це завдання з однією правильною відповіддю (1-15) -->
+            <!-- 1. ЗАВДАННЯ З ОДНІЄЮ ПРАВИЛЬНОЮ ВІДПОВІДДЮ (1-15) -->
             {% if question.question_type == 'CHOICE' %}
-                <table class="nmt-table" style="width: 100%; border-collapse: collapse; text-align: center;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">А</th>
-                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Б</th>
-                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">В</th>
-                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Г</th>
-                            <th style="border: 1px solid #000; padding: 10px; background: #f9f9f9;">Д</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            {% for option in question.options.all %}
-                            <td style="border: 1px solid #000; padding: 10px;">
-                                <label style="display: block; cursor: pointer;">
-                                    <div style="margin-bottom: 8px;">{{ option.text }}</div>
-                                    <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" style="transform: scale(1.2);">
-                                </label>
-                            </td>
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-
-            <!-- Якщо це завдання на відповідність (16-18) -->
-            {% elif question.question_type == 'MATCH' %}
-                <div style="margin-bottom: 20px;">
-                    <!-- Спочатку виводимо варіанти А-Д для ознайомлення -->
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px;">
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            {% for option in question.options.all %}
-                                <div style="font-size: 15px; color: #2c3e50;">{{ option.text }}</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Сама матриця (сітка) для відповідей -->
-                    <table class="nmt-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: center; min-width: 500px;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef; width: 40%;">Умова</th>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">А</th>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Б</th>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">В</th>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Г</th>
-                                <th style="border: 1px solid #ccc; padding: 10px; background: #e9ecef;">Д</th>
+                                <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue); width: 20%;">А</th>
+                                <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue); width: 20%;">Б</th>
+                                <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue); width: 20%;">В</th>
+                                <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue); width: 20%;">Г</th>
+                                <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue); width: 20%;">Д</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in question.match_items.all %}
                             <tr>
-                                <td style="border: 1px solid #ccc; padding: 10px; text-align: left; font-weight: 600;">{{ item.text }}</td>
                                 {% for option in question.options.all %}
-                                <td style="border: 1px solid #ccc; padding: 10px;">
-                                    <input type="radio" name="match_{{ item.id }}" value="{{ option.id }}" style="transform: scale(1.3); cursor: pointer;">
+                                <td style="border: 1px solid var(--brand-blue); padding: 15px; vertical-align: middle;">
+                                    <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer; height: 100%; justify-content: space-between;">
+                                        <div style="margin-bottom: 15px; font-size: 16px;">{{ option.text }}</div>
+                                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" style="transform: scale(1.5); cursor: pointer; accent-color: var(--brand-blue);">
+                                    </label>
                                 </td>
                                 {% endfor %}
                             </tr>
-                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
 
-            <!-- Якщо це завдання відкритої форми (19-22) -->
+            <!-- 2. ЗАВДАННЯ НА ВІДПОВІДНІСТЬ (16-18) -->
+            {% elif question.question_type == 'MATCH' %}
+                <div style="margin-bottom: 20px;">
+                    <!-- Варіанти А-Д -->
+                    <div style="background: rgba(52, 78, 134, 0.05); padding: 20px; border-radius: 10px; border: 1px solid rgba(52, 78, 134, 0.2); margin-bottom: 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            {% for option in question.options.all %}
+                                <div style="font-size: 16px; font-weight: 600; color: var(--brand-blue);">{{ option.text }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Матриця -->
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: center; min-width: 500px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); width: 40%;">Умова</th>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue);">А</th>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue);">Б</th>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue);">В</th>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue);">Г</th>
+                                    <th style="border: 1px solid var(--brand-blue); padding: 12px; background: rgba(52, 78, 134, 0.1); color: var(--brand-blue);">Д</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in question.match_items.all %}
+                                <tr>
+                                    <td style="border: 1px solid var(--brand-blue); padding: 15px; text-align: left; font-weight: 600; font-size: 16px;">{{ item.text }}</td>
+                                    {% for option in question.options.all %}
+                                    <td style="border: 1px solid var(--brand-blue); padding: 15px;">
+                                        <input type="radio" name="match_{{ item.id }}" value="{{ option.id }}" style="transform: scale(1.5); cursor: pointer; accent-color: var(--brand-blue);">
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            <!-- 3. ЗАВДАННЯ ВІДКРИТОЇ ФОРМИ (19-22) -->
             {% elif question.question_type == 'SHORT' %}
-                <div style="margin-top: 15px;">
-                    <label style="font-weight: bold;">Відповідь:</label>
-                    <input type="text" name="question_{{ question.id }}" placeholder="Наприклад: -12.5"
-                           style="padding: 10px; font-size: 16px; border: 1px solid #000; border-radius: 4px; width: 200px; margin-left: 10px;">
+                <div style="margin-top: 20px; background: rgba(255, 204, 0, 0.1); padding: 20px; border-radius: 10px; display: flex; align-items: center; gap: 15px;">
+                    <label style="font-weight: 800; color: var(--brand-blue); font-size: 1.1rem;">ВІДПОВІДЬ:</label>
+                    <input type="text" name="question_{{ question.id }}" placeholder="Введіть число..."
+                           style="padding: 12px 15px; font-size: 18px; font-weight: 600; border: 2px solid var(--brand-blue); border-radius: 8px; width: 250px; outline: none; font-family: 'Montserrat', sans-serif;">
                 </div>
             {% endif %}
 
         </div>
         {% endfor %}
 
-        <div style="text-align: center; margin-top: 30px;">
-            <button type="submit" style="background-color: #007bff; color: white; padding: 15px 40px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer;">
-                Завершити тест та отримати результат
+        <!-- КНОПКА ЗАВЕРШЕННЯ ТЕСТУ -->
+        <div style="text-align: center; margin-top: 50px; margin-bottom: 50px;">
+            <button type="submit" class="btn-brand" style="font-size: 1.3rem; padding: 15px 40px; border-width: 3px;">
+                ЗАВЕРШИТИ ТЕСТ ТА ДІЗНАТИСЯ РЕЗУЛЬТАТ
             </button>
         </div>
     </form>
 </div>
 
-<!-- Налаштування для розпізнавання одинарних $...$ у MathJax -->
+<!-- Налаштування MathJax -->
 <script>
     MathJax = {
         tex: {
@@ -108,7 +121,6 @@
         }
     };
 </script>
-
-<!-- Скрипт для рендеру математичних формул LaTeX (MathJax) -->
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 {% endblock %}
