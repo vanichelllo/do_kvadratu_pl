@@ -26,7 +26,6 @@
             color: var(--text-dark);
             margin: 0;
             padding: 0;
-            /* Фон "в клітинку" (зошит з математики) */
             background-color: #ffffff;
             background-image:
                 linear-gradient(#e5e7eb 1px, transparent 1px),
@@ -34,7 +33,7 @@
             background-size: 20px 20px;
             display: flex;
             flex-direction: column;
-            min-height: 100vh; /* Щоб підвал завжди був внизу */
+            min-height: 100vh;
         }
 
         h1, h2, h3, h4 {
@@ -52,6 +51,8 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative; /* Важливо для випадаючого меню */
+            z-index: 1000;
         }
 
         .nav-logo {
@@ -63,12 +64,28 @@
             font-weight: 900;
             font-size: 1.2rem;
             letter-spacing: 1px;
+            z-index: 1001; /* Щоб лого було над меню */
         }
 
-        /* Логотип SVG */
         .nav-logo svg {
             width: 40px;
             height: 40px;
+        }
+
+        /* КНОПКА БУРГЕР (схована на ПК) */
+        .burger-menu {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 1001;
+        }
+
+        .burger-menu svg {
+            width: 35px;
+            height: 35px;
+            fill: var(--brand-blue);
         }
 
         .nav-links {
@@ -120,7 +137,7 @@
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
-            flex-grow: 1; /* Дозволяє контенту займати весь вільний простір, відштовхуючи підвал */
+            flex-grow: 1;
             width: 100%;
             box-sizing: border-box;
         }
@@ -150,9 +167,53 @@
             transition: opacity 0.2s;
         }
 
-        .footer-links a:hover {
-            opacity: 0.8;
-            text-decoration: underline;
+        /* === АДАПТИВНІСТЬ ДЛЯ ТЕЛЕФОНІВ ТА ПЛАНШЕТІВ === */
+        @media (max-width: 1024px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+
+            .burger-menu {
+                display: block; /* Показуємо бургер */
+            }
+
+            .nav-links {
+                display: none; /* Ховаємо меню за замовчуванням */
+                flex-direction: column;
+                position: absolute;
+                top: 100%; /* Одразу під шапкою */
+                left: 0;
+                width: 100%;
+                background-color: var(--text-light);
+                padding: 20px 0;
+                box-shadow: 0 10px 10px rgba(0,0,0,0.1);
+                border-bottom: 2px dashed var(--brand-blue);
+                gap: 20px; /* Відстань між пунктами меню */
+            }
+
+            /* Коли додається клас active через JS - меню з'являється */
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                margin-left: 0;
+                font-size: 1.2rem; /* Трохи збільшуємо для пальця */
+            }
+
+            .nav-links span {
+                margin-left: 0 !important;
+                margin-top: 10px;
+            }
+
+            .nav-links form {
+                margin-left: 0 !important;
+                margin-top: 5px;
+            }
+
+            .nav-links .btn-brand {
+                margin-left: 0 !important;
+            }
         }
     </style>
 </head>
@@ -184,8 +245,16 @@
             ДО КВАДРАТУ
         </a>
 
-        <!-- ОНОВЛЕНИЙ БЛОК НАВІГАЦІЇ ТА АВТОРИЗАЦІЇ -->
-        <div class="nav-links">
+        <!-- КНОПКА БУРГЕР -->
+        <button class="burger-menu" id="burgerBtn">
+            <svg viewBox="0 0 100 80">
+                <rect width="100" height="15" rx="8"></rect>
+                <rect y="30" width="100" height="15" rx="8"></rect>
+                <rect y="60" width="100" height="15" rx="8"></rect>
+            </svg>
+        </button>
+
+        <div class="nav-links" id="navLinks">
             <a href="{% url 'home' %}">ГОЛОВНА</a>
             <a href="{% url 'diagnostic_test' %}" style="font-weight: bold; color: #d9534f;">🔥 ДІАГНОСТИКА НМТ</a>
             <a href="{% url 'materials_list' %}">ВІТРИНА</a>
@@ -194,11 +263,9 @@
             <a href="{% url 'cart_detail' %}">🛒 КОШИК</a>
 
             {% if user.is_authenticated %}
-                <!-- Індикатор поточного користувача -->
                 <span style="font-weight: 800; margin-left: 25px; color: var(--brand-blue); border: 2px dashed var(--brand-blue); padding: 5px 10px; border-radius: 8px; background: #ffffff; font-size: 0.9rem;">
                     👋 {{ user.email }}
                 </span>
-                <!-- Оновлена кнопка виходу -->
                 <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 15px;">
                     {% csrf_token %}
                     <button type="submit" class="btn-brand" style="background-color: #ff4757; color: white; padding: 7px 15px; font-size: 0.9rem;">
@@ -232,7 +299,7 @@
         {% endblock %}
     </main>
 
-    <!-- ПІДВАЛ (FOOTER) З ЮРИДИЧНИМИ СТОРІНКАМИ -->
+    <!-- ПІДВАЛ -->
     <footer class="site-footer">
         <div style="font-weight: 800; font-size: 1.1rem;">© 2026 ДО КВАДРАТУ. Всі права захищено.</div>
         <div class="footer-links">
@@ -241,6 +308,16 @@
             <a href="{% url 'privacy' %}">Політика конфіденційності</a>
         </div>
     </footer>
+
+    <!-- СКРИПТ ДЛЯ РОБОТИ БУРГЕРА -->
+    <script>
+        const burgerBtn = document.getElementById('burgerBtn');
+        const navLinks = document.getElementById('navLinks');
+
+        burgerBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
 
 </body>
 </html>
