@@ -19,7 +19,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-unsafe-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Якщо в .env написано True - буде True, інакше - False
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True
 
 # ДОЗВОЛЯЄМО ХОСТИ З .ENV
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')

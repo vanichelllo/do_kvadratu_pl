@@ -239,6 +239,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 # ОНОВЛЕНО: Безпечне читання матеріалу
 # ==========================================
 @login_required(login_url='/login/')
+@login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
@@ -249,15 +250,22 @@ def download_material_view(request, material_id):
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
-    # Читаємо файл у пам'ять і кодуємо в текст (Base64)
-    file_bytes = material.file.read()
+    # ОНОВЛЕНО: Безпечне читання файлу з Cloudinary через requests
+    try:
+        response = requests.get(material.file.url)
+        response.raise_for_status() # Перевіряємо, чи немає помилки 404/403 від Cloudinary
+        file_bytes = response.content
+    except Exception as e:
+        print(f"Помилка завантаження файлу з Cloudinary: {e}")
+        raise Http404("Помилка доступу до файлу у хмарі. Спробуйте пізніше.")
+
+    # Кодуємо в текст (Base64)
     pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
 
     context = {
         'material': material,
         'pdf_base64': pdf_base64
     }
-    # Замість видачі файлу, відкриваємо сторінку-читалку
     return render(request, 'materials/reader.html', context)
 
 
