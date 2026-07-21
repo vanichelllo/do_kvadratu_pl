@@ -14,13 +14,13 @@ def register_view(request):
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Автоматичний вхід
+            # ПРЯМО ВКАЗУЄМО БЕКЕНД АВТОРИЗАЦІЇ, ЩОБ DJANGO НЕ ПЛУТАВСЯ З ALLAUTH
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('cabinet')  # Редирект у кабінет
     else:
         form = StudentRegistrationForm()
 
     return render(request, 'users/register.html', {'form': form})
-
 
 @login_required
 def pay_with_mono(request):
