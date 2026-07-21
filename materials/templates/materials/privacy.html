@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Політика конфіденційності - ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <div style="background: #ffffff; padding: 40px; border-radius: 15px; border: 2px dashed var(--brand-blue); box-shadow: 0 4px 15px rgba(0,0,0,0.05); line-height: 1.6; color: var(--text-dark);">
+        
+        <h1 style="text-align: center; color: var(--brand-blue); margin-bottom: 30px; font-size: 2rem;">ПОЛІТИКА КОНФІДЕНЦІЙНОСТІ</h1>
+
+        <h3 style="color: var(--brand-blue); margin-top: 25px; font-size: 1.2rem;">1. ЗБІР ІНФОРМАЦІЇ</h3>
+        <p>Ми збираємо мінімально необхідну інформацію для надання послуг. При реєстрації на сайті ви надаєте нам свою електронну адресу (email). <strong>Дані про ваші платіжні картки ми не збираємо і не зберігаємо</strong> — їх обробляє виключно захищена платіжна система Monobank.</p>
+
+        <h3 style="color: var(--brand-blue); margin-top: 25px; font-size: 1.2rem;">2. ВИКОРИСТАННЯ ІНФОРМАЦІЇ</h3>
+        <p>Ваша електронна адреса використовується виключно для:</p>
+        <ul style="margin-left: 20px; margin-bottom: 15px;">
+            <li style="margin-bottom: 8px;">Створення особистого кабінету, де зберігаються ваші придбані матеріали.</li>
+            <li style="margin-bottom: 8px;">Ідентифікації ваших платежів та покупок.</li>
+            <li style="margin-bottom: 8px;">Зв'язку з вами у разі технічних питань.</li>
+        </ul>
+
+        <h3 style="color: var(--brand-blue); margin-top: 25px; font-size: 1.2rem;">3. ЗАХИСТ ДАНИХ</h3>
+        <p>Ми вживаємо всіх розумних заходів для захисту ваших даних від несанкціонованого доступу. Паролі користувачів зберігаються у надійно зашифрованому вигляді (хешування) засобами фреймворку Django.</p>
+
+        <h3 style="color: var(--brand-blue); margin-top: 25px; font-size: 1.2rem;">4. ПЕРЕДАЧА ДАНИХ ТРЕТІМ ОСОБАМ</h3>
+        <p>Ми не продаємо, не обмінюємо і не передаємо ваші персональні дані третім особам, за винятком випадків, прямо передбачених чинним законодавством України.</p>
+
+        <h3 style="color: var(--brand-blue); margin-top: 25px; font-size: 1.2rem;">5. ЗГОДА</h3>
+        <p>Використовуючи наш сайт та здійснюючи реєстрацію або покупку, ви погоджуєтесь із цією Політикою конфіденційності.</p>
+        
+    </div>
+</div>
+{% endblock %}
