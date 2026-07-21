@@ -17,25 +17,20 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from users.forms import UserProfileForm
-# ДОДАНО НОВІ ІМПОРТИ (AnswerOption, DiagnosticTopic, MatchItem)
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
     MatchItem
 
-# --- НОВІ ІМПОРТИ ДЛЯ DRF ---
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import StudyMaterialSerializer, PurchasedMaterialSerializer
 
-# Динамічно отримуємо нашу нову модель CustomUser
 User = get_user_model()
 
 
 def diagnostic_test_view(request):
-    # Підтягуємо питання разом із варіантами та умовами відповідностей
     questions = Question.objects.all().prefetch_related('options', 'match_items')
 
     if request.method == 'POST':
-        # Словник для статистики по темах
         topics_stats = {}
         for topic in DiagnosticTopic.objects.all():
             topics_stats[topic.name] = {
@@ -50,7 +45,6 @@ def diagnostic_test_view(request):
         for question in questions:
             topic_name = question.topic.name
 
-            # 1. Завдання з однією правильною відповіддю (1 бал)
             if question.question_type == 'CHOICE':
                 topics_stats[topic_name]['total'] += 1
                 max_score += 1
@@ -65,14 +59,12 @@ def diagnostic_test_view(request):
                     except AnswerOption.DoesNotExist:
                         pass
 
-            # 2. Завдання на відповідність (до 3 балів: по 1 балу за кожну правильну лінію)
             elif question.question_type == 'MATCH':
                 topics_stats[topic_name]['total'] += 3
                 max_score += 3
 
                 match_correct_count = 0
                 for item in question.match_items.all():
-                    # Шукаємо відповідь користувача для КОЖНОГО рядка матриці
                     user_match_answer = request.POST.get(f'match_{item.id}')
                     if user_match_answer and int(user_match_answer) == item.correct_option.id:
                         match_correct_count += 1
@@ -80,21 +72,18 @@ def diagnostic_test_view(request):
                 total_score += match_correct_count
                 topics_stats[topic_name]['correct'] += match_correct_count
 
-            # 3. Відкрита форма (0 або 2 бали)
             elif question.question_type == 'SHORT':
                 topics_stats[topic_name]['total'] += 2
                 max_score += 2
 
                 user_answer = request.POST.get(f'question_{question.id}')
                 if user_answer:
-                    # Універсальна обробка: відрізаємо пробіли і міняємо кому на крапку
                     user_clean = str(user_answer).strip().replace(',', '.')
                     correct_clean = str(question.correct_short_answer).strip().replace(',', '.')
                     if user_clean == correct_clean:
                         total_score += 2
                         topics_stats[topic_name]['correct'] += 2
 
-        # Визначаємо слабкі теми (менше 50% успішності)
         weak_topics = []
         for stat in topics_stats.values():
             if stat['total'] > 0:
@@ -102,7 +91,6 @@ def diagnostic_test_view(request):
                 if percent < 50:
                     weak_topics.append(stat['topic'])
 
-        # Загальний відсоток (для краси на сторінці результатів)
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
         context = {
@@ -114,20 +102,17 @@ def diagnostic_test_view(request):
         }
         return render(request, 'materials/diagnostic_results.html', context)
 
-    # ЯКЩО УЧЕНЬ ТІЛЬКИ ЗАЙШОВ НА СТОРІНКУ
     return render(request, 'materials/diagnostic_test.html', {'questions': questions})
 
 
 @login_required
 def cart_detail(request):
-    """Відображення сторінки кошика"""
     cart, created = Cart.objects.get_or_create(user=request.user)
     return render(request, 'materials/cart.html', {'cart': cart})
 
 
 @login_required
 def add_to_cart(request, material_id):
-    """Додавання товару в кошик"""
     material = get_object_or_404(StudyMaterial, id=material_id)
 
     if material in request.user.purchased_materials.all():
@@ -147,7 +132,6 @@ def add_to_cart(request, material_id):
 
 @login_required
 def remove_from_cart(request, item_id):
-    """Видалення товару з кошика"""
     cart = get_object_or_404(Cart, user=request.user)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
     item.delete()
@@ -161,6 +145,16 @@ class HomeView(TemplateView):
 
 class AboutView(TemplateView):
     template_name = 'materials/about.html'
+
+
+# ==========================================
+# НОВІ КЛАСИ ДЛЯ ЮРИДИЧНИХ ДОКУМЕНТІВ
+# ==========================================
+class OfferView(TemplateView):
+    template_name = 'materials/offer.html'
+
+class PrivacyView(TemplateView):
+    template_name = 'materials/privacy.html'
 
 
 class MaterialListView(ListView):
@@ -304,7 +298,6 @@ def api_bot_user_library(request, telegram_id):
 
 @login_required
 def pay_from_balance(request):
-    """Логіка оплати кошика з внутрішнього балансу користувача"""
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
 
@@ -342,12 +335,7 @@ def pay_from_balance(request):
         return redirect('cart_detail')
 
 
-# ==========================================
-# НОВИЙ КОД ДЛЯ MONOBANK ТА TELEGRAM
-# ==========================================
-
 def send_telegram_notification(message):
-    """Відправляє повідомлення адміну в Telegram"""
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     chat_id = getattr(settings, 'TELEGRAM_ADMIN_ID', '')
 
@@ -366,7 +354,6 @@ def send_telegram_notification(message):
 
 @login_required
 def pay_with_mono(request):
-    """Генерація посилання на оплату Monobank"""
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
 
@@ -418,7 +405,6 @@ def pay_with_mono(request):
 
 @login_required
 def topup_balance_view(request):
-    """Генерація посилання на оплату для поповнення балансу"""
     if request.method == 'POST':
         amount_str = request.POST.get('amount')
         try:
@@ -467,30 +453,24 @@ def topup_balance_view(request):
 
 @csrf_exempt
 def mono_webhook(request):
-    """Приймає сповіщення від Monobank про успішну оплату з перевіркою X-Sign"""
     if request.method == 'POST':
         try:
-            # Отримуємо заголовок X-Sign
             x_sign = request.headers.get('X-Sign')
             if not x_sign:
                 return HttpResponse("Missing X-Sign", status=400)
 
             body_bytes = request.body
 
-            # Публічний ключ Monobank (завжди статичний, береться з їхньої документації)
             mono_pub_key_base64 = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFc0NsNUJ4MWhwaXgvZ083aFVwWENwTThNdm9XRApyVlBOMlV6bXV5NUpvMHR6WjcwMmlSM29YRW1Wb3BwSW9qOGxKOFZ3aEd1T0o2bVhtYnJtQWpnWlB3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t"
             mono_pub_key_pem = base64.b64decode(mono_pub_key_base64).decode('utf-8')
 
-            # Перевірка підпису
             try:
                 vk = ecdsa.VerifyingKey.from_pem(mono_pub_key_pem)
                 signature = base64.b64decode(x_sign)
                 vk.verify(signature, body_bytes, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256)
             except ecdsa.BadSignatureError:
-                # Якщо підпис не співпав - відхиляємо запит
                 return HttpResponse("Invalid Signature", status=403)
 
-            # Якщо підпис правильний - обробляємо дані
             data = json.loads(body_bytes)
             invoice_id = data.get('invoiceId')
             status = data.get('status')
