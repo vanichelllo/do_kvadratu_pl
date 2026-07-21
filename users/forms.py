@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.utils.html import format_html
+from django.utils.safestring import mark_safe  # <-- ЗМІНИЛИ ІМПОРТ ТУТ
 from .models import CustomUser
 
 
@@ -8,7 +8,7 @@ class StudentRegistrationForm(UserCreationForm):
     # ДОДАЄМО ОБОВ'ЯЗКОВИЙ ЧЕКБОКС ЗГОДИ
     terms_agreement = forms.BooleanField(
         required=True,
-        label=format_html(
+        label=mark_safe(  # <-- ЗМІНИЛИ ФУНКЦІЮ ТУТ
             'Я погоджуюсь з умовами <a href="/offer/" target="_blank" style="color: #007bff; text-decoration: underline;">Договору оферти</a> та <a href="/privacy/" target="_blank" style="color: #007bff; text-decoration: underline;">Політикою конфіденційності</a>'
         ),
         error_messages={'required': 'Щоб зареєструватися, ви повинні погодитися з умовами оферти та політикою конфіденційності.'}
