@@ -174,31 +174,30 @@
             }
 
             .burger-menu {
-                display: block; /* Показуємо бургер */
+                display: block;
             }
 
             .nav-links {
-                display: none; /* Ховаємо меню за замовчуванням */
+                display: none;
                 flex-direction: column;
                 position: absolute;
-                top: 100%; /* Одразу під шапкою */
+                top: 100%;
                 left: 0;
                 width: 100%;
                 background-color: var(--text-light);
                 padding: 20px 0;
                 box-shadow: 0 10px 10px rgba(0,0,0,0.1);
                 border-bottom: 2px dashed var(--brand-blue);
-                gap: 20px; /* Відстань між пунктами меню */
+                gap: 20px;
             }
 
-            /* Коли додається клас active через JS - меню з'являється */
             .nav-links.active {
                 display: flex;
             }
 
             .nav-links a {
                 margin-left: 0;
-                font-size: 1.2rem; /* Трохи збільшуємо для пальця */
+                font-size: 1.2rem;
             }
 
             .nav-links span {
@@ -256,28 +255,28 @@
 
         <div class="nav-links" id="navLinks">
             <!-- Ваші загальні пункти меню, які бачать усі -->
-            <a href="{% url 'home' %}" class="...">ГОЛОВНА</a>
-            <a href="{% url 'diagnostic_test' %}" class="...">ДІАГНОСТИКА НМТ</a>
-            <a href="{% url 'materials_list' %}" class="...">ВІТРИНА</a>
-            <a href="{% url 'about' %}" class="...">ПРО ВИКЛАДАЧА</a>
+            <a href="{% url 'home' %}">ГОЛОВНА</a>
+            <a href="{% url 'diagnostic_test' %}">ДІАГНОСТИКА НМТ</a>
+            <a href="{% url 'materials_list' %}">ВІТРИНА</a>
+            <a href="{% url 'about' %}">ПРО ВИКЛАДАЧА</a>
 
             <!-- РОЗДІЛЯЄМО ЛОГІКУ ДЛЯ АВТОРИЗОВАНИХ І ГОСТЕЙ -->
             {% if user.is_authenticated %}
 
                 <!-- Це бачать ТІЛЬКИ ті, хто увійшов в акаунт -->
-                <a href="{% url 'cabinet' %}" class="...">МІЙ КАБІНЕТ</a>
-                <a href="{% url 'cart_detail' %}" class="...">КОШИК</a>
+                <a href="{% url 'cabinet' %}">МІЙ КАБІНЕТ</a>
+                <a href="{% url 'cart_detail' %}">КОШИК</a>
 
-                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 25px;">
                     {% csrf_token %}
-                    <button type="submit" class="...">ВИЙТИ</button>
+                    <button type="submit" class="btn-brand" style="background-color: transparent; border-color: var(--brand-blue); color: var(--brand-blue); box-shadow: none;">ВИЙТИ</button>
                 </form>
 
             {% else %}
 
                 <!-- Це бачать ТІЛЬКИ гості (незареєстровані) -->
-                <a href="{% url 'login' %}" class="...">УВІЙТИ</a>
-                <a href="{% url 'register' %}" class="...">РЕЄСТРАЦІЯ</a>
+                <a href="{% url 'login' %}">УВІЙТИ</a>
+                <a href="{% url 'register' %}" class="btn-brand" style="margin-left: 15px;">РЕЄСТРАЦІЯ</a>
 
             {% endif %}
         </div>
