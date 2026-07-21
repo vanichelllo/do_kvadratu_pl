@@ -250,22 +250,13 @@ def download_material_view(request, material_id):
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
-    # ОНОВЛЕНО: Читання файлу з виправленням URL Cloudinary
     try:
-        file_url = material.file.url
-
-        # Якщо Cloudinary повертає лінк без протоколу або з http — виправляємо це
-        if file_url.startswith('//'):
-            file_url = 'https:' + file_url
-        elif file_url.startswith('http://'):
-            file_url = file_url.replace('http://', 'https://')
-
-        response = requests.get(file_url)
-        response.raise_for_status()
-        file_bytes = response.content
+        # Універсальний метод: читає файл як з Cloudinary, так і з локальної папки media
+        file_bytes = material.file.read()
+    except FileNotFoundError:
+        raise Http404("Файл фізично відсутній на сервері! Зайдіть в адмінку і завантажте його ще раз.")
     except Exception as e:
-        print(f"Помилка завантаження файлу: {e}")
-        raise Http404(f"Помилка хмарного сховища. Деталі: {e}")
+        raise Http404(f"Не вдалося прочитати файл. Деталі: {e}")
 
     # Кодуємо в текст (Base64)
     pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
@@ -275,8 +266,6 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
-
-
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
