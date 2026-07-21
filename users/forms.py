@@ -1,9 +1,19 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.html import format_html
 from .models import CustomUser
 
 
 class StudentRegistrationForm(UserCreationForm):
+    # ДОДАЄМО ОБОВ'ЯЗКОВИЙ ЧЕКБОКС ЗГОДИ
+    terms_agreement = forms.BooleanField(
+        required=True,
+        label=format_html(
+            'Я погоджуюсь з умовами <a href="/offer/" target="_blank" style="color: #007bff; text-decoration: underline;">Договору оферти</a> та <a href="/privacy/" target="_blank" style="color: #007bff; text-decoration: underline;">Політикою конфіденційності</a>'
+        ),
+        error_messages={'required': 'Щоб зареєструватися, ви повинні погодитися з умовами оферти та політикою конфіденційності.'}
+    )
+
     class Meta:
         model = CustomUser
         fields = ('email',)
@@ -25,6 +35,7 @@ class StudentRegistrationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
 
 class UserProfileForm(forms.ModelForm):
     class Meta:

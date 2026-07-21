@@ -8,18 +8,23 @@
     .auth-window { background-color: #ffffff; border: 3px solid var(--brand-blue); border-radius: 12px; box-shadow: 10px 10px 0px var(--brand-yellow); max-width: 420px; margin: 60px auto; overflow: hidden; }
     .auth-body { padding: 40px; }
     .auth-title { text-align: center; font-size: 2rem; margin-top: 0; margin-bottom: 30px; color: var(--brand-blue); font-weight: 900; }
-    .auth-form p { text-align: left; margin-bottom: 15px; }
-    .auth-form label { font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 5px; font-size: 0.85rem; text-transform: uppercase; }
-    .auth-form input { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); }
+
+    .auth-form label.main-label { font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 5px; font-size: 0.85rem; text-transform: uppercase; }
+    .auth-form input[type="email"], .auth-form input[type="text"], .auth-form input[type="password"] { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); margin-bottom: 15px; }
     .auth-form input:focus { outline: none; border-color: var(--brand-yellow); background-color: #ffffff; }
+
     .btn-submit { width: 100%; background-color: var(--brand-blue); color: #ffffff; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 5px 5px 0px var(--brand-yellow); transition: all 0.2s; text-transform: uppercase; margin-top: 10px; }
     .btn-submit:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0px var(--brand-yellow); }
+
     .divider { text-align: center; margin: 25px 0; font-weight: 900; color: rgba(52, 78, 134, 0.5); position: relative; }
     .divider::before, .divider::after { content: ""; position: absolute; top: 50%; width: 40%; height: 2px; background-color: rgba(52, 78, 134, 0.2); }
     .divider::before { left: 0; }
     .divider::after { right: 0; }
+
     .btn-google { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; background-color: #ffffff; color: var(--brand-blue); padding: 12px; border: 2px solid var(--brand-blue); border-radius: 8px; font-weight: 900; text-decoration: none; box-shadow: 4px 4px 0px var(--brand-blue); transition: all 0.2s; box-sizing: border-box; }
     .btn-google:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--brand-blue); background-color: #f8f9fa; }
+
+    .error-text { color: #dc3545; font-size: 0.85rem; font-weight: 600; margin-top: -10px; margin-bottom: 15px; display: block; }
 </style>
 
 <div class="auth-window">
@@ -34,14 +39,42 @@
 
         <form method="POST" class="auth-form">
             {% csrf_token %}
-            {{ form.as_p }}
+
+            {% for field in form %}
+                {% if field.name != 'terms_agreement' %}
+                    <label class="main-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <span class="error-text">{{ field.errors.0 }}</span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Блок для чекбокса Оферти -->
+            <div style="margin-top: 5px; margin-bottom: 20px; padding: 12px; background: rgba(52, 78, 134, 0.05); border-radius: 8px; border-left: 4px solid var(--brand-yellow);">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <div style="padding-top: 3px;">
+                        {{ form.terms_agreement }}
+                    </div>
+                    <label for="{{ form.terms_agreement.id_for_label }}" style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark); line-height: 1.4; margin: 0; cursor: pointer; text-transform: none;">
+                        Я погоджуюсь з умовами
+                        <a href="{% url 'offer' %}" target="_blank" style="color: var(--brand-blue); text-decoration: underline;">Договору оферти</a> та
+                        <a href="{% url 'privacy' %}" target="_blank" style="color: var(--brand-blue); text-decoration: underline;">Політикою конфіденційності</a>
+                    </label>
+                </div>
+                {% if form.terms_agreement.errors %}
+                    <div class="error-text" style="margin-top: 5px; margin-left: 25px; margin-bottom: 0;">
+                        {{ form.terms_agreement.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
             <button type="submit" class="btn-submit">ЗАРЕЄСТРУВАТИСЯ</button>
         </form>
 
         <div class="divider">АБО</div>
 
         <!-- Кнопка Google -->
-        <!-- Безпечна форма для входу через Google -->
         <form action="{% provider_login_url 'google' %}" method="post">
             {% csrf_token %}
             <button type="submit" class="btn-google" style="font-family: inherit; font-size: 1rem;">
