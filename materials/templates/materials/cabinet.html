@@ -92,27 +92,29 @@
         flex-grow: 1;
     }
 
-    .btn-download {
+    /* ОНОВЛЕНО: Стилі кнопки для читання онлайн */
+    .btn-read-online {
         display: block;
         text-align: center;
-        background-color: #27c93f;
-        color: white;
+        background-color: var(--brand-blue);
+        color: var(--brand-yellow);
         text-decoration: none;
         padding: 12px;
         border-radius: 8px;
         font-weight: 900;
         margin-top: auto;
-        border: 2px solid #1e9e30;
-        transition: background 0.2s;
+        border: 2px solid var(--brand-blue);
+        transition: all 0.2s;
         text-transform: uppercase;
         font-size: 0.9rem;
     }
 
-    .btn-download:hover {
-        background-color: #1e9e30;
+    .btn-read-online:hover {
+        background-color: var(--brand-yellow);
+        color: var(--brand-blue);
     }
 
-    /* === НОВЕ: Блок поповнення балансу === */
+    /* Блок поповнення балансу */
     .topup-section {
         background: white;
         border: 3px solid var(--brand-blue);
@@ -229,8 +231,9 @@
                         <h3 style="font-size: 1.1rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 15px; line-height: 1.3;">
                             {{ item.title }}
                         </h3>
-                        <a href="{% url 'download_material' item.id %}" class="btn-download">
-                            ⬇ Завантажити PDF
+                        <!-- ОНОВЛЕНО: Кнопка для відкриття читалки -->
+                        <a href="{% url 'download_material' item.id %}" target="_blank" class="btn-read-online">
+                            📖 Читати онлайн
                         </a>
                     </div>
                 </div>
@@ -251,7 +254,7 @@
     <!-- ПРАВА КОЛОНКА: ДІЇ ТА НАЛАШТУВАННЯ -->
     <div>
 
-        <!-- НОВИЙ БЛОК: ПОПОВНЕННЯ БАЛАНСУ -->
+        <!-- БЛОК: ПОПОВНЕННЯ БАЛАНСУ -->
         <div class="topup-section">
             <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; text-transform: uppercase;">💳 Поповнити</h2>
             <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0;">Швидка оплата через Monobank</p>
@@ -265,7 +268,7 @@
             </form>
         </div>
 
-        <!-- ІСНУЮЧИЙ БЛОК: НАЛАШТУВАННЯ -->
+        <!-- БЛОК: НАЛАШТУВАННЯ -->
         <div class="profile-section">
             <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; text-transform: uppercase;">⚙️ Налаштування</h2>
 

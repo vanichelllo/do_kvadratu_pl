@@ -147,11 +147,9 @@ class AboutView(TemplateView):
     template_name = 'materials/about.html'
 
 
-# ==========================================
-# НОВІ КЛАСИ ДЛЯ ЮРИДИЧНИХ ДОКУМЕНТІВ
-# ==========================================
 class OfferView(TemplateView):
     template_name = 'materials/offer.html'
+
 
 class PrivacyView(TemplateView):
     template_name = 'materials/privacy.html'
@@ -237,17 +235,30 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         return self.render_to_response(context)
 
 
+# ==========================================
+# ОНОВЛЕНО: Безпечне читання матеріалу
+# ==========================================
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
+    # Перевірка доступу
     if material not in request.user.purchased_materials.all():
         raise Http404("У вас немає доступу до цього файлу.")
 
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
-    return FileResponse(material.file.open(), as_attachment=True, filename=material.file.name)
+    # Читаємо файл у пам'ять і кодуємо в текст (Base64)
+    file_bytes = material.file.read()
+    pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
+
+    context = {
+        'material': material,
+        'pdf_base64': pdf_base64
+    }
+    # Замість видачі файлу, відкриваємо сторінку-читалку
+    return render(request, 'materials/reader.html', context)
 
 
 @login_required(login_url='/login/')

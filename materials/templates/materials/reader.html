@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ material.title }} | Читання</title>
+    <style>
+        body {
+            background-color: #2c3e50; /* Темний фон для комфортного читання */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none; /* Заборона виділення тексту */
+            -webkit-user-select: none;
+        }
+        .reader-header {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            background-color: #ffcc00;
+            color: #344e86;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 8px;
+            font-family: sans-serif;
+        }
+        .pdf-title {
+            color: white;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+        #pdf-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 900px;
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        /* Якщо учень спробує роздрукувати сторінку - вона буде порожньою */
+        @media print {
+            body { display: none !important; }
+        }
+    </style>
+</head>
+<!-- Заборона правої кнопки миші -->
+<body oncontextmenu="return false;">
+
+    <div class="reader-header">
+        <a href="{% url 'cabinet' %}" class="btn-back">⬅ В кабінет</a>
+        <div class="pdf-title">{{ material.title }}</div>
+    </div>
+
+    <div id="pdf-container">
+        <!-- Сюди магічним чином завантажаться сторінки -->
+    </div>
+
+    <!-- Підключення бібліотеки PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+    <script>
+        // Блокуємо спроби зберегти сторінку клавіатурою (Ctrl+S, Ctrl+P)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c')) {
+                e.preventDefault();
+            }
+        });
+
+        // Беремо зашифрований файл із Django і декодуємо
+        var pdfData = atob('{{ pdf_base64 }}');
+        var pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        var loadingTask = pdfjsLib.getDocument({data: pdfData});
+
+        loadingTask.promise.then(function(pdf) {
+            var container = document.getElementById('pdf-container');
+
+            // Проходимось по всіх сторінках PDF
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                pdf.getPage(pageNum).then(function(page) {
+                    // Трохи збільшуємо якість для ПК
+                    var scale = window.innerWidth < 768 ? 1.2 : 2.0;
+                    var viewport = page.getViewport({scale: scale});
+
+                    // Створюємо полотно для малювання
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    // Обгортка потрібна, щоб сторінки не плуталися місцями при завантаженні
+                    var wrapper = document.createElement('div');
+                    wrapper.style.order = pageNum;
+                    wrapper.appendChild(canvas);
+                    container.appendChild(wrapper);
+
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
