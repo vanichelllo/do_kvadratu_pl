@@ -1,56 +1,81 @@
-{% extends 'base.html' %} <!-- Ваш базовий шаблон -->
+{% extends 'base.html' %}
+
+{% block title %}Результати тесту - ДО КВАДРАТУ{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; margin: 40px auto; padding: 30px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); font-family: 'Arial', sans-serif;">
-    
-    <h1 style="text-align: center; color: #333; margin-bottom: 20px;">Твій результат діагностики НМТ</h1>
-    
-    <!-- Головний бал -->
-    <div style="background-color: #f0f7ff; border-left: 5px solid #007bff; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 40px;">
-        <div style="font-size: 20px; color: #555;">Твій бал:</div>
-        <div style="font-size: 48px; font-weight: bold; color: #007bff; margin: 10px 0;">
+<div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+
+    <!-- ГОЛОВНИЙ РЕЗУЛЬТАТ -->
+    <div style="background: #ffffff; border: 2px solid var(--brand-blue); padding: 40px; margin-bottom: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;">
+        <h1 style="color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 15px;">ТВІЙ РЕЗУЛЬТАТ</h1>
+
+        <!-- Колір оцінки змінюється залежно від відсотка -->
+        <div style="font-size: 4.5rem; font-weight: 800; margin-bottom: 10px;
+            {% if percent_total >= 80 %} color: #28a745;
+            {% elif percent_total >= 50 %} color: #f39c12;
+            {% else %} color: #dc3545; {% endif %}">
             {{ total_score }} / {{ max_score }}
         </div>
-        <div style="font-size: 16px; color: #666;">Правильно виконано {{ percent_total }}% тесту</div>
+
+        <div style="font-size: 1.2rem; color: #666; font-weight: 600; margin-bottom: 25px;">
+            Це {{ percent_total }}% правильних відповідей
+        </div>
+
+        <!-- Мотиваційний текст -->
+        {% if percent_total >= 80 %}
+            <p style="font-size: 1.1rem; color: #28a745; font-weight: bold;">Чудовий результат! Ти добре володієш базою.</p>
+        {% elif percent_total >= 50 %}
+            <p style="font-size: 1.1rem; color: #f39c12; font-weight: bold;">Непогано, але є над чим працювати. Зверни увагу на свої помилки!</p>
+        {% else %}
+            <p style="font-size: 1.1rem; color: #dc3545; font-weight: bold;">Треба добряче попрацювати, щоб скласти НМТ на високий бал. Але час ще є!</p>
+        {% endif %}
     </div>
 
-    <!-- Аналіз "Сліпих зон" -->
-    <h2 style="font-size: 22px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
-        📊 Аналіз твоїх "сліпих зон"
-    </h2>
-    
+    <!-- СЛАБКІ ТЕМИ -->
     {% if weak_topics %}
-        <div style="background-color: #fff3f3; border: 1px solid #ffcccc; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <p style="color: #d9534f; font-weight: bold; margin-top: 0;">Тобі потрібно терміново підтягнути ці теми:</p>
-            <ul style="color: #333; font-size: 16px; line-height: 1.6;">
-                {% for topic in weak_topics %}
-                    <li><strong>{{ topic.name }}</strong></li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% else %}
-        <div style="background-color: #f4fdf4; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <p style="color: #28a745; font-weight: bold; margin: 0; text-align: center;">Блискуче! У тебе немає відверто слабких тем. Ти готовий до НМТ!</p>
-        </div>
+    <div style="background: rgba(220, 53, 69, 0.05); border-left: 6px solid #dc3545; padding: 25px; margin-bottom: 30px; border-radius: 10px;">
+        <h3 style="color: #dc3545; font-size: 1.3rem; margin-bottom: 15px;">⚠️ Твої слабкі місця (успішність нижче 50%):</h3>
+        <ul style="margin-left: 20px; font-size: 1.1rem; color: #333;">
+            {% for topic in weak_topics %}
+                <li style="margin-bottom: 8px;"><strong>{{ topic.name }}</strong></li>
+            {% endfor %}
+        </ul>
+        <p style="margin-top: 15px; font-size: 0.95rem; color: #555;">
+            *Рекомендую підтягнути ці теми в першу чергу. Зазирни в розділ матеріалів — там є теорія та практика саме для цього.
+        </p>
+    </div>
     {% endif %}
 
-    <!-- Детальна статистика по кожній темі -->
-    <h3 style="font-size: 18px; color: #555; margin-bottom: 15px;">Детальна розгортка:</h3>
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
-        {% for stat in topics_stats %}
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 16px; color: #333;">{{ stat.topic.name }}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; color: #555;">
-                    {{ stat.correct }} з {{ stat.total }}
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+    <!-- ДЕТАЛЬНА СТАТИСТИКА -->
+    <div style="background: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px;">
+        <h3 style="color: var(--brand-blue); font-size: 1.4rem; margin-bottom: 20px; text-align: center;">Розгорнута статистика по темах:</h3>
 
-    <!-- Кнопка повернення -->
-    <div style="text-align: center;">
-        <a href="{% url 'diagnostic_test' %}" style="display: inline-block; background-color: #333; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.3s;">
-            Пройти тест ще раз
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for stat in topics_stats %}
+                {% if stat.total > 0 %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--text-dark);">
+                        {{ stat.topic.name }}
+                    </div>
+                    <div style="font-weight: 800; font-size: 1.1rem;
+                        {% if stat.correct == stat.total %} color: #28a745;
+                        {% elif stat.correct > 0 %} color: #f39c12;
+                        {% else %} color: #dc3545; {% endif %}">
+                        {{ stat.correct }} / {{ stat.total }}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- КНОПКИ ДІЙ -->
+    <div style="text-align: center; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+        <a href="{% url 'materials_list' %}" class="btn-brand" style="text-decoration: none; padding: 15px 30px; font-size: 1.1rem;">
+            📚 Перейти до матеріалів
+        </a>
+        <a href="{% url 'home' %}" style="text-decoration: none; padding: 15px 30px; font-size: 1.1rem; border: 2px solid var(--brand-blue); color: var(--brand-blue); border-radius: 8px; font-weight: bold;">
+            На головну
         </a>
     </div>
 
