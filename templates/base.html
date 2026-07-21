@@ -255,26 +255,30 @@
         </button>
 
         <div class="nav-links" id="navLinks">
-            <a href="{% url 'home' %}">ГОЛОВНА</a>
-            <a href="{% url 'diagnostic_test' %}" style="font-weight: bold; color: #d9534f;">🔥 ДІАГНОСТИКА НМТ</a>
-            <a href="{% url 'materials_list' %}">ВІТРИНА</a>
-            <a href="{% url 'about' %}">ПРО ВИКЛАДАЧА</a>
-            <a href="{% url 'cabinet' %}">МІЙ КАБІНЕТ</a>
-            <a href="{% url 'cart_detail' %}">🛒 КОШИК</a>
+            <!-- Ваші загальні пункти меню, які бачать усі -->
+            <a href="{% url 'home' %}" class="...">ГОЛОВНА</a>
+            <a href="{% url 'diagnostic_test' %}" class="...">ДІАГНОСТИКА НМТ</a>
+            <a href="{% url 'materials_list' %}" class="...">ВІТРИНА</a>
+            <a href="{% url 'about' %}" class="...">ПРО ВИКЛАДАЧА</a>
 
+            <!-- РОЗДІЛЯЄМО ЛОГІКУ ДЛЯ АВТОРИЗОВАНИХ І ГОСТЕЙ -->
             {% if user.is_authenticated %}
-                <span style="font-weight: 800; margin-left: 25px; color: var(--brand-blue); border: 2px dashed var(--brand-blue); padding: 5px 10px; border-radius: 8px; background: #ffffff; font-size: 0.9rem;">
-                    👋 {{ user.email }}
-                </span>
-                <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 15px;">
+
+                <!-- Це бачать ТІЛЬКИ ті, хто увійшов в акаунт -->
+                <a href="{% url 'cabinet' %}" class="...">МІЙ КАБІНЕТ</a>
+                <a href="{% url 'cart_detail' %}" class="...">КОШИК</a>
+
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn-brand" style="background-color: #ff4757; color: white; padding: 7px 15px; font-size: 0.9rem;">
-                        ВИЙТИ
-                    </button>
+                    <button type="submit" class="...">ВИЙТИ</button>
                 </form>
+
             {% else %}
-                <a href="{% url 'login' %}">УВІЙТИ</a>
-                <a href="{% url 'register' %}" class="btn-brand" style="margin-left: 20px;">РЕЄСТРАЦІЯ</a>
+
+                <!-- Це бачать ТІЛЬКИ гості (незареєстровані) -->
+                <a href="{% url 'login' %}" class="...">УВІЙТИ</a>
+                <a href="{% url 'register' %}" class="...">РЕЄСТРАЦІЯ</a>
+
             {% endif %}
         </div>
     </nav>
