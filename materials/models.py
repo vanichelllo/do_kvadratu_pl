@@ -5,6 +5,9 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from pypdf import PdfWriter
 
+# ОНОВЛЕНО: Імпорт сховища Cloudinary
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name="Назва категорії")
@@ -23,7 +26,16 @@ class Tag(models.Model):
 class StudyMaterial(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
-    file = models.FileField(upload_to='documents/', blank=True, null=True, verbose_name="Файл матеріалу")
+
+    # ОНОВЛЕНО: Намертво прив'язуємо це поле до хмари Cloudinary
+    file = models.FileField(
+        upload_to='documents/',
+        storage=RawMediaCloudinaryStorage(),
+        blank=True,
+        null=True,
+        verbose_name="Файл матеріалу"
+    )
+
     is_published = models.BooleanField(default=False, verbose_name="Опубліковано на вітрині")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, verbose_name="Категорія")
     tags = models.ManyToManyField(Tag, blank=True, verbose_name="Теги")
