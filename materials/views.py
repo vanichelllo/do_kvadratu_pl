@@ -236,9 +236,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
 
 # ==========================================
-# ОНОВЛЕНО: Безпечне читання матеріалу
+# ОНОВЛЕНО: Безпечне читання матеріалу з Cloudinary
 # ==========================================
-
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
@@ -250,25 +249,13 @@ def download_material_view(request, material_id):
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
-    # Отримуємо посилання на файл (тепер воно буде хмарним)
-    file_url = material.file.url
-
-    # Виправляємо специфічні посилання Cloudinary
-    if file_url.startswith('//'):
-        file_url = 'https:' + file_url
-    elif file_url.startswith('http://'):
-        file_url = file_url.replace('http://', 'https://')
-    elif file_url.startswith('/'):
-        # Підстраховка на випадок локального файлу
-        file_url = request.build_absolute_uri(file_url)
-
     try:
-        # Безпечно завантажуємо файл з хмари у пам'ять
-        response = requests.get(file_url)
-        response.raise_for_status()
-        file_bytes = response.content
+        # Використовуємо офіційний метод SDK Cloudinary,
+        # який автоматично використовує ваші ключі для доступу (обходячи 401 помилку)
+        with material.file.open('rb') as f:
+            file_bytes = f.read()
     except Exception as e:
-        raise Http404(f"Помилка завантаження файлу з хмари. Деталі: {e}")
+        raise Http404(f"Помилка читання файлу з хмари. Деталі: {e}")
 
     # Кодуємо в текст (Base64)
     pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
@@ -278,6 +265,9 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
+# ==========================================
+
+
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
