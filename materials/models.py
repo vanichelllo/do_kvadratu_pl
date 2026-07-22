@@ -5,8 +5,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from pypdf import PdfWriter
 
-# ОНОВЛЕНО: Імпорт сховища Cloudinary
-from cloudinary_storage.storage import RawMediaCloudinaryStorage
+# Тимчасово прибрали прямий імпорт Cloudinary для чистоти експерименту
 
 
 class Category(models.Model):
@@ -27,10 +26,9 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
 
-    # ОНОВЛЕНО: Намертво прив'язуємо це поле до хмари Cloudinary
+    # Повертаємо звичайне поле, щоб перевірити глобальні налаштування з settings.py
     file = models.FileField(
         upload_to='documents/',
-        storage=RawMediaCloudinaryStorage(),
         blank=True,
         null=True,
         verbose_name="Файл матеріалу"
@@ -45,46 +43,36 @@ class StudyMaterial(models.Model):
     included_materials = models.ManyToManyField('self', blank=True, symmetrical=False,
                                                 verbose_name="Матеріали, що входять у пакет")
 
-    def save(self, *args, **kwargs):
-        # Перевіряємо, чи це нове завантаження файлу
-        is_new_file = False
-        if not self.pk:
-            is_new_file = True
-        else:
-            try:
-                old_obj = type(self).objects.get(pk=self.pk)
-                if old_obj.file != self.file:
-                    is_new_file = True
-            except type(self).DoesNotExist:
-                is_new_file = True
-
-        # Якщо завантажено новий PDF-файл (перевіряємо поле self.file)
-        if is_new_file and self.file and self.file.name.lower().endswith('.pdf'):
-            try:
-                merger = PdfWriter()
-
-                # 1. Знаходимо intro.pdf у корені проєкту
-                intro_path = os.path.join(settings.BASE_DIR, 'intro.pdf')
-
-                # Якщо файл інтро існує, ставимо його першим
-                if os.path.exists(intro_path):
-                    merger.append(intro_path)
-
-                # 2. Додаємо сам матеріал
-                merger.append(self.file.file)
-
-                # 3. Зберігаємо результат у віртуальну пам'ять
-                buffer = io.BytesIO()
-                merger.write(buffer)
-                merger.close()
-
-                # 4. Підміняємо оригінальний файл на об'єднаний
-                self.file.save(self.file.name, ContentFile(buffer.getvalue()), save=False)
-            except Exception as e:
-                print(f"Помилка об'єднання PDF: {e}")
-
-        # Зберігаємо модель у базу даних
-        super().save(*args, **kwargs)
+    # ==========================================
+    # ТИМЧАСОВО ВІДКЛЮЧЕНО: Функція save() із зшиванням PDF
+    # закоментована для перевірки базового завантаження у хмару.
+    # ==========================================
+    # def save(self, *args, **kwargs):
+    #     is_new_file = False
+    #     if not self.pk:
+    #         is_new_file = True
+    #     else:
+    #         try:
+    #             old_obj = type(self).objects.get(pk=self.pk)
+    #             if old_obj.file != self.file:
+    #                 is_new_file = True
+    #         except type(self).DoesNotExist:
+    #             is_new_file = True
+    #
+    #     if is_new_file and self.file and self.file.name.lower().endswith('.pdf'):
+    #         try:
+    #             merger = PdfWriter()
+    #             intro_path = os.path.join(settings.BASE_DIR, 'intro.pdf')
+    #             if os.path.exists(intro_path):
+    #                 merger.append(intro_path)
+    #             merger.append(self.file.file)
+    #             buffer = io.BytesIO()
+    #             merger.write(buffer)
+    #             merger.close()
+    #             self.file.save(self.file.name, ContentFile(buffer.getvalue()), save=False)
+    #         except Exception as e:
+    #             print(f"Помилка об'єднання PDF: {e}")
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         if self.is_free:
