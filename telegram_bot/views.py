@@ -1,26 +1,28 @@
+import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from asgiref.sync import async_to_sync
 from aiogram import Bot, Dispatcher, types
 
-# Додали імпорт нашого роутера
 from .handlers import router
 
 bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
-
-# Підключаємо всі команди з handlers.py до головного диспетчера
 dp.include_router(router)
 
 
 @csrf_exempt
-async def telegram_webhook(request):
+def telegram_webhook(request):  # Зверніть увагу: прибрали слово async!
     if request.method == 'POST':
         try:
-            update = types.Update.model_validate_json(
-                request.body, context={"bot": bot}
-            )
-            await dp.feed_update(bot, update)
+            # Читаємо дані від Telegram
+            json_data = request.body.decode('utf-8')
+            update = types.Update.model_validate_json(json_data, context={"bot": bot})
+
+            # Магія: запускаємо асинхронного бота в синхронному середовищі Django
+            async_to_sync(dp.feed_update)(bot, update)
+
         except Exception as e:
             print(f"Помилка Webhook: {e}")
 
