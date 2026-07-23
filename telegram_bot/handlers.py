@@ -1,12 +1,14 @@
 from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton  # <-- ОСЬ ЦЬОГО ІМПОРТУ НАМ НЕ ВИСТАЧАЛО
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from asgiref.sync import sync_to_async
 from materials.models import StudyMaterial
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
+from django.conf import settings
+from datetime import datetime
 
 User = get_user_model()
 router = Router()
@@ -14,11 +16,14 @@ router = Router()
 BOT_NAME = "do_kvadratu"
 CONTACT = "@do_kvadratu"
 
+# Тимчасова пам'ять для кошиків та замовлень
+user_carts = {}
+pending_orders = {}
 
-# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ (Перекладачі) ──────────
+
+# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ────────────────────────
 @sync_to_async
 def get_materials_page(page_number, per_page=10):
-    # Беремо всі опубліковані конспекти (не пакети)
     materials = StudyMaterial.objects.filter(is_published=True, is_bundle=False).order_by('id')
     paginator = Paginator(materials, per_page)
 
@@ -27,6 +32,14 @@ def get_materials_page(page_number, per_page=10):
 
     page = paginator.page(page_number)
     return list(page.object_list), paginator.num_pages
+
+
+@sync_to_async
+def get_cart_details(item_ids):
+    materials = StudyMaterial.objects.filter(id__in=item_ids)
+    total_price = sum(item.price for item in materials if not item.is_free)
+    titles = [item.title for item in materials]
+    return total_price, titles
 
 
 # ─── КЛАВІАТУРИ ──────────────────────────────────────────────
@@ -50,7 +63,7 @@ def get_nmt_menu_keyboard():
     return builder.as_markup()
 
 
-# ─── ГОЛОВНЕ МЕНЮ ────────────────────────────────────────────
+# ─── ГОЛОВНЕ МЕНЮ ТА ІНФО ────────────────────────────────────
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
     welcome_text = (
@@ -82,14 +95,26 @@ async def show_about(callback: types.CallbackQuery):
         "Привіт! Я — Іван, професійний викладач математики із 7-річним досвідом. "
         "У 2024–2025 роках я працював вчителем математики, а зараз продовжую роботу в державній школі, "
         "тому чудово бачу систему освіти зсередини. Я знаю всі «підводні камені» шкільної програми, "
-        "реальні вимоги до іспитів та найчастіші помилки учнів.\n\n"
-        "📈 <b>Математика на практиці:</b>\n"
-        "Для мене це не лише суха теорія. Я маю реальний досвід застосування математики у великому бізнесі. "
-        "Працюючи менеджером з асортименту в мережі супермаркетів, я щодня використовував математичні моделі, "
-        "проводив ABC/XYZ-аналіз та працював з великими масивами даних (Power BI)."
+        "реальні вимоги до іспитів та найчастіші помилки учнів."
     )
     builder = InlineKeyboardBuilder()
     builder.button(text="← До головного меню", callback_data="back_main")
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu_socials")
+async def show_socials(callback: types.CallbackQuery):
+    text = (
+        "📱 <b>Мої соцмережі</b>\n\n"
+        "Підписуйся, щоб отримувати розбори складних задач та лайфхаки для НМТ!\n\n"
+        f"Зв'язок зі мною: {CONTACT}"
+    )
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Instagram", url="https://instagram.com/do_kvadratu")
+    builder.button(text="Telegram-канал", url="https://t.me/do_kvadratu")
+    builder.button(text="← До головного меню", callback_data="back_main")
+    builder.adjust(1)
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
     await callback.answer()
 
@@ -101,51 +126,209 @@ async def show_nmt_main(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# ─── КАТАЛОГ КОНСПЕКТІВ З БАЗИ ДАНИХ ───────────────────────
+# ─── ЛОГІКА ВІДОБРАЖЕННЯ ТА КОШИКА ──────────────────────────
+async def render_materials_page(callback: types.CallbackQuery, page: int):
+    user_id = callback.from_user.id
+    if user_id not in user_carts:
+        user_carts[user_id] = set()
+
+    materials_list, total_pages = await get_materials_page(page)
+
+    if not materials_list:
+        await callback.answer("Матеріалів поки немає.", show_alert=True)
+        return
+
+    builder = InlineKeyboardBuilder()
+
+    for item in materials_list:
+        price_text = "БЕЗКОШТОВНО" if item.is_free else f"{item.price} грн"
+        mark = "✅ " if item.id in user_carts[user_id] else "📄 "
+        short_title = item.title[:30] + "..." if len(item.title) > 30 else item.title
+
+        builder.button(
+            text=f"{mark}{short_title} — {price_text}",
+            callback_data=f"toggle_mat_{item.id}_{page}"
+        )
+    builder.adjust(1)
+
+    nav_buttons = []
+    if page > 1:
+        nav_buttons.append(InlineKeyboardButton(text="← Попередня", callback_data=f"menu_materials_{page - 1}"))
+    if page < total_pages:
+        nav_buttons.append(InlineKeyboardButton(text="Наступна →", callback_data=f"menu_materials_{page + 1}"))
+    if nav_buttons:
+        builder.row(*nav_buttons)
+
+    if user_carts[user_id]:
+        builder.row(InlineKeyboardButton(text=f"🛒 Отримати обрані ({len(user_carts[user_id])} шт.)",
+                                         callback_data="checkout_cart"))
+
+    builder.row(InlineKeyboardButton(text="← Назад", callback_data="menu_nmt_main"))
+
+    text = f"<b>Конспекти окремих тем</b> (Сторінка {page} з {total_pages})\n\nНатискай на матеріали, щоб додати їх до збірки."
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+
+
 @router.callback_query(F.data.startswith("menu_materials_"))
 async def show_materials_catalog(callback: types.CallbackQuery):
     try:
         parts = callback.data.split("_")
         current_page = int(parts[2]) if len(parts) > 2 else 1
-
-        # Отримуємо конспекти з нашої бази даних Django
-        materials_list, total_pages = await get_materials_page(current_page)
-
-        if not materials_list:
-            await callback.answer("Матеріалів поки немає або вони не опубліковані на вітрині.", show_alert=True)
-            return
-
-        builder = InlineKeyboardBuilder()
-
-        for item in materials_list:
-            price_text = "БЕЗКОШТОВНО" if item.is_free else f"{item.price} грн"
-            short_title = item.title[:35] + "..." if len(item.title) > 35 else item.title
-            builder.button(
-                text=f"📄 {short_title} — {price_text}",
-                callback_data=f"info_mat_{item.id}"
-            )
-        builder.adjust(1)
-
-        # Пагінація
-        nav_buttons = []
-        if current_page > 1:
-            nav_buttons.append(
-                InlineKeyboardButton(text="← Попередня", callback_data=f"menu_materials_{current_page - 1}"))
-        if current_page < total_pages:
-            nav_buttons.append(
-                InlineKeyboardButton(text="Наступна →", callback_data=f"menu_materials_{current_page + 1}"))
-
-        if nav_buttons:
-            builder.row(*nav_buttons)
-
-        builder.row(InlineKeyboardButton(text="← Назад", callback_data="menu_nmt_main"))
-
-        text = f"<b>Конспекти окремих тем</b> (Сторінка {current_page} з {total_pages})\n\nНатискай на матеріали, щоб переглянути деталі."
-
-        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+        await render_materials_page(callback, current_page)
         await callback.answer()
-
     except Exception as e:
-        # Якщо станеться помилка, ми побачимо її в логах Render, і бот не зависне
-        print(f"Помилка в show_materials_catalog: {e}")
-        await callback.answer("Сталася помилка при завантаженні матеріалів.", show_alert=True)
+        print(f"Помилка завантаження каталогу: {e}")
+        await callback.answer("Помилка завантаження.", show_alert=True)
+
+
+@router.callback_query(F.data.startswith("toggle_mat_"))
+async def toggle_material(callback: types.CallbackQuery):
+    parts = callback.data.split("_")
+    item_id = int(parts[2])
+    page = int(parts[3])
+    user_id = callback.from_user.id
+
+    if user_id not in user_carts:
+        user_carts[user_id] = set()
+
+    if item_id in user_carts[user_id]:
+        user_carts[user_id].remove(item_id)
+    else:
+        user_carts[user_id].add(item_id)
+
+    await render_materials_page(callback, page)
+    await callback.answer()
+
+
+# ─── ОФОРМЛЕННЯ ЗАМОВЛЕННЯ ──────────────────────────────────
+@router.callback_query(F.data == "checkout_cart")
+async def process_checkout(callback: types.CallbackQuery):
+    user = callback.from_user
+    if user.id not in user_carts or not user_carts[user.id]:
+        await callback.answer("Ваш кошик порожній!", show_alert=True)
+        return
+
+    item_ids = list(user_carts[user.id])
+    total_price, titles = await get_cart_details(item_ids)
+
+    title_text = f"Збірка конспектів ({len(item_ids)} шт.)"
+    builder = InlineKeyboardBuilder()
+
+    pending_orders[user.id] = {
+        "username": user.full_name,
+        "items": item_ids,
+        "title": title_text,
+        "price": total_price,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    try:
+        admin_id = int(settings.TELEGRAM_ADMIN_ID)
+        await callback.bot.send_message(
+            admin_id,
+            f"<b>Нове замовлення (Кошик)</b>\n\n"
+            f"Учень: {user.full_name}\n"
+            f"ID: <code>{user.id}</code>\n"
+            f"Сума: {total_price} грн\n\n"
+            f"Очікуємо підтвердження оплати...",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        print(f"Помилка відправки адміну: {e}")
+
+    # ВСТАВТЕ СВІЙ НОМЕР КАРТКИ ТУТ 👇
+    card_number = "1234 5678 1234 5678"
+
+    builder.button(text="Я оплатив(ла)", callback_data="paid_confirm")
+    builder.button(text="← Назад", callback_data="menu_materials_1")
+    builder.adjust(1)
+
+    await callback.message.edit_text(
+        f"<b>Оплата замовлення</b>\n\n"
+        f"Товар: {title_text}\n"
+        f"Сума до сплати: <b>{total_price} грн</b>\n\n"
+        f"1. Перекажи кошти на картку (натисни, щоб скопіювати):\n<code>{5408810041945642}</code>\n\n"
+        f"2. Після оплати обов'язково натисни кнопку нижче.",
+        parse_mode="HTML",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+
+# ─── ПІДТВЕРДЖЕННЯ ОПЛАТИ ──────────────────────────────────
+@router.callback_query(F.data == "paid_confirm")
+async def paid_confirm(callback: types.CallbackQuery):
+    user = callback.from_user
+    order = pending_orders.get(user.id)
+
+    if not order:
+        await callback.answer("Замовлення не знайдено.", show_alert=True)
+        return
+
+    try:
+        admin_id = int(settings.TELEGRAM_ADMIN_ID)
+        await callback.bot.send_message(
+            admin_id,
+            f"💸 <b>{user.full_name}</b> підтвердив(ла) оплату!\n\n"
+            f"ID: <code>{user.id}</code>\n"
+            f"Очікувана сума: <b>{order['price']} грн</b>\n\n"
+            f"Щоб підтвердити замовлення, надішли команду:\n<code>/approve {user.id}</code>",
+            parse_mode="HTML"
+        )
+    except Exception:
+        pass
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="← До меню НМТ", callback_data="menu_nmt_main")
+
+    await callback.message.edit_text(
+        "Дякую! Твоє повідомлення отримано.\n"
+        "Я перевірю надходження коштів і надішлю матеріали.\n\n"
+        f"Якщо є питання, пиши сюди: {CONTACT}",
+        parse_mode="HTML", reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+
+# ─── АДМІНСЬКА КОМАНДА ПІДТВЕРДЖЕННЯ ────────────────────────
+@router.message(Command("approve"))
+async def approve_order(message: types.Message):
+    try:
+        admin_id = int(settings.TELEGRAM_ADMIN_ID)
+    except Exception:
+        return
+
+    if message.from_user.id != admin_id:
+        return
+
+    parts = message.text.split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.reply("Використання: <code>/approve ID_користувача</code>", parse_mode="HTML")
+        return
+
+    user_id = int(parts[1])
+    order = pending_orders.get(user_id)
+
+    if not order:
+        await message.reply(f"Активних замовлень для ID {user_id} не знайдено.")
+        return
+
+    try:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="← До меню НМТ", callback_data="menu_nmt_main")]]
+        )
+
+        await message.bot.send_message(
+            user_id,
+            "<b>Оплата підтверджена!</b> 🎉\n\nДякую за покупку! Матеріали готові.",
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+
+        if user_id in user_carts:
+            user_carts[user_id].clear()
+        del pending_orders[user_id]
+
+        await message.reply(f"Замовлення успішно завершено! Користувачу {user_id} надіслано підтвердження.")
+    except Exception as e:
+        await message.reply(f"Помилка при відправці: {e}")
