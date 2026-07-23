@@ -78,6 +78,7 @@ urlpatterns = [
     # Юридичні документи (ОНОВЛЕНО)
     path('offer/', OfferView.as_view(), name='offer'),
     path('privacy/', PrivacyView.as_view(), name='privacy'),
+    path('bot/', include('telegram_bot.urls')),
 ]
 
 if settings.DEBUG:

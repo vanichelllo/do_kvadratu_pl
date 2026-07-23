@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'rest_framework',
     'materials',
+    'telegram_bot',
     'users',
     'cloudinary',
     'cloudinary_storage',
