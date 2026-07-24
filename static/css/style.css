@@ -42,3 +42,32 @@ body {
     text-decoration: none;
     cursor: pointer;
 }
+
+/* =========================================================
+   ГЛОБАЛЬНІ ПРАВИЛА ДЛЯ МОБІЛЬНОЇ АДАПТАЦІЇ (ВИПРАВЛЕННЯ ШРИФТІВ)
+   ========================================================= */
+
+/* Захист від горизонтального скролу */
+html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* Примусовий перенос занадто довгих слів (щоб не ламали дизайн) */
+* {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+/* Зменшення великих заголовків для екранів телефонів */
+@media (max-width: 768px) {
+    h1, .display-1, .display-2, .display-3, .display-4 {
+        font-size: 2.2rem !important;
+    }
+    h2 {
+        font-size: 1.8rem !important;
+    }
+    h3 {
+        font-size: 1.5rem !important;
+    }
+}
