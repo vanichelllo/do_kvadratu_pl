@@ -30,8 +30,8 @@ pending_orders = {}
 
 # ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ТА PDF ─────────────────
 @sync_to_async
-def get_materials_page(page_number, per_page=10):
-    materials = StudyMaterial.objects.filter(is_published=True, is_bundle=False).order_by('id')
+def get_materials_page(page_number, per_page=10, is_bundle=False):
+    materials = StudyMaterial.objects.filter(is_published=True, is_bundle=is_bundle).order_by('id')
     paginator = Paginator(materials, per_page)
 
     if page_number > paginator.num_pages or page_number < 1:
@@ -60,42 +60,39 @@ def get_free_materials_urls():
     return [mat.file.url for mat in materials if mat.file]
 
 
-async def add_watermark(pdf_url: str, user_id: int) -> bytes:
-    # 1. Завантажуємо PDF із Cloudinary у пам'ять
-    async with aiohttp.ClientSession() as session:
-        async with session.get(pdf_url) as resp:
-            pdf_bytes = await resp.read()
-
-    # 2. Створюємо PDF з водяним знаком (на прозорому фоні)
+async def merge_and_watermark(pdf_urls: list, user_id: int) -> bytes:
+    # 1. Створюємо водяний знак (один раз для всіх сторінок)
     watermark_buffer = io.BytesIO()
     c = canvas.Canvas(watermark_buffer, pagesize=A4)
     c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.2))
     c.setFont("Helvetica-Bold", 36)
-
     c.translate(300, 400)
     c.rotate(45)
-
-    watermark_text = f"DO KVADRATU | USER ID: {user_id}"
-    c.drawCentredString(0, 0, watermark_text)
+    c.drawCentredString(0, 0, f"DO KVADRATU | USER ID: {user_id}")
     c.save()
 
     watermark_buffer.seek(0)
-    watermark_pdf = PdfReader(watermark_buffer)
-    watermark_page = watermark_pdf.pages[0]
+    watermark_page = PdfReader(watermark_buffer).pages[0]
 
-    # 3. Накладаємо знак на ВСІ сторінки
-    original_pdf = PdfReader(io.BytesIO(pdf_bytes))
+    # 2. Завантажуємо, маркуємо та зшиваємо ВСІ обрані файли
     writer = PdfWriter()
+    async with aiohttp.ClientSession() as session:
+        for url in pdf_urls:
+            if url.startswith("http://"):
+                url = url.replace("http://", "https://")
 
-    for page in original_pdf.pages:
-        page.merge_page(watermark_page)
-        writer.add_page(page)
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    pdf_bytes = await resp.read()
+                    reader = PdfReader(io.BytesIO(pdf_bytes))
+                    for page in reader.pages:
+                        page.merge_page(watermark_page)
+                        writer.add_page(page)
 
-    # 4. Зберігаємо результат
+    # 3. Зберігаємо фінальний склеєний результат
     output_buffer = io.BytesIO()
     writer.write(output_buffer)
     output_buffer.seek(0)
-
     return output_buffer.read()
 
 
@@ -114,7 +111,8 @@ def get_main_menu_keyboard():
 def get_nmt_menu_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="🎯 Перевір свій рівень (Тест)", callback_data="start_quiz")
-    builder.button(text="📚 Конспекти окремих тем", callback_data="menu_materials_1")
+    builder.button(text="📚 Окремі теми", callback_data="menu_materials_1")
+    builder.button(text="📦 Готові пакети", callback_data="menu_bundles_1")
     builder.button(text="🎁 Вся база для НМТ (1 файлом)", callback_data="download_all_free")
     builder.button(text="← До головного меню", callback_data="back_main")
     builder.adjust(1)
@@ -151,9 +149,7 @@ async def show_about(callback: types.CallbackQuery):
     text = (
         "👨‍🏫 <b>Про мене</b>\n\n"
         "Привіт! Я — Іван, професійний викладач математики із 7-річним досвідом. "
-        "У 2024–2025 роках я працював вчителем математики, а зараз продовжую роботу в державній школі, "
-        "тому чудово бачу систему освіти зсередини. Я знаю всі «підводні камені» шкільної програми, "
-        "реальні вимоги до іспитів та найчастіші помилки учнів."
+        "У 2024–2025 роках я працював вчителем математики, а зараз продовжую роботу в державній школі..."
     )
     builder = InlineKeyboardBuilder()
     builder.button(text="← До головного меню", callback_data="back_main")
@@ -185,35 +181,37 @@ async def show_nmt_main(callback: types.CallbackQuery):
 
 
 # ─── ЛОГІКА ВІДОБРАЖЕННЯ ТА КОШИКА ──────────────────────────
-async def render_materials_page(callback: types.CallbackQuery, page: int):
+async def render_materials_page(callback: types.CallbackQuery, page: int, is_bundle: bool):
     user_id = callback.from_user.id
     if user_id not in user_carts:
         user_carts[user_id] = set()
 
-    materials_list, total_pages = await get_materials_page(page)
+    materials_list, total_pages = await get_materials_page(page, is_bundle=is_bundle)
 
     if not materials_list:
         await callback.answer("Матеріалів поки немає.", show_alert=True)
         return
 
     builder = InlineKeyboardBuilder()
+    cb_prefix = "bundle" if is_bundle else "single"
 
     for item in materials_list:
         price_text = "БЕЗКОШТОВНО" if item.is_free else f"{item.price} грн"
-        mark = "✅ " if item.id in user_carts[user_id] else "📄 "
+        mark = "✅ " if item.id in user_carts[user_id] else ("📦 " if is_bundle else "📄 ")
         short_title = item.title[:30] + "..." if len(item.title) > 30 else item.title
 
         builder.button(
             text=f"{mark}{short_title} — {price_text}",
-            callback_data=f"toggle_mat_{item.id}_{page}"
+            callback_data=f"toggle_mat_{item.id}_{page}_{cb_prefix}"
         )
     builder.adjust(1)
 
     nav_buttons = []
+    nav_cb = "menu_bundles_" if is_bundle else "menu_materials_"
     if page > 1:
-        nav_buttons.append(InlineKeyboardButton(text="← Попередня", callback_data=f"menu_materials_{page - 1}"))
+        nav_buttons.append(InlineKeyboardButton(text="← Попередня", callback_data=f"{nav_cb}{page - 1}"))
     if page < total_pages:
-        nav_buttons.append(InlineKeyboardButton(text="Наступна →", callback_data=f"menu_materials_{page + 1}"))
+        nav_buttons.append(InlineKeyboardButton(text="Наступна →", callback_data=f"{nav_cb}{page + 1}"))
     if nav_buttons:
         builder.row(*nav_buttons)
 
@@ -223,7 +221,8 @@ async def render_materials_page(callback: types.CallbackQuery, page: int):
 
     builder.row(InlineKeyboardButton(text="← Назад", callback_data="menu_nmt_main"))
 
-    text = f"<b>Конспекти окремих тем</b> (Сторінка {page} з {total_pages})\n\nНатискай на матеріали, щоб додати їх до збірки."
+    title_str = "Готові пакети" if is_bundle else "Конспекти окремих тем"
+    text = f"<b>{title_str}</b> (Сторінка {page} з {total_pages})\n\nНатискай на матеріали, щоб додати їх до збірки."
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
 
 
@@ -232,10 +231,20 @@ async def show_materials_catalog(callback: types.CallbackQuery):
     try:
         parts = callback.data.split("_")
         current_page = int(parts[2]) if len(parts) > 2 else 1
-        await render_materials_page(callback, current_page)
+        await render_materials_page(callback, current_page, is_bundle=False)
         await callback.answer()
     except Exception as e:
-        print(f"Помилка завантаження каталогу: {e}")
+        await callback.answer("Помилка завантаження.", show_alert=True)
+
+
+@router.callback_query(F.data.startswith("menu_bundles_"))
+async def show_bundles_catalog(callback: types.CallbackQuery):
+    try:
+        parts = callback.data.split("_")
+        current_page = int(parts[2]) if len(parts) > 2 else 1
+        await render_materials_page(callback, current_page, is_bundle=True)
+        await callback.answer()
+    except Exception as e:
         await callback.answer("Помилка завантаження.", show_alert=True)
 
 
@@ -244,6 +253,7 @@ async def toggle_material(callback: types.CallbackQuery):
     parts = callback.data.split("_")
     item_id = int(parts[2])
     page = int(parts[3])
+    is_bundle = (parts[4] == "bundle")
     user_id = callback.from_user.id
 
     if user_id not in user_carts:
@@ -254,7 +264,7 @@ async def toggle_material(callback: types.CallbackQuery):
     else:
         user_carts[user_id].add(item_id)
 
-    await render_materials_page(callback, page)
+    await render_materials_page(callback, page, is_bundle)
     await callback.answer()
 
 
@@ -274,12 +284,10 @@ async def send_all_free_materials(callback: types.CallbackQuery):
             return
 
         writer = PdfWriter()
-
         async with aiohttp.ClientSession() as session:
             for url in urls:
                 if url.startswith("http://"):
                     url = url.replace("http://", "https://")
-
                 async with session.get(url) as resp:
                     if resp.status == 200:
                         pdf_bytes = await resp.read()
@@ -295,7 +303,6 @@ async def send_all_free_materials(callback: types.CallbackQuery):
             document=BufferedInputFile(output_buffer.read(), filename="Вся_база_для_НМТ.pdf"),
             caption="🎁 Тримай велику збірку «Вся база для НМТ»! Успішної підготовки."
         )
-
         await wait_msg.delete()
 
     except Exception as e:
@@ -416,39 +423,49 @@ async def approve_order(message: types.Message):
         await message.reply(f"Активних замовлень для ID {user_id} не знайдено.")
         return
 
-    await message.reply("⏳ <i>Генерую водяні знаки та завантажую матеріали... Це може зайняти кілька секунд.</i>",
-                        parse_mode="HTML")
+    await message.reply(
+        "⏳ <i>Генерую водяні знаки, зшиваю файли та завантажую матеріали... Це може зайняти до хвилини.</i>",
+        parse_mode="HTML")
 
     try:
+        # Беремо матеріали з бази
+        materials = await get_materials_by_ids(order["items"])
+        urls = [mat.file.url for mat in materials if mat.file]
+
+        if not urls:
+            await message.reply("Помилка: у цих матеріалах відсутні файли!")
+            return
+
+        # Сповіщаємо учня про успіх
         await message.bot.send_message(
             user_id,
-            "<b>Оплата успішна!</b> 🎉\n\nТримай свої матеріали. Бажаю ефективної підготовки!",
+            "<b>Оплата успішна!</b> 🎉\n\nТвоє замовлення готове. Бажаю ефективної підготовки!",
             parse_mode="HTML"
         )
 
-        materials = await get_materials_by_ids(order["items"])
+        # МАКІЯ: Всі файли з кошика зшиваються в один PDF і отримують водяний знак
+        watermarked_pdf = await merge_and_watermark(urls, user_id)
 
-        for mat in materials:
-            if mat.file:
-                file_url = mat.file.url
-                if file_url.startswith("http://"):
-                    file_url = file_url.replace("http://", "https://")
+        # Визначаємо гарну назву файлу (якщо товар був один - беремо його назву, якщо декілька - називаємо збіркою)
+        if len(materials) == 1:
+            filename = f"{materials[0].title}.pdf"
+        else:
+            filename = "Персональна_збірка_конспектів.pdf"
 
-                # Додаємо водяний знак на льоту
-                watermarked_pdf = await add_watermark(file_url, user_id)
+        # Відправляємо фінальний єдиний файл
+        await message.bot.send_document(
+            user_id,
+            document=BufferedInputFile(watermarked_pdf, filename=filename),
+            caption="📄 Твої матеріали\n\n🔒 <i>Файл персоналізовано та захищено авторським правом. Пересилання заборонено.</i>",
+            protect_content=True  # Додав захист від пересилання в Telegram
+        )
 
-                # Відправляємо персоналізований PDF
-                await message.bot.send_document(
-                    user_id,
-                    document=BufferedInputFile(watermarked_pdf, filename=f"{mat.title}.pdf"),
-                    caption=f"📄 {mat.title}\n\n🔒 <i>Файл персоналізовано та захищено авторським правом.</i>"
-                )
-
+        # Очищуємо пам'ять
         if user_id in user_carts:
             user_carts[user_id].clear()
         del pending_orders[user_id]
 
-        await message.reply(f"✅ Замовлення завершено! Персоналізовані файли надіслано учню {user_id}.")
+        await message.reply(f"✅ Замовлення завершено! Персоналізований файл надіслано учню {user_id}.")
     except Exception as e:
         await message.reply(f"Помилка при відправці файлів: {e}")
         print(f"Помилка відправки: {e}")
