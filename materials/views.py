@@ -149,6 +149,14 @@ def add_to_cart(request, material_id):
         messages.warning(request, "Ви вже придбали цей матеріал!")
         return redirect('cabinet')
 
+    # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
+    # Якщо матеріал безкоштовний (або ціна 0), одразу додаємо в кабінет і минаємо кошик
+    if material.is_free or material.price == 0:
+        request.user.purchased_materials.add(material)
+        messages.success(request, f"🎉 Безкоштовний матеріал «{material.title}» додано до вашого кабінету!")
+        return redirect('cabinet')
+    # =========================================
+
     cart, created = Cart.objects.get_or_create(user=request.user)
 
     if CartItem.objects.filter(cart=cart, material=material).exists():
@@ -306,6 +314,13 @@ def buy_material_view(request, material_id):
     if material in my_user.purchased_materials.all():
         messages.info(request, f"Ви вже маєте конспект «{material.title}».")
         return redirect('cabinet')
+
+    # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
+    if material.is_free or material.price == 0:
+        my_user.purchased_materials.add(material)
+        messages.success(request, f"Успіх! Конспект «{material.title}» успішно отримано.")
+        return redirect('cabinet')
+    # =========================================
 
     success = my_user.buy_material(material)
 
