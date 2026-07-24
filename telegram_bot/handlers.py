@@ -1,7 +1,14 @@
+import io
+import aiohttp
+from pypdf import PdfReader, PdfWriter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.colors import Color
+
 from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, BufferedInputFile
 
 from asgiref.sync import sync_to_async
 from materials.models import StudyMaterial
@@ -16,12 +23,12 @@ router = Router()
 BOT_NAME = "do_kvadratu"
 CONTACT = "@do_kvadratu"
 
-# Тимчасова пам'ять для кошиків та замовлень
+# Тимчасова пам'ять
 user_carts = {}
 pending_orders = {}
 
 
-# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ────────────────────────
+# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ТА PDF ─────────────────
 @sync_to_async
 def get_materials_page(page_number, per_page=10):
     materials = StudyMaterial.objects.filter(is_published=True, is_bundle=False).order_by('id')
@@ -40,6 +47,50 @@ def get_cart_details(item_ids):
     total_price = sum(item.price for item in materials if not item.is_free)
     titles = [item.title for item in materials]
     return total_price, titles
+
+
+@sync_to_async
+def get_materials_by_ids(item_ids):
+    return list(StudyMaterial.objects.filter(id__in=item_ids))
+
+
+async def add_watermark(pdf_url: str, user_id: int) -> bytes:
+    # 1. Завантажуємо PDF із Cloudinary у пам'ять
+    async with aiohttp.ClientSession() as session:
+        async with session.get(pdf_url) as resp:
+            pdf_bytes = await resp.read()
+
+    # 2. Створюємо PDF з водяним знаком (на прозорому фоні)
+    watermark_buffer = io.BytesIO()
+    c = canvas.Canvas(watermark_buffer, pagesize=A4)
+    c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.2))  # Напівпрозорий сірий
+    c.setFont("Helvetica-Bold", 36)
+
+    c.translate(300, 400)  # Центр сторінки
+    c.rotate(45)  # Повертаємо по діагоналі
+
+    watermark_text = f"DO KVADRATU | USER ID: {user_id}"
+    c.drawCentredString(0, 0, watermark_text)
+    c.save()
+
+    watermark_buffer.seek(0)
+    watermark_pdf = PdfReader(watermark_buffer)
+    watermark_page = watermark_pdf.pages[0]
+
+    # 3. Накладаємо знак на ВСІ сторінки оригінального конспекту
+    original_pdf = PdfReader(io.BytesIO(pdf_bytes))
+    writer = PdfWriter()
+
+    for page in original_pdf.pages:
+        page.merge_page(watermark_page)
+        writer.add_page(page)
+
+    # 4. Зберігаємо фінальний результат у пам'ять
+    output_buffer = io.BytesIO()
+    writer.write(output_buffer)
+    output_buffer.seek(0)
+
+    return output_buffer.read()
 
 
 # ─── КЛАВІАТУРИ ──────────────────────────────────────────────
@@ -247,7 +298,7 @@ async def process_checkout(callback: types.CallbackQuery):
         f"<b>Оплата замовлення</b>\n\n"
         f"Товар: {title_text}\n"
         f"Сума до сплати: <b>{total_price} грн</b>\n\n"
-        f"1. Перекажи кошти на картку (натисни, щоб скопіювати):\n<code>{5408810041945642}</code>\n\n"
+        f"1. Перекажи кошти на картку (натисни, щоб скопіювати):\n<code>{card_number}</code>\n\n"
         f"2. Після оплати обов'язково натисни кнопку нижче.",
         parse_mode="HTML",
         reply_markup=builder.as_markup()
@@ -272,7 +323,7 @@ async def paid_confirm(callback: types.CallbackQuery):
             f"💸 <b>{user.full_name}</b> підтвердив(ла) оплату!\n\n"
             f"ID: <code>{user.id}</code>\n"
             f"Очікувана сума: <b>{order['price']} грн</b>\n\n"
-            f"Щоб підтвердити замовлення, надішли команду:\n<code>/approve {user.id}</code>",
+            f"Щоб підтвердити замовлення і видати матеріали, надішли команду:\n<code>/approve {user.id}</code>",
             parse_mode="HTML"
         )
     except Exception:
@@ -283,14 +334,14 @@ async def paid_confirm(callback: types.CallbackQuery):
 
     await callback.message.edit_text(
         "Дякую! Твоє повідомлення отримано.\n"
-        "Я перевірю надходження коштів і надішлю матеріали.\n\n"
-        f"Якщо є питання, пиши сюди: {CONTACT}",
+        "Я перевірю надходження коштів і надішлю матеріали сюди.\n\n"
+        f"Якщо є питання, пиши: {CONTACT}",
         parse_mode="HTML", reply_markup=builder.as_markup()
     )
     await callback.answer()
 
 
-# ─── АДМІНСЬКА КОМАНДА ПІДТВЕРДЖЕННЯ ────────────────────────
+# ─── АДМІНСЬКА КОМАНДА ВІДПРАВКИ ────────────────────────────
 @router.message(Command("approve"))
 async def approve_order(message: types.Message):
     try:
@@ -313,22 +364,39 @@ async def approve_order(message: types.Message):
         await message.reply(f"Активних замовлень для ID {user_id} не знайдено.")
         return
 
-    try:
-        markup = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text="← До меню НМТ", callback_data="menu_nmt_main")]]
-        )
+    await message.reply("⏳ <i>Генерую водяні знаки та завантажую матеріали... Це може зайняти кілька секунд.</i>",
+                        parse_mode="HTML")
 
+    try:
         await message.bot.send_message(
             user_id,
-            "<b>Оплата підтверджена!</b> 🎉\n\nДякую за покупку! Матеріали готові.",
-            parse_mode="HTML",
-            reply_markup=markup
+            "<b>Оплата успішна!</b> 🎉\n\nТримай свої матеріали. Бажаю ефективної підготовки!",
+            parse_mode="HTML"
         )
+
+        materials = await get_materials_by_ids(order["items"])
+
+        for mat in materials:
+            if mat.file:
+                file_url = mat.file.url
+                if file_url.startswith("http://"):
+                    file_url = file_url.replace("http://", "https://")
+
+                # Додаємо водяний знак на льоту
+                watermarked_pdf = await add_watermark(file_url, user_id)
+
+                # Відправляємо персоналізований PDF
+                await message.bot.send_document(
+                    user_id,
+                    document=BufferedInputFile(watermarked_pdf, filename=f"{mat.title}.pdf"),
+                    caption=f"📄 {mat.title}\n\n🔒 <i>Файл персоналізовано та захищено авторським правом.</i>"
+                )
 
         if user_id in user_carts:
             user_carts[user_id].clear()
         del pending_orders[user_id]
 
-        await message.reply(f"Замовлення успішно завершено! Користувачу {user_id} надіслано підтвердження.")
+        await message.reply(f"✅ Замовлення завершено! Персоналізовані файли надіслано учню {user_id}.")
     except Exception as e:
-        await message.reply(f"Помилка при відправці: {e}")
+        await message.reply(f"Помилка при відправці файлів: {e}")
+        print(f"Помилка відправки: {e}")
