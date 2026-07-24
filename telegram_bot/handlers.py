@@ -54,6 +54,12 @@ def get_materials_by_ids(item_ids):
     return list(StudyMaterial.objects.filter(id__in=item_ids))
 
 
+@sync_to_async
+def get_free_materials_urls():
+    materials = StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id')
+    return [mat.file.url for mat in materials if mat.file]
+
+
 async def add_watermark(pdf_url: str, user_id: int) -> bytes:
     # 1. Завантажуємо PDF із Cloudinary у пам'ять
     async with aiohttp.ClientSession() as session:
@@ -63,11 +69,11 @@ async def add_watermark(pdf_url: str, user_id: int) -> bytes:
     # 2. Створюємо PDF з водяним знаком (на прозорому фоні)
     watermark_buffer = io.BytesIO()
     c = canvas.Canvas(watermark_buffer, pagesize=A4)
-    c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.2))  # Напівпрозорий сірий
+    c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.2))
     c.setFont("Helvetica-Bold", 36)
 
-    c.translate(300, 400)  # Центр сторінки
-    c.rotate(45)  # Повертаємо по діагоналі
+    c.translate(300, 400)
+    c.rotate(45)
 
     watermark_text = f"DO KVADRATU | USER ID: {user_id}"
     c.drawCentredString(0, 0, watermark_text)
@@ -77,7 +83,7 @@ async def add_watermark(pdf_url: str, user_id: int) -> bytes:
     watermark_pdf = PdfReader(watermark_buffer)
     watermark_page = watermark_pdf.pages[0]
 
-    # 3. Накладаємо знак на ВСІ сторінки оригінального конспекту
+    # 3. Накладаємо знак на ВСІ сторінки
     original_pdf = PdfReader(io.BytesIO(pdf_bytes))
     writer = PdfWriter()
 
@@ -85,18 +91,12 @@ async def add_watermark(pdf_url: str, user_id: int) -> bytes:
         page.merge_page(watermark_page)
         writer.add_page(page)
 
-    # 4. Зберігаємо фінальний результат у пам'ять
+    # 4. Зберігаємо результат
     output_buffer = io.BytesIO()
     writer.write(output_buffer)
     output_buffer.seek(0)
 
     return output_buffer.read()
-@sync_to_async
-def get_free_materials_urls():
-    # Шукаємо всі опубліковані безкоштовні матеріали
-    materials = StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id')
-    # Збираємо їхні посилання з Cloudinary
-    return [mat.file.url for mat in materials if mat.file]
 
 
 # ─── КЛАВІАТУРИ ──────────────────────────────────────────────
@@ -258,6 +258,51 @@ async def toggle_material(callback: types.CallbackQuery):
     await callback.answer()
 
 
+@router.callback_query(F.data == "download_all_free")
+async def send_all_free_materials(callback: types.CallbackQuery):
+    await callback.answer()
+
+    wait_msg = await callback.message.answer(
+        "⏳ <i>Завантажую та зшиваю збірку «Вся база для НМТ». Це може зайняти близько хвилини...</i>",
+        parse_mode="HTML"
+    )
+
+    try:
+        urls = await get_free_materials_urls()
+        if not urls:
+            await wait_msg.edit_text("На жаль, матеріалів для бази поки немає.")
+            return
+
+        writer = PdfWriter()
+
+        async with aiohttp.ClientSession() as session:
+            for url in urls:
+                if url.startswith("http://"):
+                    url = url.replace("http://", "https://")
+
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        pdf_bytes = await resp.read()
+                        reader = PdfReader(io.BytesIO(pdf_bytes))
+                        for page in reader.pages:
+                            writer.add_page(page)
+
+        output_buffer = io.BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+
+        await callback.message.answer_document(
+            document=BufferedInputFile(output_buffer.read(), filename="Вся_база_для_НМТ.pdf"),
+            caption="🎁 Тримай велику збірку «Вся база для НМТ»! Успішної підготовки."
+        )
+
+        await wait_msg.delete()
+
+    except Exception as e:
+        print(f"Помилка зшивання: {e}")
+        await wait_msg.edit_text("❌ Сталася помилка при формуванні файлу.")
+
+
 # ─── ОФОРМЛЕННЯ ЗАМОВЛЕННЯ ──────────────────────────────────
 @router.callback_query(F.data == "checkout_cart")
 async def process_checkout(callback: types.CallbackQuery):
@@ -348,58 +393,6 @@ async def paid_confirm(callback: types.CallbackQuery):
     await callback.answer()
 
 
-import io
-
-
-@router.callback_query(F.data == "download_all_free")
-async def send_all_free_materials(callback: types.CallbackQuery):
-    await callback.answer()
-
-    # Показуємо повідомлення, щоб учень не думав, що бот завис
-    wait_msg = await callback.message.answer(
-        "⏳ <i>Завантажую та зшиваю всі безкоштовні теми в один PDF-файл. Це може зайняти близько хвилини...</i>",
-        parse_mode="HTML"
-    )
-
-    try:
-        urls = await get_free_materials_urls()
-        if not urls:
-            await wait_msg.edit_text("На жаль, безкоштовних матеріалів поки немає.")
-            return
-
-        # Створюємо порожній PDF-документ
-        writer = PdfWriter()
-
-        # Проходимося по кожному файлу, завантажуємо і додаємо його сторінки
-        async with aiohttp.ClientSession() as session:
-            for url in urls:
-                if url.startswith("http://"):
-                    url = url.replace("http://", "https://")
-
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        pdf_bytes = await resp.read()
-                        reader = PdfReader(io.BytesIO(pdf_bytes))
-                        for page in reader.pages:
-                            writer.add_page(page)
-
-        # Зберігаємо об'єднаний файл у пам'ять
-        output_buffer = io.BytesIO()
-        writer.write(output_buffer)
-        output_buffer.seek(0)
-
-        # Відправляємо єдиний файл
-        await callback.message.answer_document(
-            document=BufferedInputFile(output_buffer.read(), filename="Всі_безкоштовні_теми_НМТ.pdf"),
-            caption="🎁 Тримай велику збірку з усіма безкоштовними темами! Успішної підготовки."
-        )
-
-        # Видаляємо повідомлення "Зачекайте..."
-        await wait_msg.delete()
-
-    except Exception as e:
-        print(f"Помилка зшивання: {e}")
-        await wait_msg.edit_text("❌ Сталася помилка при формуванні файлу.")
 # ─── АДМІНСЬКА КОМАНДА ВІДПРАВКИ ────────────────────────────
 @router.message(Command("approve"))
 async def approve_order(message: types.Message):
