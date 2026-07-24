@@ -77,7 +77,7 @@ async def merge_and_watermark(pdf_urls: list, user_id: int) -> bytes:
     # 2. Завантажуємо, маркуємо та зшиваємо ВСІ обрані файли
     writer = PdfWriter()
     async with aiohttp.ClientSession() as session:
-        for url in pdf_urls:
+        for file_index, url in enumerate(pdf_urls):
             if url.startswith("http://"):
                 url = url.replace("http://", "https://")
 
@@ -85,7 +85,12 @@ async def merge_and_watermark(pdf_urls: list, user_id: int) -> bytes:
                 if resp.status == 200:
                     pdf_bytes = await resp.read()
                     reader = PdfReader(io.BytesIO(pdf_bytes))
-                    for page in reader.pages:
+
+                    for page_index, page in enumerate(reader.pages):
+                        # МАГІЯ: Пропускаємо обкладинку (сторінку 0) для всіх файлів, крім першого
+                        if file_index > 0 and page_index == 0:
+                            continue
+
                         page.merge_page(watermark_page)
                         writer.add_page(page)
 
@@ -285,14 +290,20 @@ async def send_all_free_materials(callback: types.CallbackQuery):
 
         writer = PdfWriter()
         async with aiohttp.ClientSession() as session:
-            for url in urls:
+            for file_index, url in enumerate(urls):
                 if url.startswith("http://"):
                     url = url.replace("http://", "https://")
+
                 async with session.get(url) as resp:
                     if resp.status == 200:
                         pdf_bytes = await resp.read()
                         reader = PdfReader(io.BytesIO(pdf_bytes))
-                        for page in reader.pages:
+
+                        for page_index, page in enumerate(reader.pages):
+                            # МАГІЯ: Пропускаємо обкладинку для наступних файлів
+                            if file_index > 0 and page_index == 0:
+                                continue
+
                             writer.add_page(page)
 
         output_buffer = io.BytesIO()
@@ -443,10 +454,10 @@ async def approve_order(message: types.Message):
             parse_mode="HTML"
         )
 
-        # МАКІЯ: Всі файли з кошика зшиваються в один PDF і отримують водяний знак
+        # МАКІЯ: Всі файли з кошика зшиваються в один PDF, без повторення обкладинок, і отримують водяний знак
         watermarked_pdf = await merge_and_watermark(urls, user_id)
 
-        # Визначаємо гарну назву файлу (якщо товар був один - беремо його назву, якщо декілька - називаємо збіркою)
+        # Визначаємо гарну назву файлу
         if len(materials) == 1:
             filename = f"{materials[0].title}.pdf"
         else:
@@ -457,7 +468,7 @@ async def approve_order(message: types.Message):
             user_id,
             document=BufferedInputFile(watermarked_pdf, filename=filename),
             caption="📄 Твої матеріали\n\n🔒 <i>Файл персоналізовано та захищено авторським правом. Пересилання заборонено.</i>",
-            protect_content=True  # Додав захист від пересилання в Telegram
+            protect_content=True
         )
 
         # Очищуємо пам'ять
