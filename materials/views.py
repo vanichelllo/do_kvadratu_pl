@@ -105,18 +105,35 @@ def diagnostic_test_view(request):
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
+        # === СОРТУВАННЯ ЗА НОМЕРОМ ===
+        # Функція, яка "витягує" перше число з назви (напр. "25" із "25. Числові послідовності")
+        def extract_number(text):
+            match = re.match(r'^(\d+)', text)
+            if match:
+                return int(match.group(1))
+            return 99999  # Якщо числа немає, кидаємо в самий кінець
+
+        # 1. Сортуємо слабкі місця
+        weak_topics.sort(key=lambda t: extract_number(t.name))
+
+        # 2. Сортуємо рекомендації
+        recommendations_list = list(recommended_materials)
+        recommendations_list.sort(key=lambda m: extract_number(m.title))
+
+        # 3. Сортуємо загальну статистику
+        sorted_stats = sorted(topics_stats.values(), key=lambda s: extract_number(s['topic'].name))
+
         context = {
             'total_score': total_score,
             'max_score': max_score,
             'percent_total': percent_total,
             'weak_topics': weak_topics,
-            'topics_stats': topics_stats.values(),
-            'recommendations': list(recommended_materials),
+            'topics_stats': sorted_stats,
+            'recommendations': recommendations_list,
         }
         return render(request, 'materials/diagnostic_results.html', context)
 
     return render(request, 'materials/diagnostic_test.html', {'questions': questions})
-
 
 @login_required
 def cart_detail(request):
