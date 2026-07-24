@@ -685,24 +685,54 @@ async def approve_order(message: types.Message):
 
 
 # ─── АНКЕТА ЗАПИСУ НА ЗАНЯТТЯ (ЛІДОГЕНЕРАЦІЯ) ────────────────
+class EnrollFSM(StatesGroup):
+    role = State()
+    name = State()
+    grade = State()
+    goal = State()
+    phone = State()
+
+
 @router.callback_query(F.data.in_(["menu_5_10", "menu_other"]))
 async def start_enrollment(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
 
-    # Визначаємо, з якої кнопки прийшов учень
+    # Визначаємо категорію
     subject = "Заняття (5-10 класи)" if callback.data == "menu_5_10" else "Інші навчальні потреби"
     await state.update_data(subject=subject)
+
+    await state.set_state(EnrollFSM.role)
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="👨‍🎓 Я учень", callback_data="role_student")
+    builder.button(text="👨‍👩‍👦 Я з батьків", callback_data="role_parent")
+    builder.button(text="❌ Скасувати", callback_data="back_main")
+    builder.adjust(2, 1)  # Дві кнопки в першому ряду, скасування - в другому
+
+    text = (
+        "📝 <b>Запис на заняття</b>\n\n"
+        "Радий, що ви вирішили покращити знання з математики!\n"
+        "Щоб мені було зручніше спілкуватися, підкажіть, <b>хто заповнює цю анкету?</b>"
+    )
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+    await callback.answer()
+
+
+@router.callback_query(EnrollFSM.role, F.data.startswith("role_"))
+async def enroll_role(callback: types.CallbackQuery, state: FSMContext):
+    role = "Учень" if callback.data == "role_student" else "Батьки"
+    await state.update_data(role=role)
 
     await state.set_state(EnrollFSM.name)
 
     builder = InlineKeyboardBuilder()
     builder.button(text="❌ Скасувати", callback_data="back_main")
 
-    text = (
-        "📝 <b>Запис на заняття</b>\n\n"
-        "Радий, що ти вирішив(ла) покращити свої знання! Давай познайомимося.\n\n"
-        "Напиши своє <b>Ім'я та Прізвище</b>:"
-    )
+    if role == "Учень":
+        text = "Чудово! Напиши своє <b>Ім'я та Прізвище</b>:"
+    else:
+        text = "Дуже приємно! Напишіть <b>Ім'я та Прізвище учня</b> (можете також вказати своє ім'я, щоб я знав, як до вас звертатися):"
+
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
     await callback.answer()
 
@@ -715,7 +745,13 @@ async def enroll_name(message: types.Message, state: FSMContext):
     builder = InlineKeyboardBuilder()
     builder.button(text="❌ Скасувати", callback_data="back_main")
 
-    await message.answer("Супер! В якому ти зараз класі?", reply_markup=builder.as_markup())
+    data = await state.get_data()
+    if data.get('role') == "Учень":
+        text = "Супер! В якому ти зараз класі?"
+    else:
+        text = "В якому класі навчається учень?"
+
+    await message.answer(text, reply_markup=builder.as_markup())
 
 
 @router.message(EnrollFSM.grade)
@@ -726,12 +762,11 @@ async def enroll_grade(message: types.Message, state: FSMContext):
     builder = InlineKeyboardBuilder()
     builder.button(text="❌ Скасувати", callback_data="back_main")
 
-    await message.answer(
-        "Яка твоя головна мета занять?\n"
-        "<i>(напр., Підготовка до НМТ, підтягнути програму, розбір домашки)</i>",
-        parse_mode="HTML",
-        reply_markup=builder.as_markup()
+    text = (
+        "Яка головна мета занять?\n"
+        "<i>(напр., Підготовка до НМТ, підтягнути шкільну програму, розбір домашки)</i>"
     )
+    await message.answer(text, parse_mode="HTML", reply_markup=builder.as_markup())
 
 
 @router.message(EnrollFSM.goal)
@@ -743,7 +778,7 @@ async def enroll_goal(message: types.Message, state: FSMContext):
     builder.button(text="❌ Скасувати", callback_data="back_main")
 
     await message.answer(
-        "Останній крок! 📱 Напиши свій <b>номер телефону</b> або нікнейм у Telegram для зв'язку:",
+        "Останній крок! 📱 Залиште <b>контактний номер телефону</b> (або нікнейм у Telegram) для зв'язку:",
         parse_mode="HTML",
         reply_markup=builder.as_markup()
     )
@@ -754,9 +789,10 @@ async def enroll_phone(message: types.Message, state: FSMContext):
     data = await state.get_data()
     phone = message.text
 
-    # Формуємо красиве повідомлення для вас (адміна)
+    # Формуємо повідомлення для адміна (для вас)
     admin_text = (
         "🔥 <b>Нова заявка на заняття!</b>\n\n"
+        f"<b>Хто залишив:</b> {data.get('role')}\n"
         f"<b>Категорія:</b> {data.get('subject')}\n"
         f"<b>Ім'я:</b> {data.get('name')}\n"
         f"<b>Клас:</b> {data.get('grade')}\n"
@@ -779,7 +815,7 @@ async def enroll_phone(message: types.Message, state: FSMContext):
 
     await message.answer(
         "✅ <b>Заявку успішно відправлено!</b>\n\n"
-        "Я зв'яжуся з тобою найближчим часом, щоб обговорити деталі та підібрати зручний розклад.",
+        "Я зв'яжуся з вами найближчим часом, щоб обговорити деталі та підібрати зручний розклад.",
         parse_mode="HTML",
         reply_markup=builder.as_markup()
     )
