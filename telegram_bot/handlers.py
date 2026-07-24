@@ -91,6 +91,12 @@ async def add_watermark(pdf_url: str, user_id: int) -> bytes:
     output_buffer.seek(0)
 
     return output_buffer.read()
+@sync_to_async
+def get_free_materials_urls():
+    # Шукаємо всі опубліковані безкоштовні матеріали
+    materials = StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id')
+    # Збираємо їхні посилання з Cloudinary
+    return [mat.file.url for mat in materials if mat.file]
 
 
 # ─── КЛАВІАТУРИ ──────────────────────────────────────────────
@@ -109,6 +115,7 @@ def get_nmt_menu_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="🎯 Перевір свій рівень (Тест)", callback_data="start_quiz")
     builder.button(text="📚 Конспекти окремих тем", callback_data="menu_materials_1")
+    builder.button(text="🎁 Вся база для НМТ (1 файлом)", callback_data="download_all_free")
     builder.button(text="← До головного меню", callback_data="back_main")
     builder.adjust(1)
     return builder.as_markup()
@@ -341,6 +348,58 @@ async def paid_confirm(callback: types.CallbackQuery):
     await callback.answer()
 
 
+import io
+
+
+@router.callback_query(F.data == "download_all_free")
+async def send_all_free_materials(callback: types.CallbackQuery):
+    await callback.answer()
+
+    # Показуємо повідомлення, щоб учень не думав, що бот завис
+    wait_msg = await callback.message.answer(
+        "⏳ <i>Завантажую та зшиваю всі безкоштовні теми в один PDF-файл. Це може зайняти близько хвилини...</i>",
+        parse_mode="HTML"
+    )
+
+    try:
+        urls = await get_free_materials_urls()
+        if not urls:
+            await wait_msg.edit_text("На жаль, безкоштовних матеріалів поки немає.")
+            return
+
+        # Створюємо порожній PDF-документ
+        writer = PdfWriter()
+
+        # Проходимося по кожному файлу, завантажуємо і додаємо його сторінки
+        async with aiohttp.ClientSession() as session:
+            for url in urls:
+                if url.startswith("http://"):
+                    url = url.replace("http://", "https://")
+
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        pdf_bytes = await resp.read()
+                        reader = PdfReader(io.BytesIO(pdf_bytes))
+                        for page in reader.pages:
+                            writer.add_page(page)
+
+        # Зберігаємо об'єднаний файл у пам'ять
+        output_buffer = io.BytesIO()
+        writer.write(output_buffer)
+        output_buffer.seek(0)
+
+        # Відправляємо єдиний файл
+        await callback.message.answer_document(
+            document=BufferedInputFile(output_buffer.read(), filename="Всі_безкоштовні_теми_НМТ.pdf"),
+            caption="🎁 Тримай велику збірку з усіма безкоштовними темами! Успішної підготовки."
+        )
+
+        # Видаляємо повідомлення "Зачекайте..."
+        await wait_msg.delete()
+
+    except Exception as e:
+        print(f"Помилка зшивання: {e}")
+        await wait_msg.edit_text("❌ Сталася помилка при формуванні файлу.")
 # ─── АДМІНСЬКА КОМАНДА ВІДПРАВКИ ────────────────────────────
 @router.message(Command("approve"))
 async def approve_order(message: types.Message):
