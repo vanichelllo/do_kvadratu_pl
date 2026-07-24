@@ -91,6 +91,18 @@ def diagnostic_test_view(request):
                 if percent < 50:
                     weak_topics.append(stat['topic'])
 
+        # === МАГІЯ РЕКОМЕНДАЦІЙ ===
+        recommended_materials = set()
+        for topic in weak_topics:
+            # Шукаємо конспекти, у назві яких міститься ім'я слабкої теми
+            mats = StudyMaterial.objects.filter(
+                title__icontains=topic.name,
+                is_published=True
+            )
+            for mat in mats:
+                recommended_materials.add(mat)
+        # ==========================
+
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
         context = {
@@ -99,6 +111,7 @@ def diagnostic_test_view(request):
             'percent_total': percent_total,
             'weak_topics': weak_topics,
             'topics_stats': topics_stats.values(),
+            'recommendations': list(recommended_materials),
         }
         return render(request, 'materials/diagnostic_results.html', context)
 
