@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}ДО КВАДРАТУ | Сучасна математика{% endblock %}
 
@@ -20,22 +19,22 @@
         overflow: hidden;
     }
 
-    /* Стиль для вашого білого логотипу */
+    /* Стиль для SVG логотипу на банері */
     .hero-logo {
-        max-width: 320px;
-        height: auto;
-        margin-bottom: 20px;
-        /* Якщо файл логотипу синій або чорний, розкоментуйте рядок нижче, щоб зробити його білим */
-        /* filter: brightness(0) invert(1); */
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 20px auto;
+        display: block;
     }
 
     .hero-title {
-        font-size: 2.2rem;
+        font-size: 3.5rem;
         font-weight: 900;
         margin-bottom: 20px;
         text-transform: uppercase;
         line-height: 1.1;
         color: white;
+        letter-spacing: 2px;
     }
 
     .hero-subtitle {
@@ -260,10 +259,39 @@
 
 <!-- HERO SECTION -->
 <div class="hero-section">
-    <!-- ЛОГОТИП ДО КВАДРАТУ -->
-    <img src="{% static 'images/logo.png' %}" alt="ДО КВАДРАТУ" class="hero-logo">
 
-    <h1 class="hero-title">Сучасна математика</h1>
+    <!-- ВАШ БІЛИЙ SVG ЛОГОТИП -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" class="hero-logo">
+      <defs>
+        <style>
+          .main-square { fill: #ffffff; }
+          .grid-line { stroke: #344e86; stroke-width: 14; stroke-linecap: square; }
+          .math-glyph { fill: none; stroke: #344e86; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; }
+          .math-dot { fill: #344e86; }
+        </style>
+      </defs>
+
+      <rect width="280" height="280" rx="12" ry="12" class="main-square" />
+      <line x1="140" y1="0" x2="140" y2="280" class="grid-line" />
+      <line x1="0" y1="140" x2="280" y2="140" class="grid-line" />
+      <g transform="translate(70, 70)">
+        <line x1="-24" y1="0" x2="24" y2="0" class="math-glyph" />
+        <line x1="0" y1="-24" x2="0" y2="24" class="math-glyph" />
+      </g>
+      <g transform="translate(210, 70)">
+        <line x1="-24" y1="0" x2="24" y2="0" class="math-glyph" />
+      </g>
+      <g transform="translate(70, 210)">
+        <line x1="-18" y1="-18" x2="16" y2="16" class="math-glyph" />
+        <line x1="18" y1="-18" x2="-16" y2="16" class="math-glyph" />
+      </g>
+      <g transform="translate(210, 210)">
+        <circle cx="0" cy="-22" r="9" class="math-dot" />
+        <circle cx="0" cy="22" r="9" class="math-dot" />
+      </g>
+    </svg>
+
+    <h1 class="hero-title">ДО КВАДРАТУ</h1>
     <p class="hero-subtitle">
         Авторські конспекти та матеріали для підготовки до НМТ і вивчення шкільної програми (5-11 класи).
         Жодної води — лише чітка структура, формули та практика.
