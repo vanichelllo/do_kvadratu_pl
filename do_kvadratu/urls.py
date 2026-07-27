@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from users.views import register_view
 from django.contrib.auth.views import LoginView, LogoutView
 
-# ІМПОРТ З MATERIALS ОНОВЛЕНО (додано OfferView та PrivacyView)
+# ІМПОРТ З MATERIALS ОНОВЛЕНО (додано booking_view)
 from materials.views import (
     MaterialListView,
     MaterialDetailView,
@@ -27,7 +27,8 @@ from materials.views import (
     topup_balance_view,
     diagnostic_test_view,
     OfferView,
-    PrivacyView
+    PrivacyView,
+    booking_view  # <--- ДОДАНО СЮДИ
 )
 
 urlpatterns = [
@@ -75,11 +76,13 @@ urlpatterns = [
     # Діагностичний тест
     path('diagnostic/', diagnostic_test_view, name='diagnostic_test'),
 
-    # Юридичні документи (ОНОВЛЕНО)
+    # Юридичні документи
     path('offer/', OfferView.as_view(), name='offer'),
     path('privacy/', PrivacyView.as_view(), name='privacy'),
     path('bot/', include('telegram_bot.urls')),
-    path('booking/', views.booking_view, name='booking'),
+
+    # Календар запису (Вживаємо функцію напряму, без слова views)
+    path('booking/', booking_view, name='booking'),
 ]
 
 if settings.DEBUG:
