@@ -51,7 +51,7 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            position: relative; /* Важливо для випадаючого меню */
+            position: relative;
             z-index: 1000;
         }
 
@@ -64,7 +64,7 @@
             font-weight: 900;
             font-size: 1.2rem;
             letter-spacing: 1px;
-            z-index: 1001; /* Щоб лого було над меню */
+            z-index: 1001;
         }
 
         .nav-logo svg {
@@ -215,6 +215,16 @@
             }
         }
     </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MFQMSE2VCY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-MFQMSE2VCY');
+    </script>
 </head>
 <body>
 
@@ -254,7 +264,6 @@
         </button>
 
         <div class="nav-links" id="navLinks">
-            <!-- Ваші загальні пункти меню, які бачать усі -->
             <a href="{% url 'home' %}">ГОЛОВНА</a>
             <a href="{% url 'diagnostic_test' %}">ДІАГНОСТИКА НМТ</a>
             <a href="{% url 'materials_list' %}">ВІТРИНА</a>
@@ -262,8 +271,6 @@
 
             <!-- РОЗДІЛЯЄМО ЛОГІКУ ДЛЯ АВТОРИЗОВАНИХ І ГОСТЕЙ -->
             {% if user.is_authenticated %}
-
-                <!-- Це бачать ТІЛЬКИ ті, хто увійшов в акаунт -->
                 <a href="{% url 'cabinet' %}">МІЙ КАБІНЕТ</a>
                 <a href="{% url 'cart_detail' %}">КОШИК</a>
 
@@ -271,13 +278,9 @@
                     {% csrf_token %}
                     <button type="submit" class="btn-brand" style="background-color: transparent; border-color: var(--brand-blue); color: var(--brand-blue); box-shadow: none;">ВИЙТИ</button>
                 </form>
-
             {% else %}
-
-                <!-- Це бачать ТІЛЬКИ гості (незареєстровані) -->
                 <a href="{% url 'login' %}">УВІЙТИ</a>
                 <a href="{% url 'register' %}" class="btn-brand" style="margin-left: 15px;">РЕЄСТРАЦІЯ</a>
-
             {% endif %}
         </div>
     </nav>
@@ -325,7 +328,8 @@
             navLinks.classList.toggle('active');
         });
     </script>
-<!-- === БАНЕР COOKIE ТА АНАЛІТИКА === -->
+
+<!-- === БАНЕР COOKIE === -->
 <style>
     .cookie-banner {
         position: fixed;
@@ -380,7 +384,7 @@
 </style>
 
 <div id="cookieConsentBanner" class="cookie-banner" style="display: none;">
-    <p>Ми використовуємо файли cookie та аналітику, щоб зробити платформу зручнішою. <a href="#">Детальніше</a>.</p>
+    <p>Ми використовуємо файли cookie та аналітику, щоб зробити платформу зручнішою. <a href="{% url 'privacy' %}">Детальніше</a>.</p>
     <button id="acceptCookiesBtn" class="btn-cookie">Зрозуміло</button>
 </div>
 
@@ -389,35 +393,15 @@
         const banner = document.getElementById('cookieConsentBanner');
         const acceptBtn = document.getElementById('acceptCookiesBtn');
 
-        // ВАЖЛИВО: ЗАМІНІТЬ G-XXXXXXXXXX НА ВАШ РЕАЛЬНИЙ ІДЕНТИФІКАТОР!
-        const GA_MEASUREMENT_ID = 'G-MFQMSE2VCY';
-
-        function loadGoogleAnalytics() {
-            const script1 = document.createElement('script');
-            script1.async = true;
-            script1.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
-            document.head.appendChild(script1);
-
-            const script2 = document.createElement('script');
-            script2.innerHTML = `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}');
-            `;
-            document.head.appendChild(script2);
-        }
-
+        // Перевіряємо, чи вже давав користувач згоду
         if (!localStorage.getItem('cookiesAccepted')) {
-            banner.style.display = 'flex';
-        } else {
-            loadGoogleAnalytics();
+            banner.style.display = 'flex'; // Показуємо банер
         }
 
+        // Обробка кліку на кнопку "Зрозуміло"
         acceptBtn.addEventListener('click', function() {
             localStorage.setItem('cookiesAccepted', 'true');
             banner.style.display = 'none';
-            loadGoogleAnalytics();
         });
     });
 </script>
