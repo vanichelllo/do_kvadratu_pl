@@ -141,6 +141,43 @@
         text-transform: uppercase;
     }
 
+    .promo-btn {
+        display: inline-block;
+        font-size: 1rem;
+        font-weight: 800;
+        padding: 12px 25px;
+        border-radius: 8px;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: transform 0.2s, box-shadow 0.2s;
+        align-self: flex-start;
+    }
+
+    .promo-btn-nmt {
+        background-color: #ffffff;
+        color: #ff4757;
+        border: 2px solid #ff4757;
+        box-shadow: 4px 4px 0px #ff4757;
+    }
+
+    .promo-btn-nmt:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px #ff4757;
+    }
+
+    .promo-btn-bot {
+        background-color: #0088cc;
+        color: #ffffff;
+        border: 2px solid #0077b3;
+        box-shadow: 4px 4px 0px #0077b3;
+    }
+
+    .promo-btn-bot:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0px #0077b3;
+        color: #ffffff;
+    }
+
     /* Блок "Про автора" */
     .about-author {
         background: #f8f9fa;
@@ -219,15 +256,15 @@
 
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ ТА БОТ -->
 <div class="banners-grid">
-    <!-- Банер 1: Набір НМТ 2027 -->
+    <!-- Банер 1: Набір НМТ -->
     <div class="promo-banner promo-nmt">
         <div class="promo-tag" style="background: #ff4757;">Серпень / Вересень</div>
-        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Запис на НМТ 2027</h3>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Запис на заняття</h3>
         <p style="color: var(--text-dark); font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
-            Відкрито набір на комплексну підготовку. Робота в міні-групах <span style="color: #ff4757; font-weight: 900;">(лише 4 учні)</span>. Заняття 2 рази на тиждень. Індивідуальний підхід та гарантія результату.
+            Відкрито набір на комплексну підготовку. Робота в міні-групах <span style="color: #ff4757; font-weight: 900;">(лише 4 учні)</span> або індивідуально. Запишіться на перше діагностичне заняття.
         </p>
-        <a href="https://instagram.com/do_kvadratu" target="_blank" class="btn-brand" style="background: white; align-self: flex-start;">
-            Забронювати місце 💬
+        <a href="{% url 'booking' %}" class="promo-btn promo-btn-nmt">
+            Забронювати місце 📅
         </a>
     </div>
 
@@ -239,7 +276,7 @@
             Кишеньковий помічник <span style="color: #0088cc; font-weight: 900;">@do_kvadratu_bot</span>.
             Твій особистий кабінет, усі придбані конспекти та швидкий зв'язок прямо у твоєму улюбленому месенджері.
         </p>
-        <a href="https://t.me/do_kvadratu_bot" target="_blank" class="btn-brand" style="background: #0088cc; color: white; border-color: #0077b3; align-self: flex-start;">
+        <a href="https://t.me/do_kvadratu_bot" target="_blank" class="promo-btn promo-btn-bot">
             Перейти в бот ➔
         </a>
     </div>
