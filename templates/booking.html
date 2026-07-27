@@ -1,14 +1,46 @@
 {% extends 'base.html' %}
 
-{% block title %}Запис на урок | ДО КВАДРАТУ{% endblock %}
+{% block title %}Запис на заняття | ДО КВАДРАТУ{% endblock %}
 
 {% block content %}
 <div class="container" style="padding: 40px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
-    <h1 style="color: var(--brand-blue); margin-bottom: 10px;">Запис на заняття</h1>
+    <h1 style="color: var(--brand-blue); margin-bottom: 10px;">Формати та вартість занять</h1>
     <p style="color: var(--text-dark); margin-bottom: 30px; font-weight: 600;">
-        Оберіть зручний для вас день та час у календарі нижче.
+        Оберіть комфортний формат підготовки. Розклад закріплюється після нашого першого знайомства.
     </p>
-    
+
+    <!-- БЛОК З ТАРИФАМИ -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 40px;">
+
+        <!-- Тариф 1: Міні-групи -->
+        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue);">
+            <h3 style="margin-top: 0; color: var(--brand-blue);">Міні-групи</h3>
+            <p style="font-size: 0.9rem; color: #555;">До 4 учнів. Динамічна робота та дружня атмосфера.</p>
+            <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand-yellow); text-shadow: 1px 1px 1px #000;">240 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
+        </div>
+
+        <!-- Тариф 2: Індивідуально (День) -->
+        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue);">
+            <h3 style="margin-top: 0; color: var(--brand-blue);">Індивідуально (День)</h3>
+            <p style="font-size: 0.9rem; color: #555;">Будні дні з 14:00 до 18:00. Максимум уваги.</p>
+            <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand-yellow); text-shadow: 1px 1px 1px #000;">490 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
+        </div>
+
+        <!-- Тариф 3: Індивідуально (Вечір) -->
+        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue);">
+            <h3 style="margin-top: 0; color: var(--brand-blue);">Індивідуально (Прайм)</h3>
+            <p style="font-size: 0.9rem; color: #555;">Будні з 18:00 до 20:00 та Субота з 09:00 до 13:00.</p>
+            <div style="font-size: 1.5rem; font-weight: 900; color: var(--brand-yellow); text-shadow: 1px 1px 1px #000;">590 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
+        </div>
+
+    </div>
+
+    <hr style="border: none; border-top: 2px dashed var(--brand-blue); margin: 40px 0;">
+
+    <h2 style="color: var(--brand-blue); margin-bottom: 10px;">Запис на перше діагностичне заняття</h2>
+    <p style="color: var(--text-dark); margin-bottom: 30px; font-weight: 600;">
+        Перший урок триває 60 хвилин і проходить індивідуально. На ньому ми визначимо ваш рівень і підберемо постійний графік (або місце в міні-групі).
+    </p>
     <!-- Calendly inline widget begin -->
     <div class="calendly-inline-widget" data-url="https://calendly.com/dokvadratu/new-meeting" style="min-width:320px;height:700px;"></div>
     <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
