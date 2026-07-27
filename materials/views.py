@@ -192,7 +192,8 @@ class OfferView(TemplateView):
 class PrivacyView(TemplateView):
     template_name = 'materials/privacy.html'
 
-
+def booking_view(request):
+    return render(request, 'booking.html')
 class MaterialListView(ListView):
     model = StudyMaterial
     template_name = 'materials/list.html'

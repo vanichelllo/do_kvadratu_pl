@@ -79,6 +79,7 @@ urlpatterns = [
     path('offer/', OfferView.as_view(), name='offer'),
     path('privacy/', PrivacyView.as_view(), name='privacy'),
     path('bot/', include('telegram_bot.urls')),
+    path('booking/', views.booking_view, name='booking'),
 ]
 
 if settings.DEBUG:
