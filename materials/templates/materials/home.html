@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}ДО КВАДРАТУ | Сучасна математика{% endblock %}
 
@@ -19,12 +20,22 @@
         overflow: hidden;
     }
 
+    /* Стиль для вашого білого логотипу */
+    .hero-logo {
+        max-width: 320px;
+        height: auto;
+        margin-bottom: 20px;
+        /* Якщо файл логотипу синій або чорний, розкоментуйте рядок нижче, щоб зробити його білим */
+        /* filter: brightness(0) invert(1); */
+    }
+
     .hero-title {
-        font-size: 3.5rem;
+        font-size: 2.2rem;
         font-weight: 900;
         margin-bottom: 20px;
         text-transform: uppercase;
         line-height: 1.1;
+        color: white;
     }
 
     .hero-subtitle {
@@ -68,6 +79,13 @@
         background-color: #ff4757;
         color: #ffffff;
         border-color: #c0392b;
+    }
+
+    /* Кнопка для безкоштовних матеріалів */
+    .hero-btn-free {
+        background-color: #27c93f;
+        color: #ffffff;
+        border-color: #1e9930;
     }
 
     /* Блок "Про формат" */
@@ -242,7 +260,10 @@
 
 <!-- HERO SECTION -->
 <div class="hero-section">
-    <h1 class="hero-title">Математика<br><span style="color: var(--brand-yellow);">До Квадрату</span></h1>
+    <!-- ЛОГОТИП ДО КВАДРАТУ -->
+    <img src="{% static 'images/logo.png' %}" alt="ДО КВАДРАТУ" class="hero-logo">
+
+    <h1 class="hero-title">Сучасна математика</h1>
     <p class="hero-subtitle">
         Авторські конспекти та матеріали для підготовки до НМТ і вивчення шкільної програми (5-11 класи).
         Жодної води — лише чітка структура, формули та практика.
@@ -251,6 +272,7 @@
     <div class="hero-buttons">
         <a href="{% url 'diagnostic_test' %}" class="hero-btn hero-btn-test">🔥 Пройти діагностику</a>
         <a href="{% url 'materials_list' %}" class="hero-btn">Відкрити вітрину ➔</a>
+        <a href="{% url 'materials_list' %}?type=free" class="hero-btn hero-btn-free">🎁 Безкоштовні матеріали</a>
     </div>
 </div>
 
