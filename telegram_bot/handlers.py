@@ -567,7 +567,7 @@ async def process_checkout(callback: types.CallbackQuery):
     except Exception as e:
         print(f"Помилка відправки адміну: {e}")
 
-    card_number = "1234 5678 1234 5678"
+    card_number = "5408810041945642"
 
     builder.button(text="Я оплатив(ла)", callback_data="paid_confirm")
     builder.button(text="← Назад", callback_data="menu_materials_1")
