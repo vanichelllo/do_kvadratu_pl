@@ -121,10 +121,15 @@ class Order(models.Model):
         ('paid', 'Успішно оплачено'),
         ('cancelled', 'Скасовано'),
     )
+    SOURCE_CHOICES = (
+        ('web', 'Сайт'),
+        ('bot', 'Telegram-бот'),
+    )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='web', verbose_name="Джерело")
     mono_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(blank=True, null=True)

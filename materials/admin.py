@@ -1,11 +1,18 @@
 from django.contrib import admin
 from django.core.management import call_command
 from django.contrib import messages
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem
+
+# ДОДАНО: Імпорти для вивантаження бази в Excel
+from import_export import resources
+from import_export.admin import ExportActionMixin
+
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, \
+    AnswerOption, MatchItem
 
 # 1. Реєструємо прості таблиці
 admin.site.register(Category)
 admin.site.register(Tag)
+
 
 # ==========================================
 # ДІАГНОСТИЧНИЙ ТЕСТ: ТЕМИ ТА ГЕНЕРАЦІЯ
@@ -23,6 +30,7 @@ class DiagnosticTopicAdmin(admin.ModelAdmin):
         except Exception as e:
             self.message_user(request, f"Помилка генерації: {str(e)}", level=messages.ERROR)
 
+
 # ==========================================
 # ДІАГНОСТИЧНИЙ ТЕСТ: ПИТАННЯ ТА ВІДПОВІДІ
 # ==========================================
@@ -30,9 +38,11 @@ class AnswerOptionInline(admin.TabularInline):
     model = AnswerOption
     extra = 5
 
+
 class MatchItemInline(admin.TabularInline):
     model = MatchItem
     extra = 3
+
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
@@ -40,6 +50,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_filter = ('topic', 'question_type')
     search_fields = ('text',)
     inlines = [MatchItemInline, AnswerOptionInline]
+
 
 # ==========================================
 # ВІТРИНА: МАТЕРІАЛИ ТА ІМПОРТ
@@ -55,11 +66,14 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     def import_materials_from_excel(self, request, queryset):
         try:
             call_command('import_materials')
-            self.message_user(request, "Успіх! Всі матеріали імпортовано та відправлено на Cloudinary.", messages.SUCCESS)
+            self.message_user(request, "Успіх! Всі матеріали імпортовано та відправлено на Cloudinary.",
+                              messages.SUCCESS)
         except Exception as e:
             self.message_user(request, f"Помилка імпорту: {str(e)}", level=messages.ERROR)
 
+
 admin.site.register(StudyMaterial, StudyMaterialAdmin)
+
 
 # ==========================================
 # КОМЕРЦІЯ: КОШИК ТА ЗАМОВЛЕННЯ
@@ -68,18 +82,37 @@ class CartItemInline(admin.TabularInline):
     model = CartItem
     extra = 0
 
+
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     list_display = ['user', 'created_at']
     inlines = [CartItemInline]
 
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
 
+
+# === НОВЕ: Логіка експорту Замовлень в Excel ===
+class OrderResource(resources.ModelResource):
+    class Meta:
+        model = Order
+        # Вказуємо, які поля підуть у файл Excel (включно з джерелом)
+        fields = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
+        export_order = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
+
+
+# ОНОВЛЕНО: Додано ExportActionMixin та поле 'source'
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'total_amount', 'status', 'created_at']
-    list_filter = ['status', 'created_at']
+class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
+    resource_class = OrderResource  # Підключаємо вивантаження
+
+    # Виводимо 'source' у таблицю для зручного перегляду
+    list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at']
+
+    # Додаємо 'source' у фільтри (можна відфільтрувати тільки Сайт або тільки Бот)
+    list_filter = ['status', 'source', 'created_at']
+
     search_fields = ['user__email', 'mono_invoice_id']
     inlines = [OrderItemInline]

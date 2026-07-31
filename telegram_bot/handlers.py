@@ -13,7 +13,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from asgiref.sync import sync_to_async
-from materials.models import StudyMaterial
+
+# ОНОВЛЕНО: Додано імпорт Order та OrderItem для роботи з базою даних, а також timezone
+from materials.models import StudyMaterial, Order, OrderItem
+from django.utils.timezone import now
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.conf import settings
@@ -34,11 +37,14 @@ pending_orders = {}
 class QuizFSM(StatesGroup):
     answering_choice = State()
     answering_short = State()
+
+
 class EnrollFSM(StatesGroup):
     name = State()
     grade = State()
     goal = State()
     phone = State()
+
 
 DIAGNOSTIC_QUESTIONS = [
     # ЧАСТИНА 1: ОДИН З П'ЯТИ (1-15)
@@ -110,6 +116,47 @@ DIAGNOSTIC_QUESTIONS = [
 
 
 # ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ТА PDF ─────────────────
+
+# НОВЕ: Функція для збереження замовлення з бота в базу Django
+@sync_to_async
+def create_bot_order_in_db(telegram_id, full_name, total_price, item_ids):
+    # Створюємо або знаходимо користувача (генеруємо технічний email, якщо це новий юзер з бота)
+    user, _ = User.objects.get_or_create(
+        username=str(telegram_id),
+        defaults={
+            'first_name': full_name[:30],
+            'email': f"{telegram_id}@telegram.bot"
+        }
+    )
+
+    # Створюємо замовлення зі статусом 'pending' (Очікує оплати) і джерелом 'bot'
+    order = Order.objects.create(
+        user=user,
+        total_amount=total_price,
+        status='pending',
+        source='bot'
+    )
+
+    # Додаємо матеріали в це замовлення
+    materials = StudyMaterial.objects.filter(id__in=item_ids)
+    for mat in materials:
+        OrderItem.objects.create(order=order, material=mat, price=mat.price)
+
+    return order.id
+
+
+# НОВЕ: Функція для зміни статусу замовлення в базі на 'paid'
+@sync_to_async
+def mark_bot_order_as_paid(order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        order.status = 'paid'
+        order.paid_at = now()
+        order.save()
+    except Exception as e:
+        print(f"Помилка оновлення статусу замовлення {order_id}: {e}")
+
+
 @sync_to_async
 def get_materials_page(page_number, per_page=10, is_bundle=False):
     materials = StudyMaterial.objects.filter(is_published=True, is_bundle=is_bundle).order_by('id')
@@ -542,10 +589,15 @@ async def process_checkout(callback: types.CallbackQuery):
     item_ids = list(user_carts[user.id])
     total_price, titles = await get_cart_details(item_ids)
 
+    # ОНОВЛЕНО: Зберігаємо замовлення в базу Django
+    db_order_id = await create_bot_order_in_db(user.id, user.full_name, total_price, item_ids)
+
     title_text = f"Збірка конспектів ({len(item_ids)} шт.)"
     builder = InlineKeyboardBuilder()
 
+    # ОНОВЛЕНО: Додано db_order_id у словник
     pending_orders[user.id] = {
+        "db_order_id": db_order_id,
         "username": user.full_name,
         "items": item_ids,
         "title": title_text,
@@ -674,11 +726,16 @@ async def approve_order(message: types.Message):
             protect_content=True
         )
 
+        # ОНОВЛЕНО: Оновлюємо статус у базі даних на 'paid'
+        if "db_order_id" in order:
+            await mark_bot_order_as_paid(order["db_order_id"])
+
         if user_id in user_carts:
             user_carts[user_id].clear()
         del pending_orders[user_id]
 
-        await message.reply(f"✅ Замовлення завершено! Персоналізований файл надіслано учню {user_id}.")
+        await message.reply(
+            f"✅ Замовлення завершено! Персоналізований файл надіслано учню {user_id}. У базі збережено!")
     except Exception as e:
         await message.reply(f"Помилка при відправці файлів: {e}")
         print(f"Помилка відправки: {e}")
