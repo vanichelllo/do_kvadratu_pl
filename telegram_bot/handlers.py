@@ -39,6 +39,7 @@ class QuizFSM(StatesGroup):
 
 
 class EnrollFSM(StatesGroup):
+    role = State()
     name = State()
     grade = State()
     goal = State()
