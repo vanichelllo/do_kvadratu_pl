@@ -14,7 +14,6 @@ from aiogram.fsm.state import State, StatesGroup
 
 from asgiref.sync import sync_to_async
 
-# ОНОВЛЕНО: Додано імпорт Order та OrderItem для роботи з базою даних, а також timezone
 from materials.models import StudyMaterial, Order, OrderItem
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
@@ -116,11 +115,8 @@ DIAGNOSTIC_QUESTIONS = [
 
 
 # ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ТА PDF ─────────────────
-
-# НОВЕ: Функція для збереження замовлення з бота в базу Django
 @sync_to_async
 def create_bot_order_in_db(telegram_id, full_name, total_price, item_ids):
-    # Створюємо або знаходимо користувача (генеруємо технічний email, якщо це новий юзер з бота)
     user, _ = User.objects.get_or_create(
         username=str(telegram_id),
         defaults={
@@ -128,24 +124,18 @@ def create_bot_order_in_db(telegram_id, full_name, total_price, item_ids):
             'email': f"{telegram_id}@telegram.bot"
         }
     )
-
-    # Створюємо замовлення зі статусом 'pending' (Очікує оплати) і джерелом 'bot'
     order = Order.objects.create(
         user=user,
         total_amount=total_price,
         status='pending',
         source='bot'
     )
-
-    # Додаємо матеріали в це замовлення
     materials = StudyMaterial.objects.filter(id__in=item_ids)
     for mat in materials:
         OrderItem.objects.create(order=order, material=mat, price=mat.price)
-
     return order.id
 
 
-# НОВЕ: Функція для зміни статусу замовлення в базі на 'paid'
 @sync_to_async
 def mark_bot_order_as_paid(order_id):
     try:
@@ -189,7 +179,6 @@ def get_free_materials_urls():
 def get_recommendations_for_topics(wrong_topics):
     unique_topics = set(wrong_topics)
     recommendations = []
-
     for topic in unique_topics:
         mats = StudyMaterial.objects.filter(title__icontains=topic, is_published=True)
         if mats.exists():
@@ -197,7 +186,6 @@ def get_recommendations_for_topics(wrong_topics):
                 recommendations.append(m.title)
         else:
             recommendations.append(topic)
-
     return list(set(recommendations))
 
 
@@ -319,8 +307,6 @@ async def process_quiz_short(message: types.Message, state: FSMContext):
     wrong_topics = data.get("wrong_topics", [])
 
     q_data = DIAGNOSTIC_QUESTIONS[q_index]
-
-    # Очищаємо відповідь учня від пробілів, ком та крапок, щоб "б а в" чи "Б,А,В" зарахувалося як правильне
     user_answer = message.text.lower().replace(" ", "").replace(",", "").replace(".", "").strip()
     correct_answer = str(q_data["ans"]).lower().replace(" ", "")
 
@@ -330,12 +316,10 @@ async def process_quiz_short(message: types.Message, state: FSMContext):
         wrong_topics.append(q_data["t"])
 
     await state.update_data(score=score, current_q=q_index + 1, wrong_topics=wrong_topics)
-
     try:
         await message.delete()
     except Exception:
         pass
-
     await send_quiz_question(message, q_index + 1, state)
 
 
@@ -589,13 +573,67 @@ async def process_checkout(callback: types.CallbackQuery):
     item_ids = list(user_carts[user.id])
     total_price, titles = await get_cart_details(item_ids)
 
-    # ОНОВЛЕНО: Зберігаємо замовлення в базу Django
+    # Зберігаємо замовлення в базу Django
     db_order_id = await create_bot_order_in_db(user.id, user.full_name, total_price, item_ids)
 
+    # НОВЕ: Логіка для миттєвої видачі безкоштовних матеріалів (0 грн)
+    if total_price == 0:
+        await mark_bot_order_as_paid(db_order_id)
+
+        await callback.message.edit_text(
+            "⏳ <i>Формуємо твої безкоштовні матеріали. Це займе кілька секунд...</i>",
+            parse_mode="HTML"
+        )
+
+        try:
+            materials = await get_materials_by_ids(item_ids)
+            urls = [mat.file.url for mat in materials if mat.file]
+
+            if not urls:
+                await callback.message.answer("Помилка: файли відсутні у базі!")
+                return
+
+            watermarked_pdf = await merge_and_watermark(urls, user.id)
+            filename = "Безкоштовні_матеріали.pdf" if len(materials) > 1 else f"{materials[0].title}.pdf"
+
+            await callback.bot.send_document(
+                user.id,
+                document=BufferedInputFile(watermarked_pdf, filename=filename),
+                caption="📄 Тримай свої матеріали!\n\n🔒 <i>Файл персоналізовано спеціально для тебе.</i>",
+                protect_content=True
+            )
+
+            if user.id in user_carts:
+                user_carts[user.id].clear()
+
+            builder = InlineKeyboardBuilder()
+            builder.button(text="← До головного меню", callback_data="back_main")
+            await callback.message.answer("Успішно завантажено! Обирай що далі:", reply_markup=builder.as_markup())
+
+            # Повідомляємо адміна про безкоштовне замовлення
+            try:
+                admin_id = int(settings.TELEGRAM_ADMIN_ID)
+                await callback.bot.send_message(
+                    admin_id,
+                    f"✅ <b>Нове безкоштовне замовлення</b>\n"
+                    f"Учень: {user.full_name} (<code>{user.id}</code>)\n"
+                    f"Статус: Видано автоматично.",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+
+        except Exception as e:
+            print(f"Помилка видачі безкоштовних файлів: {e}")
+            await callback.message.answer("Сталася помилка при зшиванні файлів. Зверніться до підтримки.")
+
+        await callback.answer()
+        return
+
+    # Логіка для ПЛАТНИХ матеріалів (сума > 0)
     title_text = f"Збірка конспектів ({len(item_ids)} шт.)"
     builder = InlineKeyboardBuilder()
 
-    # ОНОВЛЕНО: Додано db_order_id у словник
     pending_orders[user.id] = {
         "db_order_id": db_order_id,
         "username": user.full_name,
@@ -726,7 +764,6 @@ async def approve_order(message: types.Message):
             protect_content=True
         )
 
-        # ОНОВЛЕНО: Оновлюємо статус у базі даних на 'paid'
         if "db_order_id" in order:
             await mark_bot_order_as_paid(order["db_order_id"])
 
@@ -753,18 +790,15 @@ class EnrollFSM(StatesGroup):
 @router.callback_query(F.data.in_(["menu_5_10", "menu_other"]))
 async def start_enrollment(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
-
-    # Визначаємо категорію
     subject = "Заняття (5-10 класи)" if callback.data == "menu_5_10" else "Інші навчальні потреби"
     await state.update_data(subject=subject)
-
     await state.set_state(EnrollFSM.role)
 
     builder = InlineKeyboardBuilder()
     builder.button(text="👨‍🎓 Я учень", callback_data="role_student")
     builder.button(text="👨‍👩‍👦 Я з батьків", callback_data="role_parent")
     builder.button(text="❌ Скасувати", callback_data="back_main")
-    builder.adjust(2, 1)  # Дві кнопки в першому ряду, скасування - в другому
+    builder.adjust(2, 1)
 
     text = (
         "📝 <b>Запис на заняття</b>\n\n"
@@ -779,7 +813,6 @@ async def start_enrollment(callback: types.CallbackQuery, state: FSMContext):
 async def enroll_role(callback: types.CallbackQuery, state: FSMContext):
     role = "Учень" if callback.data == "role_student" else "Батьки"
     await state.update_data(role=role)
-
     await state.set_state(EnrollFSM.name)
 
     builder = InlineKeyboardBuilder()
@@ -846,7 +879,6 @@ async def enroll_phone(message: types.Message, state: FSMContext):
     data = await state.get_data()
     phone = message.text
 
-    # Формуємо повідомлення для адміна (для вас)
     admin_text = (
         "🔥 <b>Нова заявка на заняття!</b>\n\n"
         f"<b>Хто залишив:</b> {data.get('role')}\n"
@@ -866,7 +898,6 @@ async def enroll_phone(message: types.Message, state: FSMContext):
         print(f"Помилка відправки заявки адміну: {e}")
 
     await state.clear()
-
     builder = InlineKeyboardBuilder()
     builder.button(text="← До головного меню", callback_data="back_main")
 
