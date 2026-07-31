@@ -541,8 +541,8 @@ async def process_checkout(callback: types.CallbackQuery):
             try:
                 admin_id = int(settings.TELEGRAM_ADMIN_ID)
                 await callback.bot.send_message(admin_id,
-                                                f"✅ <b>Нове безкоштовне замовлення</b>\nУчень: {user.full_name} (<code>{user.id}</code>)\nСтатус: Видано автоматично.",
-                                                parse_mode="HTML")
+                                              f"✅ <b>Нове безкоштовне замовлення</b>\nУчень: {user.full_name} (<code>{user.id}</code>)\nСтатус: Видано автоматично.",
+                                              parse_mode="HTML")
             except Exception:
                 pass
         except Exception as e:
@@ -567,8 +567,8 @@ async def process_checkout(callback: types.CallbackQuery):
     try:
         admin_id = int(settings.TELEGRAM_ADMIN_ID)
         await callback.bot.send_message(admin_id,
-                                        f"<b>Нове замовлення (Кошик)</b>\n\nУчень: {user.full_name}\nID: <code>{user.id}</code>\nСума: {total_price} грн\n\nОчікуємо підтвердження оплати...",
-                                        parse_mode="HTML")
+                                      f"<b>Нове замовлення (Кошик)</b>\n\nУчень: {user.full_name}\nID: <code>{user.id}</code>\nСума: {total_price} грн\n\nОчікуємо підтвердження оплати...",
+                                      parse_mode="HTML")
     except Exception:
         pass
 
@@ -595,12 +595,12 @@ async def paid_confirm(callback: types.CallbackQuery):
     try:
         admin_id = int(settings.TELEGRAM_ADMIN_ID)
         await callback.bot.send_message(admin_id,
-                                        f"💸 <b>{user.full_name}</b> підтвердив(ла) оплату!\n\nID: <code>{user.id}</code>\nОчікувана сума: <b>{order['price']} грн</b>\n\nЩоб підтвердити замовлення і видати матеріали, надішли команду:\n<code>/approve {user.id}</code>",
-                                        parse_mode="HTML")
+                                      f"💸 <b>{user.full_name}</b> підтвердив(ла) оплату!\n\nID: <code>{user.id}</code>\nОчікувана сума: <b>{order['price']} грн</b>\n\nЩоб підтвердити замовлення і видати матеріали, надішли команду:\n<code>/approve {user.id}</code>",
+                                      parse_mode="HTML")
     except Exception:
         pass
     builder = InlineKeyboardBuilder()
-    builder.button(text="← До меню НМТ", callback_data="menu_nmt_main")
+    builder.button(text="← До головного меню", callback_data="back_main")
     await callback.message.edit_text(
         f"Дякую! Твоє повідомлення отримано.\nЯ перевірю надходження коштів і надішлю матеріали сюди.\n\nЯкщо є питання, пиши: {CONTACT}",
         parse_mode="HTML", reply_markup=builder.as_markup())
@@ -683,8 +683,8 @@ async def approve_order(message: types.Message):
             await message.reply("Помилка: у цих матеріалах відсутні файли!")
             return
         await message.bot.send_message(user_id,
-                                       "<b>Оплата успішна!</b> 🎉\n\nТвоє замовлення готове. Бажаю ефективної підготовки!",
-                                       parse_mode="HTML")
+                                      "<b>Оплата успішна!</b> 🎉\n\nТвоє замовлення готове. Бажаю ефективної підготовки!",
+                                      parse_mode="HTML")
         watermarked_pdf = await merge_and_watermark(urls, user_id)
         if len(materials) == 1:
             filename = f"{materials[0].title}.pdf"
@@ -704,6 +704,36 @@ async def approve_order(message: types.Message):
             f"✅ Замовлення завершено! Персоналізований файл надіслано учню {user_id}. У базі збережено!")
     except Exception as e:
         await message.reply(f"Помилка при відправці файлів: {e}")
+
+
+# ─── АДМІНСЬКА КОМАНДА ДЛЯ НАПИСАННЯ УЧНЮ ЗА ID ───────────────
+@router.message(Command("send"))
+async def admin_send_message(message: types.Message):
+    try:
+        admin_id = int(settings.TELEGRAM_ADMIN_ID)
+    except Exception:
+        return
+
+    if message.from_user.id != admin_id:
+        return
+
+    parts = message.text.split(maxsplit=2)
+    if len(parts) < 3 or not parts[1].isdigit():
+        await message.reply(
+            "⚠️ <b>Неправильний формат!</b>\n"
+            "Використовуйте: <code>/send ID_учня Текст повідомлення</code>",
+            parse_mode="HTML"
+        )
+        return
+
+    target_user_id = int(parts[1])
+    text_to_send = parts[2]
+
+    try:
+        await message.bot.send_message(target_user_id, text_to_send, parse_mode="HTML")
+        await message.reply(f"✅ Повідомлення успішно надіслано користувачу <code>{target_user_id}</code>!", parse_mode="HTML")
+    except Exception as e:
+        await message.reply(f"❌ Не вдалося надіслати повідомлення: {e}")
 
 
 # ─── АНКЕТА ЗАПИСУ НА ЗАНЯТТЯ (ЛІДОГЕНЕРАЦІЯ) ────────────────
@@ -798,12 +828,10 @@ async def enroll_phone(message: types.Message, state: FSMContext):
 
 
 # ─── ПЕРЕХОПЛЮВАЧ УСІХ ПОВІДОМЛЕНЬ ──────────────────────────
-# Цей блок завжди має бути в самому кінці. Він ловить текст, якщо учень просто щось написав.
 @router.message(F.text & ~F.text.startswith('/'))
 async def catch_all_text(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
 
-    # Якщо користувач зараз НЕ заповнює анкету чи квіз
     if current_state is None:
         try:
             admin_id = int(settings.TELEGRAM_ADMIN_ID)
