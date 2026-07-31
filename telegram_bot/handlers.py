@@ -19,10 +19,7 @@ from django.utils.timezone import now
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.conf import settings
-from datetime import datetime, timedelta
-
-# НОВЕ: Імпортуємо планувальник для відліку часу
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime
 
 User = get_user_model()
 router = Router()
@@ -33,10 +30,6 @@ CONTACT = "@do_kvadratu"
 # Тимчасова пам'ять кошиків
 user_carts = {}
 pending_orders = {}
-
-# НОВЕ: Запускаємо планувальник задач
-scheduler = AsyncIOScheduler()
-scheduler.start()
 
 
 # ─── НАЛАШТУВАННЯ ДІАГНОСТИЧНОГО ТЕСТУ (КВІЗУ) ───────────────
@@ -57,7 +50,6 @@ class SupportFSM(StatesGroup):
 
 
 DIAGNOSTIC_QUESTIONS = [
-    # (Питання залишені без змін для економії місця, тут ваш список з 22 питань)
     {"q": "<b>1/22.</b> Розв’яжіть рівняння: 3x / 4 = 6.", "t": "6. Лінійні рівняння. Лінійні рівняння з параметром",
      "type": "choice", "opts": ["2", "4.5", "8", "18", "24"], "ans": 2},
     {"q": "<b>2/22.</b> У коробці 48 маркерів. Синіх у 3 рази більше, ніж червоних. Скільки червоних?",
@@ -147,27 +139,6 @@ def mark_bot_order_as_paid(order_id):
         order.save()
     except Exception as e:
         print(f"Помилка оновлення статусу замовлення {order_id}: {e}")
-
-
-# НОВЕ: Функція, яка спрацює через 12 годин
-async def check_order_and_remind(user_id: int, order_id: int, bot):
-    try:
-        # Перевіряємо статус замовлення в БД
-        order = await sync_to_async(Order.objects.get)(id=order_id)
-        if order.status == 'pending':
-            builder = InlineKeyboardBuilder()
-            builder.button(text="💳 Завершити оплату", callback_data=f"repay_{order_id}")
-            builder.button(text="🙋‍♂️ Потрібна допомога", callback_data="ask_help")
-            builder.adjust(1)
-
-            text = (
-                "Привіт! ⏳ Твоя збірка матеріалів все ще чекає у кошику.\n\n"
-                "Можливо, виникли труднощі з оплатою чи ти сумніваєшся, чи підійде тобі цей конспект? "
-                "Натисни кнопку нижче або <b>просто напиши мені відповідь сюди</b> — я з радістю допоможу!"
-            )
-            await bot.send_message(user_id, text, parse_mode="HTML", reply_markup=builder.as_markup())
-    except Exception as e:
-        print(f"Помилка відправки нагадування: {e}")
 
 
 @sync_to_async
@@ -593,15 +564,6 @@ async def process_checkout(callback: types.CallbackQuery):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    # НОВЕ: Запускаємо відлік часу. Рівно через 12 годин бот перевірить статус
-    run_time = datetime.now() + timedelta(minutes=1)  # Для тестування можна змінити на timedelta(minutes=1)
-    scheduler.add_job(
-        check_order_and_remind,
-        "date",
-        run_date=run_time,
-        args=[user.id, db_order_id, callback.bot]
-    )
-
     try:
         admin_id = int(settings.TELEGRAM_ADMIN_ID)
         await callback.bot.send_message(admin_id,
@@ -645,7 +607,7 @@ async def paid_confirm(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# НОВЕ: Обробка кнопки нагадування "Спробувати ще раз"
+# Обробка кнопки нагадування "Спробувати ще раз"
 @router.callback_query(F.data.startswith("repay_"))
 async def repay_reminder(callback: types.CallbackQuery):
     card_number = "5408810041945642"
@@ -664,7 +626,7 @@ async def repay_reminder(callback: types.CallbackQuery):
     await callback.answer()
 
 
-# НОВЕ: Обробка кнопки "Потрібна допомога"
+# Обробка кнопки "Потрібна допомога"
 @router.callback_query(F.data == "ask_help")
 async def ask_help_callback(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("Напиши своє запитання сюди, і я відповім тобі найближчим часом:")
