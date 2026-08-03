@@ -519,61 +519,26 @@ def topup_balance_view(request):
             return redirect('cabinet')
 
     return redirect('cabinet')
+
+
 @csrf_exempt
 def mono_webhook(request):
+    print("=== УВАГА! ХТОСЬ ПОСТУКАВ У ВЕБХУК ===")
+    print(f"Метод: {request.method}")
+    print(f"Шлях: {request.path}")
+
     if request.method == 'POST':
         try:
-            # 1. Читаємо дані від банку напряму (без перевірки застарілого ключа)
-            data = json.loads(request.body)
-            invoice_id = data.get('invoiceId')
-            status = data.get('status')
-            reference = data.get('reference', '')
+            # Читаємо сирі дані
+            body_bytes = request.body
+            print(f"Сирі дані: {body_bytes}")
 
-            # 2. Якщо оплата успішна
-            if status == 'success':
-
-                # СЦЕНАРІЙ А: Поповнення балансу
-                if reference.startswith('topup_'):
-                    parts = reference.split('_')
-                    if len(parts) >= 2:
-                        user_id = parts[1]
-                        user = User.objects.get(id=user_id)
-
-                        amount_uah = data.get('amount', 0) / 100
-                        user.balance += amount_uah
-                        user.save()
-
-                        msg = f"💰 Нове поповнення балансу!\nУчень: {user.email}\nСума: {amount_uah} ₴"
-                        send_telegram_notification(msg)
-
-                # СЦЕНАРІЙ Б: Купівля матеріалів з кошика
-                else:
-                    order = Order.objects.get(mono_invoice_id=invoice_id)
-                    if order.status != 'paid':
-                        order.status = 'paid'
-                        order.save()
-
-                        for item in order.items.all():
-                            # Видаємо сам матеріал
-                            order.user.purchased_materials.add(item.material)
-
-                            # Розпаковуємо пакет
-                            if item.material.is_bundle:
-                                for sub_material in item.material.included_materials.all():
-                                    order.user.purchased_materials.add(sub_material)
-
-                        # Очищаємо кошик
-                        cart = Cart.objects.filter(user=order.user).first()
-                        if cart:
-                            cart.items.all().delete()
-
-                        msg = f"🛒 Нова покупка на сайті!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
-                        send_telegram_notification(msg)
-
-            return HttpResponse("OK", status=200)
+            # Пробуємо розшифрувати JSON
+            data = json.loads(body_bytes)
+            print(f"Розшифрований JSON: {data}")
 
         except Exception as e:
-            print(f"Webhook Error: {e}")
-            return HttpResponse("Error", status=400)
+            print(f"ПОМИЛКА ЧИТАННЯ ДАНИХ: {e}")
 
-    return HttpResponse("Method not allowed", status=405)
+    # Завжди повертаємо 200, щоб Монобанк думав, що все добре
+    return HttpResponse("OK", status=200)

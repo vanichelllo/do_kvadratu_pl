@@ -57,7 +57,7 @@ urlpatterns = [
 
     path('cart/pay/balance/', pay_from_balance, name='pay_from_balance'),
     path('cart/pay/mono/', pay_with_mono, name='pay_with_mono'),
-    path('mono/webhook/', mono_webhook, name='mono_webhook'),
+    path('mono/webhook/', views.mono_webhook, name='mono_webhook'),
     path('cabinet/topup/', topup_balance_view, name='topup_balance'),
 
     # Відновлення пароля
