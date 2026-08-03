@@ -382,7 +382,14 @@ def pay_from_balance(request):
             )
 
             for item in cart.items.all():
+                # Видаємо сам матеріал
                 request.user.purchased_materials.add(item.material)
+
+                # ДОДАНО: Розпакування пакету (видаємо всі вкладені конспекти)
+                if item.material.is_bundle:
+                    for sub_material in item.material.included_materials.all():
+                        request.user.purchased_materials.add(sub_material)
+
                 OrderItem.objects.create(
                     order=order,
                     material=item.material,
@@ -397,7 +404,6 @@ def pay_from_balance(request):
     else:
         messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
         return redirect('cart_detail')
-
 
 def send_telegram_notification(message):
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
@@ -560,7 +566,13 @@ def mono_webhook(request):
                         order.save()
 
                         for item in order.items.all():
+                            # Видаємо сам матеріал
                             order.user.purchased_materials.add(item.material)
+
+                            # ДОДАНО: Розпакування пакету (видаємо всі вкладені конспекти)
+                            if item.material.is_bundle:
+                                for sub_material in item.material.included_materials.all():
+                                    order.user.purchased_materials.add(sub_material)
 
                         cart = Cart.objects.filter(user=order.user).first()
                         if cart:
