@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from users.views import register_view
 from django.contrib.auth.views import LoginView, LogoutView
+from materials.views import mono_webhook
 
 # ІМПОРТ З MATERIALS ОНОВЛЕНО (додано booking_view)
 from materials.views import (
@@ -57,7 +58,7 @@ urlpatterns = [
 
     path('cart/pay/balance/', pay_from_balance, name='pay_from_balance'),
     path('cart/pay/mono/', pay_with_mono, name='pay_with_mono'),
-    path('mono/webhook/', views.mono_webhook, name='mono_webhook'),
+    path('mono/webhook/', mono_webhook, name='mono_webhook'),
     path('cabinet/topup/', topup_balance_view, name='topup_balance'),
 
     # Відновлення пароля
