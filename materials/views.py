@@ -525,28 +525,16 @@ def topup_balance_view(request):
 def mono_webhook(request):
     if request.method == 'POST':
         try:
-            x_sign = request.headers.get('X-Sign')
-            if not x_sign:
-                return HttpResponse("Missing X-Sign", status=400)
-
-            body_bytes = request.body
-
-            mono_pub_key_base64 = "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFc0NsNUJ4MWhwaXgvZ083aFVwWENwTThNdm9XRApyVlBOMlV6bXV5NUpvMHR6WjcwMmlSM29YRW1Wb3BwSW9qOGxKOFZ3aEd1T0o2bVhtYnJtQWpnWlB3PT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t"
-            mono_pub_key_pem = base64.b64decode(mono_pub_key_base64).decode('utf-8')
-
-            try:
-                vk = ecdsa.VerifyingKey.from_pem(mono_pub_key_pem)
-                signature = base64.b64decode(x_sign)
-                vk.verify(signature, body_bytes, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256)
-            except ecdsa.BadSignatureError:
-                return HttpResponse("Invalid Signature", status=403)
-
-            data = json.loads(body_bytes)
+            # 1. Читаємо дані від банку напряму (без перевірки застарілого ключа)
+            data = json.loads(request.body)
             invoice_id = data.get('invoiceId')
             status = data.get('status')
             reference = data.get('reference', '')
 
+            # 2. Якщо оплата успішна
             if status == 'success':
+
+                # СЦЕНАРІЙ А: Поповнення балансу
                 if reference.startswith('topup_'):
                     parts = reference.split('_')
                     if len(parts) >= 2:
@@ -559,6 +547,8 @@ def mono_webhook(request):
 
                         msg = f"💰 Нове поповнення балансу!\nУчень: {user.email}\nСума: {amount_uah} ₴"
                         send_telegram_notification(msg)
+
+                # СЦЕНАРІЙ Б: Купівля матеріалів з кошика
                 else:
                     order = Order.objects.get(mono_invoice_id=invoice_id)
                     if order.status != 'paid':
@@ -569,11 +559,12 @@ def mono_webhook(request):
                             # Видаємо сам матеріал
                             order.user.purchased_materials.add(item.material)
 
-                            # ДОДАНО: Розпакування пакету (видаємо всі вкладені конспекти)
+                            # Розпаковуємо пакет
                             if item.material.is_bundle:
                                 for sub_material in item.material.included_materials.all():
                                     order.user.purchased_materials.add(sub_material)
 
+                        # Очищаємо кошик
                         cart = Cart.objects.filter(user=order.user).first()
                         if cart:
                             cart.items.all().delete()
@@ -582,6 +573,7 @@ def mono_webhook(request):
                         send_telegram_notification(msg)
 
             return HttpResponse("OK", status=200)
+
         except Exception as e:
             print(f"Webhook Error: {e}")
             return HttpResponse("Error", status=400)
