@@ -27,8 +27,13 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
 
-    # --- ДОДАНО ДЛЯ МОНОБАНКУ (Опис та Фото) ---
-    description = models.TextField(verbose_name="Опис матеріалу", blank=True, null=True)
+    # --- ОНОВЛЕНО ДЛЯ МОНОБАНКУ (Розширений опис за замовчуванням та Фото) ---
+    description = models.TextField(
+        verbose_name="Опис матеріалу",
+        blank=True,
+        null=True,
+        default="Авторський конспект від освітнього проєкту «До Квадрату» — це ваш надійний помічник для успішного складання НМТ з математики. Матеріал створений з урахуванням 7-річного досвіду викладання та містить лише найголовніше: структуровану теорію без зайвої води, усі необхідні базові формули, алгоритми розв'язання та детальний розбір типових практичних завдань. Ідеально підходить як для самостійного вивчення теми з нуля, так і для швидкого повторення перед іспитом."
+    )
     image = models.ImageField(upload_to='material_images/', blank=True, null=True, verbose_name="Обкладинка (Фото)")
     # -------------------------------------------
 
