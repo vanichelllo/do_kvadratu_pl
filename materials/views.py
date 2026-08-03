@@ -441,19 +441,19 @@ def pay_with_mono(request):
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)
 
     amount_kopecks = int(total_price * 100)
-    domain = request.build_absolute_uri('/')[:-1]
 
     headers = {
         'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
         'Content-Type': 'application/json'
     }
 
+    # ЖОРСТКО ПРОПИСУЄМО HTTPS, щоб Render не губив запити
     payload = {
         "amount": amount_kopecks,
         "ccy": 980,
         "reference": str(order.id),
-        "redirectUrl": f"{domain}/cabinet/",
-        "webHookUrl": f"{domain}/mono/webhook/",
+        "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
+        "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
     }
 
     try:
@@ -487,7 +487,6 @@ def topup_balance_view(request):
             return redirect('cabinet')
 
         amount_kopecks = int(amount * 100)
-        domain = request.build_absolute_uri('/')[:-1]
 
         headers = {
             'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
@@ -496,12 +495,13 @@ def topup_balance_view(request):
 
         reference = f"topup_{request.user.id}_{int(time.time())}"
 
+        # ЖОРСТКО ПРОПИСУЄМО HTTPS
         payload = {
             "amount": amount_kopecks,
             "ccy": 980,
             "reference": reference,
-            "redirectUrl": f"{domain}/cabinet/",
-            "webHookUrl": f"{domain}/mono/webhook/",
+            "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
+            "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
         }
 
         try:
@@ -519,8 +519,6 @@ def topup_balance_view(request):
             return redirect('cabinet')
 
     return redirect('cabinet')
-
-
 @csrf_exempt
 def mono_webhook(request):
     if request.method == 'POST':
