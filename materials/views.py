@@ -135,6 +135,7 @@ def diagnostic_test_view(request):
 
     return render(request, 'materials/diagnostic_test.html', {'questions': questions})
 
+
 @login_required
 def cart_detail(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
@@ -192,8 +193,11 @@ class OfferView(TemplateView):
 class PrivacyView(TemplateView):
     template_name = 'materials/privacy.html'
 
+
 def booking_view(request):
     return render(request, 'booking.html')
+
+
 class MaterialListView(ListView):
     model = StudyMaterial
     template_name = 'materials/list.html'
@@ -275,7 +279,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
 
 # ==========================================
-# ОНОВЛЕНО: Безпечне читання матеріалу з Cloudinary
+# Безпечне читання матеріалу з Cloudinary
 # ==========================================
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
@@ -304,6 +308,8 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
+
+
 # ==========================================
 
 
@@ -405,6 +411,7 @@ def pay_from_balance(request):
         messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
         return redirect('cart_detail')
 
+
 def send_telegram_notification(message):
     token = getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
     chat_id = getattr(settings, 'TELEGRAM_ADMIN_ID', '')
@@ -486,6 +493,14 @@ def topup_balance_view(request):
             messages.error(request, "Будь ласка, введіть коректну суму.")
             return redirect('cabinet')
 
+        # Створюємо "порожнє" замовлення для відстеження поповнення через invoice_id
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
+                total_amount=amount,
+                status='pending'
+            )
+
         amount_kopecks = int(amount * 100)
 
         headers = {
@@ -493,13 +508,11 @@ def topup_balance_view(request):
             'Content-Type': 'application/json'
         }
 
-        reference = f"topup_{request.user.id}_{int(time.time())}"
-
         # ЖОРСТКО ПРОПИСУЄМО HTTPS
         payload = {
             "amount": amount_kopecks,
             "ccy": 980,
-            "reference": reference,
+            "reference": str(order.id),
             "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
             "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
         }
@@ -510,6 +523,8 @@ def topup_balance_view(request):
             data = response.json()
 
             if 'pageUrl' in data:
+                order.mono_invoice_id = data['invoiceId']
+                order.save()
                 return redirect(data['pageUrl'])
             else:
                 messages.error(request, "Помилка платіжної системи. Спробуйте пізніше.")
@@ -523,22 +538,53 @@ def topup_balance_view(request):
 
 @csrf_exempt
 def mono_webhook(request):
-    print("=== УВАГА! ХТОСЬ ПОСТУКАВ У ВЕБХУК ===")
-    print(f"Метод: {request.method}")
-    print(f"Шлях: {request.path}")
-
     if request.method == 'POST':
         try:
-            # Читаємо сирі дані
-            body_bytes = request.body
-            print(f"Сирі дані: {body_bytes}")
+            data = json.loads(request.body)
+            invoice_id = data.get('invoiceId')
+            status = data.get('status')
 
-            # Пробуємо розшифрувати JSON
-            data = json.loads(body_bytes)
-            print(f"Розшифрований JSON: {data}")
+            # Обробляємо лише успішні оплати
+            if status == 'success' and invoice_id:
+                try:
+                    # Шукаємо замовлення за ID інвойсу, оскільки Монобанк не завжди повертає reference
+                    order = Order.objects.get(mono_invoice_id=invoice_id)
 
+                    if order.status != 'paid':
+                        order.status = 'paid'
+                        order.save()
+
+                        # ПЕРЕВІРКА: Це покупка матеріалів чи поповнення балансу?
+                        if order.items.exists():
+                            # 1. Товари є — значить це покупка
+                            for item in order.items.all():
+                                order.user.purchased_materials.add(item.material)
+                                # Розпаковуємо пакет
+                                if item.material.is_bundle:
+                                    for sub_material in item.material.included_materials.all():
+                                        order.user.purchased_materials.add(sub_material)
+
+                            cart = Cart.objects.filter(user=order.user).first()
+                            if cart:
+                                cart.items.all().delete()
+
+                            msg = f"🛒 Нова покупка на сайті!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
+                            send_telegram_notification(msg)
+
+                        else:
+                            # 2. Товарів немає — значить це просто поповнення балансу
+                            order.user.balance += float(order.total_amount)
+                            order.user.save()
+
+                            msg = f"💰 Нове поповнення балансу!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
+                            send_telegram_notification(msg)
+
+                except Order.DoesNotExist:
+                    pass  # Замовлення не знайдено (можливо інший платіж або тестовий інвойс)
+
+            return HttpResponse("OK", status=200)
         except Exception as e:
-            print(f"ПОМИЛКА ЧИТАННЯ ДАНИХ: {e}")
+            print(f"Webhook Error: {e}")
+            return HttpResponse("Error", status=400)
 
-    # Завжди повертаємо 200, щоб Монобанк думав, що все добре
-    return HttpResponse("OK", status=200)
+    return HttpResponse("Method not allowed", status=405)
