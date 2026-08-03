@@ -27,6 +27,11 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
 
+    # --- ДОДАНО ДЛЯ МОНОБАНКУ (Опис та Фото) ---
+    description = models.TextField(verbose_name="Опис матеріалу", blank=True, null=True)
+    image = models.ImageField(upload_to='material_images/', blank=True, null=True, verbose_name="Обкладинка (Фото)")
+    # -------------------------------------------
+
     # ОНОВЛЕНО: Намертво прив'язуємо це поле до хмари Cloudinary
     file = models.FileField(
         upload_to='documents/',

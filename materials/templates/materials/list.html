@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %} <!-- ДОДАНО: Завантажуємо статику для дефолтної картинки -->
 
 {% block title %}Вітрина | ДО КВАДРАТУ{% endblock %}
 
@@ -11,7 +12,7 @@
         border: 3px solid var(--brand-blue);
         border-radius: 12px;
         box-shadow: 6px 6px 0px var(--brand-yellow);
-        margin-bottom: 25px; /* Трохи зменшив відступ, бо нижче будуть фільтри */
+        margin-bottom: 25px;
     }
 
     .search-input, .search-select {
@@ -76,7 +77,7 @@
         display: flex;
         flex-direction: column;
         transition: transform 0.2s, box-shadow 0.2s;
-        position: relative; /* Додано для правильного позиціювання елементів */
+        position: relative;
     }
 
     .mac-window:hover {
@@ -106,7 +107,6 @@
         flex-direction: column;
     }
 
-    /* Стилі для нових бейджиків */
     .badge {
         padding: 6px 12px;
         border-radius: 6px;
@@ -156,7 +156,6 @@
             {% endfor %}
         </select>
 
-        <!-- Зберігаємо тип, якщо він вже обраний у фільтрах -->
         {% if request.GET.type %}
             <input type="hidden" name="type" value="{{ request.GET.type }}">
         {% endif %}
@@ -165,7 +164,7 @@
     </form>
 </div>
 
-<!-- Швидкі фільтри для Пакетів та Безкоштовних файлів -->
+<!-- Швидкі фільтри -->
 <div class="quick-filters">
     <a href="{% url 'materials_list' %}" class="filter-pill {% if not request.GET.type %}active{% endif %}">Всі матеріали</a>
     <a href="?type=bundle" class="filter-pill {% if request.GET.type == 'bundle' %}active{% endif %}" style="border-color: var(--brand-yellow); color: var(--brand-blue); {% if request.GET.type == 'bundle' %}background: var(--brand-yellow);{% endif %}">📦 Пакети</a>
@@ -189,17 +188,26 @@
                 </div>
             </div>
 
+            <!-- НОВИЙ БЛОК: Обкладинка (Фото) конспекту -->
+            <div style="width: 100%; aspect-ratio: 4/3; background-color: #2b4170; overflow: hidden; border-bottom: 2px solid rgba(255,255,255,0.05);">
+                {% if material.image %}
+                    <img src="{{ material.image.url }}" alt="{{ material.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                {% else %}
+                    <img src="{% static 'images/default_cover.svg' %}" alt="Конспект До Квадрату" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                {% endif %}
+            </div>
+            <!-- КІНЕЦЬ БЛОКУ З ФОТО -->
+
             <!-- Тіло картки -->
             <div class="mac-body">
-
-                <!-- Верхній рядок: Категорія + Бейджик (Пакет/Безкоштовно) -->
+                <!-- Верхній рядок: Категорія + Бейджик -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     {% if material.category %}
                     <span style="background-color: rgba(255, 255, 255, 0.15); color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
                         {{ material.category.name }}
                     </span>
                     {% else %}
-                    <span></span> <!-- Пустий span для вирівнювання бейджика по правому краю, якщо категорії немає -->
+                    <span></span>
                     {% endif %}
 
                     {% if material.is_free %}
@@ -227,7 +235,7 @@
 
                 <!-- Опис -->
                 <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; flex-grow: 1;">
-                    {{ material.description|truncatewords:12 }}
+                    {{ material.description|default:"Авторський конспект для підготовки до НМТ. Містить теорію та практичні завдання."|truncatewords:15 }}
                 </p>
 
                 <!-- Ціна та кнопка -->
