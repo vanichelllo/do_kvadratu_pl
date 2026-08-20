@@ -122,12 +122,42 @@
         });
 
         // 1. Безпечно дістаємо HTML-код із бази
-        const htmlContent = JSON.parse(document.getElementById('html-data').textContent);
+        let htmlContent = JSON.parse(document.getElementById('html-data').textContent);
         const iframe = document.getElementById('presentation-frame');
 
-        // 2. Якщо код є - відмальовуємо його через надійний srcdoc
+        // 2. Якщо код є - відмальовуємо його
         if (htmlContent && htmlContent.trim() !== "") {
+
+            // МАГІЯ: Ховаємо логотип і кнопку теми, робимо панель прозорою і "плаваючою"
+            const customStyles = `
+                <style>
+                    /* Ховаємо текст і зміну теми */
+                    .brand-logo-container, #btn-theme { display: none !important; }
+
+                    /* Перетворюємо шапку на прозорий контейнер лише для зеленої кнопки */
+                    .navbar {
+                        position: absolute !important;
+                        top: 15px !important;
+                        right: 25px !important;
+                        background: transparent !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                        height: auto !important;
+                        padding: 0 !important;
+                        z-index: 1000 !important;
+                    }
+
+                    /* Розширюємо слайд на звільнене місце */
+                    .presentation-viewport { height: calc(100vh - 61px) !important; }
+                </style>
+            </head>`;
+
+            // Вшиваємо наші стилі прямо в код презентації
+            htmlContent = htmlContent.replace('</head>', customStyles);
+
+            // Відмальовуємо оновлений код
             iframe.srcdoc = htmlContent;
+
         } else {
             // Якщо пусто - показуємо повідомлення-заглушку
             iframe.srcdoc = `
