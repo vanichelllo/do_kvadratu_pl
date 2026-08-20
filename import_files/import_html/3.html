@@ -1,0 +1,893 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Степінь та його властивості | ДО КВАДРАТУ</title>
+
+    <!-- MathJax для ідеального рендерингу математичних формул -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-blue-light: #4b6cb7;
+            --brand-green: #27ae60;
+            --brand-yellow: #f39c12;
+            --brand-yellow-light: #f1c40f;
+            --text-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --shadow: 0 8px 24px rgba(52, 78, 134, 0.08);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.25s ease;
+            --warning-red: #e74c3c;
+            --widget-bg: #eef3f9;
+        }
+
+        [data-theme="dark"] {
+            --brand-blue: #6c8dfa;
+            --brand-blue-light: #8faaff;
+            --brand-green: #2ecc71;
+            --brand-yellow: #f1c40f;
+            --text-dark: #ecf0f1;
+            --bg-light: #151c28;
+            --card-bg: #1f2a3c;
+            --border-color: #31425d;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --widget-bg: #182232;
+        }
+
+        html, body {
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* ШАПКА ТА НАВІГАЦІЯ */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--brand-green);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 100;
+            position: relative;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .timer-badge {
+            font-family: monospace;
+            background: rgba(52, 78, 134, 0.1);
+            color: var(--brand-blue);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-action, .btn-primary {
+            background-color: var(--brand-green);
+            color: white;
+            padding: 7px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1.5px solid var(--brand-blue);
+            color: var(--text-dark);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        .btn-pdf { border-color: var(--warning-red); color: var(--warning-red); }
+        .btn-pdf:hover { background-color: var(--warning-red); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow-light)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ДЛЯ СЛАЙДІВ */
+        .presentation-viewport {
+            height: calc(100vh - 125px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+        }
+
+        .slide-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 1040px;
+            height: 100%;
+            max-height: 640px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            padding: 24px 34px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .slide-card.active { display: flex; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.06); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.remark { border-left-color: #34495e; background-color: rgba(52, 73, 94, 0.06); }
+        .box.remark .box-title { color: #34495e; }
+
+        /* БЕЙДЖ ДОВІДКОВИХ МАТЕРІАЛІВ НМТ */
+        .nmt-ref-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            font-size: 0.74rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+            vertical-align: middle;
+        }
+
+        /* СІТКИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        /* ВІДЖЕТИ ТА ТРЕНАЖЕРИ */
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); margin-bottom: 8px; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .widget-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+        .widget-btn { background-color: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.88rem; transition: var(--transition); }
+        .widget-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 8px 12px; font-size: 0.93rem; border: 1px dashed var(--brand-green); min-height: 38px; display: flex; align-items: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ШАПКА -->
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg id="app-logo" class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Інтерактивна теорія</span>
+        </a>
+
+        <div class="nav-controls">
+            <a href="#" class="btn-secondary btn-pdf" title="Завантажити повний конспект">📄 Завантажити PDF</a>
+            <span class="timer-badge" id="speaker-timer">00:00</span>
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТИТУЛЬНИЙ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема 03 / Повний курс алгебри</span>
+                <h1 class="slide-title">Степінь та його властивості</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="grid-2col" style="margin-bottom: 12px;">
+                    <div class="box definition">
+                        <div class="box-title">📖 Зміст уроку:</div>
+                        <ul>
+                            <li><strong>1.</strong> Означення степеня, основа та показник.</li>
+                            <li><strong>2.</strong> Анатомія степеня та особливі випадки ($a^0$, $a^1$, $0^0$).</li>
+                            <li><strong>3.</strong> Усі 7 властивостей степеня з довідника НМТ.</li>
+                            <li><strong>4.</strong> Степінь з від'ємним показником $a^{-n}$ та дроби $(\frac{a}{b})^{-n}$.</li>
+                            <li><strong>5.</strong> Степінь з дробовим показником $a^{\frac{m}{n}} = \sqrt[n]{a^m}$.</li>
+                            <li><strong>6.</strong> Робота з дужками та мінусом: $(-a)^n$ vs $-a^n$.</li>
+                            <li><strong>7.</strong> Лайфхак НМТ: зведення до найменшої спільної основи.</li>
+                        </ul>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">⚡ Інтерактивні інструменти уроку:</div>
+                        <ul>
+                            <li>🔍 Живий генератор розкладу степеня ($a^n = a \cdot a \dots a$)</li>
+                            <li>📐 Інтерактивна схема анатомії степеня</li>
+                            <li>🧮 Калькулятор дій зі степенями (множення, ділення, степінь у степені)</li>
+                            <li>🔄 Конвертер від'ємних і дробових степенів у корені</li>
+                            <li>⚠️ Тестер дужок та парності показника для від'ємної основи</li>
+                            <li>🚀 Таблиця та помічник зведення до однакової основи ($2^k, 3^k, 5^k$)</li>
+                        </ul>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button class="btn-primary" onclick="goToSlide(2)" style="padding: 10px 24px; font-size: 1rem;">Розпочати урок →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: 1. БАЗОВІ ПОНЯТТЯ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1</span>
+                <h2 class="slide-title">1. Базові поняття: Що таке степінь?</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення степеня</div>
+                    <p><strong>Степенем</strong> числа $a$ з натуральним показником $n > 1$ називають добуток $n$ множників, кожен із яких дорівнює $a$:</p>
+                    <p style="text-align: center; font-size: 1.3rem; font-weight: bold; color: var(--brand-blue);">
+                        $$a^n = \underbrace{a \cdot a \cdot \dots \cdot a}_{n \text{ разів}}$$
+                    </p>
+                    <p>Де $a$ -- <strong>основа</strong> (число, яке множимо), $n$ -- <strong>показник</strong> (кількість множників).</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔍 Живий візуалізатор степеня як добутку:</div>
+                    <div class="widget-inputs">
+                        <label>Основа $a$: <input type="number" id="base-val" class="widget-input" value="3" style="width: 70px;"></label>
+                        <label>Показник $n$: <input type="number" id="exp-val" class="widget-input" min="1" max="8" value="4" style="width: 60px;"></label>
+                        <button class="widget-btn" onclick="calcBasicPower()">Обчислити</button>
+                    </div>
+                    <div class="widget-output" id="base-output">
+                        3⁴ = 3 · 3 · 3 · 3 = 81 (множимо 3 саме на себе 4 рази).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: АНАТОМІЯ СТЕПЕНЯ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">Анатомія степеня $a^n$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: center;">
+                    <div class="box definition">
+                        <div class="box-title">Елементи виразу:</div>
+                        <ul>
+                            <li><strong style="color: #2980b9;">Основа ($a$):</strong> показує, <em>яке саме число</em> повторюється як множник.</li>
+                            <li><strong style="color: #c0392b;">Показник ($n$):</strong> маленьке число зверху справа, показує <em>скільки разів</em> ми беремо основу.</li>
+                        </ul>
+                    </div>
+
+                    <!-- SVG Анатомія з конспекту -->
+                    <div style="background: var(--card-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center;">
+                        <svg viewBox="0 0 340 180" width="100%" height="180">
+                            <!-- Основа -->
+                            <text x="135" y="125" font-size="80" font-family="serif" font-style="italic" font-weight="bold" fill="var(--text-dark)">a</text>
+                            <!-- Показник -->
+                            <text x="180" y="65" font-size="34" font-family="serif" font-style="italic" font-weight="bold" fill="#c0392b">n</text>
+                            
+                            <!-- Пунктирне коло навколо n -->
+                            <circle cx="190" cy="55" r="22" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+                            <!-- Стрілка до основи (синя) -->
+                            <path d="M 40 100 L 125 100" fill="none" stroke="#2980b9" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+                            <text x="35" y="88" font-size="12" font-weight="bold" fill="#2980b9" text-anchor="end">Основа</text>
+                            <text x="35" y="104" font-size="10" fill="var(--text-dark)" text-anchor="end">(число, яке множимо)</text>
+
+                            <!-- Стрілка до показника (червона) -->
+                            <path d="M 300 55 L 218 55" fill="none" stroke="#c0392b" stroke-width="2.5"/>
+                            <polygon points="218,55 226,50 226,60" fill="#c0392b"/>
+                            <text x="305" y="48" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="start">Показник</text>
+                            <text x="305" y="64" font-size="10" fill="var(--text-dark)" text-anchor="start">(кількість множників)</text>
+
+                            <defs>
+                                <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2980b9"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ОСОБЛИВІ ВИПАДКИ ТА 0^0 -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1 (Продовження)</span>
+                <h2 class="slide-title">Особливі випадки: степені $0$ та $1$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-3col">
+                    <div class="box theorem" style="text-align: center;">
+                        <div class="box-title" style="justify-content: center;">Нульовий степінь</div>
+                        <p style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; margin: 8px 0;">$$a^0 = 1$$</p>
+                        <p><small>Для будь-якого $a \neq 0$. Будь-яке ненульове число в степені 0 дорівнює 1!</small></p>
+                    </div>
+
+                    <div class="box example" style="text-align: center;">
+                        <div class="box-title" style="justify-content: center;">Перший степінь</div>
+                        <p style="font-size: 1.3rem; font-weight: bold; color: var(--brand-green); margin: 8px 0;">$$a^1 = a$$</p>
+                        <p><small>Число саме по собі береться 1 раз і не змінюється.</small></p>
+                    </div>
+
+                    <div class="box error" style="text-align: center;">
+                        <div class="box-title" style="justify-content: center;">Невизначеність</div>
+                        <p style="font-size: 1.3rem; font-weight: bold; color: var(--warning-red); margin: 8px 0;">$$0^0$$</p>
+                        <p><small>Вираз <strong>не має змісту</strong> (математична невизначеність).</small></p>
+                    </div>
+                </div>
+
+                <div class="box example" style="margin-top: 8px;">
+                    <div class="box-title">Приклад з конспекту:</div>
+                    <p style="font-size: 1.15rem; margin: 0;">$$a^0 = 1 \implies \mathbf{2026^0 = 1}, \quad (-17,5)^0 = 1, \quad \left(\frac{3}{4}\right)^0 = 1$$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ВЛАСТИВОСТІ 1–3 (ОДНАКОВІ ОСНОВИ) -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Властивості 1–3</span>
+                <h2 class="slide-title">2. Властивості степенів з однаковими основами</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">
+                        <span>Для $a > 0$ та довільних $m, n \in \mathbb{R}$:</span>
+                        <span class="nmt-ref-badge">📋 Є в довідкових матеріалах НМТ</span>
+                    </div>
+                    <ul style="line-height: 1.9; font-size: 1.05rem; margin: 0;">
+                        <li><strong>1. Множення:</strong> при множенні степенів з однаковими основами показники <strong>додаються</strong>:
+                            <span style="float: right; font-weight: bold; color: #8e44ad;">$$a^m \cdot a^n = a^{m+n}$$</span>
+                        </li>
+                        <li><strong>2. Ділення:</strong> при діленні степенів з однаковими основами показники <strong>віднімаються</strong>:
+                            <span style="float: right; font-weight: bold; color: #8e44ad;">$$a^m : a^n = a^{m-n}$$</span>
+                        </li>
+                        <li><strong>3. Піднесення степеня до степеня:</strong> показники <strong>перемножуються</strong>:
+                            <span style="float: right; font-weight: bold; color: #8e44ad;">$$(a^m)^n = a^{m \cdot n}$$</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 Тренажер операцій з однаковими основами:</div>
+                    <div class="widget-inputs">
+                        <label>Основа $a$: <input type="text" id="op-base" class="widget-input" value="3" style="width: 50px; text-align: center;"></label>
+                        <label>$m$: <input type="number" id="op-m" class="widget-input" value="8" style="width: 55px;"></label>
+                        <label>$n$: <input type="number" id="op-n" class="widget-input" value="6" style="width: 55px;"></label>
+                        <button class="widget-btn" onclick="calcPropSameBase()">Обчислити всі 3 дії</button>
+                    </div>
+                    <div class="widget-output" id="same-base-output">
+                        3⁸ · 3⁶ = 3¹⁴ &nbsp;|&nbsp; 3⁸ : 3⁶ = 3² = 9 &nbsp;|&nbsp; (3⁸)⁶ = 3⁴⁸
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ВЛАСТИВОСТІ 4–5 (ДОБУТОК ТА ДРІБ) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Властивості 4–5</span>
+                <h2 class="slide-title">Степінь добутку та Степінь дробу</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box theorem">
+                        <div class="box-title">
+                            <span>4. Степінь добутку</span>
+                            <span class="nmt-ref-badge">📋 Довідник НМТ</span>
+                        </div>
+                        <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #8e44ad;">$$(ab)^n = a^n b^n$$</p>
+                        <p>Показник застосовується до <strong>кожного</strong> множника в дужках.</p>
+                        <div class="box example" style="margin-top: 6px;">
+                            <strong>Приклад:</strong> $(2y)^4 = 2^4 \cdot y^4 = \mathbf{16y^4}$
+                        </div>
+                    </div>
+
+                    <div class="box theorem">
+                        <div class="box-title">
+                            <span>5. Степінь дробу</span>
+                            <span class="nmt-ref-badge">📋 Довідник НМТ</span>
+                        </div>
+                        <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #8e44ad;">$$\left(\frac{a}{b}\right)^n = \frac{a^n}{b^n}$$</p>
+                        <p>Підносимо окремо і чисельник, і знаменник.</p>
+                        <div class="box example" style="margin-top: 6px;">
+                            <strong>Приклад:</strong> $\left(\frac{2}{3}\right)^3 = \frac{2^3}{3^3} = \mathbf{\frac{8}{27}}$
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ВЛАСТИВІСТЬ 6 (ВІД'ЄМНИЙ ПОКАЗНИК) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Властивість 6</span>
+                <h2 class="slide-title">Степінь із від'ємним показником</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box theorem">
+                        <div class="box-title">
+                            <span>6. Від'ємний показник</span>
+                            <span class="nmt-ref-badge">📋 Довідник НМТ</span>
+                        </div>
+                        <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #8e44ad;">$$a^{-n} = \frac{1}{a^n}$$</p>
+                        <p>Мінус у показнику «перевертає» число (відправляє його в знаменник дробу).</p>
+                    </div>
+
+                    <div class="box hack">
+                        <div class="box-title">Від'ємний степінь для звичайного дробу:</div>
+                        <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #d35400;">$$\left(\frac{a}{b}\right)^{-n} = \left(\frac{b}{a}\right)^n$$</p>
+                        <p>Дріб просто перевертається догори дриґом, а мінус у показнику зникає!</p>
+                    </div>
+                </div>
+
+                <div class="box example">
+                    <div class="box-title">Приклад з конспекту:</div>
+                    <p style="font-size: 1.15rem; margin: 0;">$$\left(\frac{3}{4}\right)^{-2} = \left(\frac{4}{3}\right)^2 = \frac{4^2}{3^2} = \mathbf{\frac{16}{9}}$$</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔄 Конвертер дробів з від'ємним показником:</div>
+                    <div class="widget-inputs">
+                        <label>($\frac{a}{b}$): <input type="number" id="frac-a" class="widget-input" value="3" style="width: 45px;"> / <input type="number" id="frac-b" class="widget-input" value="4" style="width: 45px;"></label>
+                        <label>показник: <input type="number" id="frac-pow" class="widget-input" value="-2" style="width: 55px;"></label>
+                        <button class="widget-btn" onclick="calcNegativeFrac()">Перетворити</button>
+                    </div>
+                    <div class="widget-output" id="neg-frac-output">
+                        (3/4)⁻² = (4/3)² = 16/9 = 1.777...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 8: ВЛАСТИВІСТЬ 7 (ДРОБОВИЙ ПОКАЗНИК) -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Властивість 7</span>
+                <h2 class="slide-title">Степінь із дробовим показником (Зв'язок із коренем)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">
+                        <span>7. Дробовий показник</span>
+                        <span class="nmt-ref-badge">📋 Довідник НМТ</span>
+                    </div>
+                    <p style="text-align: center; font-size: 1.35rem; font-weight: bold; color: #8e44ad;">$$a^{\frac{m}{n}} = \sqrt[n]{a^m}$$</p>
+                    <p>• Чисельник дробу ($m$) -- це <strong>степінь</strong> під коренем.<br>
+                    • Знаменник дробу ($n$) -- це <strong>степінь кореня</strong>.</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Типові приклади:</div>
+                        <ul>
+                            <li>$a^{\frac{1}{2}} = \sqrt{a}$</li>
+                            <li>$8^{\frac{1}{3}} = \sqrt[3]{8} = \mathbf{2}$</li>
+                            <li>$27^{\frac{2}{3}} = \sqrt[3]{27^2} = (\sqrt[3]{27})^2 = 3^2 = \mathbf{9}$</li>
+                        </ul>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🔄 Конвертер дробового степеня $a^{\frac{m}{n}}$:</div>
+                        <div class="widget-inputs">
+                            <label>$a$: <input type="number" id="frac-exp-a" class="widget-input" value="27" style="width: 55px;"></label>
+                            <label>$m/n$: <input type="number" id="frac-exp-m" class="widget-input" value="2" style="width: 45px;"> / <input type="number" id="frac-exp-n" class="widget-input" value="3" style="width: 45px;"></label>
+                            <button class="widget-btn" onclick="calcFractionalExp()">Перетворити</button>
+                        </div>
+                        <div class="widget-output" id="frac-exp-output">
+                            27^(2/3) = ³√(27²) = (³√27)² = 3² = 9.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 9: ПРИКЛАДИ СПРОЩЕННЯ -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Практичний блок</span>
+                <h2 class="slide-title">Покрокові приклади застосування властивостей</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Приклад 1: Ділення степенів</div>
+                        <p>$$\frac{a^m}{a^n} = a^{m-n} \implies \frac{3^8}{3^6} = 3^{8-6} = 3^2 = \mathbf{9}$$</p>
+                    </div>
+
+                    <div class="box example">
+                        <div class="box-title">Приклад 2: Степінь добутку</div>
+                        <p>$$(ab)^n = a^n b^n \implies (2y)^4 = 2^4 \cdot y^4 = \mathbf{16y^4}$$</p>
+                    </div>
+
+                    <div class="box example">
+                        <div class="box-title">Приклад 3: Степінь дробу</div>
+                        <p>$$\left(\frac{a}{b}\right)^n = \frac{a^n}{b^n} \implies \left(\frac{2}{3}\right)^3 = \frac{2^3}{3^3} = \mathbf{\frac{8}{27}}$$</p>
+                    </div>
+
+                    <div class="box example">
+                        <div class="box-title">Приклад 4: Від'ємний показник дробу</div>
+                        <p>$$\left(\frac{a}{b}\right)^{-n} = \left(\frac{b}{a}\right)^n \implies \left(\frac{3}{4}\right)^{-2} = \left(\frac{4}{3}\right)^2 = \mathbf{\frac{16}{9}}$$</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 10: ТИПОВА ПОМИЛКА: ДУЖКИ І МІНУС -->
+        <section class="slide-card" data-slide="10">
+            <div class="slide-header">
+                <span class="slide-tag">Увага! Типова помилка</span>
+                <h2 class="slide-title">Дужки при від'ємній основі: $(-a)^n$ проти $-a^n$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box error">
+                    <div class="box-title">⚠️ Будьте уважні з дужками при від'ємній основі:</div>
+                    <ul style="font-size: 1.05rem; line-height: 1.8;">
+                        <li><strong>$(-3)^2 = (-3) \cdot (-3) = \mathbf{9}$</strong><br>
+                        Мінус знаходиться всередині дужок, тому парний показник «нищить» мінус!</li>
+                        <li><strong>$-3^2 = -(3 \cdot 3) = \mathbf{-9}$</strong><br>
+                        Мінус стоїть окремо від степеня (підноситься лише число 3, а мінус просто дописується спереду).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚠️ Інтерактивний детектор мінуса та дужок:</div>
+                    <div class="widget-inputs">
+                        <label>Число $a$: <input type="number" id="sign-a" class="widget-input" value="3" style="width: 50px;"></label>
+                        <label>Показник $n$: <input type="number" id="sign-n" class="widget-input" value="2" style="width: 50px;"></label>
+                        <button class="widget-btn" onclick="testSignAndBrackets()">Порівняти</button>
+                    </div>
+                    <div class="widget-output" id="sign-output">
+                        (-3)² = 9 (додатне, бо парний степінь) | -3² = -9 (від'ємне, бо мінус не в степені).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 11: ЛАЙФХАК НМТ (ЗВЕДЕННЯ ДО СПІЛЬНОЇ ОСНОВИ) -->
+        <section class="slide-card" data-slide="11">
+            <div class="slide-header">
+                <span class="slide-tag">Лайфхак для НМТ</span>
+                <h2 class="slide-title">Зведення до найменшої спільної основи</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <div class="box-title">🚀 Головний принцип розв'язання тестів НМТ:</div>
+                    <p style="font-size: 1.05rem;">
+                        Якщо бачите в завданні різні основи (наприклад, $2, 4, 8$ або $3, 9, 27$) -- <strong>завжди зводьте їх до найменшої спільної основи</strong> перед тим, як застосовувати властивості!
+                    </p>
+                </div>
+
+                <div class="grid-3col" style="margin-top: 8px;">
+                    <div class="box definition" style="text-align: center;">
+                        <strong>Сім'я двійки:</strong><br>
+                        $4 = 2^2$<br>
+                        $8 = 2^3$<br>
+                        $16 = 2^4$<br>
+                        $32 = 2^5$
+                    </div>
+                    <div class="box definition" style="text-align: center;">
+                        <strong>Сім'я трійки:</strong><br>
+                        $9 = 3^2$<br>
+                        $27 = 3^3$<br>
+                        $81 = 3^4$<br>
+                        $243 = 3^5$
+                    </div>
+                    <div class="box definition" style="text-align: center;">
+                        <strong>Сім'я п'ятірки:</strong><br>
+                        $25 = 5^2$<br>
+                        $125 = 5^3$<br>
+                        $625 = 5^4$
+                    </div>
+                </div>
+
+                <div class="box example" style="margin-top: 6px;">
+                    <strong>Приклад спрощення:</strong> $\frac{8^3 \cdot 4^2}{2^{11}} = \frac{(2^3)^3 \cdot (2^2)^2}{2^{11}} = \frac{2^9 \cdot 2^4}{2^{11}} = \frac{2^{13}}{2^{11}} = 2^2 = \mathbf{4}$.
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 12: ПІДСУМОК ТЕМИ -->
+        <section class="slide-card" data-slide="12">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Усі властивості степеня засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 12px;">Повний комплект із 7 формул довідника НМТ розібрано та закріплено.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Зведена шпаргалка формул НМТ:</div>
+                        <ul style="font-size: 0.92rem; line-height: 1.6;">
+                            <li>$a^m \cdot a^n = a^{m+n}$ &nbsp;|&nbsp; $a^m : a^n = a^{m-n}$</li>
+                            <li>$(a^m)^n = a^{mn}$ &nbsp;|&nbsp; $(ab)^n = a^n b^n$</li>
+                            <li>$(a/b)^n = a^n / b^n$ &nbsp;|&nbsp; $a^{-n} = 1/a^n$</li>
+                            <li>$a^{\frac{m}{n}} = \sqrt[n]{a^m}$ &nbsp;|&nbsp; $a^0 = 1$</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для повторення:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб отримати повний друкований конспект уроку.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію спочатку</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ФУТЕР -->
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 12</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT ЛОГІКА ТА ІНТЕРАКТИВНІ ТРЕНАЖЕРИ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let secondsElapsed = 0;
+            let isDarkTheme = false;
+
+            const progressBar = document.getElementById('progress-bar');
+            const slideCounter = document.getElementById('slide-counter');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnTheme = document.getElementById('btn-theme');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const timerElement = document.getElementById('speaker-timer');
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+
+                currentSlide = index;
+
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentSlide - 1);
+                });
+
+                slideCounter.textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+                btnPrev.style.opacity = currentSlide === 1 ? '0.5' : '1';
+                btnNext.style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            btnNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+            btnPrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+
+            btnTheme.addEventListener('click', () => {
+                isDarkTheme = !isDarkTheme;
+                document.body.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+            });
+
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') btnFullscreen.click();
+            });
+
+            setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                timerElement.textContent = `${mins}:${secs}`;
+            }, 1000);
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // 1. Базовий степінь (Слайд 2)
+            window.calcBasicPower = function() {
+                const a = parseFloat(document.getElementById('base-val').value);
+                const n = parseInt(document.getElementById('exp-val').value);
+                const out = document.getElementById('base-output');
+
+                if (isNaN(a) || isNaN(n) || n < 1) {
+                    out.innerText = "Введіть коректні значення (n ≥ 1)";
+                    return;
+                }
+
+                if (n > 10) {
+                    out.innerText = "Оберіть n ≤ 10 для наочності ланцюжка";
+                    return;
+                }
+
+                const chain = Array(n).fill(a).join(' · ');
+                const val = Math.pow(a, n);
+                out.innerHTML = `${a}<sup>${n}</sup> = ${chain} = <strong>${val}</strong> (множимо ${a} саме на себе ${n} разів).`;
+            };
+
+            // 2. Властивості з однаковими основами (Слайд 5)
+            window.calcPropSameBase = function() {
+                const a = document.getElementById('op-base').value.trim();
+                const m = parseInt(document.getElementById('op-m').value);
+                const n = parseInt(document.getElementById('op-n').value);
+                const out = document.getElementById('same-base-output');
+
+                if (isNaN(m) || isNaN(n)) {
+                    out.innerText = "Введіть цілі показники m та n";
+                    return;
+                }
+
+                const numA = parseFloat(a);
+                const isNum = !isNaN(numA);
+
+                const multExp = m + n;
+                const divExp = m - n;
+                const powExp = m * n;
+
+                let divRes = "";
+                if (isNum && divExp >= 0 && divExp <= 8) {
+                    divRes = ` = ${Math.pow(numA, divExp)}`;
+                }
+
+                out.innerHTML = `${a}<sup>${m}</sup> · ${a}<sup>${n}</sup> = <strong>${a}<sup>${multExp}</sup></strong> &nbsp;|&nbsp; ${a}<sup>${m}</sup> : ${a}<sup>${n}</sup> = <strong>${a}<sup>${divExp}</sup></strong>${divRes} &nbsp;|&nbsp; (${a}<sup>${m}</sup>)<sup>${n}</sup> = <strong>${a}<sup>${powExp}</sup></strong>`;
+            };
+
+            // 3. Від'ємний показник дробу (Слайд 7)
+            window.calcNegativeFrac = function() {
+                const a = parseInt(document.getElementById('frac-a').value);
+                const b = parseInt(document.getElementById('frac-b').value);
+                const pow = parseInt(document.getElementById('frac-pow').value);
+                const out = document.getElementById('neg-frac-output');
+
+                if (isNaN(a) || isNaN(b) || isNaN(pow) || b === 0 || a === 0) {
+                    out.innerText = "Введіть ненульові числа";
+                    return;
+                }
+
+                const absPow = Math.abs(pow);
+                const invA = Math.pow(b, absPow);
+                const invB = Math.pow(a, absPow);
+                const dec = (invA / invB).toFixed(3).replace('.000', '');
+
+                out.innerHTML = `(${a}/${b})<sup>${pow}</sup> = (${b}/${a})<sup>${absPow}</sup> = ${b}<sup>${absPow}</sup> / ${a}<sup>${absPow}</sup> = <strong>${invA}/${invB}</strong> ≈ ${dec}`;
+            };
+
+            // 4. Дробовий показник (Слайд 8)
+            window.calcFractionalExp = function() {
+                const a = parseFloat(document.getElementById('frac-exp-a').value);
+                const m = parseInt(document.getElementById('frac-exp-m').value);
+                const n = parseInt(document.getElementById('frac-exp-n').value);
+                const out = document.getElementById('frac-exp-output');
+
+                if (isNaN(a) || isNaN(m) || isNaN(n) || n === 0) {
+                    out.innerText = "Введіть коректні числа";
+                    return;
+                }
+
+                const val = Math.pow(a, m / n);
+                out.innerHTML = `${a}<sup>${m}/${n}</sup> = <sup>${n}</sup>√(${a}<sup>${m}</sup>) = (<sup>${n}</sup>√${a})<sup>${m}</sup> = <strong>${Number.isInteger(val) ? val : val.toFixed(2)}</strong>`;
+            };
+
+            // 5. Тестер знаків та дужок (Слайд 10)
+            window.testSignAndBrackets = function() {
+                const a = parseFloat(document.getElementById('sign-a').value);
+                const n = parseInt(document.getElementById('sign-n').value);
+                const out = document.getElementById('sign-output');
+
+                if (isNaN(a) || isNaN(n)) {
+                    out.innerText = "Введіть коректні числа";
+                    return;
+                }
+
+                const withBrackets = Math.pow(-a, n);
+                const withoutBrackets = -Math.pow(a, n);
+                const isEven = n % 2 === 0;
+
+                out.innerHTML = `(-${a})<sup>${n}</sup> = <strong>${withBrackets}</strong> (${isEven ? 'додатне, бо парний степінь нищить мінус' : 'від\'ємне, бо непарний степінь зберігає мінус'}) &nbsp;|&nbsp; -${a}<sup>${n}</sup> = <strong>${withoutBrackets}</strong> (завжди від\'ємне, бо мінус стоїть окремо).`;
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

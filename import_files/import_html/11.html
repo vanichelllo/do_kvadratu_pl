@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Функції та їх властивості | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']], 
+                processEscapes: true 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+        .btn-toggle.red { color: var(--warning-red); border-color: var(--warning-red); }
+        .btn-toggle.red.active { background-color: var(--warning-red); color: white; }
+        .btn-toggle.green { color: var(--brand-green); border-color: var(--brand-green); }
+        .btn-toggle.green.active { background-color: var(--brand-green); color: white; }
+        .btn-toggle.orange { color: #d35400; border-color: #d35400; }
+        .btn-toggle.orange.active { background-color: #d35400; color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+        
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+        
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+            <marker id="arrMonotDec" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#3498db" /></marker>
+            <marker id="arrMonotInc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#d35400" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОЗНАЧЕННЯ ТА ОДЗ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Що таке функція та її ОДЗ</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 1rem;"><strong>Функція</strong> — це правило, за яким кожному значенню незалежної змінної $x$ з області визначення $D(f)$ відповідає <strong>єдине</strong> значення залежної змінної $y$ з області значень $E(f)$.</p>
+                </div>
+
+                <div class="box theorem" style="margin-top: 15px;">
+                    <div class="box-title">Область визначення $D(f)$ (Головні табу в НМТ): <span class="nmt-ref-badge">⚠️ Увага!</span></div>
+                    <p style="margin: 5px 0; font-size: 0.95rem;">Область визначення — це всі допустимі значення $x$. На НМТ найчастіше перевіряють два правила:</p>
+                    <div class="grid-2col" style="margin-top: 10px; gap: 10px;">
+                        <div style="background: rgba(231, 76, 60, 0.05); border-left: 3px solid var(--warning-red); padding: 10px; border-radius: 8px;">
+                            <strong>1) Дріб:</strong> Знаменник не може дорівнювати нулю.
+                            <div class="scrollable-math" style="margin-top: 5px; font-size: 1.1rem;">$ y = \frac{1}{f(x)} \implies \mathbf{f(x) \neq 0} $</div>
+                        </div>
+                        <div style="background: rgba(231, 76, 60, 0.05); border-left: 3px solid var(--warning-red); padding: 10px; border-radius: 8px;">
+                            <strong>2) Корінь:</strong> Під парним коренем не може бути мінуса.
+                            <div class="scrollable-math" style="margin-top: 5px; font-size: 1.1rem;">$ y = \sqrt{f(x)} \implies \mathbf{f(x) \geq 0} $</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box example" style="margin-top: 15px;">
+                    <div class="box-title">Типове завдання на ОДЗ:</div>
+                    <p style="margin: 0 0 5px 0; font-size: 0.95rem;">Знайдіть область визначення функції $y = \frac{5}{\sqrt{2x - 6}}$.</p>
+                    <div style="font-size: 0.95rem; color: #555;">
+                        <strong>Розв'язання:</strong> Тут поєднуються два обмеження. Корінь вимагає $\geq 0$, але оскільки він у знаменнику, нулем він бути не може. Отже, беремо <strong>строго більше</strong>:
+                        <div class="scrollable-math" style="margin: 5px 0; font-size: 1.1rem;">$ 2x - 6 > 0 \implies 2x > 6 \implies \mathbf{x > 3} $</div>
+                        <strong>Відповідь:</strong> $D(f) = (3; +\infty)$.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ПАРНІСТЬ / НЕПАРНІСТЬ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Властивості</span>
+                <h2 class="slide-title">Парність та непарність функції</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="margin-bottom: 10px;">
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Парна функція</div>
+                        <div class="scrollable-math" style="font-size: 1.1rem; text-align: center; margin: 5px 0;">$\mathbf{f(-x) = f(x)}$</div>
+                        <div style="font-size: 0.9rem; color: #555;">Симетрія відносно осі $Oy$ (дзеркало).<br><em>Приклади:</em> $y = x^2, \cos x, |x|$.</div>
+                    </div>
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Непарна функція</div>
+                        <div class="scrollable-math" style="font-size: 1.1rem; text-align: center; margin: 5px 0;">$\mathbf{f(-x) = -f(x)}$</div>
+                        <div style="font-size: 0.9rem; color: #555;">Симетрія відносно початку координат $(0;0)$.<br><em>Приклади:</em> $y = x^3, \sin x, \frac{1}{x}$.</div>
+                    </div>
+                </div>
+
+                <div class="box error" style="margin-bottom: 10px;">
+                    <div class="box-title">Важливо про загальний вигляд!</div>
+                    <p style="margin: 0; font-size: 0.9rem;">Функція, яка не підпадає під ці правила — це <strong>функція загального вигляду</strong>. Обов'язково перевіряйте ОДЗ: якщо область визначення несиметрична відносно нуля (наприклад, $x \in [-2; 5)$), то вона автоматично загального вигляду!</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔍 Детектор симетрії:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label"> Точка $x$: <input type="range" id="sym-x" class="slider-control" min="0.1" max="2" value="1" step="0.1" oninput="renderSymScene()"></label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-toggle active" id="btn-sym-even" onclick="setSymMode('even')">Парна ($y=x^2$)</button>
+                            <button class="btn-toggle" id="btn-sym-odd" onclick="setSymMode('odd')">Непарна ($y=x^3$)</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container" style="min-height: 200px; background: #fdfdfd;">
+                            <svg viewBox="-3 -3.5 6 7" width="100%" height="100%">
+                                <!-- Сітка та осі -->
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-3" y1="-3" x2="3" y2="-3"/><line x1="-3" y1="-2" x2="3" y2="-2"/><line x1="-3" y1="-1" x2="3" y2="-1"/><line x1="-3" y1="1" x2="3" y2="1"/><line x1="-3" y1="2" x2="3" y2="2"/><line x1="-3" y1="3" x2="3" y2="3"/>
+                                    <line x1="-2" y1="-3.5" x2="-2" y2="3.5"/><line x1="-1" y1="-3.5" x2="-1" y2="3.5"/><line x1="1" y1="-3.5" x2="1" y2="3.5"/><line x1="2" y1="-3.5" x2="2" y2="3.5"/>
+                                </g>
+                                <line x1="-3" y1="0" x2="3" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-3.5" x2="0" y2="3.5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <text x="2.8" y="-0.2" font-size="0.3" font-family="sans-serif">x</text>
+                                <text x="0.2" y="-3.2" font-size="0.3" font-family="sans-serif">y</text>
+
+                                <g id="sym-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="sym-out" style="min-height: 200px;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВІЗУАЛЬНЕ ЧИТАННЯ (ЗНАКОСТАЛІСТЬ І МОНОТОННІСТЬ) -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">Як правильно читати графіки?</h2>
+            </div>
+            <div class="slide-body">
+                <p style="font-size: 0.95rem; margin-bottom: 15px;">Перед тим як досліджувати складні графіки, розберемося з базовими термінами візуально.</p>
+
+                <div class="grid-2col">
+                    <!-- Знакосталість -->
+                    <div class="box" style="margin: 0; display: flex; flex-direction: column;">
+                        <div class="box-title" style="color: #8e44ad;">Знакосталість (+ та -)</div>
+                        <div class="widget-svg-container" style="height: 180px; background: #fff; padding: 0; border: none; border-bottom: 1px solid #eee; border-radius: 0;">
+                            <svg viewBox="-3 -1.5 6 5.5" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-2" y1="-1.5" x2="-2" y2="4"/><line x1="2" y1="-1.5" x2="2" y2="4"/>
+                                    <line x1="-3" y1="1" x2="3" y2="1"/><line x1="-3" y1="2" x2="3" y2="2"/><line x1="-3" y1="3" x2="3" y2="3"/>
+                                </g>
+                                <!-- Заливка зон -->
+                                <rect x="-2" y="-1.5" width="4" height="1.5" fill="#2ecc71" opacity="0.2"/>
+                                <rect x="-3" y="0" width="1" height="4" fill="#e74c3c" opacity="0.2"/>
+                                <rect x="2" y="0" width="1" height="4" fill="#e74c3c" opacity="0.2"/>
+
+                                <line x1="-3" y1="0" x2="3" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-1.5" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+
+                                <!-- y = 4 - x^2. SVG y is inverted, so y = x^2 - 4. x in [-2.5, 2.5] -->
+                                <path d="M -2.5 2.25 L -2 0 L -1.5 -1.75 L -1 -3 L -0.5 -3.75 L 0 -4 L 0.5 -3.75 L 1 -3 L 1.5 -1.75 L 2 0 L 2.5 2.25" fill="none" stroke="#8e44ad" stroke-width="0.1"/>
+
+                                <text x="-0.15" y="-0.5" font-size="0.8" font-weight="bold" fill="#27ae60">+</text>
+                                <text x="-2.6" y="2.5" font-size="0.8" font-weight="bold" fill="#c0392b">-</text>
+                                <text x="2.2" y="2.5" font-size="0.8" font-weight="bold" fill="#c0392b">-</text>
+                                <text x="-2" y="0.4" font-size="0.3" fill="#333">-2</text>
+                                <text x="1.8" y="0.4" font-size="0.3" fill="#333">2</text>
+                            </svg>
+                        </div>
+                        <div style="padding: 10px; font-size: 0.9rem; line-height: 1.5;">
+                            <strong>1. Додатна ($y > 0$):</strong> частина графіка лежить <strong style="color:#27ae60;">вище</strong> осі $Ox$ (зелена зона). <br>
+                            <em>Проміжок:</em> $x \in (-2; 2)$.<br><br>
+                            <strong>2. Від'ємна ($y < 0$):</strong> частина графіка лежить <strong style="color:#c0392b;">нижче</strong> осі $Ox$.<br>
+                            <em>Проміжок:</em> $x \in (-\infty; -2) \cup (2; +\infty)$.
+                        </div>
+                    </div>
+
+                    <!-- Монотонність -->
+                    <div class="box" style="margin: 0; display: flex; flex-direction: column;">
+                        <div class="box-title" style="color: #d35400;">Монотонність (Зрост/Спад)</div>
+                        <div class="widget-svg-container" style="height: 180px; background: #fff; padding: 0; border: none; border-bottom: 1px solid #eee; border-radius: 0;">
+                            <svg viewBox="-3 -5 6 5.5" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-2" y1="-5" x2="-2" y2="0.5"/><line x1="2" y1="-5" x2="2" y2="0.5"/>
+                                    <line x1="-3" y1="-1" x2="3" y2="-1"/><line x1="-3" y1="-2" x2="3" y2="-2"/><line x1="-3" y1="-3" x2="3" y2="-3"/><line x1="-3" y1="-4" x2="3" y2="-4"/>
+                                </g>
+                                <line x1="-3" y1="0" x2="3" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-5" x2="0" y2="0.5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+
+                                <!-- y = x^2. Math: dec for x<0, inc for x>0. SVG y inverted. -->
+                                <path d="M -2.5 -6.25 L -2 -4 L -1.5 -2.25 L -1 -1 L -0.5 -0.25 L 0 0" fill="none" stroke="#3498db" stroke-width="0.15" marker-end="url(#arrMonotDec)"/>
+                                <path d="M 0 0 L 0.5 -0.25 L 1 -1 L 1.5 -2.25 L 2 -4 L 2.5 -6.25" fill="none" stroke="#d35400" stroke-width="0.15" marker-end="url(#arrMonotInc)"/>
+
+                                <!-- Проекції на Ox -->
+                                <rect x="-2.5" y="-0.1" width="2.5" height="0.2" fill="#3498db" opacity="0.5"/>
+                                <rect x="0" y="-0.1" width="2.5" height="0.2" fill="#d35400" opacity="0.5"/>
+                                <circle cx="0" cy="0" r="0.15" fill="#333"/>
+                                <text x="-0.1" y="0.5" font-size="0.4" fill="#333">0</text>
+                            </svg>
+                        </div>
+                        <div style="padding: 10px; font-size: 0.9rem; line-height: 1.5;">
+                            <strong>Читаємо завжди зліва направо!</strong><br><br>
+                            <strong>1. Спадає ($\searrow$):</strong> графік іде <strong style="color:#3498db;">вниз</strong>.<br>
+                            <em>Проміжок:</em> $x \in (-\infty; 0]$.<br><br>
+                            <strong>2. Зростає ($\nearrow$):</strong> графік іде <strong style="color:#d35400;">вгору</strong>.<br>
+                            <em>Проміжок:</em> $x \in [0; +\infty)$.<br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ДОСЛІДЖЕННЯ ГРАФІКА (СКАНЕР) -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Аналіз</span>
+                <h2 class="slide-title">Дослідження складної функції</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Застосуємо знання на практиці! Використовуйте вкладки сканера, щоб виділити на графіку потрібні елементи. Зверніть увагу: усі проміжки ми записуємо спираючись <strong>тільки на вісь $x$</strong>.</p>
+                </div>
+
+                <div class="math-widget" style="padding: 10px;">
+                    <div class="widget-controls" style="margin-bottom: 10px; background: transparent; padding: 0;">
+                        <button class="btn-toggle active" id="btn-scan-base" onclick="setScanMode('base')">Базовий графік</button>
+                        <button class="btn-toggle red" id="btn-scan-zeros" onclick="setScanMode('zeros')">Нулі функції</button>
+                        <button class="btn-toggle green" id="btn-scan-extr" onclick="setScanMode('extr')">Екстремуми</button>
+                        <button class="btn-toggle orange" id="btn-scan-monot" onclick="setScanMode('monot')">Монотонність (зрост/спад)</button>
+                        <button class="btn-toggle" id="btn-scan-sign" onclick="setScanMode('sign')" style="color: #8e44ad; border-color: #8e44ad;">Знакосталість (+ / -)</button>
+                    </div>
+
+                    <div class="grid-2col">
+                        <div class="widget-svg-container" style="min-height: 280px; background: #fdfdfd; padding: 5px;">
+                            <svg viewBox="-5.5 -3.5 11.5 7.5" width="100%" height="100%">
+                                <!-- Сітка -->
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="-2" x2="5" y2="-2"/><line x1="-5" y1="-1" x2="5" y2="-1"/><line x1="-5" y1="1" x2="5" y2="1"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="3" x2="5" y2="3"/>
+                                    <line x1="-4" y1="-3" x2="-4" y2="3"/><line x1="-3" y1="-3" x2="-3" y2="3"/><line x1="-2" y1="-3" x2="-2" y2="3"/><line x1="-1" y1="-3" x2="-1" y2="3"/><line x1="1" y1="-3" x2="1" y2="3"/><line x1="2" y1="-3" x2="2" y2="3"/><line x1="3" y1="-3" x2="3" y2="3"/><line x1="4" y1="-3" x2="4" y2="3"/>
+                                </g>
+                                <!-- Осі -->
+                                <line x1="-5.5" y1="0" x2="5.5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-3.5" x2="0" y2="3.5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <text x="5.2" y="-0.3" font-size="0.4" font-family="sans-serif">x</text>
+                                <text x="0.2" y="-3.1" font-size="0.4" font-family="sans-serif">y</text>
+
+                                <g id="scan-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="scan-out" style="min-height: 280px; justify-content: flex-start; text-align: left;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ЕЛЕМЕНТАРНІ ФУНКЦІЇ 1 -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Графіки</span>
+                <h2 class="slide-title">Елементарні функції: Пряма та Парабола</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Уміння миттєво впізнавати форму графіка за рівнянням — ключова навичка для розв'язування завдань на відповідність. Запам'ятайте ці базові "скелети".</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-controls" style="background: transparent; padding: 0;">
+                        <button class="btn-toggle active" id="btn-ef1-line" onclick="setEfMode1('line')">Лінійна функція</button>
+                        <button class="btn-toggle" id="btn-ef1-quad" onclick="setEfMode1('quad')">Квадратична (Парабола)</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <div class="widget-svg-container" style="min-height: 250px; background: #fdfdfd;">
+                            <svg viewBox="-4 -4 8 8" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-4" y1="-3" x2="4" y2="-3"/><line x1="-4" y1="-2" x2="4" y2="-2"/><line x1="-4" y1="-1" x2="4" y2="-1"/><line x1="-4" y1="1" x2="4" y2="1"/><line x1="-4" y1="2" x2="4" y2="2"/><line x1="-4" y1="3" x2="4" y2="3"/>
+                                    <line x1="-3" y1="-4" x2="-3" y2="4"/><line x1="-2" y1="-4" x2="-2" y2="4"/><line x1="-1" y1="-4" x2="-1" y2="4"/><line x1="1" y1="-4" x2="1" y2="4"/><line x1="2" y1="-4" x2="2" y2="4"/><line x1="3" y1="-4" x2="3" y2="4"/>
+                                </g>
+                                <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <g id="ef1-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" style="min-height: 250px; justify-content: flex-start; text-align: left;" id="ef1-controls-panel">
+                            <!-- JS Controls & Text -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ЕЛЕМЕНТАРНІ ФУНКЦІЇ 2 -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Графіки</span>
+                <h2 class="slide-title">Елементарні функції: Гіпербола, Корінь, Модуль</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-top: 5px;">
+                    <div class="widget-controls" style="background: transparent; padding: 0;">
+                        <button class="btn-toggle active" id="btn-ef2-hyp" onclick="setEfMode2('hyp')">Обернена пропорційність</button>
+                        <button class="btn-toggle" id="btn-ef2-root" onclick="setEfMode2('root')">Функція кореня</button>
+                        <button class="btn-toggle" id="btn-ef2-abs" onclick="setEfMode2('abs')">Модуль</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <div class="widget-svg-container" style="min-height: 250px; background: #fdfdfd;">
+                            <svg viewBox="-4 -4 8 8" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-4" y1="-3" x2="4" y2="-3"/><line x1="-4" y1="-2" x2="4" y2="-2"/><line x1="-4" y1="-1" x2="4" y2="-1"/><line x1="-4" y1="1" x2="4" y2="1"/><line x1="-4" y1="2" x2="4" y2="2"/><line x1="-4" y1="3" x2="4" y2="3"/>
+                                    <line x1="-3" y1="-4" x2="-3" y2="4"/><line x1="-2" y1="-4" x2="-2" y2="4"/><line x1="-1" y1="-4" x2="-1" y2="4"/><line x1="1" y1="-4" x2="1" y2="4"/><line x1="2" y1="-4" x2="2" y2="4"/><line x1="3" y1="-4" x2="3" y2="4"/>
+                                </g>
+                                <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <g id="ef2-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" style="min-height: 250px; justify-content: flex-start; text-align: left;" id="ef2-controls-panel">
+                            <!-- JS Controls & Text -->
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити спочатку</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 6</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial renders based on slide
+                if (currentSlide === 2) renderSymScene();
+                if (currentSlide === 4) renderScanScene();
+                if (currentSlide === 5) renderEfControls1();
+                if (currentSlide === 6) renderEfControls2();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 2: Детектор симетрії
+            let symMode = 'even';
+            window.setSymMode = function(mode) {
+                symMode = mode;
+                document.getElementById('btn-sym-even').classList.toggle('active', mode === 'even');
+                document.getElementById('btn-sym-odd').classList.toggle('active', mode === 'odd');
+                renderSymScene();
+            }
+
+            window.renderSymScene = function() {
+                const x = parseFloat(document.getElementById('sym-x').value);
+                const scene = document.getElementById('sym-scene');
+                const out = document.getElementById('sym-out');
+
+                let svg = "";
+                let html = "";
+                let pathD = "";
+
+                if (symMode === 'even') {
+                    for(let i=-2; i<=2; i+=0.1) {
+                        let y = i*i;
+                        pathD += (i===-2 ? `M ${i} ${-y}` : ` L ${i} ${-y}`);
+                    }
+                    svg += `<path d="${pathD}" fill="none" stroke="#3498db" stroke-width="0.08"/>`;
+                    let yVal = x*x;
+                    svg += `<line x1="${-x}" y1="${-yVal}" x2="${x}" y2="${-yVal}" stroke="#e74c3c" stroke-width="0.03" stroke-dasharray="0.1,0.1"/>`;
+                    svg += `<circle cx="${x}" cy="${-yVal}" r="0.15" fill="#2c3e50"/>`;
+                    svg += `<text x="${x+0.2}" y="${-yVal}" font-size="0.3" fill="#2c3e50">f(x)</text>`;
+                    svg += `<circle cx="${-x}" cy="${-yVal}" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<text x="${-x-0.8}" y="${-yVal}" font-size="0.3" fill="#e74c3c">f(-x)</text>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px;">Парна функція: $y = x^2$</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 10px;">$f(${x.toFixed(1)}) = ${yVal.toFixed(2)}$</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--warning-red);">$f(-${x.toFixed(1)}) = ${yVal.toFixed(2)}$</div>
+                        <div style="font-size: 1rem; color: #555;">При зміні знака аргумента ($x \\to -x$), значення функції ($y$) залишається таким самим. Графік симетричний відносно осі $Oy$ (вертикальної).</div>
+                    `;
+                } else {
+                    for(let i=-1.5; i<=1.5; i+=0.05) {
+                        let y = i*i*i;
+                        pathD += (i===-1.5 ? `M ${i} ${-y}` : ` L ${i} ${-y}`);
+                    }
+                    svg += `<path d="${pathD}" fill="none" stroke="#f39c12" stroke-width="0.08"/>`;
+                    let yVal = x*x*x;
+                    svg += `<line x1="${-x}" y1="${yVal}" x2="${x}" y2="${-yVal}" stroke="#e74c3c" stroke-width="0.03" stroke-dasharray="0.1,0.1"/>`;
+                    svg += `<circle cx="${x}" cy="${-yVal}" r="0.15" fill="#2c3e50"/>`;
+                    svg += `<text x="${x+0.2}" y="${-yVal}" font-size="0.3" fill="#2c3e50">f(x)</text>`;
+                    svg += `<circle cx="${-x}" cy="${yVal}" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<text x="${-x-1}" y="${yVal}" font-size="0.3" fill="#e74c3c">-f(-x)</text>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: #d35400; margin-bottom: 10px;">Непарна функція: $y = x^3$</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 10px;">$f(${x.toFixed(1)}) = ${yVal.toFixed(2)}$</div>
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--warning-red);">$f(-${x.toFixed(1)}) = ${(-yVal).toFixed(2)}$</div>
+                        <div style="font-size: 1rem; color: #555;">При зміні знака аргумента ($x \\to -x$), значення функції ($y$) також змінює знак на протилежний. Графік симетричний відносно початку координат $(0;0)$.</div>
+                    `;
+                }
+
+                scene.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 4: Сканер графіка
+            let scanMode = 'base';
+            window.setScanMode = function(mode) {
+                scanMode = mode;
+                document.getElementById('btn-scan-base').classList.toggle('active', mode === 'base');
+                document.getElementById('btn-scan-zeros').classList.toggle('active', mode === 'zeros');
+                document.getElementById('btn-scan-extr').classList.toggle('active', mode === 'extr');
+                document.getElementById('btn-scan-monot').classList.toggle('active', mode === 'monot');
+                document.getElementById('btn-scan-sign').classList.toggle('active', mode === 'sign');
+                renderScanScene();
+            }
+
+            window.renderScanScene = function() {
+                const scene = document.getElementById('scan-scene');
+                const out = document.getElementById('scan-out');
+
+                // Бездоганна крива через математичні координати з ідеальними дотичними
+                const pathD = `M -4 2 C -3.8 1.5, -3.5 1, -3 0 C -2.5 -1, -2 -3, -1 -3 C 0 -3, 0.5 -0.75, 1 0 C 1.5 0.75, 2.5 2, 3 2 C 3.5 2, 3.7 0.6, 4 0 C 4.3 -0.6, 4.8 -1.5, 5 -2`;
+
+                let svg = `
+                <defs>
+                    <clipPath id="clip-monot-inc">
+                        <rect x="-6" y="-5" width="5" height="10"/>
+                        <rect x="3" y="-5" width="4" height="10"/>
+                    </clipPath>
+                    <clipPath id="clip-monot-dec">
+                        <rect x="-1" y="-5" width="4" height="10"/>
+                    </clipPath>
+                    <clipPath id="clip-sign-pos">
+                        <rect x="-3" y="-5" width="4" height="10"/>
+                        <rect x="4" y="-5" width="3" height="10"/>
+                    </clipPath>
+                    <clipPath id="clip-sign-neg">
+                        <rect x="-6" y="-5" width="3" height="10"/>
+                        <rect x="1" y="-5" width="3" height="10"/>
+                    </clipPath>
+                </defs>
+                `;
+
+                if (scanMode !== 'base' && scanMode !== 'zeros' && scanMode !== 'extr') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#bdc3c7" stroke-width="0.08"/>`;
+                }
+
+                svg += `<circle cx="-4" cy="2" r="0.1" fill="#2c3e50"/>`;
+                svg += `<text x="-4.2" y="2.5" font-size="0.3">-4</text>`;
+                svg += `<circle cx="5" cy="-2" r="0.1" fill="#2c3e50"/>`;
+                svg += `<text x="5.1" y="-2.3" font-size="0.3">5</text>`;
+
+                let html = "";
+
+                if (scanMode === 'base') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#2c3e50" stroke-width="0.08"/>`;
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); font-size: 1.2rem; margin-bottom: 10px;">Базовий графік</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Графік функції $y = f(x)$ заданий на відрізку $[-4; 5]$.</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong>$D(y)$ (область визначення):</strong> дивимось по осі $Ox$. Графік існує від $x=-4$ до $x=5$. Отже, $D(y) = [-4; 5]$.</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong>$E(y)$ (область значень):</strong> дивимось по осі $Oy$ (від найнижчої до найвищої). Найнижча точка $y=-2$, найвища $y=3$. Отже, $E(y) = [-2; 3]$.</p>
+                        <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: 15px;">Оберіть кнопку зверху, щоб дослідити конкретну властивість.</p>
+                    `;
+                } else if (scanMode === 'zeros') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#2c3e50" stroke-width="0.08"/>`;
+                    svg += `<circle cx="-3" cy="0" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<text x="-3.1" y="0.4" font-size="0.3" fill="#e74c3c">-3</text>`;
+                    svg += `<circle cx="1" cy="0" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<text x="0.9" y="0.4" font-size="0.3" fill="#e74c3c">1</text>`;
+                    svg += `<circle cx="4" cy="0" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<text x="3.9" y="0.4" font-size="0.3" fill="#e74c3c">4</text>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--warning-red); font-size: 1.2rem; margin-bottom: 10px;">Нулі функції $f(x) = 0$</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Це точки, де графік перетинає вісь $Ox$. У цих точках значення $y$ дорівнює нулю.</p>
+                        <div style="font-size: 1.1rem; font-weight: bold; margin-top: 10px;">Відповідь: $x = -3, \\; x = 1, \\; x = 4$.</div>
+                    `;
+                } else if (scanMode === 'extr') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#2c3e50" stroke-width="0.08"/>`;
+                    svg += `<circle cx="-1" cy="-3" r="0.15" fill="#27ae60"/>`;
+                    svg += `<text x="-1.1" y="-3.3" font-size="0.3" fill="#27ae60">max</text>`;
+                    svg += `<line x1="-1" y1="0" x2="-1" y2="-3" stroke="#27ae60" stroke-dasharray="0.1,0.1" stroke-width="0.03"/>`;
+                    svg += `<text x="-1.1" y="0.4" font-size="0.3" fill="#27ae60">-1</text>`;
+
+                    svg += `<circle cx="3" cy="2" r="0.15" fill="#27ae60"/>`;
+                    svg += `<text x="2.9" y="2.4" font-size="0.3" fill="#27ae60">min</text>`;
+                    svg += `<line x1="3" y1="0" x2="3" y2="2" stroke="#27ae60" stroke-dasharray="0.1,0.1" stroke-width="0.03"/>`;
+                    svg += `<text x="2.9" y="-0.2" font-size="0.3" fill="#27ae60">3</text>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-green); font-size: 1.2rem; margin-bottom: 10px;">Точки екстремуму</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Це локальні "піки" (максимуми) та "западини" (мінімуми) графіка.</p>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 15px;">
+                            <li><strong>Точка максимуму ($x_{max}$):</strong> точка переходу від зростання до спадання. $x_{max} = -1$. Максимум функції $y_{max} = 3$.</li>
+                            <li><strong>Точка мінімуму ($x_{min}$):</strong> точка переходу від спадання до зростання. $x_{min} = 3$. Мінімум функції $y_{min} = -2$.</li>
+                        </ul>
+                    `;
+                } else if (scanMode === 'monot') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#d35400" stroke-width="0.15" clip-path="url(#clip-monot-inc)"/>`;
+                    svg += `<path d="${pathD}" fill="none" stroke="#3498db" stroke-width="0.15" clip-path="url(#clip-monot-dec)"/>`;
+
+                    svg += `<rect x="-4" y="-0.05" width="3" height="0.1" fill="#d35400" opacity="0.5"/>`;
+                    svg += `<rect x="-1" y="-0.05" width="4" height="0.1" fill="#3498db" opacity="0.5"/>`;
+                    svg += `<rect x="3" y="-0.05" width="2" height="0.1" fill="#d35400" opacity="0.5"/>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: #d35400; font-size: 1.2rem; margin-bottom: 10px;">Монотонність (читаємо зліва направо)</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong style="color:#d35400;">Зростає $\\nearrow$:</strong> графік іде вгору. Проміжки: $[-4; -1]$ та $[3; 5]$.</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong style="color:#3498db;">Спадає $\\searrow$:</strong> графік іде вниз. Проміжок: $[-1; 3]$.</p>
+                        <p style="font-size: 0.85rem; color: var(--warning-red); margin-top: 10px;"><strong>Важливо:</strong> проміжки записуємо ТІЛЬКИ по осі $x$ (заштриховані зони на осі)!</p>
+                    `;
+                } else if (scanMode === 'sign') {
+                    svg += `<rect x="-5.5" y="-3.5" width="11" height="3.5" fill="#8e44ad" opacity="0.1"/>`;
+
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.15" clip-path="url(#clip-sign-pos)"/>`;
+                    svg += `<path d="${pathD}" fill="none" stroke="#95a5a6" stroke-width="0.15" clip-path="url(#clip-sign-neg)"/>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: #8e44ad; font-size: 1.2rem; margin-bottom: 10px;">Знакосталість</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Де функція додатна ($y > 0$), а де від'ємна ($y < 0$)?</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong style="color:#8e44ad;">$y > 0$:</strong> графік лежить ВИЩЕ осі $Ox$ (у фіолетовій зоні). Проміжки: $x \\in (-3; 1) \\cup (4; 5]$.</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;"><strong style="color:#7f8c8d;">$y < 0$:</strong> графік лежить НИЖЧЕ осі $Ox$. Проміжки: $x \\in [-4; -3) \\cup (1; 4)$.</p>
+                        <p style="font-size: 0.85rem; color: #555; margin-top: 10px;">Круглі дужки біля нулів функції, бо там $y=0$, а не $>0$ чи $<0$.</p>
+                    `;
+                }
+
+                scene.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 5: ЕФ1 (Пряма, Парабола)
+            let efMode1 = 'line';
+            let efSign1 = 1;
+
+            window.setEfMode1 = function(mode) {
+                efMode1 = mode;
+                efSign1 = 1;
+                document.getElementById('btn-ef1-line').classList.toggle('active', mode === 'line');
+                document.getElementById('btn-ef1-quad').classList.toggle('active', mode === 'quad');
+                renderEfControls1();
+            }
+            window.setEfSign1 = function(sign) {
+                efSign1 = sign;
+                renderEfControls1();
+            }
+
+            window.renderEfControls1 = function() {
+                const panel = document.getElementById('ef1-controls-panel');
+                let html = "";
+
+                if (efMode1 === 'line') {
+                    let actPos = efSign1 === 1 ? 'active' : '';
+                    let actNeg = efSign1 === -1 ? 'active' : '';
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Лінійна функція</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 15px;">$y = kx + b$</div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <button class="btn-toggle ${actPos}" onclick="setEfSign1(1)">k > 0 (Зростає)</button>
+                            <button class="btn-toggle ${actNeg}" onclick="setEfSign1(-1)">k < 0 (Спадає)</button>
+                        </div>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px; color: #444;">
+                            <li>Графік: <strong>пряма</strong>.</li>
+                            <li>Коефіцієнт $k$ визначає кут нахилу до осі $Ox$.</li>
+                            <li>Коефіцієнт $b$ — це точка перетину з віссю $Oy$.</li>
+                        </ul>
+                    `;
+                } else if (efMode1 === 'quad') {
+                    let actPos = efSign1 === 1 ? 'active' : '';
+                    let actNeg = efSign1 === -1 ? 'active' : '';
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Квадратична функція</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 15px;">$y = ax^2 + bx + c$</div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                            <button class="btn-toggle ${actPos}" onclick="setEfSign1(1)">a > 0 (Вітки $\\cup$)</button>
+                            <button class="btn-toggle ${actNeg}" onclick="setEfSign1(-1)">a < 0 (Вітки $\\cap$)</button>
+                        </div>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px; color: #444;">
+                            <li>Графік: <strong>парабола</strong>.</li>
+                            <li>Знак старшого коефіцієнта $a$ вказує напрямок віток.</li>
+                            <li>Вершина параболи: $x_0 = -\\frac{b}{2a}$.</li>
+                        </ul>
+                    `;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([panel]);
+                panel.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([panel]);
+                renderEfScene1();
+            }
+
+            window.renderEfScene1 = function() {
+                const scene = document.getElementById('ef1-scene');
+                let svg = "";
+                let pathD = "";
+
+                if (efMode1 === 'line') {
+                    let k = efSign1 * 0.8;
+                    svg += `<line x1="-4" y1="${-k*(-4)}" x2="4" y2="${-k*(4)}" stroke="#3498db" stroke-width="0.1"/>`;
+                } else if (efMode1 === 'quad') {
+                    let a = efSign1 * 0.8;
+                    for(let i=-4; i<=4; i+=0.1) {
+                        let y = a*i*i;
+                        if (y <= 4.5 && y >= -4.5) {
+                            if (pathD === "") pathD = `M ${i} ${-y}`;
+                            else pathD += ` L ${i} ${-y}`;
+                        }
+                    }
+                    svg += `<path d="${pathD}" fill="none" stroke="#27ae60" stroke-width="0.1"/>`;
+                }
+                scene.innerHTML = svg;
+            };
+
+            // Слайд 6: ЕФ2 (Гіпербола, Корінь, Модуль)
+            let efMode2 = 'hyp';
+            let efSign2 = 1;
+
+            window.setEfMode2 = function(mode) {
+                efMode2 = mode;
+                efSign2 = 1;
+                document.getElementById('btn-ef2-hyp').classList.toggle('active', mode === 'hyp');
+                document.getElementById('btn-ef2-root').classList.toggle('active', mode === 'root');
+                document.getElementById('btn-ef2-abs').classList.toggle('active', mode === 'abs');
+                renderEfControls2();
+            }
+            window.setEfSign2 = function(sign) {
+                efSign2 = sign;
+                renderEfControls2();
+            }
+
+            window.renderEfControls2 = function() {
+                const panel = document.getElementById('ef2-controls-panel');
+                let html = "";
+
+                if (efMode2 === 'hyp') {
+                    let actPos = efSign2 === 1 ? 'active' : '';
+                    let actNeg = efSign2 === -1 ? 'active' : '';
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Обернена пропорційність</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 15px;">$y = \\frac{k}{x}$</div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <button class="btn-toggle ${actPos}" onclick="setEfSign2(1)">k > 0 (І та ІІІ чв.)</button>
+                            <button class="btn-toggle ${actNeg}" onclick="setEfSign2(-1)">k < 0 (ІІ та IV чв.)</button>
+                        </div>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px; color: #444;">
+                            <li>Графік: <strong>гіпербола</strong>.</li>
+                            <li>$D(y): x \\neq 0$, $E(y): y \\neq 0$.</li>
+                            <li>Графік ніколи не перетинає осі координат.</li>
+                        </ul>
+                    `;
+                } else if (efMode2 === 'root') {
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Функція кореня</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 15px;">$y = \\sqrt{x}$</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px; color: #444; margin-top: 15px;">
+                            <li>Графік: <strong>вітка параболи</strong>.</li>
+                            <li>$D(y): x \\geq 0$.</li>
+                            <li>$E(y): y \\geq 0$.</li>
+                            <li>Функція завжди зростає.</li>
+                        </ul>
+                    `;
+                } else if (efMode2 === 'abs') {
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Функція модуля</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 15px;">$y = |x|$</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px; color: #444; margin-top: 15px;">
+                            <li>Графік: <strong>«кутик» або «галочка»</strong>.</li>
+                            <li>Типова <strong>парна</strong> функція (симетрія відносно $Oy$).</li>
+                            <li>$D(y) = \\mathbb{R}$.</li>
+                            <li>Область значень завжди невід'ємна: $y \\geq 0$.</li>
+                        </ul>
+                    `;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([panel]);
+                panel.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([panel]);
+                renderEfScene2();
+            }
+
+            window.renderEfScene2 = function() {
+                const scene = document.getElementById('ef2-scene');
+                let svg = "";
+                let pathD = "";
+
+                if (efMode2 === 'hyp') {
+                    let k = efSign2 * 2;
+                    let path1 = "", path2 = "";
+                    for(let i=0.1; i<=4; i+=0.1) {
+                        let y = k/i;
+                        if (y <= 4.5 && y >= -4.5) {
+                            if (path1 === "") path1 = `M ${i} ${-y}`;
+                            else path1 += ` L ${i} ${-y}`;
+                        }
+                    }
+                    for(let i=-4; i<=-0.1; i+=0.1) {
+                        let y = k/i;
+                        if (y <= 4.5 && y >= -4.5) {
+                            if (path2 === "") path2 = `M ${i} ${-y}`;
+                            else path2 += ` L ${i} ${-y}`;
+                        }
+                    }
+                    svg += `<path d="${path1}" fill="none" stroke="#f39c12" stroke-width="0.1"/>`;
+                    svg += `<path d="${path2}" fill="none" stroke="#f39c12" stroke-width="0.1"/>`;
+                } else if (efMode2 === 'root') {
+                    for(let i=0; i<=4; i+=0.1) {
+                        let y = Math.sqrt(i);
+                        pathD += (i===0 ? `M ${i} ${-y}` : ` L ${i} ${-y}`);
+                    }
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.1"/>`;
+                } else if (efMode2 === 'abs') {
+                    svg += `<path d="M -4 -4 L 0 0 L 4 -4" fill="none" stroke="#e67e22" stroke-width="0.1"/>`;
+                }
+                scene.innerHTML = svg;
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

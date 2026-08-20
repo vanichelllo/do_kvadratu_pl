@@ -1,0 +1,618 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рівнобедрений трикутник | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-green: #27ae60;
+            --brand-yellow: #f39c12;
+            --text-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --shadow: 0 8px 24px rgba(52, 78, 134, 0.08);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.25s ease;
+            --warning-red: #e74c3c;
+            --widget-bg: #eef3f9;
+        }
+
+        [data-theme="dark"] {
+            --brand-blue: #6c8dfa;
+            --brand-green: #2ecc71;
+            --brand-yellow: #f1c40f;
+            --text-dark: #ecf0f1;
+            --bg-light: #151c28;
+            --card-bg: #1f2a3c;
+            --border-color: #31425d;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --widget-bg: #182232;
+        }
+
+        html, body {
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--brand-green);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 100;
+            position: relative;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1060px; height: 100%; max-height: 640px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; position: relative; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.06); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); margin-bottom: 8px; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .widget-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+        .widget-btn { background-color: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.88rem; transition: var(--transition); }
+        .widget-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .widget-btn.active { background-color: var(--brand-yellow); color: var(--text-dark); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 8px 12px; font-size: 0.93rem; border: 1px dashed var(--brand-green); min-height: 38px; display: flex; align-items: center; }
+
+        .slider-control { width: 100%; margin: 8px 0; }
+        .dyn-path { transition: d 0.1s ease-out, stroke 0.3s, fill 0.3s; }
+        .dyn-text { transition: x 0.1s ease-out, y 0.1s ease-out; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Геометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТИТУЛЬНИЙ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема / Геометрія</span>
+                <h1 class="slide-title">Рівнобедрений трикутник</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="grid-2col" style="margin-bottom: 12px;">
+                    <div class="box definition">
+                        <div class="box-title">📖 Зміст уроку:</div>
+                        <ul style="line-height: 1.6;">
+                            <li><strong>1.</strong> Означення: бічні сторони та основа.</li>
+                            <li><strong>2.</strong> Головна властивість кутів при основі ($\alpha = \beta$).</li>
+                            <li><strong>3.</strong> Унікальна властивість висоти (3-в-1: висота, медіана, бісектриса).</li>
+                            <li><strong>4.</strong> Лайфхак $60^\circ$ (перетворення на рівносторонній).</li>
+                            <li><strong>5.</strong> Практичний розбір типової задачі.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">⚡ Інтерактивні інструменти:</div>
+                        <p>На цьому уроці геометрія оживає:</p>
+                        <ul style="font-size: 0.95rem;">
+                            <li>📐 <strong>Досліди висоту</strong>: переконайся, що вона є медіаною і бісектрисою одночасно.</li>
+                            <li>🧭 <strong>Деформуй кути</strong>: змінюй форму трикутника повзунком.</li>
+                            <li>🚀 <strong>Знайди рівносторонній</strong>: злови момент, коли трикутник стає ідеальним.</li>
+                            <li>🧮 <strong>Універсальний калькулятор</strong> для розв'язання задач.</li>
+                        </ul>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(2)" style="padding: 10px 24px; font-size: 1rem;">Почати дослідження →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ОЗНАЧЕННЯ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1</span>
+                <h2 class="slide-title">1. Означення та елементи</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Рівнобедрений трикутник</strong> -- це трикутник, у якого дві сторони рівні між собою.</p>
+                    <ul style="line-height: 1.6; padding-left: 20px;">
+                        <li><strong>Бічні сторони</strong> -- дві рівні сторони трикутника.</li>
+                        <li><strong>Основа</strong> -- третя сторона трикутника (та, що відрізняється від бічних).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="text-align: center; margin-top: 15px;">
+                    <div style="background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); padding: 15px; position: relative;">
+                        <svg viewBox="-150 -20 300 180" width="100%" height="200">
+                            <!-- Трикутник -->
+                            <path d="M 0 0 L -100 140 L 100 140 Z" fill="rgba(142, 68, 173, 0.1)" stroke="#8e44ad" stroke-width="3" stroke-linejoin="round"/>
+                            
+                            <!-- Засічки рівності сторін -->
+                            <line x1="-55" y1="60" x2="-35" y2="75" stroke="#8e44ad" stroke-width="3"/>
+                            <line x1="35" y1="75" x2="55" y2="60" stroke="#8e44ad" stroke-width="3"/>
+
+                            <!-- Підписи -->
+                            <text x="-90" y="70" font-weight="bold" fill="#8e44ad" font-size="14">Бічна сторона</text>
+                            <text x="15" y="70" font-weight="bold" fill="#8e44ad" font-size="14">Бічна сторона</text>
+                            <text x="0" y="160" font-weight="bold" fill="var(--text-dark)" font-size="14" text-anchor="middle">Основа</text>
+
+                            <!-- Вершини -->
+                            <circle cx="0" cy="0" r="4" fill="var(--text-dark)"/>
+                            <circle cx="-100" cy="140" r="4" fill="var(--text-dark)"/>
+                            <circle cx="100" cy="140" r="4" fill="var(--text-dark)"/>
+                            
+                            <text x="0" y="-10" font-weight="bold">C (Вершина)</text>
+                            <text x="-115" y="150" font-weight="bold">A</text>
+                            <text x="110" y="150" font-weight="bold">B</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ТЕОРЕМА ПРО ВЛАСТИВОСТІ (3-В-1) -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1.2</span>
+                <h2 class="slide-title">Властивості висоти, медіани та бісектриси</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Головні властивості рівнобедреного трикутника:</div>
+                    <ol style="line-height: 1.6; font-size: 1.05rem; padding-left: 20px;">
+                        <li><strong>Кути при основі</strong> рівні між собою ($\angle A = \angle B$).</li>
+                        <li><strong>Супер-властивість:</strong> Висота, проведена до основи, є одночасно <strong>медіаною</strong> та <strong>бісектрисою</strong>.</li>
+                        <li>Центри вписаного та описаного кіл завжди лежать на цій висоті.</li>
+                    </ol>
+                </div>
+
+                <div class="grid-2col" style="align-items: stretch; margin-top: 15px;">
+                    <div class="math-widget" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="widget-title">🔦 Перевір властивість 3-в-1:</div>
+                        <p style="font-size: 0.9rem; margin-top:0;">Натискай кнопки, щоб побачити, що робить ця лінія $CH$:</p>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn-secondary" id="btn-prop-alt" onclick="toggleProp('alt')" style="text-align: left;">
+                                📐 <strong>Як Висота:</strong> утворює кут 90° з основою.
+                            </button>
+                            <button class="btn-secondary" id="btn-prop-med" onclick="toggleProp('med')" style="text-align: left;">
+                                📏 <strong>Як Медіана:</strong> ділить основу $AB$ навпіл.
+                            </button>
+                            <button class="btn-secondary" id="btn-prop-bis" onclick="toggleProp('bis')" style="text-align: left;">
+                                ✂️ <strong>Як Бісектриса:</strong> ділить кут $C$ навпіл.
+                            </button>
+                            <button class="btn-primary" onclick="toggleProp('all')" style="margin-top: 5px;">Показати всі одразу</button>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; position: relative;">
+                        <svg viewBox="-120 -20 240 180" width="100%" height="100%">
+                            <!-- Трикутник -->
+                            <path d="M 0 0 L -100 130 L 100 130 Z" fill="rgba(142, 68, 173, 0.05)" stroke="#8e44ad" stroke-width="3" stroke-linejoin="round"/>
+                            
+                            <!-- Кути при основі (завжди рівні) -->
+                            <path d="M -70 130 A 30 30 0 0 1 -81.7 106.2" fill="none" stroke="#c0392b" stroke-width="2"/>
+                            <text x="-65" y="120" font-size="12" fill="#c0392b" font-weight="bold">α</text>
+                            
+                            <path d="M 70 130 A 30 30 0 0 0 81.7 106.2" fill="none" stroke="#c0392b" stroke-width="2"/>
+                            <text x="55" y="120" font-size="12" fill="#c0392b" font-weight="bold">α</text>
+
+                            <!-- Головна лінія CH -->
+                            <line x1="0" y1="0" x2="0" y2="130" stroke="#f39c12" stroke-width="3" stroke-dasharray="6,4"/>
+                            
+                            <!-- Значки Висоти (alt) -->
+                            <g id="svg-alt" style="display: none;">
+                                <polyline points="0,115 15,115 15,130" fill="none" stroke="#f39c12" stroke-width="2"/>
+                                <text x="20" y="125" font-size="10" fill="#f39c12" font-weight="bold">90°</text>
+                            </g>
+
+                            <!-- Значки Медіани (med) -->
+                            <g id="svg-med" style="display: none;">
+                                <line x1="-50" y1="125" x2="-50" y2="135" stroke="#2980b9" stroke-width="2"/>
+                                <line x1="-54" y1="125" x2="-54" y2="135" stroke="#2980b9" stroke-width="2"/>
+                                
+                                <line x1="50" y1="125" x2="50" y2="135" stroke="#2980b9" stroke-width="2"/>
+                                <line x1="54" y1="125" x2="54" y2="135" stroke="#2980b9" stroke-width="2"/>
+                            </g>
+
+                            <!-- Значки Бісектриси (bis) -->
+                            <g id="svg-bis" style="display: none;">
+                                <path d="M 0 30 A 30 30 0 0 1 18.2 23.8" fill="none" stroke="#27ae60" stroke-width="2"/>
+                                <path d="M 0 35 A 35 35 0 0 1 21.2 27.8" fill="none" stroke="#27ae60" stroke-width="2"/>
+                                
+                                <path d="M 0 30 A 30 30 0 0 0 -18.2 23.8" fill="none" stroke="#27ae60" stroke-width="2"/>
+                                <path d="M 0 35 A 35 35 0 0 0 -21.2 27.8" fill="none" stroke="#27ae60" stroke-width="2"/>
+                            </g>
+
+                            <text x="0" y="-8" font-weight="bold" text-anchor="middle">C</text>
+                            <text x="-110" y="140" font-weight="bold">A</text>
+                            <text x="100" y="140" font-weight="bold">B</text>
+                            <text x="0" y="145" font-weight="bold" text-anchor="middle">H</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ЛАЙФХАК 60 ГРАДУСІВ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Секрет для НМТ</span>
+                <h2 class="slide-title">Лайфхак: Кут $60^\circ$ і Рівносторонній трикутник</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <div class="box-title">🚀 Головний лайфхак рівнобедреного трикутника:</div>
+                    <p style="font-size: 1.1rem; margin-bottom: 0;">Якщо в задачі сказано, що <strong>хоча б один із кутів</strong> рівнобедреного трикутника дорівнює <strong>$60^\circ$</strong>, то цей трикутник автоматично стає <strong>рівностороннім</strong> (усі його кути $60^\circ$, і всі три сторони рівні).</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧭 Досліди зміну кута при вершині:</div>
+                    <p style="font-size:0.85rem; margin-top:0;">Змінюй кут при вершині $C$. Зверни увагу, що стається, коли він досягає $60^\circ$.</p>
+                    <input type="range" id="iso-slider" class="slider-control" min="20" max="140" value="40" oninput="drawDynamicIso()">
+                    
+                    <div class="grid-2col" style="align-items: center; margin-top: 10px;">
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; height: 180px; position: relative;">
+                            <svg viewBox="-150 -20 300 160" width="100%" height="100%">
+                                <path id="dyn-iso-tri" class="dyn-path" d="" fill="rgba(52, 152, 219, 0.1)" stroke="#3498db" stroke-width="3" stroke-linejoin="round"/>
+                                
+                                <text id="dyn-lbl-a" class="dyn-text" x="-50" y="135" font-weight="bold" font-size="12">A</text>
+                                <text id="dyn-lbl-b" class="dyn-text" x="50" y="135" font-weight="bold" font-size="12">B</text>
+                                <text x="0" y="-8" font-weight="bold" font-size="12" text-anchor="middle">C</text>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="dyn-iso-output" style="display: block; font-size: 1.1rem; line-height: 1.6;">
+                            Кут при вершині: ∠C = <strong>40°</strong><br>
+                            Кути при основі: (180° - 40°) / 2 = <strong>70°</strong><br>
+                            Тип: <span style="color:var(--brand-blue); font-weight:bold;">Рівнобедрений</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРАКТИКА (КАЛЬКУЛЯТОР ЗАДАЧ) -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 (Практика)</span>
+                <h2 class="slide-title">Розв'язання задач: Знаходження кутів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box example">
+                    <div class="box-title">Задача з конспекту:</div>
+                    <p>Кут при вершині рівнобедреного трикутника дорівнює $40^\circ$. Знайдіть кути при основі.</p>
+                    <p><strong>Розв'язання:</strong></p>
+                    <ol style="line-height: 1.6; margin-bottom: 0;">
+                        <li>Сума кутів трикутника дорівнює $180^\circ$.</li>
+                        <li>Нехай кут при основі дорівнює $x$. Оскільки кути при основі рівні, маємо рівняння: $40^\circ + 2x = 180^\circ$.</li>
+                        <li>$2x = 180^\circ - 40^\circ = 140^\circ \implies x = 70^\circ$.</li>
+                    </ol>
+                    <p style="margin-top: 5px;"><strong>Відповідь:</strong> $70^\circ, 70^\circ$.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 Універсальний калькулятор кутів:</div>
+                    <p style="font-size:0.85rem; margin-top:0;">Обери, який кут відомий, введи значення і калькулятор знайде інші.</p>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                        <select id="task-type" class="widget-input" style="width: auto;" onchange="updateTaskInputPlaceholder()">
+                            <option value="vertex">Відомий кут при вершині</option>
+                            <option value="base">Відомий кут при основі</option>
+                        </select>
+                        <input type="number" id="task-val" class="widget-input" value="40" style="width: 70px;">°
+                        <button class="widget-btn" onclick="solveIsoTask()">Розв'язати</button>
+                    </div>
+
+                    <div class="widget-output" id="task-output" style="display: block;">
+                        <strong>Крок 1:</strong> Відомий кут при вершині = 40°.<br>
+                        <strong>Крок 2:</strong> Кути при основі рівні. (180° - 40°) / 2 = 140° / 2 = 70°.<br>
+                        <strong>Відповідь:</strong> Кути при основі дорівнюють 70° і 70°.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ПІДСУМОК ТЕМИ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Рівнобедрений трикутник" засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Ви власноруч перевірили всі унікальні властивості цієї фігури.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Головне, що треба пам'ятати:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li>Бічні сторони рівні. Кути при основі -- рівні.</li>
+                            <li>Висота до основи є і медіаною, і бісектрисою (3-в-1).</li>
+                            <li>Будь-який кут $60^\circ$ автоматично робить його рівностороннім.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти повний конспект зі всіма ілюстраціями.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 6</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            
+            // --- Navigation ---
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Render specific slide interactive features
+                if (currentSlide === 4) drawDynamicIso();
+                
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 3: Властивість 3-в-1
+            window.toggleProp = function(prop) {
+                if (prop === 'all') {
+                    document.getElementById('svg-alt').style.display = 'block';
+                    document.getElementById('svg-med').style.display = 'block';
+                    document.getElementById('svg-bis').style.display = 'block';
+                    
+                    document.getElementById('btn-prop-alt').style.borderColor = 'var(--brand-green)';
+                    document.getElementById('btn-prop-med').style.borderColor = 'var(--brand-green)';
+                    document.getElementById('btn-prop-bis').style.borderColor = 'var(--brand-green)';
+                    return;
+                }
+                
+                const el = document.getElementById(`svg-${prop}`);
+                const btn = document.getElementById(`btn-prop-${prop}`);
+                if (el.style.display === 'none' || el.style.display === '') {
+                    el.style.display = 'block';
+                    btn.style.borderColor = 'var(--brand-green)';
+                    btn.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+                } else {
+                    el.style.display = 'none';
+                    btn.style.borderColor = 'var(--brand-blue)';
+                    btn.style.backgroundColor = 'transparent';
+                }
+            };
+
+            // Слайд 4: Динамічний рівнобедрений трикутник
+            window.drawDynamicIso = function() {
+                const vAngle = parseInt(document.getElementById('iso-slider').value);
+                const baseAngle = (180 - vAngle) / 2;
+                const out = document.getElementById('dyn-iso-output');
+                const path = document.getElementById('dyn-iso-tri');
+                
+                // Щоб трикутник завжди красиво виглядав, зафіксуємо довжину бічної сторони L = 120
+                const L = 120;
+                // Кут у радіанах (половина кута при вершині)
+                const halfRad = (vAngle / 2) * Math.PI / 180;
+                
+                // Координати (C в (0,0) - візуально зверху, A і B внизу)
+                // Оскільки SVG y йде вниз, y додатній.
+                const ax = -L * Math.sin(halfRad);
+                const ay = L * Math.cos(halfRad);
+                
+                const bx = L * Math.sin(halfRad);
+                const by = L * Math.cos(halfRad);
+
+                // Оновлюємо форму трикутника
+                path.setAttribute('d', `M 0 0 L ${bx} ${by} L ${ax} ${ay} Z`);
+                
+                // Рухаємо підписи A і B
+                document.getElementById('dyn-lbl-a').setAttribute('x', ax - 15);
+                document.getElementById('dyn-lbl-a').setAttribute('y', ay + 15);
+                document.getElementById('dyn-lbl-b').setAttribute('x', bx + 5);
+                document.getElementById('dyn-lbl-b').setAttribute('y', by + 15);
+
+                // Логіка 60 градусів (Лайфхак)
+                if (vAngle === 60) {
+                    path.setAttribute('fill', 'rgba(46, 204, 113, 0.2)');
+                    path.setAttribute('stroke', '#27ae60');
+                    out.innerHTML = `
+                        Кут при вершині: ∠C = <strong>60°</strong><br>
+                        Кути при основі: (180° - 60°) / 2 = <strong>60°</strong><br>
+                        Тип: <span style="color:var(--brand-green); font-weight:bold; font-size:1.2rem;">РІВНОСТОРОННІЙ! 🎉</span>
+                    `;
+                } else {
+                    path.setAttribute('fill', 'rgba(52, 152, 219, 0.1)');
+                    path.setAttribute('stroke', '#3498db');
+                    
+                    let typeStr = "Рівнобедрений (Гострокутний)";
+                    if (vAngle > 90) typeStr = "Рівнобедрений (Тупокутний)";
+                    if (vAngle === 90) typeStr = "Рівнобедрений (Прямокутний)";
+
+                    out.innerHTML = `
+                        Кут при вершині: ∠C = <strong>${vAngle}°</strong><br>
+                        Кути при основі: (180° - ${vAngle}°) / 2 = <strong>${baseAngle.toFixed(1).replace('.0','')}°</strong><br>
+                        Тип: <span style="color:var(--brand-blue); font-weight:bold;">${typeStr}</span>
+                    `;
+                }
+            };
+
+            // Слайд 5: Калькулятор задач
+            window.updateTaskInputPlaceholder = function() {
+                const type = document.getElementById('task-type').value;
+                const input = document.getElementById('task-val');
+                if (type === 'vertex') {
+                    input.value = 40;
+                } else {
+                    input.value = 70;
+                }
+                // Clear output visually
+                document.getElementById('task-output').innerHTML = "Натисніть «Розв'язати» для отримання кроків.";
+            };
+
+            window.solveIsoTask = function() {
+                const type = document.getElementById('task-type').value;
+                const val = parseFloat(document.getElementById('task-val').value);
+                const out = document.getElementById('task-output');
+
+                if (isNaN(val) || val <= 0 || val >= 180) {
+                    out.innerHTML = "<span style='color:var(--warning-red);'>Помилка: Введіть коректний кут (від 0 до 180).</span>";
+                    return;
+                }
+
+                if (type === 'vertex') {
+                    const base = (180 - val) / 2;
+                    out.innerHTML = `
+                        <strong>Крок 1:</strong> Відомий кут при вершині = ${val}°.<br>
+                        <strong>Крок 2:</strong> Сума кутів 180°. Кути при основі рівні. Отже, (180° - ${val}°) / 2 = ${180-val}° / 2 = ${base}°.<br>
+                        <strong>Відповідь:</strong> Кути при основі дорівнюють <strong style="color:var(--brand-green);">${base}°</strong> і <strong style="color:var(--brand-green);">${base}°</strong>.
+                    `;
+                } else {
+                    // type === 'base'
+                    if (val >= 90) {
+                        out.innerHTML = `<span style='color:var(--warning-red);'>Помилка: Кут при основі рівнобедреного трикутника має бути гострим (менше 90°), оскільки їх два однакових! (Сума двох тупих дасть більше 180°).</span>`;
+                        return;
+                    }
+                    const vertex = 180 - 2 * val;
+                    out.innerHTML = `
+                        <strong>Крок 1:</strong> Відомий кут при основі = ${val}°. Оскільки він рівнобедрений, другий кут при основі також ${val}°.<br>
+                        <strong>Крок 2:</strong> Сума кутів 180°. Знайдемо кут при вершині: 180° - (${val}° + ${val}°) = 180° - ${2*val}° = ${vertex}°.<br>
+                        <strong>Відповідь:</strong> Кут при вершині дорівнює <strong style="color:var(--brand-green);">${vertex}°</strong>.
+                    `;
+                }
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

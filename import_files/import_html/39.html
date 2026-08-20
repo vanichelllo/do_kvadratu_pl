@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вступ до стереометрії | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.25s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 660px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        /* ВІДЖЕТИ - Адаптивна архітектура */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 12px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-layout { display: flex; flex-direction: column; gap: 10px; }
+
+        .widget-svg-container { background: white; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 0.95rem; border: 1px dashed var(--brand-green); line-height: 1.6; word-wrap: break-word; white-space: normal; text-align: center; }
+
+        .slider-control { flex-grow: 1; min-width: 150px; margin: 0 10px; cursor: ew-resize; }
+        .slider-label { font-weight: bold; font-size: 0.9rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px;}
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Стереометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВСТУП ТА АКСІОМИ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема 1</span>
+                <h1 class="slide-title">Вступ до стереометрії. Аксіоми</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Що таке стереометрія?</div>
+                    <p style="margin: 0;">Це розділ геометрії про фігури у <strong>просторі</strong> (3D). Основні фігури: точка, пряма, площина.</p>
+                </div>
+
+                <div class="grid-2col" style="margin-top: 10px;">
+                    <div class="box theorem">
+                        <div class="box-title">Головні аксіоми (С1-С4):</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 5px; padding-left: 20px;">
+                            <li>Існують точки, що належать площині, і ті, що їй не належать.</li>
+                            <li>Якщо дві різні площини мають спільну точку, вони перетинаються <strong>по прямій</strong>.</li>
+                            <li>Якщо дві точки прямої належать площині, то <strong>вся пряма</strong> належить їй.</li>
+                            <li>Через будь-які <strong>три точки</strong>, що не лежать на одній прямій, можна провести площину (і тільки одну).</li>
+                        </ul>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">⚠️ Обережно з точками:</div>
+                        <p style="font-size: 0.9rem; margin-bottom: 0;">Не можна сказати, що площину визначають <em>будь-які</em> три точки. Якщо вони лежать на одній прямій, через них можна провести безліч площин (як сторінки в книзі). Умова <strong>«не лежать на одній прямій»</strong> — обов'язкова!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ЗАДАННЯ ПЛОЩИНИ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1.2</span>
+                <h2 class="slide-title">Способи однозначного задання площини</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0;">Площина нескінченна, але щоб її "зафіксувати" у просторі, нам потрібен певний "каркас". Існує 4 основні способи це зробити.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 5px;">
+                    <div class="widget-title">🧊 3D Дослідник площин:</div>
+
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-pl-1" onclick="setPlaneDef(1)">1. Три точки</button>
+                        <button class="btn-toggle" id="btn-pl-2" onclick="setPlaneDef(2)">2. Пряма і точка</button>
+                        <button class="btn-toggle" id="btn-pl-3" onclick="setPlaneDef(3)">3. Прямі, що перетинаються</button>
+                        <button class="btn-toggle" id="btn-pl-4" onclick="setPlaneDef(4)">4. Паралельні прямі</button>
+
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="pl-rot-slider" class="slider-control" min="-60" max="60" value="20" oninput="renderPlaneDef()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 280px; background: rgba(52, 152, 219, 0.05);">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="pl-def-elements"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="pl-output" style="min-height: 80px;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ПРЯМІ У ПРОСТОРІ (3D КУБ) -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2</span>
+                <h2 class="slide-title">Взаємне розміщення двох прямих</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin:0;">У 2D просторі прямі можуть лише перетинатися або бути паралельними. У 3D просторі з'являється новий стан — <strong>мимобіжність</strong>.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">🧊 3D Куб просторових відношень:</div>
+
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-line-par" onclick="setLineType('par')">Паралельні ($a \parallel b$)</button>
+                        <button class="btn-toggle" id="btn-line-int" onclick="setLineType('int')">Що перетинаються ($a \cap b$)</button>
+                        <button class="btn-toggle" id="btn-line-skew" onclick="setLineType('skew')">Мимобіжні прямі</button>
+
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="cube-rot-y" class="slider-control" min="-60" max="60" value="-20" oninput="renderCubeScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 280px; background: #fafafa;">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <!-- Усі грані СУЦІЛЬНІ -->
+                                <g id="cube-edges" stroke="#95a5a6" stroke-width="2.5"></g>
+                                <!-- Специфічні елементи сцени -->
+                                <g id="scene-elements"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="line-output">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: КУТ МІЖ МИМОБІЖНИМИ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2.1</span>
+                <h2 class="slide-title">Кут між мимобіжними прямими</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <p style="margin:0;"><strong>Кут між мимобіжними прямими</strong> $a$ і $b$ — це кут між прямими, що перетинаються і відповідно паралельні даним мимобіжним.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">🚀 Як знайти кут? (Метод паралельного перенесення):</div>
+                    <p style="font-size: 0.85rem; margin-top:0;">Щоб знайти кут між мимобіжними прямими $a$ і $b$, перенеси одну з них паралельно самій собі так, щоб вони перетнулися!</p>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            Перенести пряму $b$:
+                            <input type="range" id="skew-trans-slider" class="slider-control" min="0" max="100" value="0" oninput="renderSkewAngleScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="skew-rot-slider" class="slider-control" min="-60" max="60" value="-30" oninput="renderSkewAngleScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 250px; background: #fafafa;">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="skew-cube-edges" stroke="#bdc3c7" stroke-width="1.5"></g>
+                                <g id="skew-scene-elements"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="skew-output" style="text-align: left; max-width: 500px; margin: 0 auto;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРЯМА І ПЛОЩИНА (КУТ) -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 3</span>
+                <h2 class="slide-title">Пряма і площина. Кут нахилу</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Взаємне розміщення прямої та площини:</div>
+                    <ul style="font-size: 0.95rem; margin-bottom: 0;">
+                        <li><strong>Паралельність</strong> ($a \parallel \alpha$) — не мають спільних точок.</li>
+                        <li><strong>Перетин</strong> ($a \cap \alpha = M$) — мають одну спільну точку.</li>
+                        <li><strong>Належність</strong> ($a \subset \alpha$) — кожна точка прямої лежить у площині.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">📐 Досліди кут нахилу ($\varphi$):</div>
+                    <p style="font-size: 0.85rem; margin-top:0;"><strong>Кут між прямою і площиною</strong> — це кут між самою прямою (похилою) та її <strong>проєкцією</strong> на цю площину.</p>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            Висота точки $A$:
+                            <input type="range" id="ang-h-slider" class="slider-control" min="0" max="100" value="60" oninput="renderAngleScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт камери:
+                            <input type="range" id="ang-rot-slider" class="slider-control" min="-60" max="60" value="20" oninput="renderAngleScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 250px; background: rgba(52, 152, 219, 0.03);">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <path id="ang-plane-poly" d="" fill="rgba(52, 152, 219, 0.2)" stroke="#2980b9" stroke-width="2"/>
+                                <text id="ang-plane-lbl" x="" y="" font-weight="bold" fill="#2980b9" font-size="18">α</text>
+
+                                <line id="ang-proj-line" x1="" y1="" x2="" y2="" stroke="#8e44ad" stroke-width="4"/>
+                                <line id="ang-h-line" x1="" y1="" x2="" y2="" stroke="#e74c3c" stroke-width="4"/>
+                                <line id="ang-a-line" x1="" y1="" x2="" y2="" stroke="#d35400" stroke-width="5"/>
+
+                                <circle id="ang-pt-M" cx="" cy="" r="6" fill="#333"/>
+                                <circle id="ang-pt-O" cx="" cy="" r="6" fill="#333"/>
+                                <circle id="ang-pt-A" cx="" cy="" r="7" fill="#e74c3c"/>
+
+                                <text id="ang-lbl-M" x="" y="" font-weight="bold" font-size="16">M</text>
+                                <text id="ang-lbl-O" x="" y="" font-weight="bold" font-size="16">O</text>
+                                <text id="ang-lbl-A" x="" y="" font-weight="bold" fill="#e74c3c" font-size="18">A</text>
+                                <text id="ang-lbl-proj" x="" y="" font-weight="bold" fill="#8e44ad" font-size="14">проєкція</text>
+                                <text id="ang-lbl-slant" x="" y="" font-weight="bold" fill="#d35400" font-size="14">похила</text>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="ang-plane-out">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ВЗАЄМНЕ РОЗМІЩЕННЯ ПЛОЩИН (ДВОГРАННИЙ КУТ) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 4</span>
+                <h2 class="slide-title">Взаємне розміщення площин. Двогранний кут</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0;">Дві площини можуть бути <strong>паралельними</strong> ($\alpha \parallel \beta$) або <strong>перетинатися</strong> по прямій. При перетині утворюється <strong>двогранний кут</strong>.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">📖 Книжка площин (Лінійний кут двогранного кута):</div>
+                    <p style="font-size: 0.85rem; margin-top:0;">Щоб виміряти кут між площинами, проводять два перпендикуляри до лінії їх перетину. Кут між ними — це <strong>лінійний кут</strong> двогранного кута.</p>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            Відкрити площину $\beta$:
+                            <input type="range" id="dih-angle-slider" class="slider-control" min="20" max="160" value="60" oninput="renderDihedralScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Камера:
+                            <input type="range" id="dih-rot-slider" class="slider-control" min="-60" max="60" value="15" oninput="renderDihedralScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 250px; background: #fafafa;">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="dih-scene-elements"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="dih-output" style="text-align: center;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ВІДСТАНІ В ПРОСТОРІ -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 5</span>
+                <h2 class="slide-title">Відстані у просторі (3D)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin:0;">Відстань у стереометрії — це завжди довжина <strong>найкоротшого шляху</strong>, тобто <strong>спільного перпендикуляра</strong> між об'єктами.</p>
+                </div>
+
+                <div class="grid-3col" style="margin-top: 15px;">
+                    <!-- 1. Точка - Площина -->
+                    <div class="box theorem" style="text-align: center; border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.05); padding: 10px;">
+                        <div class="box-title" style="justify-content: center; color: #2980b9; font-size:0.95rem;">1. Від Точки до Площини</div>
+                        <div style="background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; margin-bottom: 10px; height: 120px; display:flex; align-items:center;">
+                            <svg viewBox="-50 -50 100 100" width="100%" height="100%">
+                                <path d="M -40 20 L 20 20 L 40 -10 L -20 -10 Z" fill="rgba(52, 152, 219, 0.2)" stroke="#2980b9" stroke-width="1.5"/>
+                                <line x1="0" y1="5" x2="0" y2="-40" stroke="#e74c3c" stroke-width="3"/>
+                                <circle cx="0" cy="5" r="2.5" fill="#e74c3c"/>
+                                <circle cx="0" cy="-40" r="3" fill="#e74c3c"/>
+                                <polyline points="-5,5 -5,0 0,0" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <p style="font-size:0.8rem; margin:0; line-height:1.4;">Довжина перпендикуляра від точки до площини.</p>
+                    </div>
+
+                    <!-- 2. Між площинами -->
+                    <div class="box theorem" style="text-align: center; border-left-color: #27ae60; background-color: rgba(46, 204, 113, 0.05); padding: 10px;">
+                        <div class="box-title" style="justify-content: center; color: #27ae60; font-size:0.95rem;">2. Між площинами</div>
+                        <div style="background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; margin-bottom: 10px; height: 120px; display:flex; align-items:center;">
+                            <svg viewBox="-50 -50 100 100" width="100%" height="100%">
+                                <path d="M -40 30 L 20 30 L 40 0 L -20 0 Z" fill="rgba(46, 204, 113, 0.2)" stroke="#27ae60" stroke-width="1.5"/>
+                                <path d="M -40 -10 L 20 -10 L 40 -40 L -20 -40 Z" fill="rgba(46, 204, 113, 0.2)" stroke="#27ae60" stroke-width="1.5"/>
+                                <line x1="0" y1="15" x2="0" y2="-25" stroke="#e74c3c" stroke-width="3"/>
+                                <circle cx="0" cy="15" r="2.5" fill="#e74c3c"/>
+                                <circle cx="0" cy="-25" r="2.5" fill="#e74c3c"/>
+                            </svg>
+                        </div>
+                        <p style="font-size:0.8rem; margin:0; line-height:1.4;">Відстань від будь-якої точки однієї площини до іншої.</p>
+                    </div>
+
+                    <!-- 3. Мимобіжні прямі -->
+                    <div class="box theorem" style="text-align: center; border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.05); padding: 10px;">
+                        <div class="box-title" style="justify-content: center; color: #8e44ad; font-size:0.95rem;">3. Мимобіжні прямі</div>
+                        <div style="background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 10px; margin-bottom: 10px; height: 120px; display:flex; align-items:center;">
+                            <svg viewBox="-50 -50 100 100" width="100%" height="100%">
+                                <path d="M -30 30 L 10 30 L 10 -10 L -30 -10 Z" fill="none" stroke="#ccc" stroke-width="1"/>
+                                <path d="M -10 10 L 30 10 L 30 -30 L -10 -30 Z" fill="none" stroke="#ccc" stroke-width="1"/>
+                                <line x1="-30" y1="30" x2="-10" y2="10" stroke="#ccc" stroke-width="1"/>
+                                <line x1="10" y1="30" x2="30" y2="10" stroke="#ccc" stroke-width="1"/>
+                                <line x1="10" y1="-10" x2="30" y2="-30" stroke="#ccc" stroke-width="1"/>
+                                <line x1="-30" y1="-10" x2="-10" y2="-30" stroke="#ccc" stroke-width="1"/>
+
+                                <line x1="-40" y1="30" x2="20" y2="30" stroke="#2980b9" stroke-width="3"/>
+                                <line x1="30" y1="20" x2="30" y2="-40" stroke="#8e44ad" stroke-width="3"/>
+                                <line x1="10" y1="30" x2="30" y2="10" stroke="#e74c3c" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <p style="font-size:0.8rem; margin:0; line-height:1.4;">Довжина їхнього <strong>спільного перпендикуляра</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 8: ТЕОРЕМА ПРО ТРИ ПЕРПЕНДИКУЛЯРИ (ТТП 3D) -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 6</span>
+                <h2 class="slide-title">Теорема про три перпендикуляри (ТТП)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <p style="margin:0; font-size:0.95rem;"><strong>ТТП — найважливіша теорема стереометрії на НМТ!</strong><br>Пряма на площині перпендикулярна до похилої тоді і тільки тоді, коли вона перпендикулярна до її проєкції.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">🏗️ 3D Конструктор ТТП (Покроково):</div>
+
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-ttp-1" onclick="setTtpStep(1)">Крок 1: База</button>
+                        <button class="btn-toggle" id="btn-ttp-2" onclick="setTtpStep(2)">Крок 2: Перпендикуляр</button>
+                        <button class="btn-toggle" id="btn-ttp-3" onclick="setTtpStep(3)">Крок 3: Проєкція $\perp c$</button>
+                        <button class="btn-toggle" id="btn-ttp-4" onclick="setTtpStep(4)">Крок 4: ФІНАЛ (ТТП)</button>
+
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Камера:
+                            <input type="range" id="ttp-rot-slider" class="slider-control" min="-50" max="50" value="25" oninput="renderTTPScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-layout">
+                        <div class="widget-svg-container" style="height: 280px; background: rgba(46, 204, 113, 0.05);">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <path id="ttp-plane" d="" fill="rgba(46, 204, 113, 0.2)" stroke="#27ae60" stroke-width="2"/>
+                                <text id="ttp-lbl-alpha" x="" y="" font-weight="bold" fill="#27ae60" font-size="18">α</text>
+
+                                <g id="ttp-elements"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="ttp-output">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 9: ПІДСУМОК -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Базу стереометрії засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Тепер ви вмієте "бачити" у просторі.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Золоті правила:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li>Мимобіжні прямі не паралельні і не перетинаються. Їхній кут шукаємо паралельним перенесенням.</li>
+                            <li>Кут між площинами вимірюється <strong>лінійним кутом</strong> двогранного кута.</li>
+                            <li>Кут між прямою і площиною — це кут між прямою та її <strong>проєкцією</strong>.</li>
+                            <li><strong>ТТП:</strong> Похила $\perp$ прямій $c \iff$ проєкція $\perp$ прямій $c$.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти конспект з 3D ілюстраціями.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial render for widgets
+                if (currentSlide === 2) { setPlaneDef(1); renderPlaneDef(); }
+                if (currentSlide === 3) { setLineType('par'); renderCubeScene(); }
+                if (currentSlide === 4) renderSkewAngleScene();
+                if (currentSlide === 5) renderAngleScene();
+                if (currentSlide === 6) renderDihedralScene();
+                if (currentSlide === 8) { setTtpStep(1); renderTTPScene(); }
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= 3D ПРОЄКЦІЙНИЙ РУШІЙ =================
+            function project3D(x, y, z, angleYDeg, angleXDeg = 20) {
+                let ay = angleYDeg * Math.PI / 180;
+                let ax = angleXDeg * Math.PI / 180;
+
+                let x1 = x * Math.cos(ay) - z * Math.sin(ay);
+                let z1 = x * Math.sin(ay) + z * Math.cos(ay);
+                let y1 = y;
+
+                let y2 = y1 * Math.cos(ax) - z1 * Math.sin(ax);
+                let z2 = y1 * Math.sin(ax) + z1 * Math.cos(ax);
+                let x2 = x1;
+
+                return { px: x2, py: -y2, zDepth: z2 };
+            }
+
+            function line3D(x1, y1, z1, x2, y2, z2, angleY, props) {
+                const p1 = project3D(x1, y1, z1, angleY);
+                const p2 = project3D(x2, y2, z2, angleY);
+                return `<line x1="${p1.px}" y1="${p1.py}" x2="${p2.px}" y2="${p2.py}" ${props} />`;
+            }
+
+            function point3D(x, y, z, angleY, props, text, textDx=5, textDy=-5, textProps="") {
+                const p = project3D(x, y, z, angleY);
+                let res = `<circle cx="${p.px}" cy="${p.py}" ${props} />`;
+                if(text) res += `<text x="${p.px + textDx}" y="${p.py + textDy}" ${textProps}>${text}</text>`;
+                return res;
+            }
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 2: Задання площини
+            let plDefState = 1;
+            window.setPlaneDef = function(num) {
+                plDefState = num;
+                [1,2,3,4].forEach(i => document.getElementById(`btn-pl-${i}`).classList.remove('active'));
+                document.getElementById(`btn-pl-${num}`).classList.add('active');
+
+                const out = document.getElementById('pl-output');
+                if (num === 1) out.innerHTML = `<strong style="color:var(--brand-blue); font-size:1.1rem; margin-bottom:10px;">1. Через три точки</strong>Через будь-які 3 точки, що НЕ лежать на одній прямій, можна провести площину. Це основна аксіома простору.`;
+                if (num === 2) out.innerHTML = `<strong style="color:var(--brand-blue); font-size:1.1rem; margin-bottom:10px;">2. Через пряму і точку</strong>Через пряму і точку, яка їй не належить, можна провести площину.`;
+                if (num === 3) out.innerHTML = `<strong style="color:var(--brand-blue); font-size:1.1rem; margin-bottom:10px;">3. Прямі, що перетинаються</strong>Через дві прямі, що перетинаються, можна провести площину.`;
+                if (num === 4) out.innerHTML = `<strong style="color:var(--brand-blue); font-size:1.1rem; margin-bottom:10px;">4. Паралельні прямі</strong>Через дві паралельні прямі можна провести площину.`;
+
+                renderPlaneDef();
+            };
+
+            window.renderPlaneDef = function() {
+                const angleY = parseInt(document.getElementById('pl-rot-slider').value);
+
+                const p1 = project3D(-120, 0, -80, angleY);
+                const p2 = project3D(120, 0, -80, angleY);
+                const p3 = project3D(120, 0, 80, angleY);
+                const p4 = project3D(-120, 0, 80, angleY);
+
+                let elems = `<path d="M ${p1.px} ${p1.py} L ${p2.px} ${p2.py} L ${p3.px} ${p3.py} L ${p4.px} ${p4.py} Z" fill="rgba(52, 152, 219, 0.2)" stroke="#2980b9" stroke-width="2"/>`;
+                elems += `<text x="${p2.px - 15}" y="${p2.py + 25}" font-weight="bold" fill="#2980b9" font-size="18">α</text>`;
+
+                if (plDefState === 1) {
+                    elems += point3D(-60, 0, -40, angleY, 'r="7" fill="#e74c3c"', 'A', -5, -15, 'font-weight="bold" fill="#c0392b" font-size="16"');
+                    elems += point3D(50, 0, -20, angleY, 'r="7" fill="#e74c3c"', 'B', 10, -5, 'font-weight="bold" fill="#c0392b" font-size="16"');
+                    elems += point3D(-10, 0, 50, angleY, 'r="7" fill="#e74c3c"', 'C', 10, 15, 'font-weight="bold" fill="#c0392b" font-size="16"');
+                } else if (plDefState === 2) {
+                    elems += line3D(-100, 0, -40, 100, 0, 40, angleY, 'stroke="#8e44ad" stroke-width="5"');
+                    elems += point3D(100, 0, 40, angleY, 'r="0"', 'a', 10, 10, 'font-weight="bold" fill="#8e44ad" font-size="16"');
+                    elems += point3D(-30, 0, 40, angleY, 'r="7" fill="#e74c3c"', 'M', -10, 20, 'font-weight="bold" fill="#c0392b" font-size="16"');
+                } else if (plDefState === 3) {
+                    elems += line3D(-100, 0, -50, 100, 0, 50, angleY, 'stroke="#8e44ad" stroke-width="5"');
+                    elems += point3D(100, 0, 50, angleY, 'r="0"', 'a', 10, 10, 'font-weight="bold" fill="#8e44ad" font-size="16"');
+                    elems += line3D(-80, 0, 60, 80, 0, -60, angleY, 'stroke="#d35400" stroke-width="5"');
+                    elems += point3D(80, 0, -60, angleY, 'r="0"', 'b', 10, -5, 'font-weight="bold" fill="#d35400" font-size="16"');
+                    elems += point3D(0, 0, 0, angleY, 'r="6" fill="#333"', 'O', -15, -15, 'font-weight="bold" font-size="16"');
+                } else if (plDefState === 4) {
+                    elems += line3D(-90, 0, -30, 90, 0, -30, angleY, 'stroke="#27ae60" stroke-width="5"');
+                    elems += point3D(100, 0, -30, angleY, 'r="0"', 'a', 5, 5, 'font-weight="bold" fill="#27ae60" font-size="16"');
+                    elems += line3D(-90, 0, 30, 90, 0, 30, angleY, 'stroke="#27ae60" stroke-width="5"');
+                    elems += point3D(100, 0, 30, angleY, 'r="0"', 'b', 5, 5, 'font-weight="bold" fill="#27ae60" font-size="16"');
+                }
+                document.getElementById('pl-def-elements').innerHTML = elems;
+            };
+
+            // Слайд 3: 3D КУБ
+            let currentLineType = 'par';
+            window.setLineType = function(type) {
+                currentLineType = type;
+                ['par', 'int', 'skew'].forEach(id => document.getElementById(`btn-line-${id}`).classList.remove('active'));
+                document.getElementById(`btn-line-${type}`).classList.add('active');
+
+                const out = document.getElementById('line-output');
+                if (type === 'par') {
+                    out.innerHTML = `
+                        <div style="font-weight:bold; font-size:1.1rem; color:#2980b9; margin-bottom:10px;">Паралельні прямі ($a \\parallel b$)</div>
+                        Лежать в <strong>одній площині</strong> і ніколи не перетинаються. На моделі показано протилежні ребра куба.
+                    `;
+                } else if (type === 'int') {
+                    out.innerHTML = `
+                        <div style="font-weight:bold; font-size:1.1rem; color:#d35400; margin-bottom:10px;">Прямі, що перетинаються ($a \\cap b = O$)</div>
+                        Лежать в <strong>одній площині</strong> (наприклад, передній грані) і мають одну спільну точку O.
+                    `;
+                } else {
+                    out.innerHTML = `
+                        <div style="font-weight:bold; font-size:1.1rem; color:#8e44ad; margin-bottom:10px;">Мимобіжні прямі</div>
+                        <strong>Не існують в жодній спільній площині!</strong><br>
+                        <em>Ознака:</em> Пряма $a$ лежить у площині $\\alpha$ (верхня грань). Пряма $b$ протикає цю площину в точці $A$, яка не лежить на прямій $a$.
+                    `;
+                }
+                if (window.MathJax) MathJax.typesetPromise();
+                renderCubeScene();
+            };
+
+            window.renderCubeScene = function() {
+                const angleY = parseInt(document.getElementById('cube-rot-y').value);
+                const size = 60;
+
+                const v000 = [-size, -size, -size], v100 = [size, -size, -size], v101 = [size, -size, size], v001 = [-size, -size, size];
+                const v010 = [-size, size, -size], v110 = [size, size, -size], v111 = [size, size, size], v011 = [-size, size, size];
+
+                let allEdges = "";
+                let sceneElems = "";
+
+                const edgeStyle = 'stroke="#95a5a6" stroke-width="2.5"';
+                // Y
+                allEdges += line3D(...v000, ...v010, angleY, edgeStyle);
+                allEdges += line3D(...v100, ...v110, angleY, edgeStyle);
+                allEdges += line3D(...v101, ...v111, angleY, edgeStyle);
+                allEdges += line3D(...v001, ...v011, angleY, edgeStyle);
+                // X
+                allEdges += line3D(...v000, ...v100, angleY, edgeStyle);
+                allEdges += line3D(...v001, ...v101, angleY, edgeStyle);
+                allEdges += line3D(...v010, ...v110, angleY, edgeStyle);
+                allEdges += line3D(...v011, ...v111, angleY, edgeStyle);
+                // Z
+                allEdges += line3D(...v000, ...v001, angleY, edgeStyle);
+                allEdges += line3D(...v100, ...v101, angleY, edgeStyle);
+                allEdges += line3D(...v010, ...v011, angleY, edgeStyle);
+                allEdges += line3D(...v110, ...v111, angleY, edgeStyle);
+
+                if (currentLineType === 'par') {
+                    sceneElems += line3D(-size-40, size, size, size+40, size, size, angleY, 'stroke="#2980b9" stroke-width="6"');
+                    sceneElems += point3D(-size-45, size, size, angleY, 'r="0"', 'a', -15, 5, 'font-weight="bold" fill="#2980b9" font-size="18"');
+
+                    sceneElems += line3D(-size-40, -size, -size, size+40, -size, -size, angleY, 'stroke="#27ae60" stroke-width="6"');
+                    sceneElems += point3D(size+45, -size, -size, angleY, 'r="0"', 'b', 5, 5, 'font-weight="bold" fill="#27ae60" font-size="18"');
+                }
+                else if (currentLineType === 'int') {
+                    sceneElems += line3D(-size-40, -size, size, size+40, -size, size, angleY, 'stroke="#2980b9" stroke-width="6"');
+                    sceneElems += point3D(-size-45, -size, size, angleY, 'r="0"', 'a', -20, 5, 'font-weight="bold" fill="#2980b9" font-size="18"');
+
+                    sceneElems += line3D(size, -size-40, size, size, size+40, size, angleY, 'stroke="#d35400" stroke-width="6"');
+                    sceneElems += point3D(size, size+45, size, angleY, 'r="0"', 'b', -5, 20, 'font-weight="bold" fill="#d35400" font-size="18"');
+
+                    sceneElems += point3D(...v101, angleY, 'r="7" fill="#c0392b"', 'O', 15, -15, 'font-weight="bold" fill="#c0392b" font-size="18"');
+                }
+                else if (currentLineType === 'skew') {
+                    const pA = project3D(...v010, angleY);
+                    const pB = project3D(...v110, angleY);
+                    const pC = project3D(...v111, angleY);
+                    const pD = project3D(...v011, angleY);
+                    sceneElems += `<path d="M ${pA.px} ${pA.py} L ${pB.px} ${pB.py} L ${pC.px} ${pC.py} L ${pD.px} ${pD.py} Z" fill="rgba(41, 128, 185, 0.2)" stroke="none"/>`;
+                    sceneElems += `<text x="${(pA.px+pD.px)/2}" y="${(pA.py+pD.py)/2 - 10}" fill="#2980b9" font-weight="bold" font-size="16">Площина α</text>`;
+
+                    sceneElems += line3D(size, -size-40, -size, size, size+40, -size, angleY, 'stroke="#8e44ad" stroke-width="6"');
+                    sceneElems += point3D(size, -size-45, -size, angleY, 'r="0"', 'b', -5, 10, 'font-weight="bold" fill="#8e44ad" font-size="18"');
+
+                    sceneElems += line3D(-size-40, size, size, size+40, size, size, angleY, 'stroke="#2980b9" stroke-width="6"');
+                    sceneElems += point3D(-size-45, size, size, angleY, 'r="0"', 'a', -20, 5, 'font-weight="bold" fill="#2980b9" font-size="18"');
+
+                    sceneElems += point3D(...v110, angleY, 'r="7" fill="#8e44ad"', 'A', 15, -5, 'font-weight="bold" fill="#8e44ad" font-size="18"');
+                }
+
+                document.getElementById('cube-edges').innerHTML = allEdges;
+                document.getElementById('scene-elements').innerHTML = sceneElems;
+            };
+
+            // Слайд 4: КУТ МІЖ МИМОБІЖНИМИ
+            window.renderSkewAngleScene = function() {
+                const transVal = parseInt(document.getElementById('skew-trans-slider').value); // 0 to 100
+                const angleY = parseInt(document.getElementById('skew-rot-slider').value);
+                const size = 60;
+
+                // Базові координати
+                // a (вгорі спереду, по X)
+                const a1 = [-size-40, size, size], a2 = [size+40, size, size];
+                // b (справа ззаду, по Y)
+                const b1 = [size, -size-40, -size], b2 = [size, size+40, -size];
+
+                // Перенос прямої b вздовж осі Z вперед (до a)
+                const targetZ = size;
+                const currentZ = -size + (targetZ - (-size)) * (transVal / 100);
+
+                const b1_trans = [size, -size-40, currentZ];
+                const b2_trans = [size, size+40, currentZ];
+
+                let allEdges = "";
+                const edgeStyle = 'stroke="#bdc3c7" stroke-width="1.5"';
+                // Тільки найважливіші ребра для орієнтації
+                allEdges += line3D(-size,-size,-size, -size,size,-size, angleY, edgeStyle);
+                allEdges += line3D(size,-size,-size, size,size,-size, angleY, edgeStyle);
+                allEdges += line3D(size,-size,size, size,size,size, angleY, edgeStyle);
+                allEdges += line3D(-size,-size,size, -size,size,size, angleY, edgeStyle);
+
+                allEdges += line3D(-size,-size,-size, size,-size,-size, angleY, edgeStyle);
+                allEdges += line3D(-size,size,-size, size,size,-size, angleY, edgeStyle);
+                allEdges += line3D(-size,size,size, size,size,size, angleY, edgeStyle);
+                allEdges += line3D(-size,-size,size, size,-size,size, angleY, edgeStyle);
+
+                allEdges += line3D(-size,-size,-size, -size,-size,size, angleY, edgeStyle);
+                allEdges += line3D(size,-size,-size, size,-size,size, angleY, edgeStyle);
+                allEdges += line3D(-size,size,-size, -size,size,size, angleY, edgeStyle);
+                allEdges += line3D(size,size,-size, size,size,size, angleY, edgeStyle);
+
+                document.getElementById('skew-cube-edges').innerHTML = allEdges;
+
+                let elems = "";
+                // Пряма a
+                elems += line3D(...a1, ...a2, angleY, 'stroke="#2980b9" stroke-width="5"');
+                elems += point3D(...a1, angleY, 'r="0"', 'a', -15, 5, 'font-weight="bold" fill="#2980b9" font-size="16"');
+
+                // Початкова пряма b (сірувата)
+                if (transVal > 0) {
+                    elems += line3D(...b1, ...b2, angleY, 'stroke="#8e44ad" stroke-width="2" stroke-dasharray="4" opacity="0.5"');
+                    elems += point3D(...b1, angleY, 'r="0"', 'b', -5, 10, 'font-weight="bold" fill="#8e44ad" font-size="12" opacity="0.5"');
+                }
+
+                // Перенесена пряма b'
+                elems += line3D(...b1_trans, ...b2_trans, angleY, 'stroke="#8e44ad" stroke-width="5"');
+                elems += point3D(...b1_trans, angleY, 'r="0"', transVal===100?"b'":"b", -15, 10, 'font-weight="bold" fill="#8e44ad" font-size="16"');
+
+                // Якщо перетнулися (100%), малюємо кут і точку O
+                if (transVal === 100) {
+                    elems += point3D(size, size, size, angleY, 'r="6" fill="#f39c12"', 'O', 10, -10, 'font-weight="bold" fill="#d35400" font-size="16"');
+
+                    // Кут. Вони перпендикулярні в кубі. Малюємо прямий кут в площині y=size.
+                    // O = (size, size, size). a йде вздовж X, b' вздовж Y.
+                    const pO = project3D(size, size, size, angleY);
+                    const pA = project3D(size-20, size, size, angleY);
+                    const pB = project3D(size, size-20, size, angleY);
+                    const pCorner = project3D(size-20, size-20, size, angleY);
+
+                    elems += `<polyline points="${pA.px},${pA.py} ${pCorner.px},${pCorner.py} ${pB.px},${pB.py}" fill="rgba(243,156,18,0.5)" stroke="#f39c12" stroke-width="3"/>`;
+                }
+
+                document.getElementById('skew-scene-elements').innerHTML = elems;
+
+                const out = document.getElementById('skew-output');
+                if (transVal === 0) {
+                    out.innerHTML = `Прямі $a$ та $b$ — <strong>мимобіжні</strong>. Щоб знайти кут між ними, почніть тягнути повзунок.`;
+                } else if (transVal < 100) {
+                    out.innerHTML = `Виконуємо <strong>паралельне перенесення</strong> прямої $b$ доти, поки вона не перетнеться з прямою $a$.`;
+                } else {
+                    out.innerHTML = `
+                        <strong style="color:var(--brand-green); font-size:1.1rem;">Готово! Вони перетнулися.</strong><br>
+                        Тепер ми бачимо утворений кут. Це і є кут між мимобіжними прямими (у кубі він дорівнює $90^\\circ$).
+                    `;
+                }
+                if (window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 5: Пряма і площина (Кут нахилу)
+            window.renderAngleScene = function() {
+                const hVal = parseInt(document.getElementById('ang-h-slider').value);
+                const angleY = parseInt(document.getElementById('ang-rot-slider').value);
+
+                const p1 = project3D(-120, 0, -100, angleY);
+                const p2 = project3D(120, 0, -100, angleY);
+                const p3 = project3D(120, 0, 100, angleY);
+                const p4 = project3D(-120, 0, 100, angleY);
+
+                const planePath = `M ${p1.px} ${p1.py} L ${p2.px} ${p2.py} L ${p3.px} ${p3.py} L ${p4.px} ${p4.py} Z`;
+                document.getElementById('ang-plane-poly').setAttribute('d', planePath);
+                document.getElementById('ang-plane-lbl').setAttribute('x', p2.px - 10);
+                document.getElementById('ang-plane-lbl').setAttribute('y', p2.py + 20);
+
+                const O_3d = [50, 0, 0];
+                const A_3d = [50, hVal, 0];
+                const M_3d = [-60, 0, 0];
+
+                const pO = project3D(...O_3d, angleY);
+                const pA = project3D(...A_3d, angleY);
+                const pM = project3D(...M_3d, angleY);
+
+                const lProj = document.getElementById('ang-proj-line');
+                lProj.setAttribute('x1', pM.px); lProj.setAttribute('y1', pM.py);
+                lProj.setAttribute('x2', pO.px); lProj.setAttribute('y2', pO.py);
+
+                const lH = document.getElementById('ang-h-line');
+                lH.setAttribute('x1', pA.px); lH.setAttribute('y1', pA.py);
+                lH.setAttribute('x2', pO.px); lH.setAttribute('y2', pO.py);
+
+                const lA = document.getElementById('ang-a-line');
+                lA.setAttribute('x1', pM.px); lA.setAttribute('y1', pM.py);
+                lA.setAttribute('x2', pA.px); lA.setAttribute('y2', pA.py);
+
+                const updatePt = (id, p, dx, dy) => {
+                    const c = document.getElementById(`ang-pt-${id}`);
+                    c.setAttribute('cx', p.px); c.setAttribute('cy', p.py);
+                    const l = document.getElementById(`ang-lbl-${id}`);
+                    l.setAttribute('x', p.px + dx); l.setAttribute('y', p.py + dy);
+                };
+                updatePt('M', pM, -20, 15);
+                updatePt('O', pO, 15, 15);
+                updatePt('A', pA, -10, -15);
+
+                const lblProj = document.getElementById('ang-lbl-proj');
+                lblProj.setAttribute('x', (pM.px+pO.px)/2 - 30); lblProj.setAttribute('y', (pM.py+pO.py)/2 + 20);
+
+                const lblSlant = document.getElementById('ang-lbl-slant');
+                lblSlant.setAttribute('x', (pM.px+pA.px)/2 - 40); lblSlant.setAttribute('y', (pM.py+pA.py)/2 - 15);
+
+                const projLen = 110;
+                const tgPhi = hVal / projLen;
+                const phiDeg = Math.atan(tgPhi) * 180 / Math.PI;
+
+                const out = document.getElementById('ang-plane-out');
+                if (hVal === 0) {
+                    out.innerHTML = `Похила повністю лежить у площині. Кут <strong>$\\varphi = 0^\\circ$</strong>.`;
+                } else {
+                    out.innerHTML = `
+                        Висота $h = ${hVal}$. Проєкція $MO = 110$.<br>
+                        $\\text{tg } \\varphi = \\frac{h}{MO} = \\frac{${hVal}}{110} \\approx ${tgPhi.toFixed(2)}$<br>
+                        <strong>Кут $\\varphi \\approx ${phiDeg.toFixed(1)}^\\circ$</strong>
+                    `;
+                }
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 6: ДВОГРАННИЙ КУТ
+            window.renderDihedralScene = function() {
+                const angleBeta = parseInt(document.getElementById('dih-angle-slider').value); // 20 to 160
+                const angleY = parseInt(document.getElementById('dih-rot-slider').value); // -60 to 60
+
+                let elems = "";
+                const edgeZ = [-100, 100]; // Лінія перетину c: X=0, Y=0, Z=-100 to 100
+
+                // Площина альфа (базова, X>0, Y=0)
+                const pA1 = project3D(0, 0, -100, angleY);
+                const pA2 = project3D(100, 0, -100, angleY);
+                const pA3 = project3D(100, 0, 100, angleY);
+                const pA4 = project3D(0, 0, 100, angleY);
+                elems += `<path d="M ${pA1.px} ${pA1.py} L ${pA2.px} ${pA2.py} L ${pA3.px} ${pA3.py} L ${pA4.px} ${pA4.py} Z" fill="rgba(46, 204, 113, 0.2)" stroke="#27ae60" stroke-width="2"/>`;
+                elems += `<text x="${pA3.px + 10}" y="${pA3.py}" font-weight="bold" fill="#27ae60" font-size="16">α</text>`;
+
+                // Площина бета (обернена на angleBeta навколо Z)
+                const rad = angleBeta * Math.PI / 180;
+                // Вектор ширини бета: X = -100*cos, Y = 100*sin
+                const bW = 100;
+                const bX = -bW * Math.cos(rad);
+                const bY = bW * Math.sin(rad);
+
+                const pB1 = project3D(0, 0, -100, angleY);
+                const pB2 = project3D(bX, bY, -100, angleY);
+                const pB3 = project3D(bX, bY, 100, angleY);
+                const pB4 = project3D(0, 0, 100, angleY);
+                elems += `<path d="M ${pB1.px} ${pB1.py} L ${pB2.px} ${pB2.py} L ${pB3.px} ${pB3.py} L ${pB4.px} ${pB4.py} Z" fill="rgba(52, 152, 219, 0.2)" stroke="#2980b9" stroke-width="2"/>`;
+                elems += `<text x="${pB3.px - 20}" y="${pB3.py - 10}" font-weight="bold" fill="#2980b9" font-size="16">β</text>`;
+
+                // Лінія перетину c
+                elems += line3D(0, 0, -120, 0, 0, 120, angleY, 'stroke="#333" stroke-width="4"');
+                elems += point3D(0, 0, 125, angleY, 'r="0"', 'c', 0, 15, 'font-weight="bold" font-size="16"');
+
+                // Лінійний кут
+                const oZ = 0; // Точка O посередині
+                const aX = 60, aY = 0; // В площині альфа
+                const bx = -60 * Math.cos(rad), by = 60 * Math.sin(rad); // В площині бета
+
+                elems += line3D(0, 0, oZ, aX, aY, oZ, angleY, 'stroke="#e74c3c" stroke-width="4"');
+                elems += point3D(aX, aY, oZ, angleY, 'r="0"', 'a', 5, 10, 'font-weight="bold" fill="#e74c3c" font-size="16"');
+
+                elems += line3D(0, 0, oZ, bx, by, oZ, angleY, 'stroke="#d35400" stroke-width="4"');
+                elems += point3D(bx, by, oZ, angleY, 'r="0"', 'b', -15, -5, 'font-weight="bold" fill="#d35400" font-size="16"');
+
+                elems += point3D(0, 0, oZ, angleY, 'r="5" fill="#333"', 'O', 10, 15, 'font-weight="bold" font-size="14"');
+
+                // Прямі кути
+                const pO = project3D(0,0,oZ, angleY);
+                const pCa = project3D(20, 0, oZ, angleY);
+                const pCc = project3D(0, 0, oZ-20, angleY);
+                const pCac = project3D(20, 0, oZ-20, angleY);
+                elems += `<polyline points="${pCa.px},${pCa.py} ${pCac.px},${pCac.py} ${pCc.px},${pCc.py}" fill="none" stroke="#e74c3c" stroke-width="2"/>`;
+
+                const pCb = project3D(bx/3, by/3, oZ, angleY);
+                const pCbc = project3D(bx/3, by/3, oZ-20, angleY);
+                elems += `<polyline points="${pCb.px},${pCb.py} ${pCbc.px},${pCbc.py} ${pCc.px},${pCc.py}" fill="none" stroke="#d35400" stroke-width="2"/>`;
+
+                document.getElementById('dih-scene-elements').innerHTML = elems;
+
+                document.getElementById('dih-output').innerHTML = `
+                    Двогранний кут між площинами $\\alpha$ та $\\beta$ дорівнює їх лінійному куту: <strong>$\\angle(a, b) = ${angleBeta}^\\circ$</strong>.<br>
+                    <small>Прямі $a$ та $b$ проведені перпендикулярно до ребра $c$ з однієї точки $O$.</small>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 8: ТТП (3D) СУЦІЛЬНІ ЛІНІЇ
+            let ttpState = 1;
+            window.setTtpStep = function(step) {
+                ttpState = step;
+                [1,2,3,4].forEach(i => document.getElementById(`btn-ttp-${i}`).classList.remove('active'));
+                document.getElementById(`btn-ttp-${step}`).classList.add('active');
+                renderTTPScene();
+            };
+
+            window.renderTTPScene = function() {
+                const angleY = parseInt(document.getElementById('ttp-rot-slider').value);
+                const step = ttpState;
+
+                const p1 = project3D(-120, 0, -100, angleY);
+                const p2 = project3D(120, 0, -100, angleY);
+                const p3 = project3D(120, 0, 100, angleY);
+                const p4 = project3D(-120, 0, 100, angleY);
+
+                document.getElementById('ttp-plane').setAttribute('d', `M ${p1.px} ${p1.py} L ${p2.px} ${p2.py} L ${p3.px} ${p3.py} L ${p4.px} ${p4.py} Z`);
+                document.getElementById('ttp-lbl-alpha').setAttribute('x', p2.px - 20);
+                document.getElementById('ttp-lbl-alpha').setAttribute('y', p2.py + 25);
+
+                let elems = "";
+
+                // Крок 1: Пряма c (СУЦІЛЬНА)
+                const cZ = 50;
+                elems += line3D(-120, 0, cZ, 120, 0, cZ, angleY, 'stroke="#8e44ad" stroke-width="5"');
+                elems += point3D(125, 0, cZ, angleY, 'r="0"', 'c', 5, 5, 'font-weight="bold" fill="#8e44ad" font-size="18"');
+
+                const O_3d = [40, 0, -40];
+                const A_3d = [40, 90, -40];
+                const M_3d = [40, 0, cZ];
+
+                if (step >= 2) {
+                    elems += line3D(...A_3d, ...O_3d, angleY, 'stroke="#3498db" stroke-width="5"');
+                    elems += point3D(...O_3d, angleY, 'r="6" fill="#2980b9"', 'O', 15, 10, 'font-weight="bold" font-size="16"');
+                    elems += point3D(...A_3d, angleY, 'r="6" fill="#2980b9"', 'A', -5, -20, 'font-weight="bold" fill="#2980b9" font-size="18"');
+                }
+
+                if (step >= 3) {
+                    elems += line3D(...O_3d, ...M_3d, angleY, 'stroke="#f39c12" stroke-width="5"');
+                    elems += point3D(...M_3d, angleY, 'r="7" fill="#d35400"', 'M', -20, 20, 'font-weight="bold" fill="#d35400" font-size="16"');
+
+                    const pM = project3D(...M_3d, angleY);
+                    const pM_c = project3D(M_3d[0] + 20, 0, M_3d[2], angleY);
+                    const pM_om = project3D(M_3d[0], 0, M_3d[2] - 20, angleY);
+                    const pM_corner = project3D(M_3d[0] + 20, 0, M_3d[2] - 20, angleY);
+                    elems += `<polyline points="${pM_c.px},${pM_c.py} ${pM_corner.px},${pM_corner.py} ${pM_om.px},${pM_om.py}" fill="rgba(243,156,18,0.3)" stroke="#d35400" stroke-width="2.5"/>`;
+
+                    const pMid = project3D(40, 0, 0, angleY);
+                    elems += `<text x="${pMid.px - 45}" y="${pMid.py + 10}" fill="#d35400" font-weight="bold" font-size="14">проєкція</text>`;
+                }
+
+                if (step >= 4) {
+                    elems += line3D(...A_3d, ...M_3d, angleY, 'stroke="#e74c3c" stroke-width="6"');
+
+                    const pM = project3D(...M_3d, angleY);
+                    const pM_c = project3D(M_3d[0] + 20, 0, M_3d[2], angleY);
+                    const pM_am = project3D(40, 20, M_3d[2] - 20, angleY);
+                    const pM_corner = project3D(M_3d[0] + 20, 20, M_3d[2] - 20, angleY);
+                    elems += `<polyline points="${pM_c.px},${pM_c.py} ${pM_corner.px},${pM_corner.py} ${pM_am.px},${pM_am.py}" fill="rgba(231,76,60,0.5)" stroke="#e74c3c" stroke-width="2.5"/>`;
+
+                    const pMid = project3D(40, 45, 0, angleY);
+                    elems += `<text x="${pMid.px + 15}" y="${pMid.py - 10}" fill="#e74c3c" font-weight="bold" font-size="14">похила</text>`;
+                }
+
+                document.getElementById('ttp-elements').innerHTML = elems;
+
+                const out = document.getElementById('ttp-output');
+                if (step === 1) {
+                    out.innerHTML = `<strong>База:</strong> Є площина $\\alpha$ та пряма $c$, що лежить у цій площині.`;
+                } else if (step === 2) {
+                    out.innerHTML = `<strong>Перпендикуляр:</strong> Опускаємо з точки $A$ перпендикуляр $AO$ на площину $\\alpha$.`;
+                } else if (step === 3) {
+                    out.innerHTML = `<strong>Умова (Проєкція $\\perp c$):</strong> Проводимо в площині відрізок $OM$ перпендикулярно до прямої $c$. Це наша <em>проєкція</em>.`;
+                } else {
+                    out.innerHTML = `
+                        <strong style="color:var(--warning-red); font-size:1.1rem;">Висновк ТТП:</strong><br>
+                        Оскільки проєкція $OM \\perp c$, то за Теоремою про три перпендикуляри сама похила <strong>$AM$ також перпендикулярна до $c$</strong>!<br>
+                        <em>(Обертайте камеру, щоб переконатися).</em>
+                    `;
+                }
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

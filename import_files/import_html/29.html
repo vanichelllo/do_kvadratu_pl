@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Ймовірність та статистика | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); flex-shrink: 0; }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: wrap; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+
+        /* Статистика (Масиви) */
+        .array-item { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #fff; border: 2px solid var(--border-color); border-radius: 8px; font-weight: bold; font-size: 1.2rem; color: var(--brand-blue); margin: 0 5px; transition: var(--transition); }
+        .array-item.highlight { border-color: var(--brand-green); background: rgba(39, 174, 96, 0.1); transform: scale(1.1); }
+        .array-item.highlight-secondary { border-color: var(--warning-red); background: rgba(231, 76, 60, 0.1); }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТЕОРІЯ ЙМОВІРНОСТЕЙ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">1. Теорія ймовірностей</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Класичне означення ймовірності:</div>
+                    <p style="margin: 0; font-size: 0.95rem;">Ймовірністю події $A$ називають відношення кількості сприятливих для цієї події наслідків ($m$) до загальної кількості всіх рівноможливих наслідків ($n$).</p>
+                    <div class="scrollable-math" style="font-size: 1.35rem; margin: 10px 0; font-weight: bold; color: var(--brand-blue); display: flex; align-items: center; justify-content: center; gap: 15px;">
+                        $P(A) = \frac{m}{n}$ <span class="nmt-ref-badge" style="font-size: 0.8rem;">✅ НМТ</span>
+                    </div>
+                </div>
+
+                <div class="box theorem" style="margin-top: 10px;">
+                    <div class="box-title">Основні властивості:</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li><strong>$0 \le P(A) \le 1$</strong> — ймовірність не може бути від'ємною або $> 1$.</li>
+                        <li><strong>$P(U) = 1$</strong> — достовірна подія (точно відбудеться).</li>
+                        <li><strong>$P(\emptyset) = 0$</strong> — неможлива подія (ніколи не відбудеться).</li>
+                        <li><strong>$P(\bar{A}) = 1 - P(A)$</strong> — ймовірність протилежної події.</li>
+                    </ul>
+                </div>
+
+                <!-- Тренажер: Урна -->
+                <div class="math-widget" style="flex-grow: 1; margin-top: 10px;">
+                    <div class="widget-title" style="text-align: center;">Тренажер: Ймовірність витягнути червону кульку</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 300px;">
+                            🔴 Червоні ($m$): <span id="prob-red-val" style="color:#e74c3c; font-weight:bold; width:30px; text-align:center;">3</span>
+                            <input type="range" id="prob-red" class="slider-control" min="0" max="12" value="3" step="1" oninput="renderProb()">
+                        </label>
+                        <label class="slider-label" style="width: 100%; max-width: 300px;">
+                            🔵 Сині: <span id="prob-blue-val" style="color:#3498db; font-weight:bold; width:30px; text-align:center;">5</span>
+                            <input type="range" id="prob-blue" class="slider-control" min="0" max="12" value="5" step="1" oninput="renderProb()">
+                        </label>
+                    </div>
+                    <div class="grid-2col" style="margin-top: 10px; gap: 15px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 140px; padding: 10px;" id="prob-svg-container">
+                            <!-- JS SVG -->
+                        </div>
+                        <div class="widget-output" id="prob-out" style="justify-content: center; text-align: center; font-size: 1.2rem; line-height: 1.8;">
+                            <!-- JS Math -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: СТАТИСТИЧНІ ХАРАКТЕРИСТИКИ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Статистика</span>
+                <h2 class="slide-title">2. Елементи математичної статистики</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <p style="margin: 0; font-size: 0.95rem;">Нехай маємо впорядкований ряд даних: $x_1, x_2, \dots, x_n$.</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li><strong>Розмах ($R$):</strong> $x_{max} - x_{min}$.</li>
+                        <li><strong>Мода ($M_o$):</strong> Значення, що зустрічається найчастіше.</li>
+                        <li><strong>Медіана ($M_e$):</strong> Серединне значення <em>впорядкованого</em> ряду.<br>
+                        <span style="color: #7f8c8d; font-size: 0.85rem;">(Якщо $n$ — парне, $M_e$ — середнє арифметичне двох центральних).</span></li>
+                        <li><strong>Середнє значення ($\bar{x}$):</strong> $\bar{x} = \frac{x_1 + x_2 + \dots + x_n}{n}$.</li>
+                    </ul>
+                </div>
+
+                <!-- Аналізатор вибірки -->
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title" style="text-align: center;">Тренажер: Аналіз вибірки (5 оцінок)</div>
+                    <div class="widget-controls" style="gap: 15px;">
+                        <button class="btn-primary" onclick="randomizeStats()">🎲 Згенерувати випадкові</button>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;" id="stats-inputs">
+                            <input type="number" class="slider-label" style="width: 50px; text-align: center;" value="7" min="1" max="12" onchange="renderStats()">
+                            <input type="number" class="slider-label" style="width: 50px; text-align: center;" value="10" min="1" max="12" onchange="renderStats()">
+                            <input type="number" class="slider-label" style="width: 50px; text-align: center;" value="7" min="1" max="12" onchange="renderStats()">
+                            <input type="number" class="slider-label" style="width: 50px; text-align: center;" value="12" min="1" max="12" onchange="renderStats()">
+                            <input type="number" class="slider-label" style="width: 50px; text-align: center;" value="9" min="1" max="12" onchange="renderStats()">
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 10px; font-weight: bold; color: var(--brand-blue);">Впорядкований ряд:</div>
+                    <div id="stats-sorted-array" style="display: flex; justify-content: center; margin: 10px 0;">
+                        <!-- JS Array Items -->
+                    </div>
+
+                    <div class="grid-2col" id="stats-out" style="gap: 10px; margin-top: 10px;">
+                        <!-- JS Output Cards -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВІЗУАЛІЗАЦІЯ ДАНИХ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Графіки</span>
+                <h2 class="slide-title">3. Візуалізація даних</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Частотна таблиця</strong> — це таблиця, у якій кожному значенню вибірки ($x_i$) відповідає його <strong>частота</strong> ($n_i$) — кількість разів, яку це значення зустрічається у вибірці.</p>
+                </div>
+                <div class="box theorem">
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.5;">
+                        <li><strong>Гістограма</strong> — стовпчаста діаграма (висота стовпця = частота).</li>
+                        <li><strong>Полігон частот</strong> — ламана лінія, що з'єднує точки $(x_i; n_i)$.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title" style="text-align: center;">Побудова Гістограми та Полігону</div>
+                    <div class="widget-controls" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px;">
+                        <div style="text-align: center;"><div style="font-size: 0.8rem; font-weight: bold;">Бал: 5</div><input type="range" id="hist-f1" min="0" max="6" value="1" step="1" style="width:100%;" oninput="renderHist()"><div id="hist-v1" style="font-weight: bold; color: var(--brand-blue);">1</div></div>
+                        <div style="text-align: center;"><div style="font-size: 0.8rem; font-weight: bold;">Бал: 7</div><input type="range" id="hist-f2" min="0" max="6" value="3" step="1" style="width:100%;" oninput="renderHist()"><div id="hist-v2" style="font-weight: bold; color: var(--brand-blue);">3</div></div>
+                        <div style="text-align: center;"><div style="font-size: 0.8rem; font-weight: bold;">Бал: 8</div><input type="range" id="hist-f3" min="0" max="6" value="2" step="1" style="width:100%;" oninput="renderHist()"><div id="hist-v3" style="font-weight: bold; color: var(--brand-blue);">2</div></div>
+                        <div style="text-align: center;"><div style="font-size: 0.8rem; font-weight: bold;">Бал: 10</div><input type="range" id="hist-f4" min="0" max="6" value="1" step="1" style="width:100%;" oninput="renderHist()"><div id="hist-v4" style="font-weight: bold; color: var(--brand-blue);">1</div></div>
+                        <div style="text-align: center;"><div style="font-size: 0.8rem; font-weight: bold;">Бал: 12</div><input type="range" id="hist-f5" min="0" max="6" value="1" step="1" style="width:100%;" oninput="renderHist()"><div id="hist-v5" style="font-weight: bold; color: var(--brand-blue);">1</div></div>
+                    </div>
+                    <div class="widget-svg-container" style="background: #fff; min-height: 220px; flex-grow: 1; padding: 10px 20px;" id="hist-svg-container">
+                        <!-- JS SVG -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ЛАЙФХАКИ ТА КРУГОВА ДІАГРАМА -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">НМТ Секрети</span>
+                <h2 class="slide-title">4. Поради для НМТ та Кругова діаграма</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <div class="box-title">Швидкий аналіз діаграм:</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 1.05rem; line-height: 1.6;">
+                        <li><strong>Мода</strong> на гістограмі — це найвищий стовпчик.</li>
+                        <li><strong>Сума частот ($n_i$)</strong> завжди дорівнює загальній кількості елементів вибірки ($n$).</li>
+                        <li><strong>Кругова діаграма:</strong> кут сектора пропорційний частоті. Формула: $\alpha = \frac{n_i}{n} \cdot 360^\circ$.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; margin-top: 15px;">
+                    <div class="widget-title" style="text-align: center;">Тренажер: Побудова кругової діаграми</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 250px;">
+                            <span style="color:#e74c3c;">Група А:</span> <span id="pie-a-val" style="width:20px; text-align:center;">5</span>
+                            <input type="range" id="pie-a" class="slider-control" min="1" max="10" value="5" oninput="renderPie()">
+                        </label>
+                        <label class="slider-label" style="width: 100%; max-width: 250px;">
+                            <span style="color:#3498db;">Група Б:</span> <span id="pie-b-val" style="width:20px; text-align:center;">3</span>
+                            <input type="range" id="pie-b" class="slider-control" min="1" max="10" value="3" oninput="renderPie()">
+                        </label>
+                        <label class="slider-label" style="width: 100%; max-width: 250px;">
+                            <span style="color:#f1c40f;">Група В:</span> <span id="pie-c-val" style="width:20px; text-align:center;">4</span>
+                            <input type="range" id="pie-c" class="slider-control" min="1" max="10" value="4" oninput="renderPie()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 10px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 200px; padding: 10px;" id="pie-svg-container">
+                            <!-- JS SVG -->
+                        </div>
+                        <div class="widget-output" id="pie-out" style="justify-content: center; font-size: 1.1rem; line-height: 1.8;">
+                            <!-- JS Math -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 4</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderProb();
+                if (currentSlide === 2) renderStats();
+                if (currentSlide === 3) renderHist();
+                if (currentSlide === 4) renderPie();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ВІДЖЕТИ =================
+
+            // Слайд 1: Ймовірність (Урна)
+            window.renderProb = function() {
+                const red = parseInt(document.getElementById('prob-red').value);
+                const blue = parseInt(document.getElementById('prob-blue').value);
+                document.getElementById('prob-red-val').textContent = red;
+                document.getElementById('prob-blue-val').textContent = blue;
+
+                const total = red + blue;
+                const svgContainer = document.getElementById('prob-svg-container');
+                const outContainer = document.getElementById('prob-out');
+
+                if (total === 0) {
+                    svgContainer.innerHTML = `<div style="text-align:center; color:#7f8c8d; font-weight:bold; padding-top:40px;">Урна порожня. Додайте кульки!</div>`;
+                    outContainer.innerHTML = `Неможливо обчислити (ділення на нуль).`;
+                    return;
+                }
+
+                // Малюємо кульки у вигляді сітки
+                let svgHtml = `<svg viewBox="0 0 100 60" width="100%" height="100%">`;
+
+                // Рамка "Урни"
+                svgHtml += `<path d="M 10 5 L 10 55 C 10 58 15 60 20 60 L 80 60 C 85 60 90 58 90 55 L 90 5" fill="none" stroke="#bdc3c7" stroke-width="2"/>`;
+
+                let balls = [];
+                for(let i=0; i<red; i++) balls.push("#e74c3c");
+                for(let i=0; i<blue; i++) balls.push("#3498db");
+
+                let rows = Math.ceil(total / 8);
+                let startY = 55 - rows * 10;
+
+                let idx = 0;
+                for(let r=0; r<rows; r++) {
+                    let cols = Math.min(8, total - idx);
+                    let startX = 50 - (cols * 10) / 2 + 5;
+                    for(let c=0; c<cols; c++) {
+                        svgHtml += `<circle cx="${startX + c*10}" cy="${startY + r*10}" r="4" fill="${balls[idx]}" stroke="#fff" stroke-width="0.5"/>`;
+                        idx++;
+                    }
+                }
+                svgHtml += `</svg>`;
+                svgContainer.innerHTML = svgHtml;
+
+                // Обчислення ймовірності (НСД для скорочення дробів)
+                function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+                let d = gcd(red, total);
+                let num = red / d;
+                let den = total / d;
+
+                let fracHtml = total === red ? `1` : (red === 0 ? `0` : (d === 1 ? `\\frac{${red}}{${total}}` : `\\frac{${red}}{${total}} = \\mathbf{\\frac{${num}}{${den}}}`));
+                let perc = ((red / total) * 100).toFixed(1);
+
+                outContainer.innerHTML = `
+                    <div style="font-size: 1rem; color: #555; margin-bottom: 5px;">Сприятливих наслідків (червоні): $m = ${red}$</div>
+                    <div style="font-size: 1rem; color: #555; margin-bottom: 10px;">Всього наслідків (всі кульки): $n = ${total}$</div>
+                    <div style="font-weight:bold; color: var(--brand-blue); border-top: 1px dashed var(--border-color); padding-top: 10px;">
+                        $P(\\text{Червона}) = ${fracHtml}$
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 5px;">або $\\approx ${perc}\\%$</div>
+                `;
+
+                if(window.MathJax) MathJax.typesetClear([outContainer]);
+                if(window.MathJax) MathJax.typesetPromise([outContainer]);
+            };
+
+            // Слайд 2: Статистика
+            window.randomizeStats = function() {
+                const inputs = document.querySelectorAll('#stats-inputs input');
+                inputs.forEach(input => {
+                    input.value = Math.floor(Math.random() * 12) + 1;
+                });
+                renderStats();
+            };
+
+            window.renderStats = function() {
+                const inputs = document.querySelectorAll('#stats-inputs input');
+                let arr = [];
+                inputs.forEach(inp => {
+                    let val = parseInt(inp.value);
+                    if(!isNaN(val)) arr.push(val);
+                });
+
+                if(arr.length === 0) return;
+
+                // Сортування
+                arr.sort((a, b) => a - b);
+
+                // Середнє
+                let sum = arr.reduce((a, b) => a + b, 0);
+                let mean = sum / arr.length;
+
+                // Медіана (для 5 елементів це індекс 2)
+                let median = arr[2];
+
+                // Розмах
+                let range = arr[arr.length - 1] - arr[0];
+
+                // Мода (рахуємо частоти)
+                let freq = {};
+                let maxFreq = 0;
+                arr.forEach(v => {
+                    freq[v] = (freq[v] || 0) + 1;
+                    if(freq[v] > maxFreq) maxFreq = freq[v];
+                });
+                let modes = [];
+                for(let k in freq) {
+                    if(freq[k] === maxFreq) modes.push(parseInt(k));
+                }
+                let modeStr = (maxFreq === 1) ? "Немає (усі по 1 разу)" : modes.join(", ");
+
+                // Відображення впорядкованого масиву
+                let arrHtml = "";
+                arr.forEach((v, idx) => {
+                    let cls = "array-item";
+                    if (idx === 2) cls += " highlight"; // медіана
+                    if (modes.includes(v) && maxFreq > 1) cls += " highlight-secondary"; // мода (з червоним відтінком)
+                    arrHtml += `<div class="${cls}">${v}</div>`;
+                });
+                document.getElementById('stats-sorted-array').innerHTML = arrHtml;
+
+                // Вивід результатів
+                let outHtml = `
+                    <div style="background: rgba(52, 78, 134, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--brand-blue); text-align: center;">
+                        <div style="font-size: 0.95rem; color: #555; margin-bottom: 5px;">Середнє значення ($\\bar{x}$)</div>
+                        <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold;">$\\frac{${sum}}{5} = \\mathbf{${mean.toFixed(1)}}$</div>
+                    </div>
+                    <div style="background: rgba(39, 174, 96, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--brand-green); text-align: center;">
+                        <div style="font-size: 0.95rem; color: #555; margin-bottom: 5px;">Медіана ($M_e$) <span style="font-size:0.8rem;">(середина)</span></div>
+                        <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold;">$\\mathbf{${median}}$</div>
+                    </div>
+                    <div style="background: rgba(231, 76, 60, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--warning-red); text-align: center;">
+                        <div style="font-size: 0.95rem; color: #555; margin-bottom: 5px;">Мода ($M_o$) <span style="font-size:0.8rem;">(найчастіше)</span></div>
+                        <div style="font-size: 1.25rem; font-weight: bold; color: var(--warning-red);">${modeStr}</div>
+                    </div>
+                    <div style="background: rgba(243, 156, 18, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed var(--brand-yellow); text-align: center;">
+                        <div style="font-size: 0.95rem; color: #555; margin-bottom: 5px;">Розмах ($R$) <span style="font-size:0.8rem;">(max - min)</span></div>
+                        <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold;">$${arr[arr.length - 1]} - ${arr[0]} = \\mathbf{${range}}$</div>
+                    </div>
+                `;
+                document.getElementById('stats-out').innerHTML = outHtml;
+
+                if(window.MathJax) MathJax.typesetClear([document.getElementById('stats-out')]);
+                if(window.MathJax) MathJax.typesetPromise([document.getElementById('stats-out')]);
+            };
+
+            // Слайд 3: Гістограма та полігон
+            window.renderHist = function() {
+                const cats = [5, 7, 8, 10, 12];
+                let freqs = [];
+                for(let i=1; i<=5; i++) {
+                    let val = parseInt(document.getElementById(`hist-f${i}`).value);
+                    freqs.push(val);
+                    document.getElementById(`hist-v${i}`).textContent = val;
+                }
+
+                const svg = document.getElementById('hist-svg-container');
+                // ViewBox: X from 0 to 12, Y from 0 to 7 (inverted mathematically later)
+                // Let's place categories at X = 2, 4, 6, 8, 10
+                const xPos = [2, 4, 6, 8, 10];
+                const yMax = 7;
+
+                let svgHtml = `<svg viewBox="0 0 12 8" width="100%" height="100%">`;
+
+                // Сітка та Осі (Y=7 це низ, Y=0 це верх)
+                for(let i=1; i<=6; i++) {
+                    let y = yMax - i;
+                    svgHtml += `<line x1="1" y1="${y}" x2="11.5" y2="${y}" stroke="#ecf0f1" stroke-width="0.05" stroke-dasharray="0.2,0.2"/>`;
+                    svgHtml += `<text x="0.5" y="${y+0.15}" font-size="0.4" font-family="sans-serif" text-anchor="middle" fill="#7f8c8d">${i}</text>`;
+                }
+
+                // Вісь X та Y
+                svgHtml += `<line x1="1" y1="${yMax}" x2="11.5" y2="${yMax}" stroke="#7f8c8d" stroke-width="0.08" marker-end="url(#arrDark)"/>`;
+                svgHtml += `<line x1="1" y1="${yMax}" x2="1" y2="0.5" stroke="#7f8c8d" stroke-width="0.08" marker-end="url(#arrDark)"/>`;
+
+                // Стовпці (Гістограма)
+                freqs.forEach((f, i) => {
+                    if (f > 0) {
+                        let x = xPos[i];
+                        let y = yMax - f;
+                        svgHtml += `<rect x="${x - 0.5}" y="${y}" width="1" height="${f}" fill="rgba(52, 152, 219, 0.4)" stroke="#3498db" stroke-width="0.05"/>`;
+                    }
+                    // Підписи осі X
+                    svgHtml += `<text x="${xPos[i]}" y="${yMax + 0.6}" font-size="0.4" font-family="sans-serif" text-anchor="middle" font-weight="bold">${cats[i]}</text>`;
+                });
+
+                // Полігон частот (червона лінія)
+                let polyline = "";
+                freqs.forEach((f, i) => {
+                    let x = xPos[i];
+                    let y = yMax - f;
+                    polyline += `${x},${y} `;
+                });
+                svgHtml += `<polyline points="${polyline}" fill="none" stroke="#e74c3c" stroke-width="0.1"/>`;
+
+                // Точки полігону
+                freqs.forEach((f, i) => {
+                    let x = xPos[i];
+                    let y = yMax - f;
+                    svgHtml += `<circle cx="${x}" cy="${y}" r="0.15" fill="#e74c3c"/>`;
+                });
+
+                svgHtml += `</svg>`;
+                svg.innerHTML = svgHtml;
+            };
+
+            // Слайд 4: Кругова діаграма
+            window.renderPie = function() {
+                const a = parseInt(document.getElementById('pie-a').value);
+                const b = parseInt(document.getElementById('pie-b').value);
+                const c = parseInt(document.getElementById('pie-c').value);
+
+                document.getElementById('pie-a-val').textContent = a;
+                document.getElementById('pie-b-val').textContent = b;
+                document.getElementById('pie-c-val').textContent = c;
+
+                const total = a + b + c;
+                const vals = [a, b, c];
+                const colors = ["#e74c3c", "#3498db", "#f1c40f"];
+                const names = ["Група А", "Група Б", "Група В"];
+
+                const svg = document.getElementById('pie-svg-container');
+                let svgHtml = `<svg viewBox="-1.2 -1.2 2.4 2.4" width="100%" height="100%" transform="rotate(-90)">`;
+
+                let currentAngle = 0; // Starts at top due to rotation -90
+
+                vals.forEach((v, i) => {
+                    let fraction = v / total;
+                    let angle = fraction * 2 * Math.PI;
+                    let nextAngle = currentAngle + angle;
+
+                    let x1 = Math.cos(currentAngle);
+                    let y1 = Math.sin(currentAngle);
+                    let x2 = Math.cos(nextAngle);
+                    let y2 = Math.sin(nextAngle);
+
+                    let largeArc = angle > Math.PI ? 1 : 0;
+
+                    // Path for the slice
+                    let pathData = `M 0 0 L ${x1} ${y1} A 1 1 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                    svgHtml += `<path d="${pathData}" fill="${colors[i]}" stroke="#fff" stroke-width="0.02"/>`;
+
+                    currentAngle = nextAngle;
+                });
+
+                svgHtml += `</svg>`;
+                svg.innerHTML = svgHtml;
+
+                // Виведення розрахунків кутів
+                let outHtml = `<div style="font-weight:bold; margin-bottom: 10px;">Всього $n = ${total}$</div>`;
+                vals.forEach((v, i) => {
+                    let angleDeg = Math.round((v / total) * 360);
+                    outHtml += `
+                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                            <div style="width: 15px; height: 15px; background: ${colors[i]}; border-radius: 3px; margin-right: 10px;"></div>
+                            <div class="scrollable-math" style="font-size: 1.1rem;">
+                                ${names[i]}: $\\alpha = \\frac{${v}}{${total}} \\cdot 360^\\circ = \\mathbf{${angleDeg}^\\circ}$
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('pie-out').innerHTML = outHtml;
+                if(window.MathJax) MathJax.typesetClear([document.getElementById('pie-out')]);
+                if(window.MathJax) MathJax.typesetPromise([document.getElementById('pie-out')]);
+            };
+
+            // Init
+            goToSlide(1);
+            // Initialize random array for stats on load
+            randomizeStats();
+        });
+    </script>
+</body>
+</html>

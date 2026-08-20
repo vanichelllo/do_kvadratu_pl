@@ -1,0 +1,820 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Відношення, пропорції та відсотки | ДО КВАДРАТУ</title>
+
+    <!-- MathJax для ідеального рендерингу математичних формул -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-blue-light: #4b6cb7;
+            --brand-green: #27ae60;
+            --brand-yellow: #f39c12;
+            --brand-yellow-light: #f1c40f;
+            --text-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --shadow: 0 8px 24px rgba(52, 78, 134, 0.08);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.25s ease;
+            --warning-red: #e74c3c;
+            --widget-bg: #eef3f9;
+        }
+
+        [data-theme="dark"] {
+            --brand-blue: #6c8dfa;
+            --brand-blue-light: #8faaff;
+            --brand-green: #2ecc71;
+            --brand-yellow: #f1c40f;
+            --text-dark: #ecf0f1;
+            --bg-light: #151c28;
+            --card-bg: #1f2a3c;
+            --border-color: #31425d;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --widget-bg: #182232;
+        }
+
+        html, body {
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* ШАПКА ТА НАВІГАЦІЯ */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--brand-green);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 100;
+            position: relative;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .timer-badge {
+            font-family: monospace;
+            background: rgba(52, 78, 134, 0.1);
+            color: var(--brand-blue);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-action, .btn-primary {
+            background-color: var(--brand-green);
+            color: white;
+            padding: 7px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1.5px solid var(--brand-blue);
+            color: var(--text-dark);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        .btn-pdf { border-color: var(--warning-red); color: var(--warning-red); }
+        .btn-pdf:hover { background-color: var(--warning-red); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow-light)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ДЛЯ СЛАЙДІВ */
+        .presentation-viewport {
+            height: calc(100vh - 125px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+        }
+
+        .slide-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 1040px;
+            height: 100%;
+            max-height: 640px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            padding: 24px 34px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .slide-card.active { display: flex; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.06); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.remark { border-left-color: #34495e; background-color: rgba(52, 73, 94, 0.06); }
+        .box.remark .box-title { color: #34495e; }
+
+        .nmt-ref-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            font-size: 0.74rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+            vertical-align: middle;
+        }
+
+        /* СІТКИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        /* ВІДЖЕТИ ТА ТРЕНАЖЕРИ */
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); margin-bottom: 8px; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .widget-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+        .widget-btn { background-color: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.88rem; transition: var(--transition); }
+        .widget-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 8px 12px; font-size: 0.93rem; border: 1px dashed var(--brand-green); min-height: 38px; display: flex; align-items: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ШАПКА -->
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg id="app-logo" class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Інтерактивна теорія</span>
+        </a>
+
+        <div class="nav-controls">
+            <a href="#" class="btn-secondary btn-pdf" title="Завантажити повний конспект">📄 Завантажити PDF</a>
+            <span class="timer-badge" id="speaker-timer">00:00</span>
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТИТУЛЬНИЙ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема 02 / Повний курс алгебри</span>
+                <h1 class="slide-title">Відношення, пропорції та відсотки</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="grid-2col" style="margin-bottom: 12px;">
+                    <div class="box definition">
+                        <div class="box-title">📖 Зміст уроку:</div>
+                        <ul>
+                            <li><strong>1.</strong> Поняття відношення двох чисел та його зміст.</li>
+                            <li><strong>2.</strong> Пропорція, крайні та середні члени.</li>
+                            <li><strong>3.</strong> Основна властивість пропорції (правило перехресного множення).</li>
+                            <li><strong>4.</strong> Знаходження невідомого члена пропорції.</li>
+                            <li><strong>5.</strong> Поняття відсотка та правило 100%.</li>
+                            <li><strong>6.</strong> Знаходження відсотка від числа (через пропорцію та через дріб).</li>
+                            <li><strong>7.</strong> Розбір типової помилки: відсоток від числа vs число за відсотком.</li>
+                        </ul>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">⚡ Інтерактивні інструменти уроку:</div>
+                        <ul>
+                            <li>🔍 Аналізатор та спрощувач відношень чисел</li>
+                            <li>🦋 Схема перехресного множення («Метелик»)</li>
+                            <li>🧮 Автоматичний розв'язувач будь-яких пропорцій ($x$)</li>
+                            <li>🔄 Конвертер відсотків у десяткові та звичайні дроби</li>
+                            <li>⚖️ Порівняльний тренажер двох типів задач на відсотки</li>
+                        </ul>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button class="btn-primary" onclick="goToSlide(2)" style="padding: 10px 24px; font-size: 1rem;">Розпочати урок →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: 1. ВІДНОШЕННЯ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1</span>
+                <h2 class="slide-title">1. Що таке відношення чисел?</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення відношення</div>
+                    <p><strong>Відношенням</strong> двох чисел $a$ та $b$ ($b \neq 0$) називають <strong>частку</strong> цих чисел:</p>
+                    <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: var(--brand-blue);">
+                        $$a:b \quad \text{або} \quad \frac{a}{b}$$
+                    </p>
+                    <p><strong>Зміст відношення:</strong> воно показує:</p>
+                    <ul>
+                        <li>у скільки разів число $a$ більше за $b$ (якщо $a > b$);</li>
+                        <li>або яку частину число $a$ становить від $b$ (якщо $a < b$).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔍 Живий аналізатор відношення двох чисел:</div>
+                    <div class="widget-inputs">
+                        <label>a: <input type="number" id="rel-a" class="widget-input" value="15" style="width: 70px;"></label>
+                        <label>b: <input type="number" id="rel-b" class="widget-input" value="5" style="width: 70px;"></label>
+                        <button class="widget-btn" onclick="calcRelation()">Аналізувати</button>
+                    </div>
+                    <div class="widget-output" id="rel-output">
+                        Відношення 15 : 5 = 3 (число 15 у 3 рази більше за 5).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ПРОПОРЦІЯ ТА ОСНОВНА ВЛАСТИВІСТЬ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1 (Продовження)</span>
+                <h2 class="slide-title">Пропорція та її основна властивість</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">
+                        <span>Означення та властивість</span>
+                        <span class="nmt-ref-badge">📋 Фундамент НМТ</span>
+                    </div>
+                    <p><strong>Пропорція</strong> -- це рівність двох відношень:</p>
+                    <p style="text-align: center; font-size: 1.2rem;">
+                        $$\frac{a}{b} = \frac{c}{d} \quad \text{або} \quad a:b = c:d$$
+                    </p>
+                    <p>Числа $a$ і $d$ називають <strong>крайніми членами</strong>, а $b$ і $c$ -- <strong>середніми членами</strong> пропорції.</p>
+                    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+                    <p><strong>Основна властивість пропорції:</strong> добуток крайніх членів дорівнює добутку середніх членів.</p>
+                    <p style="text-align: center; font-size: 1.3rem; font-weight: bold; color: #8e44ad;">
+                        $$a \cdot d = b \cdot c$$
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: СХЕМА ПЕРЕХРЕСНОГО МНОЖЕННЯ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">Схема перехресного множення («Метелик»)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: center;">
+                    <div class="box hack">
+                        <div class="box-title">🦋 Правило «Метелика»:</div>
+                        <p>Множимо числа навхрест по діагоналях:</p>
+                        <p style="text-align: center; font-size: 1.15rem;">
+                            $$\color{red}{a \cdot d} = \color{blue}{b \cdot c}$$
+                        </p>
+                        <p>Щоб знайти будь-який невідомий член, перемножуємо відому діагональ і ділимо на число, що стоїть навпроти невідомого:</p>
+                        <p style="text-align: center; font-weight: bold;">
+                            $$x = \frac{b \cdot c}{d}$$
+                        </p>
+                    </div>
+
+                    <!-- SVG Схема з конспекту -->
+                    <div style="background: var(--card-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center;">
+                        <svg viewBox="0 0 260 170" width="100%" height="160">
+                            <!-- Букви -->
+                            <text x="50" y="45" font-size="24" font-family="serif" font-weight="bold" fill="#e74c3c" text-anchor="middle">a</text>
+                            <text x="50" y="125" font-size="24" font-family="serif" font-weight="bold" fill="#3498db" text-anchor="middle">b</text>
+                            <text x="210" y="45" font-size="24" font-family="serif" font-weight="bold" fill="#3498db" text-anchor="middle">c</text>
+                            <text x="210" y="125" font-size="24" font-family="serif" font-weight="bold" fill="#e74c3c" text-anchor="middle">d</text>
+
+                            <!-- Риски дробів -->
+                            <line x1="30" y1="70" x2="70" y2="70" stroke="var(--text-dark)" stroke-width="3"/>
+                            <line x1="190" y1="70" x2="230" y2="70" stroke="var(--text-dark)" stroke-width="3"/>
+
+                            <!-- Дорівнює -->
+                            <text x="130" y="78" font-size="26" font-weight="bold" fill="var(--text-dark)" text-anchor="middle">=</text>
+
+                            <!-- Перехресні пунктирні лінії зі стрілками -->
+                            <line x1="62" y1="52" x2="198" y2="115" stroke="#e74c3c" stroke-width="2.5" stroke-dasharray="5,4"/>
+                            <line x1="62" y1="115" x2="198" y2="52" stroke="#3498db" stroke-width="2.5" stroke-dasharray="5,4"/>
+
+                            <!-- Напис внизу -->
+                            <text x="130" y="160" font-size="16" font-weight="bold" text-anchor="middle">
+                                <tspan fill="#e74c3c">a · d</tspan> <tspan fill="var(--text-dark)">=</tspan> <tspan fill="#3498db">b · c</tspan>
+                            </text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРИКЛАД РОЗВ'ЯЗАННЯ ПРОПОРЦІЇ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Практичний розбір</span>
+                <h2 class="slide-title">Знаходження невідомого члена пропорції</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Приклад з конспекту:</div>
+                        <p>Знайти невідомий член пропорції $x : 12 = 3 : 4$.</p>
+                        <p><strong>Розв'язання:</strong></p>
+                        <p>За основною властивістю пропорції:</p>
+                        $$\frac{x}{12} = \frac{3}{4} \implies 4 \cdot x = 12 \cdot 3$$
+                        $$4x = 36 \implies x = \frac{36}{4} = \mathbf{9}$$
+                        <p><strong>Відповідь:</strong> 9.</p>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🧮 Інтерактивний розв'язувач пропорцій $\frac{a}{b} = \frac{c}{d}$:</div>
+                        <p style="font-size: 0.85rem; margin-top: 0;">Введіть будь-які три числа, а замість невідомого залиште <b>x</b>:</p>
+                        <div class="widget-inputs" style="justify-content: center; gap: 6px;">
+                            <div style="display: inline-flex; flex-direction: column; align-items: center;">
+                                <input type="text" id="prop-a" class="widget-input" value="x" style="width: 45px; text-align: center;">
+                                <hr style="width: 100%; border: none; border-top: 2px solid var(--text-dark); margin: 3px 0;">
+                                <input type="text" id="prop-b" class="widget-input" value="12" style="width: 45px; text-align: center;">
+                            </div>
+                            <span style="font-size: 1.5rem; font-weight: bold; align-self: center;">=</span>
+                            <div style="display: inline-flex; flex-direction: column; align-items: center;">
+                                <input type="text" id="prop-c" class="widget-input" value="3" style="width: 45px; text-align: center;">
+                                <hr style="width: 100%; border: none; border-top: 2px solid var(--text-dark); margin: 3px 0;">
+                                <input type="text" id="prop-d" class="widget-input" value="4" style="width: 45px; text-align: center;">
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px;">
+                            <button class="widget-btn" onclick="solveProportion()">Знайти невідоме</button>
+                        </div>
+                        <div class="widget-output" id="prop-output" style="margin-top: 8px;">
+                            x = (12 · 3) / 4 = 36 / 4 = 9.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: 2. ВІДСОТКИ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2</span>
+                <h2 class="slide-title">2. Що таке відсотки? Правило 100%</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <div class="box-title">
+                        <span>Запам'ятайте головне правило:</span>
+                        <span class="nmt-ref-badge">📋 Важливо для задач</span>
+                    </div>
+                    <p style="font-size: 1.05rem;">
+                        <strong>1% (один відсоток)</strong> -- це <strong>одна сота</strong> частина числа ($0,01$ або $\frac{1}{100}$).
+                    </p>
+                    <p>
+                        Для розв'язання задач на відсотки найзручніше складати пропорцію, де <strong>число, від якого рахують відсотки (базова величина, початковий стан або ціле), завжди приймають за 100%</strong>.
+                    </p>
+                </div>
+
+                <div class="grid-3col" style="margin-top: 6px;">
+                    <div class="box example" style="text-align: center;">
+                        <strong>25%</strong><br>
+                        $\frac{25}{100} = \frac{1}{4} = 0,25$<br>
+                        <small>(Чверть числа)</small>
+                    </div>
+                    <div class="box example" style="text-align: center;">
+                        <strong>50%</strong><br>
+                        $\frac{50}{100} = \frac{1}{2} = 0,5$<br>
+                        <small>(Половина числа)</small>
+                    </div>
+                    <div class="box example" style="text-align: center;">
+                        <strong>75%</strong><br>
+                        $\frac{75}{100} = \frac{3}{4} = 0,75$<br>
+                        <small>(Три чверті числа)</small>
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔄 Конвертер відсотків у дроби:</div>
+                    <div class="widget-inputs">
+                        <label>Відсотки (%): <input type="number" id="pct-input" class="widget-input" value="20" style="width: 80px;"></label>
+                        <button class="widget-btn" onclick="convertPercent()">Конвертувати</button>
+                    </div>
+                    <div class="widget-output" id="pct-output">
+                        20% = 0,2 (десятковий дріб) = 1/5 (звичайний скорочений дріб).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ЗАДАЧА НА ВІДСОТКИ (СПОСІБ 1: ПРОПОРЦІЯ) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Метод 1</span>
+                <h2 class="slide-title">Знаходження відсотка від числа: Спосіб 1 (Пропорція)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box example">
+                    <div class="box-title">Задача: Знайти $20\%$ від числа $150$.</div>
+                    <p><strong>Розв'язання 1 (через пропорцію):</strong></p>
+                    <p>Складаємо схему, де число $150$ -- це ціле, тобто $100\%$:</p>
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-width: 280px; margin: 8px auto; text-align: center; font-size: 1.15rem;">
+                        $$\begin{aligned}
+                        150 &\text{ --- } 100\% \\
+                        x   &\text{ --- } 20\%
+                        \end{aligned}$$
+                    </div>
+                    <p>За правилом «хрестика» (властивість пропорції):</p>
+                    <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: var(--brand-green);">
+                        $$x = \frac{150 \cdot 20}{100} = \frac{15 \cdot 2}{1} = \mathbf{30}$$
+                    </p>
+                    <p><strong>Відповідь:</strong> 30.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 8: ЗАДАЧА НА ВІДСОТКИ (СПОСІБ 2: ДЕСЯТКОВИЙ ДРІБ) -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2 / Метод 2</span>
+                <h2 class="slide-title">Знаходження відсотка від числа: Спосіб 2 (Десятковий дріб)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box example">
+                    <div class="box-title">Задача: Знайти $20\%$ від числа $150$.</div>
+                    <p><strong>Розв'язання 2 (через десятковий дріб):</strong></p>
+                    <ol style="line-height: 1.8;">
+                        <li><strong>Перетворюємо відсотки у дріб:</strong><br>
+                        $$20\% = 20 \div 100 = 0,2$$</li>
+                        <li><strong>Множимо число на цей дріб:</strong><br>
+                        $$150 \cdot 0,2 = \mathbf{30}$$</li>
+                    </ol>
+                    <p><strong>Відповідь:</strong> 30.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚙️ Калькулятор відсотка від числа (двома способами):</div>
+                    <div class="widget-inputs">
+                        <label>Знайти <input type="number" id="calc-p" class="widget-input" value="20" style="width: 60px;"> %</label>
+                        <label>від числа <input type="number" id="calc-num" class="widget-input" value="150" style="width: 80px;"></label>
+                        <button class="widget-btn" onclick="calcPercentTask()">Обчислити</button>
+                    </div>
+                    <div class="widget-output" id="calc-output">
+                        20% від 150 = 30. (150 · 0,2 = 30 або x = (150 · 20) / 100 = 30).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 9: ТИПОВА ПОМИЛКА: ВІДСОТОК ВІД ЧИСЛА VS ЧИСЛО ЗА ВІДСОТКОМ -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Увага! Типова помилка</span>
+                <h2 class="slide-title">Відсоток від числа vs Число за його відсотком</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box error">
+                    <div class="box-title">⚠️ Головна пастка на НМТ:</div>
+                    <p>
+                        <strong>Не плутайте:</strong>
+                    </p>
+                    <ul>
+                        <li><strong>Знаходження відсотка від числа:</strong> коли нам відоме ціле число ($100\%$), і ми шукаємо його частинку.</li>
+                        <li><strong>Знаходження числа за його відсотком:</strong> коли нам відома лише частинка, і ми шукаємо початкове ціле ($100\%$).</li>
+                    </ul>
+                    <p style="font-weight: bold; margin-bottom: 0;">
+                        Завжди уважно визначайте, що саме є цілим ($100\%$)!
+                    </p>
+                </div>
+
+                <div class="grid-2col" style="margin-top: 6px;">
+                    <div class="box definition">
+                        <div class="box-title">Тип 1: Відсоток від числа</div>
+                        <p><em>«Знайти 20% від 150»</em></p>
+                        $$150 \text{ --- } 100\%$$
+                        $$x \text{ --- } 20\%$$
+                        $$x = \frac{150 \cdot 20}{100} = \mathbf{30}$$
+                    </div>
+
+                    <div class="box definition">
+                        <div class="box-title">Тип 2: Число за відсотком</div>
+                        <p><em>«Знайти число, 20% якого дорівнюють 30»</em></p>
+                        $$30 \text{ --- } 20\%$$
+                        $$x \text{ --- } 100\%$$
+                        $$x = \frac{30 \cdot 100}{20} = \mathbf{150}$$
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 10: ПІДСУМОК ТЕМИ -->
+        <section class="slide-card" data-slide="10">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему успішно завершено!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Усі концепції відношень, пропорцій та відсотків засвоєно!</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Головні формули уроку:</div>
+                        <ul>
+                            <li>Відношення: $a : b = \frac{a}{b}$</li>
+                            <li>Пропорція: $\frac{a}{b} = \frac{c}{d} \iff a \cdot d = b \cdot c$</li>
+                            <li>$1\% = 0,01 = \frac{1}{100}$</li>
+                            <li>$p\%$ від числа $A$: $A \cdot \frac{p}{100}$</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Скористайтеся кнопкою <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти повний друкований конспект.</p>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px; font-size: 1rem;">🔄 Повторити теорію спочатку</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ФУТЕР -->
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 10</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT ЛОГІКА ТА ІНТЕРАКТИВНІ ТРЕНАЖЕРИ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let secondsElapsed = 0;
+            let isDarkTheme = false;
+
+            const progressBar = document.getElementById('progress-bar');
+            const slideCounter = document.getElementById('slide-counter');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnTheme = document.getElementById('btn-theme');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const timerElement = document.getElementById('speaker-timer');
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+
+                currentSlide = index;
+
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentSlide - 1);
+                });
+
+                slideCounter.textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+                btnPrev.style.opacity = currentSlide === 1 ? '0.5' : '1';
+                btnNext.style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            btnNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+            btnPrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+
+            btnTheme.addEventListener('click', () => {
+                isDarkTheme = !isDarkTheme;
+                document.body.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+            });
+
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') btnFullscreen.click();
+            });
+
+            setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                timerElement.textContent = `${mins}:${secs}`;
+            }, 1000);
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // 1. Аналізатор відношення (Слайд 2)
+            window.calcRelation = function() {
+                const a = parseFloat(document.getElementById('rel-a').value);
+                const b = parseFloat(document.getElementById('rel-b').value);
+                const out = document.getElementById('rel-output');
+
+                if (isNaN(a) || isNaN(b) || b === 0) {
+                    out.innerText = "Введіть коректні числа (b ≠ 0)";
+                    return;
+                }
+
+                const val = a / b;
+                const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+                const isInt = Number.isInteger(a) && Number.isInteger(b);
+                let simpleStr = "";
+                if (isInt && a > 0 && b > 0) {
+                    const g = gcd(a, b);
+                    simpleStr = ` (скорочене відношення: ${a/g} : ${b/g})`;
+                }
+
+                if (a >= b) {
+                    out.innerHTML = `Відношення ${a} : ${b} = <strong>${val.toFixed(2).replace('.00', '')}</strong>${simpleStr}. Число ${a} у <strong>${val.toFixed(2).replace('.00', '')}</strong> раз(и) більше за ${b}.`;
+                } else {
+                    out.innerHTML = `Відношення ${a} : ${b} = <strong>${val.toFixed(2).replace('.00', '')}</strong>${simpleStr}. Число ${a} становить <strong>${(val * 100).toFixed(1).replace('.0', '')}%</strong> від числа ${b}.`;
+                }
+            };
+
+            // 2. Розв'язувач пропорцій (Слайд 5)
+            window.solveProportion = function() {
+                const aVal = document.getElementById('prop-a').value.trim();
+                const bVal = document.getElementById('prop-b').value.trim();
+                const cVal = document.getElementById('prop-c').value.trim();
+                const dVal = document.getElementById('prop-d').value.trim();
+                const out = document.getElementById('prop-output');
+
+                const isX = (v) => v.toLowerCase() === 'x' || v === '' || v === '?';
+
+                let xPos = null;
+                if (isX(aVal)) xPos = 'a';
+                else if (isX(bVal)) xPos = 'b';
+                else if (isX(cVal)) xPos = 'c';
+                else if (isX(dVal)) xPos = 'd';
+
+                if (!xPos) {
+                    out.innerText = "Вкажіть 'x' в одному з 4 полів!";
+                    return;
+                }
+
+                const a = parseFloat(aVal), b = parseFloat(bVal), c = parseFloat(cVal), d = parseFloat(dVal);
+
+                let res = 0, explanation = "";
+                if (xPos === 'a') {
+                    if (isNaN(b) || isNaN(c) || isNaN(d) || d === 0) { out.innerText = "Помилка вводу чисел"; return; }
+                    res = (b * c) / d;
+                    explanation = `x = (${b} · ${c}) / ${d} = ${b * c} / ${d} = <strong>${res}</strong>`;
+                } else if (xPos === 'b') {
+                    if (isNaN(a) || isNaN(c) || isNaN(d) || c === 0) { out.innerText = "Помилка вводу чисел"; return; }
+                    res = (a * d) / c;
+                    explanation = `x = (${a} · ${d}) / ${c} = ${a * d} / ${c} = <strong>${res}</strong>`;
+                } else if (xPos === 'c') {
+                    if (isNaN(a) || isNaN(b) || isNaN(d) || b === 0) { out.innerText = "Помилка вводу чисел"; return; }
+                    res = (a * d) / b;
+                    explanation = `x = (${a} · ${d}) / ${b} = ${a * d} / ${b} = <strong>${res}</strong>`;
+                } else if (xPos === 'd') {
+                    if (isNaN(a) || isNaN(b) || isNaN(c) || a === 0) { out.innerText = "Помилка вводу чисел"; return; }
+                    res = (b * c) / a;
+                    explanation = `x = (${b} · ${c}) / ${a} = ${b * c} / ${a} = <strong>${res}</strong>`;
+                }
+
+                out.innerHTML = `Розв'язання: ${explanation}`;
+            };
+
+            // 3. Конвертер відсотків (Слайд 6)
+            window.convertPercent = function() {
+                const p = parseFloat(document.getElementById('pct-input').value);
+                const out = document.getElementById('pct-output');
+                if (isNaN(p)) { out.innerText = "Введіть число"; return; }
+
+                const dec = p / 100;
+                const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+                let fracStr = "";
+                if (Number.isInteger(p)) {
+                    const g = gcd(Math.abs(p), 100);
+                    fracStr = ` = ${p/g}/${100/g} (звичайний скорочений дріб)`;
+                }
+
+                out.innerHTML = `${p}% = <strong>${dec}</strong> (десятковий дріб)${fracStr}`;
+            };
+
+            // 4. Калькулятор відсотка від числа (Слайд 8)
+            window.calcPercentTask = function() {
+                const p = parseFloat(document.getElementById('calc-p').value);
+                const n = parseFloat(document.getElementById('calc-num').value);
+                const out = document.getElementById('calc-output');
+
+                if (isNaN(p) || isNaN(n)) { out.innerText = "Введіть коректні числа"; return; }
+
+                const dec = p / 100;
+                const res = n * dec;
+
+                out.innerHTML = `${p}% від ${n} = <strong>${res}</strong>.<br><small>Спосіб 1: (${n} · ${p}) / 100 = ${res} | Спосіб 2: ${n} · ${dec} = ${res}</small>`;
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

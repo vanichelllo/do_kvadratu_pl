@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Квадратичні та раціональні нерівності | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: КВАДРАТИЧНІ НЕРІВНОСТІ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h1 class="slide-title">Квадратичні нерівності. Метод параболи</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Квадратичними</strong> називають нерівності виду $ax^2 + bx + c > 0$ (або $<, \leq, \geq$), де $a \neq 0$. Графічним образом лівої частини є <strong>парабола</strong>.</p>
+                </div>
+
+                <div class="box theorem" style="margin-top: 15px;">
+                    <div class="box-title">Алгоритм «Метод параболи»:</div>
+                    <ol style="margin: 5px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li><strong>Нулі:</strong> Розв'язати рівняння $ax^2 + bx + c = 0$ (знайти точки перетину з віссю $Ox$).</li>
+                        <li><strong>Ескіз:</strong> Зобразити вітки параболи ($a>0 \implies \cup$, $\; a<0 \implies \cap$). Нас цікавить лише перетин з $Ox$, вісь $Oy$ малювати не потрібно.</li>
+                        <li><strong>Вибір:</strong> Позначити проміжки: над віссю (там де $+ $) для знака «$>$», під віссю (там де $-$) для знака «$<$».</li>
+                    </ol>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">Тренажер: $x^2 - 4x + 3 \text{ [ ? ] } 0$</div>
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03); padding: 5px;">
+                        <button class="btn-toggle active" id="btn-q-le" onclick="renderQuadraticScene('<=')">$\leq 0$</button>
+                        <button class="btn-toggle" id="btn-q-lt" onclick="renderQuadraticScene('<')">$< 0$</button>
+                        <button class="btn-toggle" id="btn-q-ge" onclick="renderQuadraticScene('>=')">$\geq 0$</button>
+                        <button class="btn-toggle" id="btn-q-gt" onclick="renderQuadraticScene('>')">$> 0$</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container" style="min-height: 180px; background: #fff;">
+                            <svg viewBox="-1 -2.5 6 4.5" width="100%" height="100%" id="quad-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="quad-out" style="min-height: 180px; justify-content: center; text-align: left;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ОСОБЛИВИЙ ВИПАДОК D < 0 -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Аналіз</span>
+                <h2 class="slide-title">Особливі випадки: Коли $D < 0$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Якщо дискримінант від'ємний ($D < 0$), парабола <strong>не перетинає</strong> вісь $Ox$. Вона повністю "висить" над віссю ($a>0$) або повністю під нею ($a<0$).</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="widget-title">Дослідіть нерівність: $x^2 + x + c > 0$</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 250px;">
+                            Змінюємо вільний член $c$: <span id="dneg-c-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">5</span>
+                            <input type="range" id="dneg-c" class="slider-control" min="-2" max="5" value="5" step="0.5" oninput="renderDNegScene()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px; flex-grow: 1;">
+                        <div class="widget-svg-container" style="min-height: 250px; background: #fff;">
+                            <svg viewBox="-4 -2 8 10" width="100%" height="100%" id="dneg-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="dneg-out" style="min-height: 250px; justify-content: flex-start; text-align: left;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ПІДСТАНОВКА В МЕТОДІ ІНТЕРВАЛІВ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Методика</span>
+                <h2 class="slide-title">Чому працює метод інтервалів?</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition" style="margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Уявіть вираз $f(x) = (x-2)(x+3)$. Його нулі: $x=2$ та $x=-3$. Ці точки розбивають вісь на три інтервали. На кожному з них вираз зберігає свій знак. Щоб його дізнатися, достатньо <strong>підставити будь-яке число</strong> з цього інтервалу!</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="widget-title">Підстановка значень у вираз $f(x) = (x-2)(x+3)$</div>
+
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03); padding: 10px;">
+                        <label class="slider-label" style="min-width: 300px;">
+                            Обери точку $x$: <span id="subst-x-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">0</span>
+                            <input type="range" id="subst-x" class="slider-control" min="-6" max="5" value="0" step="1" oninput="renderSubstScene()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px; flex-grow: 1;">
+                        <div class="widget-svg-container" style="min-height: 200px; background: #fff;">
+                            <svg viewBox="-7 -3 13 6" width="100%" height="100%" id="subst-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="subst-out" style="min-height: 200px; justify-content: center; text-align: center; font-size: 1.3rem;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: РАЦІОНАЛЬНІ НЕРІВНОСТІ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Раціональні нерівності та метод інтервалів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Раціональною</strong> називають нерівність виду $\frac{P(x)}{Q(x)} > 0$. Головна особливість: ми <strong>не можемо</strong> просто помножити ліву і праву частину на знаменник, оскільки його знак залежить від $x$. Тому використовується <strong>метод інтервалів</strong>.</p>
+                </div>
+
+                <div class="box theorem" style="margin-top: 15px;">
+                    <div class="box-title">Базовий алгоритм методу інтервалів:</div>
+                    <ol style="margin: 5px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li>Знайти <strong>нулі чисельника</strong> (точки, де вираз дорівнює 0).</li>
+                        <li>Знайти <strong>нулі знаменника</strong> (точки, де вираз не існує — ОДЗ).</li>
+                        <li>Позначити всі ці точки на числовій осі.</li>
+                        <li>Визначити знак виразу на кожному інтервалі <strong>підстановкою</strong> будь-якого числа. Знаки «$+$» та «$-$» зручно ставити прямо над відповідним проміжком.</li>
+                    </ol>
+                </div>
+
+                <div class="box error" style="margin-top: 15px;">
+                    <div class="box-title">Пам'ятайте про ОДЗ! <span class="nmt-ref-badge">⚠️ Пастка</span></div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Точки, що прийшли <strong>зі знаменника</strong>, на числовій осі завжди малюються порожніми (виколотими) $\circ$, незалежно від того, строгий ($>$) чи нестрогий ($\geq$) знак стоїть у нерівності.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРАКТИКА МЕТОДУ ІНТЕРВАЛІВ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Метод інтервалів (Приклад 1)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="widget-title">Розв'яжіть: $\frac{(x-4)(x+1)}{x-2} \geq 0$</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px; width: 100%;">
+                            Крок: <input type="range" id="rat1-step" class="slider-control" min="0" max="4" value="0" oninput="renderRat1Scene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; padding: 20px;">
+                        <div id="rat1-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 20px; min-height: 120px; line-height: 1.5;">
+                            <!-- Text -->
+                        </div>
+                        <div class="widget-svg-container" style="border: none; box-shadow: none; height: 160px; padding: 0;" id="rat1-svg-container">
+                            <!-- SVG Number Line -->
+                        </div>
+                        <div class="scrollable-math" id="rat1-render" style="min-height: 40px; font-size: 1.5rem; color: var(--brand-green); font-weight: bold; text-align: center; margin-top: 10px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ПРАВИЛО КРАТНОСТІ КОРЕНІВ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Ускладнення</span>
+                <h2 class="slide-title">Правило кратності коренів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box error" style="margin-bottom: 15px;">
+                    <div class="box-title">Головна пастка НМТ!</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Якщо лінійний множник (дужка) стоїть у <strong>парному</strong> степені (наприклад, $(x-3)^2$ або $x^4$), то при переході через цей корінь на числовій осі <strong>знак нерівності не змінюється</strong>. Квадрат числа завжди "з'їдає" мінус!</p>
+                </div>
+
+                <div class="box hack" style="margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Підстановка контрольних точок з кожного проміжку — це найнадійніший спосіб не потрапити в цю пастку. Ви самі побачите, як парний степінь перетворює від'ємне значення дужки на додатне.</p>
+                </div>
+
+                <p style="text-align: center; color: var(--brand-blue); font-weight: bold; margin-top: 20px;">Перейдіть на наступний слайд, щоб застосувати це на практиці!</p>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ПРАКТИКА З ПАРНИМ СТЕПЕНЕМ -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика НМТ</span>
+                <h2 class="slide-title">Метод інтервалів (Приклад 2)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="widget-title">Розв'яжіть: $\frac{(x-3)^2}{x+2} \leq 0$</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px; width: 100%;">
+                            Крок: <input type="range" id="rat2-step" class="slider-control" min="0" max="4" value="0" oninput="renderRat2Scene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; padding: 20px;">
+                        <div id="rat2-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 20px; min-height: 120px; line-height: 1.5;">
+                            <!-- Text -->
+                        </div>
+                        <div class="widget-svg-container" style="border: none; box-shadow: none; height: 160px; padding: 0;" id="rat2-svg-container">
+                            <!-- SVG Number Line -->
+                        </div>
+                        <div class="scrollable-math" id="rat2-render" style="min-height: 40px; font-size: 1.5rem; color: var(--brand-green); font-weight: bold; text-align: center; margin-top: 10px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        // Утиліта для побудови параболи
+        function getParabolaPath(a, b, c, xMin, xMax, step = 0.05) {
+            let path = "";
+            for (let x = xMin; x <= xMax; x += step) {
+                let y = a * x * x + b * x + c;
+                path += (path === "" ? `M ${x} ${-y}` : ` L ${x} ${-y}`);
+            }
+            return path;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderQuadraticScene('<=');
+                if (currentSlide === 2) renderDNegScene();
+                if (currentSlide === 3) renderSubstScene();
+                if (currentSlide === 5) renderRat1Scene();
+                if (currentSlide === 7) renderRat2Scene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Квадратичні нерівності
+            let quadSign = '<=';
+            window.renderQuadraticScene = function(sign) {
+                quadSign = sign;
+                document.getElementById('btn-q-le').classList.toggle('active', sign === '<=');
+                document.getElementById('btn-q-lt').classList.toggle('active', sign === '<');
+                document.getElementById('btn-q-ge').classList.toggle('active', sign === '>=');
+                document.getElementById('btn-q-gt').classList.toggle('active', sign === '>');
+
+                const scene = document.getElementById('quad-svg');
+                const out = document.getElementById('quad-out');
+
+                let pathD = getParabolaPath(1, -4, 3, -0.5, 4.5);
+
+                let svg = `
+                    <defs>
+                        <clipPath id="clip-under">
+                            <rect x="-2" y="0" width="8" height="5"/>
+                        </clipPath>
+                        <clipPath id="clip-over">
+                            <rect x="-2" y="-5" width="8" height="5"/>
+                        </clipPath>
+                    </defs>
+                    <line x1="-1" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="4.8" y="0.4" font-size="0.4">x</text>
+                `;
+
+                svg += `<path d="${pathD}" fill="none" stroke="#bdc3c7" stroke-width="0.05"/>`;
+
+                let html = "";
+                let isStrict = (sign === '<' || sign === '>');
+                let dotFill = isStrict ? "#fff" : "#8e44ad";
+                let strokeW = isStrict ? "0.08" : "0";
+
+                if (sign === '<=') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.12" clip-path="url(#clip-under)"/>`;
+                    svg += `<path d="${pathD}" fill="#8e44ad" opacity="0.2" clip-path="url(#clip-under)"/>`;
+                    svg += `<line x1="1" y1="0" x2="3" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+
+                    html = `
+                        <p style="font-size: 0.95rem;">Шукаємо $\\leq 0$, тобто область <strong>під віссю $Ox$</strong>. Включаючи самі точки перетину.</p>
+                        <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; text-align: center;">$x \\in [1; 3]$</div>
+                    `;
+                } else if (sign === '<') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.12" clip-path="url(#clip-under)"/>`;
+                    svg += `<path d="${pathD}" fill="#8e44ad" opacity="0.2" clip-path="url(#clip-under)"/>`;
+                    svg += `<line x1="1" y1="0" x2="3" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+
+                    html = `
+                        <p style="font-size: 0.95rem;">Шукаємо $< 0$, тобто строго <strong>під віссю $Ox$</strong>. Точки перетину не включаємо (дужки круглі).</p>
+                        <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; text-align: center;">$x \\in (1; 3)$</div>
+                    `;
+                } else if (sign === '>=') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.12" clip-path="url(#clip-over)"/>`;
+                    svg += `<path d="${pathD}" fill="#8e44ad" opacity="0.2" clip-path="url(#clip-over)"/>`;
+                    svg += `<line x1="-1" y1="0" x2="1" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+                    svg += `<line x1="3" y1="0" x2="5" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+
+                    html = `
+                        <p style="font-size: 0.95rem;">Шукаємо $\\geq 0$, тобто область <strong>над віссю $Ox$</strong>. Включаючи самі точки перетину.</p>
+                        <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; text-align: center;">$x \\in (-\\infty; 1] \\cup [3; +\\infty)$</div>
+                    `;
+                } else if (sign === '>') {
+                    svg += `<path d="${pathD}" fill="none" stroke="#8e44ad" stroke-width="0.12" clip-path="url(#clip-over)"/>`;
+                    svg += `<path d="${pathD}" fill="#8e44ad" opacity="0.2" clip-path="url(#clip-over)"/>`;
+                    svg += `<line x1="-1" y1="0" x2="1" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+                    svg += `<line x1="3" y1="0" x2="5" y2="0" stroke="#8e44ad" stroke-width="0.15"/>`;
+
+                    html = `
+                        <p style="font-size: 0.95rem;">Шукаємо $> 0$, тобто строго <strong>над віссю $Ox$</strong>. Точки перетину не включаємо.</p>
+                        <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; text-align: center;">$x \\in (-\\infty; 1) \\cup (3; +\\infty)$</div>
+                    `;
+                }
+
+                svg += `<circle cx="1" cy="0" r="0.18" fill="${dotFill}" stroke="#8e44ad" stroke-width="${strokeW}"/>`;
+                svg += `<text x="0.8" y="0.5" font-size="0.4" font-family="sans-serif">1</text>`;
+                svg += `<circle cx="3" cy="0" r="0.18" fill="${dotFill}" stroke="#8e44ad" stroke-width="${strokeW}"/>`;
+                svg += `<text x="2.9" y="0.5" font-size="0.4" font-family="sans-serif">3</text>`;
+
+                scene.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 2: Тренажер D < 0
+            window.renderDNegScene = function() {
+                const cVal = parseFloat(document.getElementById('dneg-c').value);
+                document.getElementById('dneg-c-val').textContent = cVal;
+
+                const scene = document.getElementById('dneg-svg');
+                const out = document.getElementById('dneg-out');
+
+                let pathD = getParabolaPath(1, 1, cVal, -4, 3);
+
+                let svg = `
+                    <line x1="-4" y1="0" x2="3" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="2.6" y="0.4" font-size="0.4">x</text>
+                    <path d="${pathD}" fill="none" stroke="#e74c3c" stroke-width="0.12"/>
+                `;
+
+                let d = 1 - 4 * 1 * cVal;
+                let html = `
+                    <div style="font-size: 1.1rem; margin-bottom: 10px;">$D = 1^2 - 4 \\cdot 1 \\cdot (${cVal}) = \\mathbf{${d}}$</div>
+                `;
+
+                if (d < 0) {
+                    html += `
+                        <p style="color: #e74c3c; font-weight: bold; font-size: 1rem;">$D < 0$ (Немає перетину з $Ox$)</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Парабола повністю лежить над віссю. Це означає, що функція завжди додатна ($y>0$).</p>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px;">
+                            <li>Якщо нерівність $\\mathbf{> 0}$: Відповідь $x \\in (-\\infty; +\\infty)$</li>
+                            <li>Якщо нерівність $\\mathbf{< 0}$: Відповідь $x \\in \\varnothing$ (розв'язків немає)</li>
+                        </ul>
+                    `;
+                } else if (d === 0) {
+                    svg += `<circle cx="-0.5" cy="0" r="0.15" fill="#e74c3c"/>`;
+                    html += `
+                        <p style="color: #f39c12; font-weight: bold; font-size: 1rem;">$D = 0$ (Дотикається)</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Є одна точка, де функція дорівнює нулю: $x = -0.5$.</p>
+                        <ul style="font-size: 0.95rem; line-height: 1.5; padding-left: 20px;">
+                            <li>Якщо $\\mathbf{> 0}$: Відповідь $x \\neq -0.5$</li>
+                            <li>Якщо $\\mathbf{\\geq 0}$: Відповідь $x \\in \\mathbb{R}$</li>
+                        </ul>
+                    `;
+                } else {
+                    let r1 = (-1 - Math.sqrt(d))/2;
+                    let r2 = (-1 + Math.sqrt(d))/2;
+                    svg += `<circle cx="${r1}" cy="0" r="0.15" fill="#27ae60"/>`;
+                    svg += `<circle cx="${r2}" cy="0" r="0.15" fill="#27ae60"/>`;
+                    html += `
+                        <p style="color: #27ae60; font-weight: bold; font-size: 1rem;">$D > 0$ (Два перетини)</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5;">Стандартна ситуація. Парабола перетинає вісь у двох точках. Розв'язуємо стандартним методом.</p>
+                    `;
+                }
+
+                scene.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 3: Підстановка в методі інтервалів (ВЕРСІЯ БЕЗ ДУГ)
+            window.renderSubstScene = function() {
+                const xVal = parseInt(document.getElementById('subst-x').value);
+                document.getElementById('subst-x-val').textContent = xVal;
+
+                const scene = document.getElementById('subst-svg');
+                const out = document.getElementById('subst-out');
+
+                let svg = `
+                    <line x1="-6" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="4.8" y="0.4" font-size="0.4">x</text>
+
+                    <circle cx="-3" cy="0" r="0.2" fill="#2c3e50"/>
+                    <text x="-3" y="0.8" font-size="0.5" text-anchor="middle">-3</text>
+
+                    <circle cx="2" cy="0" r="0.2" fill="#2c3e50"/>
+                    <text x="2" y="0.8" font-size="0.5" text-anchor="middle">2</text>
+                `;
+
+                let arcColor;
+                if (xVal > 2) { arcColor = "#27ae60"; }
+                else if (xVal < -3) { arcColor = "#27ae60"; }
+                else { arcColor = "#e74c3c"; }
+
+                // Highlight active interval on the axis directly
+                if (xVal > 2) svg += `<line x1="2" y1="0" x2="5" y2="0" stroke="${arcColor}" stroke-width="0.2"/>`;
+                else if (xVal < -3) svg += `<line x1="-6" y1="0" x2="-3" y2="0" stroke="${arcColor}" stroke-width="0.2"/>`;
+                else svg += `<line x1="-3" y1="0" x2="2" y2="0" stroke="${arcColor}" stroke-width="0.2"/>`;
+
+                // The test point
+                svg += `<circle cx="${xVal}" cy="0" r="0.25" fill="${arcColor}"/>`;
+                svg += `<text x="${xVal}" y="-0.8" font-size="0.6" font-weight="bold" fill="${arcColor}" text-anchor="middle">x=${xVal}</text>`;
+                svg += `<line x1="${xVal}" y1="0" x2="${xVal}" y2="-0.6" stroke="${arcColor}" stroke-dasharray="0.1,0.1" stroke-width="0.05"/>`;
+
+                // Show all signs hovering
+                svg += `<text x="3.5" y="-0.4" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>`;
+                svg += `<text x="-0.5" y="-0.4" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>`;
+                svg += `<text x="-4.5" y="-0.4" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>`;
+
+                scene.innerHTML = svg;
+
+                let val1 = xVal - 2;
+                let val2 = xVal + 3;
+                let res = val1 * val2;
+                let signStr = res > 0 ? `<span style="color:var(--brand-green); font-weight:bold;">> 0 (+)</span>` : (res < 0 ? `<span style="color:var(--warning-red); font-weight:bold;">< 0 (-)</span>` : `\\mathbf{= 0}`);
+
+                let html = `
+                    <div style="color: #555; font-size: 1.1rem; margin-bottom: 10px;">Підставляємо $x = ${xVal}$ у $f(x) = (x-2)(x+3)$</div>
+                    <div class="scrollable-math" style="margin-bottom: 10px;">$f(${xVal}) = (${xVal >= 0 ? xVal : '('+xVal+')'} - 2) \\cdot (${xVal >= 0 ? xVal : '('+xVal+')'} + 3)$</div>
+                    <div class="scrollable-math" style="margin-bottom: 10px;">$= (${val1}) \\cdot (${val2}) = ${res}$</div>
+                    <div>Отже, на цьому інтервалі: ${signStr}</div>
+                `;
+
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 5: Метод Інтервалів 1 (БЕЗ ДУГ)
+            window.renderRat1Scene = function() {
+                const step = parseInt(document.getElementById('rat1-step').value);
+                const desc = document.getElementById('rat1-desc');
+                const svgCont = document.getElementById('rat1-svg-container');
+                const render = document.getElementById('rat1-render');
+
+                let text = "";
+                let svg = "";
+                let eq = "";
+
+                if (step === 0) {
+                    text = "Початкова раціональна нерівність. Застосовуємо метод інтервалів.";
+                } else if (step === 1) {
+                    text = "<strong>Крок 1: Знаходимо нулі та ОДЗ.</strong><br>Чисельник дорівнює нулю при $x = 4$ та $x = -1$. Оскільки нерівність $\\geq 0$, ці точки зафарбовані ($\\bullet$).<br>Знаменник дорівнює нулю при $x = 2$ (ОДЗ). Ця точка ЗАВЖДИ виколота ($\\circ$).";
+
+                    svg = `
+                        <svg viewBox="-3 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-3" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="5.8" y="0.4" font-size="0.4">x</text>
+
+                            <circle cx="-1" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="-1" y="0.7" font-size="0.4" text-anchor="middle">-1</text>
+
+                            <circle cx="2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="2" y="0.7" font-size="0.4" text-anchor="middle">2</text>
+
+                            <circle cx="4" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="4" y="0.7" font-size="0.4" text-anchor="middle">4</text>
+                        </svg>
+                    `;
+                } else if (step === 2) {
+                    text = `<strong>Крок 2: Визначаємо знаки підстановкою.</strong><br>
+                            • $x=5 \\implies \\frac{(+)(+)}{+} = \\mathbf{+}$ (ставимо $+$)<br>
+                            • $x=3 \\implies \\frac{(-)(+)}{+} = \\mathbf{-}$ (ставимо $-$)<br>
+                            • $x=0 \\implies \\frac{(-)(+)}{-} = \\mathbf{+}$ (ставимо $+$)<br>
+                            • $x=-2 \\implies \\frac{(-)(-)}{-} = \\mathbf{-}$ (ставимо $-$)`;
+
+                    svg = `
+                        <svg viewBox="-3 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-3" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="5.8" y="0.4" font-size="0.4">x</text>
+
+                            <!-- Знаки над інтервалами -->
+                            <text x="5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="3" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+                            <text x="0.5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="-2" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+
+                            <circle cx="-1" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="-1" y="0.7" font-size="0.4" text-anchor="middle">-1</text>
+
+                            <circle cx="2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="2" y="0.7" font-size="0.4" text-anchor="middle">2</text>
+
+                            <circle cx="4" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="4" y="0.7" font-size="0.4" text-anchor="middle">4</text>
+                        </svg>
+                    `;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3: Штриховка.</strong><br>Нас просять знайти, де вираз $\\geq 0$. Отже, штрихуємо інтервали зі знаком $+$.";
+
+                    svg = `
+                        <svg viewBox="-3 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-3" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="5.8" y="0.4" font-size="0.4">x</text>
+
+                            <text x="5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="3" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+                            <text x="0.5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="-2" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+
+                            <!-- Штриховка (додатні інтервали) -->
+                            <line x1="-1" y1="0" x2="2" y2="0" stroke="#27ae60" stroke-width="0.2"/>
+                            <line x1="4" y1="0" x2="6" y2="0" stroke="#27ae60" stroke-width="0.2"/>
+                            ${Array.from({length: 10}, (_, i) => -0.8 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="-0.4" stroke="#27ae60" stroke-width="0.05"/>`).join('')}
+                            ${Array.from({length: 7}, (_, i) => 4.2 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="-0.4" stroke="#27ae60" stroke-width="0.05"/>`).join('')}
+
+                            <circle cx="-1" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="-1" y="0.7" font-size="0.4" text-anchor="middle">-1</text>
+
+                            <circle cx="2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="2" y="0.7" font-size="0.4" text-anchor="middle">2</text>
+
+                            <circle cx="4" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="4" y="0.7" font-size="0.4" text-anchor="middle">4</text>
+                        </svg>
+                    `;
+                } else if (step === 4) {
+                    text = "<strong>Відповідь!</strong> Об'єднуємо заштриховані проміжки. Уважно з дужками: кругла біля 2 (бо виколота ОДЗ), квадратні біля -1 та 4.";
+                    eq = `x \\in [-1; 2) \\cup [4; +\\infty)`;
+                    svg = `
+                        <svg viewBox="-3 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-3" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="5.8" y="0.4" font-size="0.4">x</text>
+
+                            <line x1="-1" y1="0" x2="2" y2="0" stroke="#27ae60" stroke-width="0.2"/>
+                            <line x1="4" y1="0" x2="6" y2="0" stroke="#27ae60" stroke-width="0.2"/>
+                            ${Array.from({length: 10}, (_, i) => -0.8 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="-0.4" stroke="#27ae60" stroke-width="0.05"/>`).join('')}
+                            ${Array.from({length: 7}, (_, i) => 4.2 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="-0.4" stroke="#27ae60" stroke-width="0.05"/>`).join('')}
+
+                            <circle cx="-1" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="-1" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">-1</text>
+
+                            <circle cx="2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="2" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">2</text>
+
+                            <circle cx="4" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="4" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">4</text>
+                        </svg>
+                    `;
+                }
+
+                desc.innerHTML = text;
+                svgCont.innerHTML = svg;
+                render.innerHTML = eq ? `$$${eq}$$` : "";
+
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 7: Метод Інтервалів 2 (Кратні корені - БЕЗ ДУГ)
+            window.renderRat2Scene = function() {
+                const step = parseInt(document.getElementById('rat2-step').value);
+                const desc = document.getElementById('rat2-desc');
+                const svgCont = document.getElementById('rat2-svg-container');
+                const render = document.getElementById('rat2-render');
+
+                let text = "";
+                let svg = "";
+                let eq = "";
+
+                if (step === 0) {
+                    text = "Маємо дріб з парним степенем: $\\frac{(x-3)^2}{x+2} \\leq 0$. Зверніть особливу увагу на дужку $(x-3)^2$.";
+                } else if (step === 1) {
+                    text = "<strong>Крок 1: Нулі та ОДЗ.</strong><br>Чисельник: $x = 3$. Оскільки нерівність $\\leq 0$, точка зафарбована ($\\bullet$). Зверніть увагу: це корінь <strong>парної</strong> кратності!<br>Знаменник: $x = -2$. ОДЗ, тому виколота ($\\circ$).";
+
+                    svg = `
+                        <svg viewBox="-4 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-4" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="4.8" y="0.4" font-size="0.4">x</text>
+
+                            <circle cx="-2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="-2" y="0.7" font-size="0.4" text-anchor="middle">-2</text>
+
+                            <circle cx="3" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="3" y="0.7" font-size="0.4" text-anchor="middle">3</text>
+                        </svg>
+                    `;
+                } else if (step === 2) {
+                    text = `<strong>Крок 2: Перевіряємо знаки підстановкою.</strong><br>
+                            • $x=4 (+) \\implies$ ставимо $\\mathbf{+}$<br>
+                            • $x=0 (+) \\implies$ ставимо $\\mathbf{+}$ (квадрат "з'їв" мінус!)<br>
+                            • $x=-3 (-) \\implies$ ставимо $\\mathbf{-}$`;
+
+                    svg = `
+                        <svg viewBox="-4 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-4" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="4.8" y="0.4" font-size="0.4">x</text>
+
+                            <text x="4" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="0.5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="-3" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+
+                            <circle cx="-2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="-2" y="0.7" font-size="0.4" text-anchor="middle">-2</text>
+
+                            <circle cx="3" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="3" y="0.7" font-size="0.4" text-anchor="middle">3</text>
+                        </svg>
+                    `;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3: Штриховка.</strong><br>Шукаємо $\\leq 0$ (знак $-$). Заштриховуємо проміжок зліва від $-2$.<br>Але <strong style='color:var(--warning-red);'>УВАГА!</strong> Точка $x=3$ зафарбована, в ній вираз дорівнює нулю (що відповідає умові $\\leq 0$). Ми не можемо її просто викинути!";
+
+                    svg = `
+                        <svg viewBox="-4 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-4" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="4.8" y="0.4" font-size="0.4">x</text>
+
+                            <text x="4" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="0.5" y="-0.8" font-size="0.9" fill="#27ae60" font-weight="bold">+</text>
+                            <text x="-3" y="-0.8" font-size="0.9" fill="#e74c3c" font-weight="bold">-</text>
+
+                            <!-- Штриховка (вниз для від'ємних інтервалів) -->
+                            <line x1="-4" y1="0" x2="-2" y2="0" stroke="#c0392b" stroke-width="0.2"/>
+                            ${Array.from({length: 6}, (_, i) => -3.8 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="0.4" stroke="#c0392b" stroke-width="0.05"/>`).join('')}
+
+                            <!-- Ізольована точка -->
+                            <circle cx="3" cy="0" r="0.3" fill="none" stroke="#c0392b" stroke-width="0.05">
+                                <animate attributeName="r" values="0.2;0.5;0.2" dur="1.5s" repeatCount="indefinite" />
+                                <animate attributeName="opacity" values="1;0;1" dur="1.5s" repeatCount="indefinite" />
+                            </circle>
+
+                            <circle cx="-2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="-2" y="0.7" font-size="0.4" text-anchor="middle">-2</text>
+
+                            <circle cx="3" cy="0" r="0.2" fill="#2c3e50"/>
+                            <text x="3" y="0.7" font-size="0.4" text-anchor="middle">3</text>
+                        </svg>
+                    `;
+                } else if (step === 4) {
+                    text = "<strong>Відповідь!</strong> До проміжку $(-\\infty; -2)$ обов'язково додаємо <strong>ізольовану точку</strong> $\\{3\\}$. Це найпопулярніша пастка на НМТ, через яку втрачають бали.";
+                    eq = `x \\in (-\\infty; -2) \\cup \\{3\\}`;
+                    svg = `
+                        <svg viewBox="-4 -2.5 9 5" width="100%" height="100%">
+                            <line x1="-4" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <text x="4.8" y="0.4" font-size="0.4">x</text>
+
+                            <line x1="-4" y1="0" x2="-2" y2="0" stroke="#c0392b" stroke-width="0.2"/>
+                            ${Array.from({length: 6}, (_, i) => -3.8 + i*0.3).map(x => `<line x1="${x}" y1="0" x2="${x+0.2}" y2="0.4" stroke="#c0392b" stroke-width="0.05"/>`).join('')}
+
+                            <circle cx="-2" cy="0" r="0.2" fill="#fff" stroke="#2c3e50" stroke-width="0.08"/>
+                            <text x="-2" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">-2</text>
+
+                            <circle cx="3" cy="0" r="0.25" fill="#c0392b"/>
+                            <text x="3" y="0.8" font-size="0.5" fill="#c0392b" text-anchor="middle" font-weight="bold">3</text>
+                        </svg>
+                    `;
+                }
+
+                desc.innerHTML = text;
+                svgCont.innerHTML = svg;
+                render.innerHTML = eq ? `$$${eq}$$` : "";
+
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Init
+            goToSlide(1);
+            renderSubstScene();
+        });
+    </script>
+</body>
+</html>

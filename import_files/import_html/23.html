@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Показникові та логарифмічні нерівності | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); flex-shrink: 0; }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: wrap; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ТАБЛИЦЯ */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .styled-table th, .styled-table td { padding: 12px 10px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        .styled-table th { background-color: rgba(52, 78, 134, 0.1); color: var(--brand-blue); font-weight: 700; }
+        .styled-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .styled-table .gray-cell { background-color: rgba(0,0,0,0.04); font-weight: bold; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#7f8c8d" /></marker>
+            <marker id="arrBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#3498db" /></marker>
+            <marker id="arrRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#e74c3c" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ФУНДАМЕНТАЛЬНИЙ ПРИНЦИП -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">1. Головне правило нерівностей</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Фундаментальний принцип:</div>
+                    <p style="margin: 0 0 5px 0; font-size: 0.95rem;">При переході від нерівності для функцій до нерівності для аргументів (показників або підлогарифмічних виразів) ми дивимося на основу <strong>$a$</strong>:</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>Якщо <strong>$a > 1$</strong>: функція зростає $\rightarrow$ знак нерівності <strong>зберігається</strong>.</li>
+                        <li>Якщо <strong>$0 < a < 1$</strong>: функція спадає $\rightarrow$ знак нерівності <strong>змінюється на протилежний</strong>.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title" style="text-align: center;">Візуалізація: Як монотонність впливає на знак</div>
+
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-func-exp" onclick="setMonotonyType('exp')">Показникова $y=a^x$</button>
+                        <button class="btn-toggle" id="btn-func-log" onclick="setMonotonyType('log')">Логарифмічна $y=\log_a x$</button>
+
+                        <div style="width: 1px; height: 20px; background: #ccc; margin: 0 10px;"></div>
+
+                        <label class="slider-label">
+                            Основа $a$: <span id="mono-a-val" style="color:var(--brand-blue); width:30px; font-weight:bold; text-align:center;">2.0</span>
+                            <input type="range" id="mono-a" class="slider-control" min="0.1" max="4" value="2.0" step="0.1" oninput="renderMonotonyGraph()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 10px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px; align-items: stretch;">
+                            <!-- В'юпорт буде встановлюватися через JS -->
+                            <svg width="100%" height="100%" id="mono-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="mono-out" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; font-size: 1.05rem; line-height: 1.5; overflow-y: auto;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ПОКАЗНИКОВІ НЕРІВНОСТІ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">2. Показникові нерівності</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм розв'язання $a^{f(x)} > a^{g(x)}$:</div>
+                    <ol style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>Звести обидві частини нерівності до однієї спільної основи $a$.</li>
+                        <li>Порівняти показники $f(x)$ та $g(x)$, враховуючи величину основи (знак зберігаємо або змінюємо).</li>
+                    </ol>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title">Приклад: Розв'яжіть нерівність $\left(\frac{1}{3}\right)^x \geq 27$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-exp" class="slider-control" min="0" max="3" value="0" oninput="renderStepExp()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="exp-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 60px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="exp-render" style="font-size: 1.4rem; color: var(--brand-blue); font-weight: bold; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ЛОГАРИФМІЧНІ НЕРІВНОСТІ ТЕОРІЯ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">3. Логарифмічні нерівності: ОДЗ та Перехід</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 15px;">
+                    <div class="box-title">ОДЗ — понад усе!</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">На відміну від показникових нерівностей, у логарифмічних ми жорстко обмежені областю визначення. Кожен підлогарифмічний вираз <strong>обов'язково має бути строго більшим за 0</strong>. Нерівність без урахування ОДЗ автоматично вважається розв'язаною неправильно.</p>
+                </div>
+
+                <div class="box theorem" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="box-title" style="font-size: 1.15rem; margin-bottom: 10px;">Перехід до системи нерівностей:</div>
+                    <p style="margin: 0 0 10px 0; font-size: 1rem;">Нерівність $\log_a f(x) > \log_a g(x)$ розпадається на систему, яка одразу об'єднує і порівняння аргументів, і ОДЗ (достатньо обмежити лише менший вираз):</p>
+
+                    <div class="grid-2col" style="gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center;">
+                            <div style="color: var(--brand-green); font-weight: bold; margin-bottom: 10px;">Основа $a > 1$ (Знак той самий)</div>
+                            <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold;">
+                                $\begin{cases} f(x) > g(x) \\ g(x) > 0 \end{cases}$
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.7); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center;">
+                            <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 10px;">Основа $0 < a < 1$ (Знак протилежний)</div>
+                            <div class="scrollable-math" style="font-size: 1.3rem; font-weight: bold;">
+                                $\begin{cases} f(x) < g(x) \\ f(x) > 0 \end{cases}$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ЛОГАРИФМІЧНІ НЕРІВНОСТІ ПРАКТИКА -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Логарифмічні нерівності: Практика</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="flex-grow: 1; margin-top: 0;">
+                    <div class="widget-title">Приклад: Розв'яжіть нерівність $\log_{0{,}5}(x - 4) > -1$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-log" class="slider-control" min="0" max="3" value="0" oninput="renderStepLog()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="log-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 60px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="log-render" style="font-size: 1.4rem; color: #8e44ad; font-weight: bold; background: rgba(142, 68, 173, 0.05); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПАМ'ЯТКА ДЛЯ НМТ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Довідник</span>
+                <h2 class="slide-title">4. Пам'ятка та поради для НМТ</h2>
+            </div>
+            <div class="slide-body">
+
+                <div class="box hack" style="margin-bottom: 15px;">
+                    <div class="box-title">Головний індикатор — основа $a$:</div>
+
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Основа $a$</th>
+                                <th style="width: 35%;">Тип функції</th>
+                                <th style="width: 40%;">Дія зі знаком нерівності</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="gray-cell" style="font-size: 1.2rem;">$\mathbf{a > 1}$</td>
+                                <td>Зростаюча $\nearrow$</td>
+                                <td style="color: var(--brand-green); font-weight: bold; font-size: 1.05rem;">Залишаємо без змін</td>
+                            </tr>
+                            <tr>
+                                <td class="gray-cell" style="font-size: 1.2rem;">$\mathbf{0 < a < 1}$</td>
+                                <td>Спадна $\searrow$</td>
+                                <td style="color: var(--warning-red); font-weight: bold; font-size: 1.05rem;">Змінюємо на протилежний</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p style="margin: 10px 0 0 0; font-size: 0.95rem; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+                        <strong>Порада:</strong> Перед тим як «відкинути» однакові основи, зафіксуйте на них погляд на одну секунду. Якщо основа — дріб менший за одиницю (наприклад, $0{,}3$, $\frac{1}{7}$ чи $\frac{2}{3}$), знак нерівності обов'язково розвертається у протилежний бік!
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ПАСТКА З ОДЗ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">УВАГА</span>
+                <h2 class="slide-title">Пастка з ОДЗ!</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box error">
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Найпоширеніша помилка в тестах — розв'язати нерівність через властивості, але забути про природні обмеження логарифма.</p>
+
+                    <div style="background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px;">
+                        <div style="color: #7f8c8d; font-size: 0.85rem; margin-bottom: 5px;">Типове (неповне) розв'язання:</div>
+                        <div class="scrollable-math" style="font-size: 1.15rem;">$\log_{0{,}5} x > -2 \implies x < (0{,}5)^{-2} \implies x < 4$</div>
+                    </div>
+
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; font-weight: bold;">Це не повна відповідь! Ви зобов'язані накласти умову ОДЗ: $x > 0$.</p>
+                    <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold; color: var(--brand-green);">Правильна відповідь: $x \in (0; 4)$</div>
+                </div>
+
+                <!-- Візуалізатор перетину множин -->
+                <div class="math-widget" style="flex-grow: 1; margin-top: 10px;">
+                    <div class="widget-title" style="text-align: center;">Візуалізація перетину: $x < 4$ та $x > 0$</div>
+                    <div class="widget-svg-container" style="background: #fff; height: 100%; min-height: 120px; flex-grow: 1;">
+                        <svg viewBox="-2 -2 8 4" width="100%" height="100%" id="numline-svg">
+                            <!-- JS -->
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: АЛГОРИТМ СТОП-КОНТРОЛЬ -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Чек-лист</span>
+                <h2 class="slide-title">Алгоритм «Стоп-Контроль»</h2>
+            </div>
+            <div class="slide-body" style="justify-content: center;">
+                <div class="box remark" style="padding: 20px;">
+                    <div class="box-title" style="font-size: 1.3rem; margin-bottom: 15px; border-bottom: 2px solid rgba(52, 152, 219, 0.2); padding-bottom: 10px;">Перевіряй себе на кожному кроці:</div>
+
+                    <ol style="margin: 0; padding-left: 25px; font-size: 1.1rem; line-height: 2;">
+                        <li><strong>ОДЗ:</strong> Переконайся, що всі вирази під логарифмами строго $> 0$.</li>
+                        <li><strong>Основа:</strong> Зведи обидві частини до абсолютно однакового вигляду.</li>
+                        <li><strong>Аналіз:</strong> Подивись на основу: вона більша чи менша за $1$?</li>
+                        <li><strong>Перехід:</strong> Запиши нову нерівність для показників/аргументів.</li>
+                        <li><strong>Фінал:</strong> Знайди спільне рішення (перетин отриманого розв'язку з ОДЗ).</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderMonotonyGraph();
+                if (currentSlide === 2) renderStepExp();
+                if (currentSlide === 4) renderStepLog();
+                if (currentSlide === 6) renderNumLine();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            let currentMonoType = 'exp';
+            window.setMonotonyType = function(type) {
+                currentMonoType = type;
+                document.getElementById('btn-func-exp').classList.toggle('active', type === 'exp');
+                document.getElementById('btn-func-log').classList.toggle('active', type === 'log');
+                renderMonotonyGraph();
+            };
+
+            // Слайд 1: Монотонність і знак
+            window.renderMonotonyGraph = function() {
+                let a = parseFloat(document.getElementById('mono-a').value);
+
+                // Захист від a = 1
+                if (Math.abs(a - 1.0) < 0.05) {
+                    a = 1.1;
+                    document.getElementById('mono-a').value = 1.1;
+                }
+
+                document.getElementById('mono-a-val').textContent = a.toFixed(1);
+
+                const svg = document.getElementById('mono-svg');
+                const out = document.getElementById('mono-out');
+
+                // Coordinate system adjustments based on func type
+                // exp: x [-2.5, 4.5], y [-1, 5.5]
+                // log: x [-1.5, 5.5], y [-3.5, 3.5]
+                let bounds = currentMonoType === 'exp'
+                    ? { xmin: -2.5, xmax: 4.5, ymin: -1, ymax: 5.5 }
+                    : { xmin: -1.5, xmax: 5.5, ymin: -3.5, ymax: 3.5 };
+
+                // Update viewBox dynamically
+                if (currentMonoType === 'exp') {
+                    svg.setAttribute('viewBox', '-3 -6 8 8');
+                } else {
+                    svg.setAttribute('viewBox', '-2 -4 8 8');
+                }
+
+                // Малюємо осі з урахуванням того, що Y інвертовано (-y)
+                let svgHtml = `
+                    <line x1="${bounds.xmin}" y1="0" x2="${bounds.xmax}" y2="0" stroke="#7f8c8d" stroke-width="0.04" marker-end="url(#arrDark)"/>
+                    <text x="${bounds.xmax - 0.2}" y="0.4" font-size="0.4" font-family="sans-serif">x</text>
+
+                    <line x1="0" y1="${-bounds.ymin}" x2="0" y2="${-bounds.ymax}" stroke="#7f8c8d" stroke-width="0.04" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="${-bounds.ymax + 0.4}" font-size="0.4" font-family="sans-serif">y</text>
+                `;
+
+                let d = "";
+                let x1 = 1, x2 = 2.5; // Points to compare
+                let y1, y2;
+
+                if (currentMonoType === 'exp') {
+                    for(let x = bounds.xmin; x <= bounds.xmax; x += 0.1) {
+                        let y = Math.pow(a, x);
+                        if (y <= bounds.ymax && y >= bounds.ymin) {
+                            d += (d==="" ? `M ${x} ${-y}` : ` L ${x} ${-y}`);
+                        }
+                    }
+                    y1 = Math.pow(a, x1);
+                    y2 = Math.pow(a, x2);
+                } else { // log
+                    for(let x = 0.05; x <= bounds.xmax; x += 0.05) {
+                        let y = Math.log(x) / Math.log(a);
+                        if (y <= bounds.ymax && y >= bounds.ymin) {
+                            d += (d==="" ? `M ${x} ${-y}` : ` L ${x} ${-y}`);
+                        }
+                    }
+                    x1 = 1.5; x2 = 3.5;
+                    y1 = Math.log(x1) / Math.log(a);
+                    y2 = Math.log(x2) / Math.log(a);
+                }
+
+                let color = a > 1 ? "#27ae60" : "#e74c3c";
+                svgHtml += `<path d="${d}" fill="none" stroke="${color}" stroke-width="0.08" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+                // Draw comparison points and lines
+                if (y1 >= bounds.ymin && y1 <= bounds.ymax && y2 >= bounds.ymin && y2 <= bounds.ymax) {
+                    // Lines for x1
+                    svgHtml += `<line x1="${x1}" y1="0" x2="${x1}" y2="${-y1}" stroke="#344e86" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                    svgHtml += `<line x1="0" y1="${-y1}" x2="${x1}" y2="${-y1}" stroke="#344e86" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                    svgHtml += `<circle cx="${x1}" cy="${-y1}" r="0.1" fill="#344e86"/>`;
+                    svgHtml += `<text x="${x1}" y="0.5" font-size="0.4" font-family="sans-serif" text-anchor="middle">x₁</text>`;
+
+                    // Lines for x2
+                    svgHtml += `<line x1="${x2}" y1="0" x2="${x2}" y2="${-y2}" stroke="#344e86" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                    svgHtml += `<line x1="0" y1="${-y2}" x2="${x2}" y2="${-y2}" stroke="#344e86" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                    svgHtml += `<circle cx="${x2}" cy="${-y2}" r="0.1" fill="#344e86"/>`;
+                    svgHtml += `<text x="${x2}" y="0.5" font-size="0.4" font-family="sans-serif" text-anchor="middle">x₂</text>`;
+
+                    // Labels for y1, y2
+                    svgHtml += `<text x="-0.2" y="${-y1 + 0.15}" font-size="0.4" font-family="sans-serif" text-anchor="end">y₁</text>`;
+                    svgHtml += `<text x="-0.2" y="${-y2 + 0.15}" font-size="0.4" font-family="sans-serif" text-anchor="end">y₂</text>`;
+                }
+
+                svg.innerHTML = svgHtml;
+
+                // Update text output
+                let funcStr = currentMonoType === 'exp' ? `a^x` : `\\log_a x`;
+                if (a > 1) {
+                    out.innerHTML = `
+                        <div style="margin-bottom: 12px;">Основа $a = ${a.toFixed(1)} > 1$.</div>
+                        <div style="margin-bottom: 12px;">Функція $f(x) = ${funcStr}$ <strong style="color: var(--brand-green);">зростає</strong> $\\nearrow$.</div>
+                        <div style="margin-bottom: 15px;">Оскільки $x_1 < x_2$, то $y_1 < y_2$.</div>
+                        <div style="color: var(--brand-green); font-weight: bold; font-size: 1.15rem; background: rgba(39, 174, 96, 0.1); padding: 12px; border-radius: 6px; width: 100%;">Знак ЗБЕРІГАЄТЬСЯ</div>
+                    `;
+                } else {
+                    out.innerHTML = `
+                        <div style="margin-bottom: 12px;">Основа $a = ${a.toFixed(1)} < 1$.</div>
+                        <div style="margin-bottom: 12px;">Функція $f(x) = ${funcStr}$ <strong style="color: var(--warning-red);">спадає</strong> $\\searrow$.</div>
+                        <div style="margin-bottom: 15px;">Оскільки $x_1 < x_2$, то $y_1 > y_2$.</div>
+                        <div style="color: var(--warning-red); font-weight: bold; font-size: 1.15rem; background: rgba(231, 76, 60, 0.1); padding: 12px; border-radius: 6px; width: 100%;">Знак ЗМІНЮЄТЬСЯ</div>
+                    `;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([out]);
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 2: Метод показникові
+            window.renderStepExp = function() {
+                const step = parseInt(document.getElementById('step-exp').value);
+                const desc = document.getElementById('exp-desc');
+                const render = document.getElementById('exp-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкова нерівність.";
+                    eq = `\\left(\\frac{1}{3}\\right)^x \\geq 27`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Зведемо ліву і праву частини до спільної основи $\\frac{1}{3}$. Пам'ятаємо, що $27 = 3^3 = \\left(\\frac{1}{3}\\right)^{-3}$.";
+                    eq = `\\left(\\frac{1}{3}\\right)^x \\geq \\left(\\frac{1}{3}\\right)^{\\mathbf{-3}}`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Звертаємо увагу на основу. $a = \\frac{1}{3} < 1$, функція спадає. Тому прибираючи основи, <strong>ЗМІНЮЄМО</strong> знак нерівності на протилежний.";
+                    eq = `x \\mathbf{\\leq} -3`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Записуємо фінальну відповідь у вигляді проміжку.";
+                    eq = `x \\in (-\\infty; -3]`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 4: Метод логарифмічні
+            window.renderStepLog = function() {
+                const step = parseInt(document.getElementById('step-log').value);
+                const desc = document.getElementById('log-desc');
+                const render = document.getElementById('log-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкова нерівність.";
+                    eq = `\\log_{0{,}5}(x - 4) > -1`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Представимо число $-1$ як логарифм за основою $0{,}5$. Використовуємо правило: $c = \\log_a a^c$. Тоді $-1 = \\log_{0{,}5}(0{,}5)^{-1} = \\log_{0{,}5} 2$.";
+                    eq = `\\log_{0{,}5}(x - 4) > \\log_{0{,}5} \\mathbf{2}`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Основа $0{,}5 < 1$, тому <strong>змінюємо знак</strong> нерівності на протилежний. І обов'язково додаємо умову <strong>ОДЗ</strong>: підлогарифмічний вираз має бути $>0$.";
+                    eq = `\\begin{cases} x - 4 \\mathbf{<} 2 \\\\ x - 4 \\mathbf{>} 0 \\text{ (ОДЗ)} \\end{cases}`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Розв'язуємо систему і записуємо відповідь.";
+                    eq = `\\begin{cases} x < 6 \\\\ x > 4 \\end{cases} \\implies \\mathbf{x \\in (4; 6)}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 6: Числова пряма ОДЗ
+            window.renderNumLine = function() {
+                const svg = document.getElementById('numline-svg');
+                let svgHtml = `
+                    <!-- Основна вісь -->
+                    <line x1="-1" y1="0" x2="7" y2="0" stroke="#2c3e50" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="6.8" y="-0.4" font-size="0.4" font-family="sans-serif">x</text>
+
+                    <!-- Штрихи -->
+                    <line x1="0" y1="-0.15" x2="0" y2="0.15" stroke="#2c3e50" stroke-width="0.05"/>
+                    <circle cx="0" cy="0" r="0.1" fill="#fff" stroke="#e74c3c" stroke-width="0.05"/>
+                    <text x="0" y="0.6" font-size="0.4" font-family="sans-serif" text-anchor="middle">0</text>
+
+                    <line x1="4" y1="-0.15" x2="4" y2="0.15" stroke="#2c3e50" stroke-width="0.05"/>
+                    <circle cx="4" cy="0" r="0.1" fill="#fff" stroke="#3498db" stroke-width="0.05"/>
+                    <text x="4" y="0.6" font-size="0.4" font-family="sans-serif" text-anchor="middle">4</text>
+                `;
+
+                // Розв'язок нерівності x < 4 (синій)
+                svgHtml += `
+                    <line x1="4" y1="-0.4" x2="-0.8" y2="-0.4" stroke="#3498db" stroke-width="0.08" marker-end="url(#arrBlue)"/>
+                    <!-- Штриховка -->
+                    <path d="M 3.8 -0.4 L 3.5 0 M 3.5 -0.4 L 3.2 0 M 3.2 -0.4 L 2.9 0 M 2.9 -0.4 L 2.6 0 M 2.6 -0.4 L 2.3 0 M 2.3 -0.4 L 2.0 0 M 2.0 -0.4 L 1.7 0 M 1.7 -0.4 L 1.4 0 M 1.4 -0.4 L 1.1 0 M 1.1 -0.4 L 0.8 0 M 0.8 -0.4 L 0.5 0 M 0.5 -0.4 L 0.2 0 M 0.2 -0.4 L -0.1 0 M -0.1 -0.4 L -0.4 0" stroke="#3498db" stroke-width="0.02"/>
+                `;
+
+                // ОДЗ x > 0 (червоний)
+                svgHtml += `
+                    <line x1="0" y1="-0.8" x2="6.5" y2="-0.8" stroke="#e74c3c" stroke-width="0.08" marker-end="url(#arrRed)"/>
+                    <!-- Штриховка в інший бік -->
+                    <path d="M 0.2 -0.8 L 0.5 0 M 0.5 -0.8 L 0.8 0 M 0.8 -0.8 L 1.1 0 M 1.1 -0.8 L 1.4 0 M 1.4 -0.8 L 1.7 0 M 1.7 -0.8 L 2.0 0 M 2.0 -0.8 L 2.3 0 M 2.3 -0.8 L 2.6 0 M 2.6 -0.8 L 2.9 0 M 2.9 -0.8 L 3.2 0 M 3.2 -0.8 L 3.5 0 M 3.5 -0.8 L 3.8 0 M 3.8 -0.8 L 4.1 0" stroke="#e74c3c" stroke-width="0.02"/>
+                `;
+
+                // Виділення перетину (0; 4)
+                svgHtml += `
+                    <rect x="0" y="-1" width="4" height="1.2" fill="#27ae60" opacity="0.2"/>
+                    <text x="2" y="-1.2" font-size="0.4" font-family="sans-serif" text-anchor="middle" fill="#27ae60" font-weight="bold">Перетин: x ∈ (0; 4)</text>
+                `;
+
+                svg.innerHTML = svgHtml;
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

@@ -45,7 +45,11 @@ class StudyMaterial(models.Model):
         null=True,
         verbose_name="Файл матеріалу"
     )
-
+    html_content = models.TextField(
+        verbose_name="HTML Презентація",
+        blank=True,
+        null=True
+    )
     is_published = models.BooleanField(default=False, verbose_name="Опубліковано на вітрині")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, verbose_name="Категорія")
     tags = models.ManyToManyField(Tag, blank=True, verbose_name="Теги")

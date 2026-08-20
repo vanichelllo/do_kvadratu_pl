@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Логарифмічні вирази | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 5px; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; margin-left: 5px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+            <marker id="arrBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#3498db" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОЗНАЧЕННЯ ТА ОДЗ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">1. Що таке логарифм та його ОДЗ</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0; font-size: 1rem;"><strong>Логарифмом</strong> додатного числа $b$ за основою $a$ називається такий показник степеня $x$, до якого треба піднести $a$, щоб отримати $b$.</p>
+                </div>
+
+                <!-- ІНТЕРАКТИВНЕ КОЛЕСО -->
+                <div class="math-widget" style="margin-top: 15px; cursor: pointer; user-select: none;" id="log-cycle-btn" onclick="toggleLogCycle()">
+                    <div style="font-size: 0.9rem; color: #7f8c8d; text-align: center; margin-bottom: 10px;">Натисніть на рамку, щоб побачити "правило кола" 👇</div>
+                    <div style="position: relative; height: 120px; width: 100%; display: flex; justify-content: center; align-items: center;">
+
+                        <!-- Формула логарифма -->
+                        <div id="log-formula" style="font-size: 2.5rem; font-weight: bold; position: absolute; transition: opacity 0.3s; opacity: 1;">
+                            $\log_{\color{#e74c3c}{a}} \color{#27ae60}{b} = \color{#3498db}{x}$
+                        </div>
+
+                        <!-- Формула степеня (прихована) -->
+                        <div id="exp-formula" style="font-size: 2.5rem; font-weight: bold; position: absolute; transition: opacity 0.3s; opacity: 0;">
+                            $\color{#e74c3c}{a}^{\color{#3498db}{x}} = \color{#27ae60}{b}$
+                        </div>
+
+                        <!-- Стрілочки анімації -->
+                        <svg width="250" height="120" style="position: absolute; z-index: 10;" id="log-arrows">
+                            <!-- Arrow from a to x -->
+                            <path id="arr1" d="M 90,80 Q 125,120 160,80" fill="none" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrBlue)" stroke-dasharray="100" stroke-dashoffset="100" style="transition: stroke-dashoffset 0.5s ease-out; opacity: 0;"/>
+                            <!-- Arrow from x to b -->
+                            <path id="arr2" d="M 160,35 Q 125,-10 90,35" fill="none" stroke="#3498db" stroke-width="2" marker-end="url(#arrBlue)" stroke-dasharray="100" stroke-dashoffset="100" style="transition: stroke-dashoffset 0.5s ease-out 0.5s; opacity: 0;"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="box remark" style="margin-top: 15px;">
+                    <div class="box-title">Область допустимих значень (ОДЗ)</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Це <strong>найважливіша</strong> частина теми. Логарифм $\log_a b$ існує виключно за виконання трьох умов одночасно:</p>
+                    <ul style="margin: 5px 0 0 0; font-size: 0.95rem; padding-left: 20px;">
+                        <li>Основа логарифма: $\mathbf{a > 0}$ та $\mathbf{a \neq 1}$.</li>
+                        <li>Підлогарифмічний вираз: $\mathbf{b > 0}$.</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 15px; font-size: 0.95rem;">
+                    <strong>Особливі види логарифмів:</strong>
+                    <ul>
+                        <li><strong>Десятковий:</strong> $\log_{10} b = \lg b$ (логарифм за основою 10).</li>
+                        <li><strong>Натуральний:</strong> $\log_{e} b = \ln b$ (основа — число Ейлера $e \approx 2.718$).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ВЛАСТИВОСТІ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Довідник</span>
+                <h2 class="slide-title">2. Основні властивості логарифмів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Для $a > 0, a \neq 1, b > 0, c > 0$ та $k \neq 0$:</div>
+                    <ul style="margin: 10px 0 0 0; font-size: 1.05rem; line-height: 1.8; padding-left: 20px; list-style-type: none;">
+                        <li>1. $\log_a 1 = 0$ <span class="nmt-ref-badge">✅ НМТ</span> &nbsp;та&nbsp; $\log_a a = 1$ <span class="nmt-ref-badge">✅ НМТ</span></li>
+                        <li>2. $a^{\log_a b} = b$ <span class="nmt-ref-badge">✅ НМТ</span> <span style="font-size: 0.85rem; color: #555;">(основна тотожність)</span></li>
+                        <li>3. $\log_a(b \cdot c) = \log_a b + \log_a c$ <span class="nmt-ref-badge">✅ НМТ</span> <span style="font-size: 0.85rem; color: #555;">(добуток)</span></li>
+                        <li>4. $\log_a\left(\frac{b}{c}\right) = \log_a b - \log_a c$ <span class="nmt-ref-badge">✅ НМТ</span> <span style="font-size: 0.85rem; color: #555;">(частка)</span></li>
+                        <li>5. $\log_a b^n = n \cdot \log_a b$ <span class="nmt-ref-badge">✅ НМТ</span> <span style="font-size: 0.85rem; color: #555;">(степінь з числа)</span></li>
+                        <li>6. $\log_{a^k} b = \frac{1}{k} \cdot \log_a b$ <span class="nmt-ref-badge">✅ НМТ</span> <span style="font-size: 0.85rem; color: #555;">(степінь з основи)</span></li>
+                        <li>7. $\log_a b = \frac{1}{\log_b a}$ <span style="font-size: 0.85rem; color: #555;">(інверсія)</span></li>
+                        <li>8. $\log_a b = \frac{\log_c b}{\log_c a}$ <span style="font-size: 0.85rem; color: #555;">(нова основа)</span></li>
+                    </ul>
+                </div>
+
+                <div class="box hack" style="margin-top: 15px;">
+                    <div class="box-title">Комбіноване винесення степеня:</div>
+                    <p style="margin: 5px 0 5px 0; font-size: 0.95rem;">Якщо об'єднати 5-ту та 6-ту властивості, отримаємо дуже зручну формулу, яка часто економить час на НМТ:</p>
+                    <div class="scrollable-math" style="font-size: 1.3rem; color: #d35400; font-weight: bold; text-align: center;">
+                        $\log_{a^k} b^n = \frac{n}{k} \cdot \log_a b$
+                    </div>
+                </div>
+
+                <div class="box error" style="margin-top: 15px;">
+                    <div class="box-title">Критична помилка!</div>
+                    <p style="margin: 0; font-size: 0.95rem;">Ніколи не записуйте $\log_a (b+c) = \log_a b + \log_a c$. Логарифм <strong>суми</strong> не розкладається на суму логарифмів. Додавати можна лише самі логарифми.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ПРИКЛАД 1 -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">3. Приклад 1: Спрощення виразу</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-top: 0; min-height: 350px;">
+                    <div class="widget-title">Обчисліть: $25^{\log_5 3}$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок розв'язку: <input type="range" id="step-ex1" class="slider-control" min="0" max="3" value="0" oninput="renderStepEx1()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="ex1-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="ex1-render" style="font-size: 1.6rem; color: var(--brand-blue); font-weight: bold; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px; text-align: center;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ПРИКЛАД 2 ТА ТРЕНАЖЕР -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Тренажер</span>
+                <h2 class="slide-title">4. Приклад 2: Обчислення логарифма</h2>
+            </div>
+            <div class="slide-body">
+                <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Мета: звести число та основу логарифма до однієї бази (у цьому випадку — до двійки).</p>
+
+                <div class="math-widget">
+                    <div class="widget-title">Знайдіть: $\log_8 32$</div>
+
+                    <div style="background: rgba(0,0,0,0.03); border-radius: 8px; padding: 15px; margin-top: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <label class="slider-label">
+                                Основа $8 = 2^{k}$: <span id="train-k-val" style="color:var(--brand-blue); width:20px; font-weight:bold;">1</span>
+                                <input type="range" id="train-k" class="slider-control" min="1" max="5" value="1" step="1" oninput="renderTrainEx()">
+                            </label>
+                            <label class="slider-label">
+                                Число $32 = 2^{n}$: <span id="train-n-val" style="color:var(--brand-green); width:20px; font-weight:bold;">1</span>
+                                <input type="range" id="train-n" class="slider-control" min="1" max="6" value="1" step="1" oninput="renderTrainEx()">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="widget-output" style="margin-top: 15px; text-align: center;">
+                        <div id="train-math" class="scrollable-math" style="font-size: 1.6rem; font-weight: bold; margin-bottom: 10px;">
+                            <!-- JS -->
+                        </div>
+                        <div id="train-res" style="font-size: 1.1rem; color: #555;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ЛОГАРИФМІЧНА ФУНКЦІЯ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Функції</span>
+                <h2 class="slide-title">5. Логарифмічна функція $y = \log_a x$</h2>
+            </div>
+            <div class="slide-body">
+
+                <div class="grid-2col" style="align-items: start;">
+                    <div>
+                        <div class="box definition" style="margin-bottom: 15px;">
+                            <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                                <li><strong>Область визначення $D(f)$:<br></strong> $x \in (0; +\infty)$ (<strong>тільки додатні $x$</strong>).</li>
+                                <li style="margin-top: 8px;"><strong>Множина значень $E(f)$:<br></strong> $y \in (-\infty; +\infty)$.</li>
+                            </ul>
+                        </div>
+
+                        <div class="box theorem">
+                            <div class="box-title">Перетин з осями:</div>
+                            <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.5;">
+                                <li>З віссю $Ox$: завжди проходить через точку $(1; 0)$.</li>
+                                <li>З віссю $Oy$: <strong>не перетинає</strong> (вісь $Oy$ є вертикальною асимптотою).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="math-widget" style="margin-top: 0;">
+                        <div class="widget-controls" style="padding: 5px;">
+                            <label class="slider-label" style="width: 100%;">
+                                Змінюємо основу $a$: <span id="logf-a-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">2.0</span>
+                                <input type="range" id="logf-a" class="slider-control" min="0.1" max="4" value="2.0" step="0.1" oninput="renderLogGraph()">
+                            </label>
+                        </div>
+                        <div class="widget-svg-container" style="background: #fff; height: 230px; margin-top: 10px;">
+                            <svg viewBox="-1 -4 7 8" width="100%" height="100%" id="logf-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div id="logf-desc" style="text-align: center; margin-top: 10px; font-size: 1rem; font-weight: bold;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial renderers for specific slides
+                if (currentSlide === 1) resetLogCycle();
+                if (currentSlide === 3) renderStepEx1();
+                if (currentSlide === 4) renderTrainEx();
+                if (currentSlide === 5) renderLogGraph();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Колесо логарифма
+            let isCycleExp = false;
+            window.toggleLogCycle = function() {
+                const logF = document.getElementById('log-formula');
+                const expF = document.getElementById('exp-formula');
+                const arr1 = document.getElementById('arr1');
+                const arr2 = document.getElementById('arr2');
+
+                isCycleExp = !isCycleExp;
+
+                if (isCycleExp) {
+                    logF.style.opacity = 0;
+                    setTimeout(() => { expF.style.opacity = 1; }, 300);
+
+                    arr1.style.opacity = 1;
+                    arr1.style.strokeDashoffset = 0;
+
+                    setTimeout(() => {
+                        arr2.style.opacity = 1;
+                        arr2.style.strokeDashoffset = 0;
+                    }, 500);
+                } else {
+                    expF.style.opacity = 0;
+                    setTimeout(() => { logF.style.opacity = 1; }, 300);
+
+                    arr1.style.strokeDashoffset = 100;
+                    arr2.style.strokeDashoffset = 100;
+                    setTimeout(() => {
+                        arr1.style.opacity = 0;
+                        arr2.style.opacity = 0;
+                    }, 500);
+                }
+            };
+
+            window.resetLogCycle = function() {
+                isCycleExp = false;
+                document.getElementById('exp-formula').style.opacity = 0;
+                document.getElementById('log-formula').style.opacity = 1;
+                document.getElementById('arr1').style.strokeDashoffset = 100;
+                document.getElementById('arr2').style.strokeDashoffset = 100;
+                document.getElementById('arr1').style.opacity = 0;
+                document.getElementById('arr2').style.opacity = 0;
+            };
+
+            // Слайд 3: Приклад 1
+            window.renderStepEx1 = function() {
+                const step = parseInt(document.getElementById('step-ex1').value);
+                const desc = document.getElementById('ex1-desc');
+                const render = document.getElementById('ex1-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початковий вираз. Щоб використати основну тотожність $a^{\\log_a b} = b$, основа степеня ($25$) і основа логарифма ($5$) мають бути <strong>однаковими</strong>.";
+                    eq = `25^{\\log_5 3}`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Подамо $25$ як $5^2$. При піднесенні степеня до степеня показники множаться.";
+                    eq = `(5^2)^{\\log_5 3} = 5^{2 \\cdot \\log_5 3}`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Тотожність не працює, поки перед логарифмом стоїть множник. За властивістю логарифмів «ховаємо» двійку у степінь числа (трійки).";
+                    eq = `5^{\\log_5 3^{\\mathbf{2}}} = 5^{\\log_5 9}`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Тепер основи ідеально збігаються. Застосовуємо $a^{\\log_a b} = b$.";
+                    eq = `5^{\\log_5 9} = \\mathbf{9}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 4: Приклад 2 (Тренажер)
+            window.renderTrainEx = function() {
+                const k = parseInt(document.getElementById('train-k').value);
+                const n = parseInt(document.getElementById('train-n').value);
+
+                document.getElementById('train-k-val').textContent = k;
+                document.getElementById('train-n-val').textContent = n;
+
+                const base = Math.pow(2, k);
+                const arg = Math.pow(2, n);
+
+                const mathEl = document.getElementById('train-math');
+                const resEl = document.getElementById('train-res');
+
+                // Check if they got the correct setup for log_8 32
+                if (k === 3 && n === 5) {
+                    mathEl.innerHTML = `$$\\log_{2^{\\mathbf{3}}} 2^{\\mathbf{5}} = \\frac{5}{3} \\log_2 2 = \\mathbf{\\frac{5}{3}}$$`;
+                    resEl.innerHTML = `<span style="color: var(--brand-green); font-weight: bold;">✅ Бінго! Ви розв'язали приклад!</span> $8=2^3$ та $32=2^5$.`;
+                } else {
+                    mathEl.innerHTML = `$$\\log_{${base}} ${arg} \\quad \\implies \\quad \\log_{2^{\\mathbf{${k}}}} 2^{\\mathbf{${n}}} = \\frac{${n}}{${k}}$$`;
+                    resEl.innerHTML = `Шукаємо $\\log_8 32$. Ви обрали $\\log_{${base}} ${arg}$.<br>Рухайте повзунки, поки не отримаєте потрібні числа!`;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([mathEl, resEl]);
+                if(window.MathJax) MathJax.typesetPromise([mathEl, resEl]);
+            };
+
+            // Слайд 5: Логарифмічна функція
+            window.renderLogGraph = function() {
+                let a = parseFloat(document.getElementById('logf-a').value);
+
+                // Захист від a = 1
+                if (Math.abs(a - 1.0) < 0.05) {
+                    a = 1.1;
+                    document.getElementById('logf-a').value = 1.1;
+                }
+
+                document.getElementById('logf-a-val').textContent = a.toFixed(1);
+
+                const svg = document.getElementById('logf-svg');
+                const desc = document.getElementById('logf-desc');
+
+                let svgHtml = `
+                    <!-- Осі -->
+                    <line x1="-0.8" y1="0" x2="6.8" y2="0" stroke="#7f8c8d" stroke-width="0.03" marker-end="url(#arrDark)"/>
+                    <text x="6.5" y="0.4" font-size="0.3" font-family="sans-serif">x</text>
+                    <line x1="0" y1="3.8" x2="0" y2="-3.8" stroke="#7f8c8d" stroke-width="0.03" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="-3.5" font-size="0.3" font-family="sans-serif">y</text>
+
+                    <!-- Асимптота на Y -->
+                    <line x1="0" y1="4" x2="0" y2="-4" stroke="#e74c3c" stroke-width="0.03" stroke-dasharray="0.1,0.1"/>
+
+                    <text x="1" y="0.4" font-size="0.3" font-family="sans-serif">1</text>
+                `;
+
+                // Побудова графіка
+                let d = "";
+                for(let x = 0.05; x <= 6.8; x += 0.05) {
+                    let y = Math.log(x) / Math.log(a);
+                    if (y >= -4 && y <= 4) {
+                        let svgY = -y; // Інвертуємо Y
+                        d += (d==="" ? `M ${x} ${svgY}` : ` L ${x} ${svgY}`);
+                    }
+                }
+
+                let color = a > 1 ? "#3498db" : "#e74c3c";
+                svgHtml += `<path d="${d}" fill="none" stroke="${color}" stroke-width="0.08" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+                // Точка (1,0)
+                svgHtml += `<circle cx="1" cy="0" r="0.1" fill="${color}"/>`;
+
+                svg.innerHTML = svgHtml;
+
+                if (a > 1) {
+                    desc.innerHTML = `<span style="color: #3498db;">Основа $a > 1$. Функція зростає.</span>`;
+                } else {
+                    desc.innerHTML = `<span style="color: #e74c3c;">Основа $0 < a < 1$. Функція спадає.</span>`;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([desc]);
+                if(window.MathJax) MathJax.typesetPromise([desc]);
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

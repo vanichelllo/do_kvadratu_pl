@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Тригонометричні вирази | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ТАБЛИЦЯ */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .styled-table th, .styled-table td { padding: 12px 10px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        .styled-table th { background-color: rgba(52, 78, 134, 0.1); color: var(--brand-blue); font-weight: 700; }
+        .styled-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .styled-table .gray-cell { background-color: rgba(0,0,0,0.04); font-weight: bold; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+            <marker id="arrBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#3498db" /></marker>
+            <marker id="arrRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#e74c3c" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Тригонометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОДИНИЧНЕ КОЛО -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">1. Означення через одиничне коло</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Одиничне коло</strong> — це коло з радіусом $R=1$ та центром у початку координат. Кожній точці $P(x; y)$ на колі відповідає певний кут повороту $\alpha$:</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li><strong>Косинус</strong> ($\cos \alpha$) — це абсциса (координата $x$) точки на колі. <span class="nmt-ref-badge">✅ НМТ</span></li>
+                        <li><strong>Синус</strong> ($\sin \alpha$) — це ордината (координата $y$) точки на колі. <span class="nmt-ref-badge">✅ НМТ</span></li>
+                        <li><strong>Тангенс</strong> ($\text{tg } \alpha = \frac{\sin \alpha}{\cos \alpha}$) та <strong>Котангенс</strong> ($\text{ctg } \alpha = \frac{\cos \alpha}{\sin \alpha}$).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03); padding: 10px;">
+                        <label class="slider-label" style="min-width: 300px;">
+                            Кут повороту $\alpha$: <span id="circ-angle-val" style="color:var(--brand-blue); font-weight:bold; width:45px; text-align:center;">30°</span>
+                            <input type="range" id="circ-angle" class="slider-control" min="0" max="360" value="30" step="1" oninput="renderUnitCircle()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px; flex-grow: 1; align-items: center;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 250px;">
+                            <svg viewBox="-1.5 -1.5 3 3" width="100%" height="100%" id="circ-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" style="justify-content: center; text-align: left; padding: 20px;">
+                            <div style="font-size: 1.2rem; margin-bottom: 15px; color: var(--brand-blue); font-weight: bold;">
+                                Точка $P(\cos \alpha; \sin \alpha)$
+                            </div>
+                            <div id="circ-math-cos" class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 10px;">
+                                <!-- JS -->
+                            </div>
+                            <div id="circ-math-sin" class="scrollable-math" style="font-size: 1.3rem; margin-bottom: 10px;">
+                                <!-- JS -->
+                            </div>
+                            <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                                Зверніть увагу: оскільки радіус кола $R=1$, значення синуса та косинуса ніколи не можуть бути більшими за 1 або меншими за -1.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ТОТОЖНОСТІ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">2. Основні тотожності та формули</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Основні тригонометричні тотожності:</div>
+                    <ol style="margin: 10px 0 0 0; font-size: 1.05rem; line-height: 1.8; padding-left: 25px;">
+                        <li><strong>Основна тотожність:</strong> $\sin^2 \alpha + \cos^2 \alpha = 1$ <span class="nmt-ref-badge">✅ Є в довіднику НМТ</span></li>
+                        <li><strong>Тангенс та котангенс:</strong> $\text{tg } \alpha = \frac{\sin \alpha}{\cos \alpha}, \quad \text{ctg } \alpha = \frac{\cos \alpha}{\sin \alpha}$</li>
+                        <li><strong>Зв'язок функцій:</strong> $\text{tg } \alpha \cdot \text{ctg } \alpha = 1$</li>
+                        <li><strong>Наслідки:</strong> $1 + \text{tg}^2 \alpha = \frac{1}{\cos^2 \alpha} \quad \text{та} \quad 1 + \text{ctg}^2 \alpha = \frac{1}{\sin^2 \alpha}$</li>
+                    </ol>
+                </div>
+
+                <div class="box hack" style="margin-top: 20px;">
+                    <div class="box-title">Формули подвійного кута:</div>
+                    <ul style="margin: 10px 0 0 0; font-size: 1.1rem; line-height: 1.8; padding-left: 20px;">
+                        <li>$\sin 2\alpha = 2\sin \alpha \cos \alpha$ <span class="nmt-ref-badge">✅ НМТ</span></li>
+                        <li>$\cos 2\alpha = \cos^2 \alpha - \sin^2 \alpha$ <span class="nmt-ref-badge">✅ НМТ</span></li>
+                    </ul>
+                </div>
+
+                <p style="text-align: center; color: var(--text-dark); margin-top: 20px; font-size: 0.95rem;">
+                    <em>Ці формули є основою для спрощення складних тригонометричних виразів. Майже всі вони доступні в зошиті учасника НМТ, проте їхнє розуміння пришвидшує роботу.</em>
+                </p>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ЗВЕДЕННЯ ТА ТАБЛИЦЯ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Довідник</span>
+                <h2 class="slide-title">3. Формули зведення та значення</h2>
+            </div>
+            <div class="slide-body" style="padding-right: 0;">
+                <div class="box remark" style="margin-bottom: 15px; margin-right: 5px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Формули зведення використовуються для спрощення виразів. Зверніть увагу на зміну знаку залежно від чверті кола. <span class="nmt-ref-badge">✅ Є в довіднику НМТ</span></p>
+                </div>
+
+                <table class="styled-table" style="width: calc(100% - 5px);">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Функція</th>
+                            <th style="width: 40%;">$90^\circ + \alpha$ (зміна назви)</th>
+                            <th style="width: 40%;">$180^\circ - \alpha$ (назва лишається)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="gray-cell">$\sin$</td>
+                            <td>$\sin(90^\circ + \alpha) = \cos \alpha$</td>
+                            <td>$\sin(180^\circ - \alpha) = \sin \alpha$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell">$\cos$</td>
+                            <td>$\cos(90^\circ + \alpha) = -\sin \alpha$</td>
+                            <td>$\cos(180^\circ - \alpha) = -\cos \alpha$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell">$\text{tg}$</td>
+                            <td>$\text{tg}(90^\circ + \alpha) = -\text{ctg } \alpha$ *</td>
+                            <td>$\text{tg}(180^\circ - \alpha) = -\text{tg } \alpha$</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="font-size: 0.8rem; color: #7f8c8d; text-align: right; margin-bottom: 15px; margin-right: 5px;">* У довіднику НМТ котангенс замінено на дріб: $-\frac{1}{\text{tg } \alpha}$</div>
+
+                <h3 style="color: var(--brand-blue); font-size: 1.1rem; margin-bottom: 10px;">Таблиця основних значень <span class="nmt-ref-badge">✅ НМТ</span></h3>
+                <table class="styled-table" style="width: calc(100% - 5px);">
+                    <thead>
+                        <tr>
+                            <th class="gray-cell">$\alpha$ (град)</th>
+                            <th>$0^\circ$</th>
+                            <th>$30^\circ$</th>
+                            <th>$45^\circ$</th>
+                            <th>$60^\circ$</th>
+                            <th>$90^\circ$</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="gray-cell">$\alpha$ (рад)</td>
+                            <td>$0$</td>
+                            <td>$\pi/6$</td>
+                            <td>$\pi/4$</td>
+                            <td>$\pi/3$</td>
+                            <td>$\pi/2$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell">$\sin \alpha$</td>
+                            <td>$0$</td>
+                            <td>$1/2$</td>
+                            <td>$\sqrt{2}/2$</td>
+                            <td>$\sqrt{3}/2$</td>
+                            <td>$1$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell">$\cos \alpha$</td>
+                            <td>$1$</td>
+                            <td>$\sqrt{3}/2$</td>
+                            <td>$\sqrt{2}/2$</td>
+                            <td>$1/2$</td>
+                            <td>$0$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell">$\text{tg } \alpha$</td>
+                            <td>$0$</td>
+                            <td>$\sqrt{3}/3$</td>
+                            <td>$1$</td>
+                            <td>$\sqrt{3}$</td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ЗНАКИ ФУНКЦІЙ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">4. Знаки тригонометричних функцій</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Парність:</strong> Косинус — єдина <strong>парна</strong> функція: $\cos(-\alpha) = \cos \alpha$. Усі інші є <strong>непарними</strong>: $\sin(-\alpha) = -\sin \alpha$, $\text{tg}(-\alpha) = -\text{tg } \alpha$.</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls" style="background: transparent;">
+                        <button class="btn-toggle active" id="btn-sign-sin" onclick="renderSignsScene('sin')">Знаки $\sin \alpha$</button>
+                        <button class="btn-toggle" id="btn-sign-cos" onclick="renderSignsScene('cos')">Знаки $\cos \alpha$</button>
+                        <button class="btn-toggle" id="btn-sign-tg" onclick="renderSignsScene('tg')">Знаки $\text{tg} / \text{ctg}$</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px; align-items: center;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 260px; border: none; box-shadow: none;">
+                            <svg viewBox="-1.5 -1.5 3 3" width="100%" height="100%" id="signs-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="signs-out" style="min-height: 200px; justify-content: center; text-align: left; background: var(--bg-light);">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ГРАФІКИ СИНУСА І КОСИНУСА -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Функції</span>
+                <h2 class="slide-title">5. Властивості $\sin x$ та $\cos x$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="margin-bottom: 15px;">
+                    <div style="background: var(--bg-light); border-radius: 8px; padding: 12px; border-left: 4px solid #3498db;">
+                        <div style="color: #3498db; font-weight: bold; margin-bottom: 5px;">$y = \sin x$</div>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.4;">
+                            <li>$D(y) = (-\infty; +\infty)$</li>
+                            <li>$E(y) = [-1; 1]$</li>
+                            <li>Період: $T = 2\pi$</li>
+                            <li>Непарна</li>
+                        </ul>
+                    </div>
+                    <div style="background: var(--bg-light); border-radius: 8px; padding: 12px; border-left: 4px solid #e74c3c;">
+                        <div style="color: #e74c3c; font-weight: bold; margin-bottom: 5px;">$y = \cos x$</div>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.4;">
+                            <li>$D(y) = (-\infty; +\infty)$</li>
+                            <li>$E(y) = [-1; 1]$</li>
+                            <li>Період: $T = 2\pi$</li>
+                            <li>Парна</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls" style="background: transparent; padding: 0;">
+                        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="chk-sin" checked onchange="renderSinCosGraph()"> Показувати $\sin x$ (синій)
+                        </label>
+                        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-left: 15px;">
+                            <input type="checkbox" id="chk-cos" checked onchange="renderSinCosGraph()"> Показувати $\cos x$ (червоний)
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="background: #fff; height: 220px; margin-top: 10px;">
+                        <svg viewBox="-4 -2 11 4" width="100%" height="100%" id="sincos-svg">
+                            <!-- JS -->
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="box hack" style="margin-top: 15px;">
+                    <p style="margin: 0; font-size: 0.9rem;"><strong>Ключове для НМТ:</strong> Рівняння $\sin x = a$ або $\cos x = a$ мають розв'язки <strong>лише</strong> при $|a| \leq 1$. Якщо $a = 2$, розв'язків немає!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ГРАФІК ТАНГЕНСА -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Функції</span>
+                <h2 class="slide-title">6. Графік та властивості тангенса</h2>
+            </div>
+            <div class="slide-body">
+                <div style="background: var(--bg-light); border-radius: 8px; padding: 12px; border-left: 4px solid #f39c12; margin-bottom: 15px;">
+                    <div style="color: #d35400; font-weight: bold; margin-bottom: 5px;">$y = \text{tg } x$</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.5;">
+                        <li><strong>Область визначення:</strong> $x \neq \frac{\pi}{2} + \pi k$ (існують розриви).</li>
+                        <li><strong>Область значень:</strong> $E(y) = (-\infty; +\infty)$ (на відміну від синуса, тангенс може бути будь-яким числом).</li>
+                        <li><strong>Період:</strong> $T = \pi$ (графік повторюється частіше).</li>
+                        <li>Непарна функція.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; margin-top: 0;">
+                    <div class="widget-controls" style="background: transparent; padding: 0;">
+                        <label style="font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <input type="checkbox" id="chk-asymp" checked onchange="renderTanGraph()"> Показувати вертикальні асимптоти
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="background: #fff; height: 260px; margin-top: 10px;">
+                        <svg viewBox="-5 -4 10 8" width="100%" height="100%" id="tan-svg">
+                            <!-- JS -->
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 6</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderUnitCircle();
+                if (currentSlide === 4) renderSignsScene('sin');
+                if (currentSlide === 5) renderSinCosGraph();
+                if (currentSlide === 6) renderTanGraph();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Одиничне коло
+            window.renderUnitCircle = function() {
+                const angleDeg = parseInt(document.getElementById('circ-angle').value);
+                document.getElementById('circ-angle-val').textContent = angleDeg + '°';
+
+                const svg = document.getElementById('circ-svg');
+                const outCos = document.getElementById('circ-math-cos');
+                const outSin = document.getElementById('circ-math-sin');
+
+                const rad = angleDeg * Math.PI / 180;
+                const cosV = Math.cos(rad);
+                const sinV = Math.sin(rad);
+
+                let svgHtml = `
+                    <!-- Осі -->
+                    <line x1="-1.3" y1="0" x2="1.3" y2="0" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="1.1" y="0.15" font-size="0.1" font-family="sans-serif">x (cos)</text>
+                    <line x1="0" y1="1.3" x2="0" y2="-1.3" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="0.05" y="-1.2" font-size="0.1" font-family="sans-serif">y (sin)</text>
+
+                    <!-- Коло -->
+                    <circle cx="0" cy="0" r="1" fill="none" stroke="#2c3e50" stroke-width="0.03"/>
+
+                    <!-- Позначки осей -->
+                    <text x="1.05" y="0.1" font-size="0.1" font-family="sans-serif">1</text>
+                    <text x="-1.1" y="0.1" font-size="0.1" font-family="sans-serif">-1</text>
+                    <text x="0.05" y="-1.05" font-size="0.1" font-family="sans-serif">1</text>
+                    <text x="0.05" y="1.1" font-size="0.1" font-family="sans-serif">-1</text>
+                `;
+
+                // Радіус вектор
+                const svgX = cosV;
+                const svgY = -sinV; // SVG y is inverted
+
+                // Проєкції
+                svgHtml += `<line x1="${svgX}" y1="0" x2="${svgX}" y2="${svgY}" stroke="#e74c3c" stroke-width="0.02" stroke-dasharray="0.05,0.05"/>`;
+                svgHtml += `<line x1="0" y1="${svgY}" x2="${svgX}" y2="${svgY}" stroke="#3498db" stroke-width="0.02" stroke-dasharray="0.05,0.05"/>`;
+
+                // Вектор та точка
+                svgHtml += `<line x1="0" y1="0" x2="${svgX}" y2="${svgY}" stroke="#8e44ad" stroke-width="0.04"/>`;
+                svgHtml += `<circle cx="${svgX}" cy="${svgY}" r="0.05" fill="#8e44ad"/>`;
+
+                // Відрізки на осях (сама проєкція)
+                svgHtml += `<line x1="0" y1="0" x2="${svgX}" y2="0" stroke="#e74c3c" stroke-width="0.05"/>`;
+                svgHtml += `<line x1="0" y1="0" x2="0" y2="${svgY}" stroke="#3498db" stroke-width="0.05"/>`;
+
+                svg.innerHTML = svgHtml;
+
+                let cosStr = cosV.toFixed(2);
+                let sinStr = sinV.toFixed(2);
+                if (Math.abs(cosV) < 0.001) cosStr = "0.00";
+                if (Math.abs(sinV) < 0.001) sinStr = "0.00";
+
+                outCos.innerHTML = `$\\cos(${angleDeg}^\\circ) \\approx \\mathbf{${cosStr}}$ <span style="color:#e74c3c; font-size:0.9rem;">(червоний відрізок $x$)</span>`;
+                outSin.innerHTML = `$\\sin(${angleDeg}^\\circ) \\approx \\mathbf{${sinStr}}$ <span style="color:#3498db; font-size:0.9rem;">(синій відрізок $y$)</span>`;
+
+                if(window.MathJax) MathJax.typesetClear([outCos, outSin]);
+                if(window.MathJax) MathJax.typesetPromise([outCos, outSin]);
+            };
+
+            // Слайд 4: Знаки функцій
+            window.renderSignsScene = function(func) {
+                document.getElementById('btn-sign-sin').classList.toggle('active', func === 'sin');
+                document.getElementById('btn-sign-cos').classList.toggle('active', func === 'cos');
+                document.getElementById('btn-sign-tg').classList.toggle('active', func === 'tg');
+
+                const svg = document.getElementById('signs-svg');
+                const out = document.getElementById('signs-out');
+
+                let title, q1, q2, q3, q4, desc, color;
+
+                if (func === 'sin') {
+                    title = "\\sin \\alpha"; color = "#3498db";
+                    q1 = "+"; q2 = "+"; q3 = "-"; q4 = "-";
+                    desc = "Синус — це координата $y$. Тому він додатний там, де $y > 0$ (I та II чверті, тобто верхня півплощина).";
+                } else if (func === 'cos') {
+                    title = "\\cos \\alpha"; color = "#e74c3c";
+                    q1 = "+"; q2 = "-"; q3 = "-"; q4 = "+";
+                    desc = "Косинус — це координата $x$. Тому він додатний там, де $x > 0$ (I та IV чверті, тобто права півплощина).";
+                } else {
+                    title = "\\text{tg} \\, \\alpha \\text{ та } \\text{ctg} \\, \\alpha"; color = "#f39c12";
+                    q1 = "+"; q2 = "-"; q3 = "+"; q4 = "-";
+                    desc = "Тангенс — це відношення синуса до косинуса. Якщо їхні знаки однакові (I і III чверть) — тангенс додатний. Якщо різні (II і IV) — від'ємний.";
+                }
+
+                let getSignColor = (s) => s === '+' ? "#27ae60" : "#c0392b";
+
+                let svgHtml = `
+                    <line x1="-1.3" y1="0" x2="1.3" y2="0" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="1.1" y="0.15" font-size="0.1" font-family="sans-serif">x</text>
+                    <line x1="0" y1="1.3" x2="0" y2="-1.3" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="0.05" y="-1.2" font-size="0.1" font-family="sans-serif">y</text>
+
+                    <circle cx="0" cy="0" r="1" fill="none" stroke="${color}" stroke-width="0.04"/>
+
+                    <text x="0.5" y="-0.5" font-size="0.4" fill="${getSignColor(q1)}" text-anchor="middle" font-weight="bold">${q1}</text>
+                    <text x="-0.5" y="-0.5" font-size="0.4" fill="${getSignColor(q2)}" text-anchor="middle" font-weight="bold">${q2}</text>
+                    <text x="-0.5" y="0.6" font-size="0.4" fill="${getSignColor(q3)}" text-anchor="middle" font-weight="bold">${q3}</text>
+                    <text x="0.5" y="0.6" font-size="0.4" fill="${getSignColor(q4)}" text-anchor="middle" font-weight="bold">${q4}</text>
+
+                    <text x="-1.2" y="-1.2" font-size="0.15" font-family="sans-serif" font-weight="bold" fill="#333">II</text>
+                    <text x="1.1" y="-1.2" font-size="0.15" font-family="sans-serif" font-weight="bold" fill="#333">I</text>
+                    <text x="-1.2" y="1.2" font-size="0.15" font-family="sans-serif" font-weight="bold" fill="#333">III</text>
+                    <text x="1.1" y="1.2" font-size="0.15" font-family="sans-serif" font-weight="bold" fill="#333">IV</text>
+                `;
+
+                svg.innerHTML = svgHtml;
+
+                let html = `
+                    <div style="font-size: 1.4rem; margin-bottom: 15px; color: ${color}; font-weight: bold; text-align: center;">$${title}$</div>
+                    <div style="font-size: 1.05rem; line-height: 1.6;">${desc}</div>
+                `;
+                out.innerHTML = html;
+
+                if(window.MathJax) MathJax.typesetClear([out]);
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 5: Sin Cos Graph
+            window.renderSinCosGraph = function() {
+                const showSin = document.getElementById('chk-sin').checked;
+                const showCos = document.getElementById('chk-cos').checked;
+                const svg = document.getElementById('sincos-svg');
+
+                let svgHtml = `
+                    <!-- Осі -->
+                    <line x1="-4" y1="0" x2="7" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="6.5" y="0.4" font-size="0.3" font-family="sans-serif">x</text>
+                    <line x1="0" y1="2" x2="0" y2="-2" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="-1.7" font-size="0.3" font-family="sans-serif">y</text>
+
+                    <!-- Сітка y -->
+                    <line x1="-4" y1="-1" x2="7" y2="-1" stroke="#bdc3c7" stroke-dasharray="0.1,0.1" stroke-width="0.02"/>
+                    <text x="-0.3" y="-1.1" font-size="0.3" font-family="sans-serif">1</text>
+                    <line x1="-4" y1="1" x2="7" y2="1" stroke="#bdc3c7" stroke-dasharray="0.1,0.1" stroke-width="0.02"/>
+                    <text x="-0.4" y="1.3" font-size="0.3" font-family="sans-serif">-1</text>
+                `;
+
+                // Позначки Pi
+                const pi = Math.PI;
+                const ticks = [
+                    {v: -pi, l: "-\\pi"}, {v: -pi/2, l: "-\\pi/2"},
+                    {v: pi/2, l: "\\pi/2"}, {v: pi, l: "\\pi"},
+                    {v: 3*pi/2, l: "3\\pi/2"}, {v: 2*pi, l: "2\\pi"}
+                ];
+                ticks.forEach(t => {
+                    svgHtml += `<line x1="${t.v}" y1="-0.1" x2="${t.v}" y2="0.1" stroke="#333" stroke-width="0.03"/>`;
+                    // Спрощений підпис (просто текст для SVG)
+                    let text = t.l.replace('\\pi', 'π');
+                    svgHtml += `<text x="${t.v}" y="0.4" font-size="0.25" font-family="sans-serif" text-anchor="middle">${text}</text>`;
+                });
+
+                // Path generator
+                let getPath = (fn) => {
+                    let d = "";
+                    for(let x = -4; x <= 7; x += 0.05) {
+                        let y = -fn(x); // Invert Y
+                        d += (d==="" ? `M ${x} ${y}` : ` L ${x} ${y}`);
+                    }
+                    return d;
+                };
+
+                if (showSin) {
+                    svgHtml += `<path d="${getPath(Math.sin)}" fill="none" stroke="#3498db" stroke-width="0.08"/>`;
+                }
+                if (showCos) {
+                    svgHtml += `<path d="${getPath(Math.cos)}" fill="none" stroke="#e74c3c" stroke-width="0.08" stroke-dasharray="0.2,0.1"/>`;
+                }
+
+                svg.innerHTML = svgHtml;
+            };
+
+            // Слайд 6: Tan Graph
+            window.renderTanGraph = function() {
+                const showAsymp = document.getElementById('chk-asymp').checked;
+                const svg = document.getElementById('tan-svg');
+
+                let svgHtml = `
+                    <line x1="-5" y1="0" x2="5" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="4.5" y="0.5" font-size="0.4" font-family="sans-serif">x</text>
+                    <line x1="0" y1="4" x2="0" y2="-4" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="-3.5" font-size="0.4" font-family="sans-serif">y</text>
+
+                    <line x1="-5" y1="-1" x2="5" y2="-1" stroke="#bdc3c7" stroke-dasharray="0.1,0.1" stroke-width="0.02"/>
+                    <text x="-0.3" y="-1.1" font-size="0.3" font-family="sans-serif">1</text>
+                    <line x1="-5" y1="1" x2="5" y2="1" stroke="#bdc3c7" stroke-dasharray="0.1,0.1" stroke-width="0.02"/>
+                    <text x="-0.4" y="1.3" font-size="0.3" font-family="sans-serif">-1</text>
+                `;
+
+                const pi = Math.PI;
+                const ticks = [
+                    {v: -pi, l: "-π"}, {v: -pi/2, l: "-π/2"},
+                    {v: pi/2, l: "π/2"}, {v: pi, l: "π"}
+                ];
+                ticks.forEach(t => {
+                    svgHtml += `<line x1="${t.v}" y1="-0.1" x2="${t.v}" y2="0.1" stroke="#333" stroke-width="0.03"/>`;
+                    svgHtml += `<text x="${t.v}" y="0.5" font-size="0.3" font-family="sans-serif" text-anchor="middle">${t.l}</text>`;
+                });
+
+                if (showAsymp) {
+                    [-pi/2, pi/2, 3*pi/2, -3*pi/2].forEach(x => {
+                        if(x > -5 && x < 5) {
+                            svgHtml += `<line x1="${x}" y1="-4" x2="${x}" y2="4" stroke="#e74c3c" stroke-width="0.04" stroke-dasharray="0.2,0.2"/>`;
+                        }
+                    });
+                }
+
+                // Custom tan path generator to avoid drawing lines across asymptotes
+                let d = "";
+                let prevY = 0;
+                for(let x = -5; x <= 5; x += 0.05) {
+                    let y = Math.tan(x);
+                    let svgY = -y;
+
+                    if (Math.abs(y) > 15) {
+                        d += ""; // Break line
+                        prevY = 999;
+                    } else {
+                        if (Math.abs(y - prevY) > 10) {
+                            d += ` M ${x} ${svgY}`; // Jumped across asymptote
+                        } else {
+                            d += (d==="" ? `M ${x} ${svgY}` : ` L ${x} ${svgY}`);
+                        }
+                        prevY = y;
+                    }
+                }
+                svgHtml += `<path d="${d}" fill="none" stroke="#f39c12" stroke-width="0.08"/>`;
+
+                svg.innerHTML = svgHtml;
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

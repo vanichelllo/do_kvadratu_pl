@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Геометричні перетворення | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); flex-shrink: 0; }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: wrap; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#7f8c8d" /></marker>
+            <marker id="arrRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#e74c3c" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВЕРТИКАЛЬНИЙ ЗСУВ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Перенесення</span>
+                <h1 class="slide-title">1. Паралельне перенесення (Зсув)</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0; font-size: 0.95rem;">Для побудови графіка функції $y = f(x+a) + b$ ми беремо базовий графік $y = f(x)$ і переносимо його:</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li><strong>Вгору/Вниз</strong> на $b$ одиниць вздовж $Oy$ (знак $+b$ — вгору, $-b$ — вниз).</li>
+                        <li><strong>Вліво/Вправо</strong> на $a$ одиниць вздовж $Ox$ (знак <strong>протилежний</strong>: $x+a$ — вліво, $x-a$ — вправо).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title" style="text-align: center;">Зсув вздовж осі Oy (Вертикальний)</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 400px;">
+                            Зсув $b$: <span id="vshift-val" style="color:var(--brand-blue); width:30px; font-weight:bold; text-align:center;">0</span>
+                            <input type="range" id="vshift-k" class="slider-control" min="-3" max="3" value="0" step="1" oninput="renderVShift()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 5px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-4 -4 8 9" width="100%" height="100%" id="vshift-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="vshift-out" style="justify-content: center; text-align: center; font-size: 1.3rem; line-height: 1.8;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ГОРИЗОНТАЛЬНИЙ ЗСУВ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Перенесення</span>
+                <h2 class="slide-title">1.2. Зсув вздовж осі Ox (Горизонтальний)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <div class="box-title">Золоте правило Ox:</div>
+                    <p style="margin: 0; font-size: 0.95rem;">Все, що відбувається <strong>всередині</strong> функції, безпосередньо з $x$, діє «навпаки»:</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>$f(x-2)$ — графік рухається <strong>вправо</strong> (в сторону $+2$).</li>
+                        <li>$f(x+2)$ — графік рухається <strong>вліво</strong> (в сторону $-2$).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title" style="text-align: center;">Тренажер: $y = (x + a)^2$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 400px;">
+                            Додаємо до $x$ значення $a$: <span id="hshift-val" style="color:var(--brand-blue); width:30px; font-weight:bold; text-align:center;">0</span>
+                            <input type="range" id="hshift-a" class="slider-control" min="-3" max="3" value="0" step="1" oninput="renderHShift()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 5px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-5 -2 10 7" width="100%" height="100%" id="hshift-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="hshift-out" style="justify-content: center; text-align: center; font-size: 1.3rem; line-height: 1.8;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: СИМЕТРІЯ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Відображення</span>
+                <h2 class="slide-title">2. Симетричне відображення</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Дзеркальне відображення:</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>$y = -f(x)$: Відображення <strong>вертикальне</strong> (відносно $Ox$, низ і верх міняються місцями).</li>
+                        <li>$y = f(-x)$: Відображення <strong>горизонтальне</strong> (відносно $Oy$, ліво і право міняються місцями).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-sym-ox" onclick="renderSym('ox')">Відносно Ox: $y = -f(x)$</button>
+                        <button class="btn-toggle" id="btn-sym-oy" onclick="renderSym('oy')">Відносно Oy: $y = f(-x)$</button>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 10px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-4 -4 8 8" width="100%" height="100%" id="sym-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="sym-out" style="justify-content: center; text-align: center; font-size: 1.15rem; line-height: 1.6;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ВЕРТИКАЛЬНЕ МАСШТАБУВАННЯ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Масштабування</span>
+                <h2 class="slide-title">3.1. Вздовж осі Oy (Вертикальне)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <p style="margin: 0; font-size: 0.95rem;">Перетворення $y = k \cdot f(x)$ змінює ординату базового графіка в $k$ разів:</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>$k > 1$: графік <strong style="color: var(--warning-red);">розтягується</strong> від осі $Ox$ (стає вищим).</li>
+                        <li>$0 < k < 1$: графік <strong style="color: var(--warning-red);">стискається</strong> до осі $Ox$ (стає нижчим).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 400px;">
+                            Коефіцієнт $k$: <span id="vscale-val" style="color:var(--brand-blue); width:30px; font-weight:bold; text-align:center;">2.0</span>
+                            <input type="range" id="vscale-k" class="slider-control" min="0.2" max="3" value="2" step="0.2" oninput="renderVScale()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 5px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-4 -4 8 8" width="100%" height="100%" id="vscale-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="vscale-out" style="justify-content: center; text-align: center; font-size: 1.3rem; line-height: 1.6;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ГОРИЗОНТАЛЬНЕ МАСШТАБУВАННЯ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Масштабування</span>
+                <h2 class="slide-title">3.2. Вздовж осі Ox (Горизонтальне)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <p style="margin: 0; font-size: 0.95rem;">Перетворення $y = f(kx)$. Згадуємо «Золоте правило $Ox$»: все, що робиться з іксом, працює навпаки!</p>
+                    <ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li>$k > 1$: графік <strong style="color: var(--warning-red);">стискається</strong> до осі $Oy$ (період зменшується).</li>
+                        <li>$0 < k < 1$: графік <strong style="color: var(--warning-red);">розтягується</strong> від осі $Oy$ (період збільшується).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%; max-width: 400px;">
+                            Коефіцієнт $k$: <span id="hscale-val" style="color:var(--brand-blue); width:30px; font-weight:bold; text-align:center;">2.0</span>
+                            <input type="range" id="hscale-k" class="slider-control" min="0.5" max="3" value="2" step="0.5" oninput="renderHScale()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 5px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-4 -2.5 8 5" width="100%" height="100%" id="hscale-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="hscale-out" style="justify-content: center; text-align: center; font-size: 1.3rem; line-height: 1.6;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: МОДУЛЬ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Модуль</span>
+                <h2 class="slide-title">4. Перетворення з модулем</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритми роботи з модулем:</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                        <li><strong>$y = |f(x)|$: «Відбиття знизу вгору».</strong> Частини графіка, що були під віссю $Ox$, відображаємо симетрично вгору, а нижню від'ємну частину видаляємо.</li>
+                        <li><strong>$y = f(|x|)$: «Копіювання справа наліво».</strong> Видаляємо все, що було зліва від осі $Oy$ ($x < 0$), а праву додатну частину симетрично копіюємо на ліву сторону.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-mod-out" onclick="renderMod('outer')">Модуль функції: $y = |x^2 - 2|$</button>
+                        <button class="btn-toggle" id="btn-mod-in" onclick="renderMod('inner')">Модуль аргументу: $y = |x| - 2$</button>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 10px;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 220px;">
+                            <svg viewBox="-4 -3 8 7" width="100%" height="100%" id="mod-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="mod-out" style="justify-content: center; text-align: center; font-size: 1.15rem; line-height: 1.6;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ПІДСУМОК -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Чек-лист</span>
+                <h2 class="slide-title">5. Комбіновані перетворення</h2>
+            </div>
+            <div class="slide-body" style="justify-content: center;">
+                <div class="box theorem">
+                    <div class="box-title">Правильний порядок побудови:</div>
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Якщо функція має вигляд $y = k \cdot f(x+a) + b$, перетворення виконуються в такому порядку (від $x$ назовні):</p>
+                    <ol style="margin: 0; padding-left: 25px; font-size: 1.05rem; line-height: 1.8;">
+                        <li><strong>Горизонтальний зсув:</strong> $f(x+a)$ (рухаємо вліво/вправо).</li>
+                        <li><strong>Масштабування/Симетрія:</strong> $k \cdot f(x)$ (розтягуємо або віддзеркалюємо, якщо є мінус).</li>
+                        <li><strong>Вертикальний зсув:</strong> $+ b$ (піднімаємо або опускаємо фінальний графік).</li>
+                        <li><strong>Модуль:</strong> Застосовується останнім, якщо він охоплює всю функцію.</li>
+                    </ol>
+                </div>
+
+                <div class="box hack" style="margin-top: 20px; padding: 20px;">
+                    <div class="box-title" style="font-size: 1.2rem; margin-bottom: 10px;">Підсумок для запам'ятовування:</div>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 1.1rem; line-height: 2;">
+                        <li>$x \pm a$ — <strong>Зсув</strong> (завжди «навпаки»).</li>
+                        <li>$\pm f(x)$ або $f(\pm x)$ — <strong>Симетрія</strong> (дзеркало).</li>
+                        <li>$k \cdot f(x)$ — <strong>Масштаб</strong> (стиск/розтяг).</li>
+                        <li>$| \dots |$ — <strong>Виправлення знаку</strong> (завжди додатний результат).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderVShift();
+                if (currentSlide === 2) renderHShift();
+                if (currentSlide === 3) renderSym('ox');
+                if (currentSlide === 4) renderVScale();
+                if (currentSlide === 5) renderHScale();
+                if (currentSlide === 6) renderMod('outer');
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= SVG Helper =================
+            function getGridAndAxes(b) {
+                let h = "";
+                for(let i=Math.ceil(b.xmin); i<=Math.floor(b.xmax); i++) {
+                    if(i===0) continue;
+                    h += `<line x1="${i}" y1="${-b.ymin}" x2="${i}" y2="${-b.ymax}" stroke="#ecf0f1" stroke-width="0.03"/>`;
+                    h += `<text x="${i}" y="0.4" font-size="0.35" font-family="sans-serif" text-anchor="middle" fill="#7f8c8d">${i}</text>`;
+                }
+                for(let i=Math.ceil(b.ymin); i<=Math.floor(b.ymax); i++) {
+                    if(i===0) continue;
+                    h += `<line x1="${b.xmin}" y1="${-i}" x2="${b.xmax}" y2="${-i}" stroke="#ecf0f1" stroke-width="0.03"/>`;
+                    h += `<text x="0.2" y="${-i+0.12}" font-size="0.35" font-family="sans-serif" fill="#7f8c8d">${i}</text>`;
+                }
+                h += `<line x1="${b.xmin}" y1="0" x2="${b.xmax}" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>`;
+                h += `<text x="${b.xmax - 0.3}" y="-0.3" font-size="0.4" font-family="sans-serif">x</text>`;
+
+                h += `<line x1="0" y1="${-b.ymin}" x2="0" y2="${-b.ymax}" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>`;
+                h += `<text x="0.2" y="${-b.ymax + 0.4}" font-size="0.4" font-family="sans-serif">y</text>`;
+                return h;
+            }
+
+            function getPath(func, b, color, isDashed=false) {
+                let d = "";
+                let isDrawing = false;
+                for(let x = b.xmin; x <= b.xmax; x += 0.05) {
+                    let y = func(x);
+                    if (y >= b.ymin && y <= b.ymax && !isNaN(y)) {
+                        if (!isDrawing) { d += `M ${x} ${-y}`; isDrawing = true; }
+                        else { d += ` L ${x} ${-y}`; }
+                    } else {
+                        isDrawing = false;
+                    }
+                }
+                let dash = isDashed ? `stroke-dasharray="0.1, 0.1"` : "";
+                return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${isDashed ? '0.04' : '0.08'}" stroke-linecap="round" stroke-linejoin="round" ${dash}/>`;
+            }
+
+            // ================= Renderers =================
+
+            window.renderVShift = function() {
+                const b = parseFloat(document.getElementById('vshift-k').value);
+                const bounds = {xmin: -4, xmax: 4, ymin: -4, ymax: 5};
+                document.getElementById('vshift-val').textContent = b > 0 ? `+${b}` : b;
+
+                let svg = getGridAndAxes(bounds);
+                svg += getPath(x => x*x, bounds, "#3498db", true); // Base
+                svg += getPath(x => x*x + b, bounds, "#e74c3c"); // Transformed
+
+                if (b !== 0) {
+                    svg += `<line x1="0" y1="0" x2="0" y2="${-b}" stroke="#e74c3c" stroke-width="0.06" marker-end="url(#arrRed)"/>`;
+                }
+
+                document.getElementById('vshift-svg').innerHTML = svg;
+
+                let sign = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
+                let dir = b > 0 ? "вгору" : (b < 0 ? "вниз" : "не рухається");
+                document.getElementById('vshift-out').innerHTML = `
+                    <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = x^2$</div>
+                    <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = x^2 ${sign}$</div>
+                    <div style="font-size: 1rem;">Графік зміщено <strong>${dir}</strong> на ${Math.abs(b)} од.</div>
+                `;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            window.renderHShift = function() {
+                const a = parseFloat(document.getElementById('hshift-a').value);
+                const bounds = {xmin: -5, xmax: 5, ymin: -2, ymax: 5};
+                document.getElementById('hshift-val').textContent = a > 0 ? `+${a}` : a;
+
+                let svg = getGridAndAxes(bounds);
+                svg += getPath(x => x*x, bounds, "#3498db", true); // Base
+                svg += getPath(x => Math.pow(x + a, 2), bounds, "#e74c3c"); // Transformed
+
+                if (a !== 0) {
+                    svg += `<line x1="0" y1="0" x2="${-a}" y2="0" stroke="#e74c3c" stroke-width="0.06" marker-end="url(#arrRed)"/>`;
+                }
+
+                document.getElementById('hshift-svg').innerHTML = svg;
+
+                let sign = a >= 0 ? `+ ${a}` : `- ${Math.abs(a)}`;
+                let dir = a > 0 ? "вліво" : (a < 0 ? "вправо" : "не рухається");
+                document.getElementById('hshift-out').innerHTML = `
+                    <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = x^2$</div>
+                    <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = (x ${sign})^2$</div>
+                    <div style="font-size: 1rem;">Зверніть увагу! Знак плюс рухає <strong>${dir}</strong> на ${Math.abs(a)} од.</div>
+                `;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            let currentSym = 'ox';
+            window.renderSym = function(type) {
+                if (type) {
+                    currentSym = type;
+                    document.getElementById('btn-sym-ox').classList.toggle('active', type === 'ox');
+                    document.getElementById('btn-sym-oy').classList.toggle('active', type === 'oy');
+                }
+
+                const bounds = {xmin: -4, xmax: 4, ymin: -4, ymax: 4};
+                let svg = getGridAndAxes(bounds);
+                let outHTML = "";
+
+                if (currentSym === 'ox') {
+                    svg += getPath(x => x*x, bounds, "#3498db", true);
+                    svg += getPath(x => -(x*x), bounds, "#e74c3c");
+                    svg += `<path d="M 1.5 -2.25 L 1.5 2.25" fill="none" stroke="#7f8c8d" stroke-width="0.04" stroke-dasharray="0.1,0.1" marker-end="url(#arrDark)" marker-start="url(#arrDark)"/>`;
+
+                    outHTML = `
+                        <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = x^2$</div>
+                        <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = -x^2$</div>
+                        <div style="font-size: 1rem;">Мінус перед усією функцією: <br>відображення відносно осі $Ox$ (низ-верх).</div>
+                    `;
+                } else {
+                    svg += getPath(x => Math.sqrt(x), bounds, "#3498db", true);
+                    svg += getPath(x => Math.sqrt(-x), bounds, "#e74c3c");
+                    svg += `<path d="M -2 -1.41 L 2 -1.41" fill="none" stroke="#7f8c8d" stroke-width="0.04" stroke-dasharray="0.1,0.1" marker-end="url(#arrDark)" marker-start="url(#arrDark)"/>`;
+
+                    outHTML = `
+                        <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = \\sqrt{x}$</div>
+                        <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = \\sqrt{-x}$</div>
+                        <div style="font-size: 1rem;">Мінус біля самого $x$: <br>відображення відносно осі $Oy$ (ліво-право).</div>
+                    `;
+                }
+
+                document.getElementById('sym-svg').innerHTML = svg;
+                document.getElementById('sym-out').innerHTML = outHTML;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            window.renderVScale = function() {
+                const k = parseFloat(document.getElementById('vscale-k').value);
+                const bounds = {xmin: -4, xmax: 4, ymin: -4, ymax: 4};
+                document.getElementById('vscale-val').textContent = k.toFixed(1);
+
+                let svg = getGridAndAxes(bounds);
+
+                // Add pi markers
+                const pi = Math.PI;
+                svg += `<line x1="${pi/2}" y1="-0.1" x2="${pi/2}" y2="0.1" stroke="#333" stroke-width="0.05"/><text x="${pi/2}" y="0.4" font-size="0.3" text-anchor="middle">π/2</text>`;
+                svg += `<line x1="${-pi/2}" y1="-0.1" x2="${-pi/2}" y2="0.1" stroke="#333" stroke-width="0.05"/><text x="${-pi/2}" y="0.4" font-size="0.3" text-anchor="middle">-π/2</text>`;
+
+                svg += getPath(x => Math.sin(x), bounds, "#3498db", true);
+                svg += getPath(x => k * Math.sin(x), bounds, "#e74c3c");
+
+                svg += `<line x1="${pi/2}" y1="-1" x2="${pi/2}" y2="${-k}" stroke="#f39c12" stroke-width="0.04" marker-end="url(#arrDark)"/>`;
+
+                document.getElementById('vscale-svg').innerHTML = svg;
+
+                let action = k > 1 ? "розтягнення" : (k < 1 ? "стиск" : "без змін");
+                document.getElementById('vscale-out').innerHTML = `
+                    <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = \\sin x$</div>
+                    <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = ${k.toFixed(1)} \\sin x$</div>
+                    <div style="font-size: 1rem;">Вертикальне <strong>${action}</strong>. <br>Амплітуда змінилася в ${k.toFixed(1)} разів.</div>
+                `;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            window.renderHScale = function() {
+                const k = parseFloat(document.getElementById('hscale-k').value);
+                const bounds = {xmin: -4, xmax: 4, ymin: -2.5, ymax: 2.5};
+                document.getElementById('hscale-val').textContent = k.toFixed(1);
+
+                let svg = getGridAndAxes(bounds);
+
+                const pi = Math.PI;
+                svg += `<line x1="${pi}" y1="-0.1" x2="${pi}" y2="0.1" stroke="#333" stroke-width="0.05"/><text x="${pi}" y="0.4" font-size="0.3" text-anchor="middle">π</text>`;
+                svg += `<line x1="${-pi}" y1="-0.1" x2="${-pi}" y2="0.1" stroke="#333" stroke-width="0.05"/><text x="${-pi}" y="0.4" font-size="0.3" text-anchor="middle">-π</text>`;
+
+                svg += getPath(x => Math.sin(x), bounds, "#3498db", true);
+                svg += getPath(x => Math.sin(k * x), bounds, "#e74c3c");
+
+                svg += `<line x1="${pi/2}" y1="-1" x2="${(pi/2)/k}" y2="-1" stroke="#f39c12" stroke-width="0.04" marker-end="url(#arrDark)"/>`;
+
+                document.getElementById('hscale-svg').innerHTML = svg;
+
+                let action = k > 1 ? "стиск" : (k < 1 ? "розтягнення" : "без змін");
+                document.getElementById('hscale-out').innerHTML = `
+                    <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = \\sin x$</div>
+                    <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = \\sin(${k.toFixed(1)}x)$</div>
+                    <div style="font-size: 1rem;">Горизонтальне <strong>${action}</strong>. <br>Зверніть увагу: більше $k$ — сильніше стискає!</div>
+                `;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            let currentMod = 'outer';
+            window.renderMod = function(type) {
+                if(type) {
+                    currentMod = type;
+                    document.getElementById('btn-mod-out').classList.toggle('active', type === 'outer');
+                    document.getElementById('btn-mod-in').classList.toggle('active', type === 'inner');
+                }
+
+                const bounds = {xmin: -4, xmax: 4, ymin: -3, ymax: 4};
+                let svg = getGridAndAxes(bounds);
+                let outHTML = "";
+
+                if (currentMod === 'outer') {
+                    svg += getPath(x => x*x - 2, bounds, "#3498db", true);
+                    svg += getPath(x => Math.abs(x*x - 2), bounds, "#e74c3c");
+
+                    svg += `<path d="M 0 2 L 0 -2" fill="none" stroke="#f39c12" stroke-width="0.04" stroke-dasharray="0.1,0.1" marker-start="url(#arrDark)"/>`;
+
+                    outHTML = `
+                        <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = x^2 - 2$</div>
+                        <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = |x^2 - 2|$</div>
+                        <div style="font-size: 1rem;"><strong>Модуль функції:</strong><br>Все, що було нижче осі $Ox$, "відбилося" наверх симетрично.</div>
+                    `;
+                } else {
+                    svg += getPath(x => x - 2, bounds, "#3498db", true);
+                    svg += getPath(x => Math.abs(x) - 2, bounds, "#e74c3c");
+
+                    svg += `<path d="M 3 -1 L -3 -1" fill="none" stroke="#f39c12" stroke-width="0.04" stroke-dasharray="0.1,0.1" marker-end="url(#arrDark)"/>`;
+
+                    outHTML = `
+                        <div style="color: #7f8c8d; font-size: 1rem; margin-bottom: 5px;">Базова: $y = x - 2$</div>
+                        <div style="color: var(--warning-red); font-weight: bold; margin-bottom: 15px;">Нова: $y = |x| - 2$</div>
+                        <div style="font-size: 1rem;"><strong>Модуль аргументу:</strong><br>Ліва частина зникла. Права частина скопіювалася дзеркально наліво.</div>
+                    `;
+                }
+
+                document.getElementById('mod-svg').innerHTML = svg;
+                document.getElementById('mod-out').innerHTML = outHTML;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

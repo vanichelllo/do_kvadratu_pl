@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Многочлени | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.25s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-action { background-color: #8e44ad; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); }
+        .btn-action:hover { background-color: #9b59b6; transform: translateY(-2px); }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); }
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        /* Специфічні стилі для алгебри */
+        .term { display: inline-block; padding: 4px 8px; border-radius: 6px; border: 2px solid transparent; transition: all 0.3s ease; font-weight: bold; margin: 0 2px; }
+        .term.highlight-x2 { background-color: rgba(52, 152, 219, 0.2); border-color: #3498db; color: #2980b9; }
+        .term.highlight-x { background-color: rgba(231, 76, 60, 0.2); border-color: #e74c3c; color: #c0392b; }
+        .term.highlight-num { background-color: rgba(39, 174, 96, 0.2); border-color: #27ae60; color: #2196f3; }
+
+        .sign-toggle { font-size: 1.4rem; font-weight: bold; cursor: pointer; color: var(--brand-blue); background: var(--bg-light); border: 2px solid var(--brand-blue); border-radius: 8px; width: 40px; height: 40px; display: inline-flex; justify-content: center; align-items: center; user-select: none; transition: var(--transition); flex-shrink: 0; }
+        .sign-toggle:hover { background: var(--brand-blue); color: white; }
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 10px; max-width: 100%; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Глобальні маркери для стрілок -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#e74c3c" /></marker>
+            <marker id="arrBlue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3498db" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВСТУП -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи алгебри</span>
+                <h1 class="slide-title">Одночлени, многочлени та вирази</h1>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Раціональні вирази:</div>
+                        <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Складені з чисел і змінних за допомогою дій $+$, $-$, $\cdot$, $:$.</p>
+                        <ul style="font-size: 0.95rem; margin: 0; padding-left: 20px;">
+                            <li><strong>Цілі вирази:</strong> не містять ділення на змінну. <br><small>Приклад: $5y+7$</small></li>
+                            <li><strong>Дробові вирази:</strong> містять ділення на вираз зі змінною. <br><small>Приклад: $\frac{7x^3 y}{5x-2}$</small></li>
+                        </ul>
+                    </div>
+
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Одночлени та Многочлени:</div>
+                        <p style="margin: 0 0 10px 0; font-size: 0.95rem;"><strong>Одночлен</strong> — це добуток чисел, змінних та їх натуральних степенів.</p>
+                        <p style="margin: 0; font-size: 0.95rem;"><strong>Многочлен</strong> — це сума кількох одночленів.</p>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧩 Досліди зведення подібних доданків:</div>
+                    <div class="widget-controls">
+                        <button class="btn-action" id="btn-group-terms" onclick="toggleTermsGrouping()">Згрупувати подібні</button>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 120px; font-size: 1.3rem;">
+                        <!-- Вихідний вираз -->
+                        <div id="poly-expression" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: center;">
+                            <span class="term term-x2">$3x^2$</span>
+                            <span class="term term-x">$- 5x$</span>
+                            <span class="term term-num">$+ 7$</span>
+                            <span class="term term-x2">$- 2x^2$</span>
+                            <span class="term term-x">$+ 8x$</span>
+                            <span class="term term-num">$- 3$</span>
+                        </div>
+
+                        <!-- Результат -->
+                        <div id="poly-result" style="display: none; font-weight: bold; color: var(--brand-green); font-size: 1.5rem; border-top: 2px dashed #dce3ec; padding-top: 15px;">
+                            $x^2 + 3x + 4$
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ДОДАВАННЯ/ВІДНІМАННЯ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Дії над многочленами</span>
+                <h2 class="slide-title">Розкриття дужок (Зміна знаків)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Правила розкриття дужок:</div>
+                    <ul style="font-size: 1rem; margin: 5px 0 0 0; padding-left: 20px; line-height: 1.6;">
+                        <li><strong>Перед дужками «+»:</strong> Дужки просто опускаються. <br> $A + (B - C) = A + B - C$</li>
+                        <li><strong>Перед дужками «–»:</strong> Знаки всередині дужок змінюються на протилежні. <br> $A - (B - C) = A - B + C$</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🔄 Інтерактивне розкриття дужок (Клікай на знаки!):</div>
+
+                    <div class="widget-output" style="min-height: 180px;">
+                        <!-- Контейнер з nowrap, щоб дужка не переносилась окремо -->
+                        <div class="scrollable-math" style="font-size: 1.6rem; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 25px;">
+                            <span>$2x$</span>
+                            <div class="sign-toggle" id="sign-outer" onclick="toggleSign('outer')">-</div>
+                            <span>$(3y$</span>
+                            <div class="sign-toggle" id="sign-inner" onclick="toggleSign('inner')">-</div>
+                            <span>$5z)$</span>
+                        </div>
+
+                        <div style="font-size: 1.4rem; color: var(--text-dark);">
+                            <span style="font-weight:bold;">Результат:</span><br>
+                            <span id="bracket-res" style="display:inline-block; margin-top: 10px; padding: 8px 15px; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border-color); white-space: nowrap;">
+                                <!-- JS -->
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: МНОЖЕННЯ МНОГОЧЛЕНІВ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дії над многочленами</span>
+                <h2 class="slide-title">Множення: Метод "Фонтанчика"</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-top: 0;">
+                    <div class="widget-title">🔄 Досліди візуалізацію множення (Клікай кроки):</div>
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-mult-1" onclick="setMultMode(1)">Одночлен на многочлен</button>
+                        <button class="btn-toggle" id="btn-mult-2" onclick="setMultMode(2)">Многочлен на многочлен</button>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label" style="min-width: 150px;">
+                            Крок: <input type="range" id="mult-step" class="slider-control" min="0" max="2" value="0" oninput="renderMultScene()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container" style="min-height: 240px;">
+                            <svg viewBox="0 0 300 150" width="100%" height="100%">
+                                <g id="mult-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="mult-out" style="min-height: 240px; text-align: left; padding: 20px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box example" style="margin-top: 10px;">
+                    <div class="box-title">Практичний приклад:</div>
+                    <div class="scrollable-math" style="text-align: center; font-size: 1.1rem; margin-top: 10px;">
+                        $(4x - y)(2x + 3y) = \mathbf{4x \cdot 2x} + \mathbf{4x \cdot 3y} - \mathbf{y \cdot 2x} - \mathbf{y \cdot 3y}$<br><br>
+                        $= 8x^2 + 12xy - 2xy - 3y^2 = \mathbf{8x^2 + 10xy - 3y^2}$
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ФСМ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Тотожності</span>
+                <h2 class="slide-title">Формули скороченого множення (ФСМ)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Основні формули <span class="nmt-ref-badge">📋 Довідник</span></div>
+                    <ul style="font-size: 1.1rem; line-height: 1.8; margin: 5px 0 0 0; list-style-type: none; padding: 0; text-align: center;">
+                        <li><strong>Різниця квадратів:</strong> $\quad a^2 - b^2 = (a-b)(a+b)$</li>
+                        <li><strong>Квадрат суми/різниці:</strong> $\quad (a \pm b)^2 = a^2 \pm 2ab + b^2$</li>
+                        <li><strong>Сума/різниця кубів:</strong> $\quad a^3 \pm b^3 = (a \pm b)(a^2 \mp ab + b^2)$</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">📐 Геометричний зміст Квадрата суми $(a+b)^2$:</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">Змінюй $a$: <input type="range" id="sq-a" class="slider-control" min="1" max="6" value="4" oninput="renderSquareScene()"></label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">Змінюй $b$: <input type="range" id="sq-b" class="slider-control" min="1" max="6" value="2" oninput="renderSquareScene()"></label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container" style="min-height: 250px;">
+                            <!-- Збільшено viewBox для того щоб текст зліва і зверху ніколи не обрізався -->
+                            <svg viewBox="-60 -50 300 300" width="100%" height="100%">
+                                <g id="sq-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="sq-out" style="min-height: 250px; text-align: left; padding: 20px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПІДСУМОК -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Многочлени" засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Тепер ви з легкістю впораєтеся з будь-яким алгебраїчним виразом.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Золоті правила:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li><strong>Мінус перед дужками:</strong> Змінює ВСІ знаки всередині на протилежні.</li>
+                            <li><strong>Множення многочленів:</strong> Множимо кожен доданок першого на кожен доданок другого ("фонтанчик").</li>
+                            <li><strong>ФСМ:</strong> Знання трьох основних формул економить час на НМТ!</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти конспект з усіма правилами та формулами.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial render
+                if (currentSlide === 2) updateBracketResult();
+                if (currentSlide === 3) renderMultScene();
+                if (currentSlide === 4) renderSquareScene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Зведення подібних доданків
+            let isGrouped = false;
+            window.toggleTermsGrouping = function() {
+                isGrouped = !isGrouped;
+                const btn = document.getElementById('btn-group-terms');
+                const termsX2 = document.querySelectorAll('.term-x2');
+                const termsX = document.querySelectorAll('.term-x');
+                const termsNum = document.querySelectorAll('.term-num');
+                const res = document.getElementById('poly-result');
+
+                if (isGrouped) {
+                    btn.innerText = "Повернути назад";
+                    btn.style.backgroundColor = "#e74c3c";
+
+                    termsX2.forEach(el => el.classList.add('highlight-x2'));
+                    termsX.forEach(el => el.classList.add('highlight-x'));
+                    termsNum.forEach(el => el.classList.add('highlight-num'));
+
+                    res.style.display = "block";
+                } else {
+                    btn.innerText = "Згрупувати подібні";
+                    btn.style.backgroundColor = "#8e44ad";
+
+                    termsX2.forEach(el => el.classList.remove('highlight-x2'));
+                    termsX.forEach(el => el.classList.remove('highlight-x'));
+                    termsNum.forEach(el => el.classList.remove('highlight-num'));
+
+                    res.style.display = "none";
+                }
+            };
+
+            // Слайд 2: Розкриття дужок (Безпечний HTML рендерінг замість MathJax macros)
+            let signOuter = '-';
+            let signInner = '-';
+            window.toggleSign = function(type) {
+                if (type === 'outer') {
+                    signOuter = signOuter === '+' ? '-' : '+';
+                    document.getElementById('sign-outer').innerText = signOuter;
+                } else {
+                    signInner = signInner === '+' ? '-' : '+';
+                    document.getElementById('sign-inner').innerText = signInner;
+                }
+                updateBracketResult();
+            };
+
+            window.updateBracketResult = function() {
+                let resStr = "$2x$ ";
+
+                if (signOuter === '+') {
+                    resStr += "$+ 3y$ ";
+                    resStr += signInner === '+' ? "$+ 5z$" : "$- 5z$";
+                } else {
+                    resStr += "$- 3y$ ";
+                    // Змінюємо колір через HTML span, щоб не ламати MathJax
+                    if (signInner === '+') {
+                        resStr += "<span style='color:var(--warning-red); font-weight:bold;'>$- 5z$</span>";
+                    } else {
+                        resStr += "<span style='color:var(--brand-green); font-weight:bold;'>$+ 5z$</span>";
+                    }
+                }
+
+                document.getElementById('bracket-res').innerHTML = resStr;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+
+            // Слайд 3: Візуалізація множення (Безпечний HTML рендерінг)
+            let multMode = 1;
+            window.setMultMode = function(mode) {
+                multMode = mode;
+                [1, 2].forEach(i => document.getElementById(`btn-mult-${i}`).classList.remove('active'));
+                document.getElementById(`btn-mult-${mode}`).classList.add('active');
+
+                const slider = document.getElementById('mult-step');
+                slider.max = (mode === 1) ? 2 : 4;
+                slider.value = 0;
+
+                renderMultScene();
+            }
+
+            window.renderMultScene = function() {
+                const step = parseInt(document.getElementById('mult-step').value);
+                let svg = "";
+                const out = document.getElementById('mult-out');
+
+                const drawText = (x, y, text, color, bold=false) => {
+                    const fw = bold ? "font-weight='bold'" : "";
+                    return `<text x="${x}" y="${y}" font-size="24" font-family="monospace" ${fw} fill="${color}" dominant-baseline="central" text-anchor="middle">${text}</text>`;
+                };
+
+                const drawArrow = (x1, y1, x2, y2, color, marker, bend) => {
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2 + bend;
+                    return `<path d="M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="3" marker-end="url(#${marker})"/>`;
+                };
+
+                const baseColor = "var(--text-dark)";
+                // CSS кольори для HTML
+                const cA = "#e74c3c";
+                const cB = "#27ae60";
+                const cC = "#3498db";
+                const cD = "#8e44ad";
+
+                if (multMode === 1) {
+                    // a(b + c)
+                    svg += drawText(80, 75, "a", cA, true);
+                    svg += drawText(100, 75, "(", baseColor);
+                    svg += drawText(120, 75, "b", cB, true);
+                    svg += drawText(145, 75, "+", baseColor);
+                    svg += drawText(170, 75, "c", cC, true);
+                    svg += drawText(190, 75, ")", baseColor);
+
+                    // Будуємо HTML рядок (кожен елемент у своєму span'і для кольору)
+                    let calcStr = `<span style="color:${cA}">$\\mathbf{a}$</span> ( <span style="color:${cB}">$\\mathbf{b}$</span> + <span style="color:${cC}">$\\mathbf{c}$</span> ) = `;
+
+                    if (step >= 1) {
+                        svg += drawArrow(80, 55, 120, 55, cA, "arrRed", -30);
+                        calcStr += `<span style="color:${cA}">$\\mathbf{a}$</span><span style="color:${cB}">$\\mathbf{b}$</span>`;
+                    }
+                    if (step >= 2) {
+                        svg += drawArrow(80, 45, 170, 45, cA, "arrRed", -50);
+                        calcStr += ` + <span style="color:${cA}">$\\mathbf{a}$</span><span style="color:${cC}">$\\mathbf{c}$</span>`;
+                    }
+
+                    out.innerHTML = `
+                        <div style="font-size: 1.1rem; margin-bottom: 10px; font-weight: bold; text-align: center;">Множимо одночлен на кожен доданок:</div>
+                        <div class="scrollable-math" style="font-size: 1.5rem; text-align: center; margin-top: 20px;">
+                            ${calcStr}
+                        </div>
+                    `;
+
+                } else {
+                    // (a + b)(c + d)
+                    svg += drawText(50, 75, "(", baseColor);
+                    svg += drawText(70, 75, "a", cA, true);
+                    svg += drawText(95, 75, "+", baseColor);
+                    svg += drawText(120, 75, "b", cB, true);
+                    svg += drawText(140, 75, ")", baseColor);
+
+                    svg += drawText(160, 75, "(", baseColor);
+                    svg += drawText(180, 75, "c", cC, true);
+                    svg += drawText(205, 75, "+", baseColor);
+                    svg += drawText(230, 75, "d", cD, true);
+                    svg += drawText(250, 75, ")", baseColor);
+
+                    let calcStr = `( <span style="color:${cA}">$\\mathbf{a}$</span> + <span style="color:${cB}">$\\mathbf{b}$</span> )( <span style="color:${cC}">$\\mathbf{c}$</span> + <span style="color:${cD}">$\\mathbf{d}$</span> ) = <br><br>`;
+
+                    if (step >= 1) {
+                        svg += drawArrow(70, 55, 180, 55, cA, "arrRed", -35);
+                        calcStr += `<span style="color:${cA}">$\\mathbf{a}$</span><span style="color:${cC}">$\\mathbf{c}$</span>`;
+                    }
+                    if (step >= 2) {
+                        svg += drawArrow(70, 45, 230, 45, cA, "arrRed", -60);
+                        calcStr += ` + <span style="color:${cA}">$\\mathbf{a}$</span><span style="color:${cD}">$\\mathbf{d}$</span>`;
+                    }
+                    if (step >= 3) {
+                        svg += drawArrow(120, 95, 180, 95, cB, "arrBlue", 35);
+                        calcStr += ` + <span style="color:${cB}">$\\mathbf{b}$</span><span style="color:${cC}">$\\mathbf{c}$</span>`;
+                    }
+                    if (step >= 4) {
+                        svg += drawArrow(120, 105, 230, 105, cB, "arrBlue", 60);
+                        calcStr += ` + <span style="color:${cB}">$\\mathbf{b}$</span><span style="color:${cD}">$\\mathbf{d}$</span>`;
+                    }
+
+                    out.innerHTML = `
+                        <div style="font-size: 1.05rem; margin-bottom: 5px; font-weight: bold; text-align: center;">Кожен на кожного:</div>
+                        <div class="scrollable-math" style="font-size: 1.3rem; text-align: center; margin-top: 15px; line-height: 1.6;">
+                            ${calcStr}
+                        </div>
+                    `;
+                }
+
+                document.getElementById('mult-scene').innerHTML = svg;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 4: ФСМ Геометрія (Адаптивне масштабування)
+            window.renderSquareScene = function() {
+                const a = parseInt(document.getElementById('sq-a').value);
+                const b = parseInt(document.getElementById('sq-b').value);
+
+                // Фіксуємо загальний розмір візуалізації незалежно від сум "a" та "b".
+                const totalSize = 180;
+                const scale = totalSize / (a + b);
+                const sA = a * scale;
+                const sB = b * scale;
+
+                let svg = "";
+
+                // Функція контролю розміру тексту, щоб він не вилазив за межі малого прямокутника
+                const getLabel = (w, h, fullText, shortText) => {
+                    return (w >= 45 && h >= 25) ? fullText : shortText;
+                };
+
+                // a^2 (Top-Left)
+                svg += `<rect x="0" y="0" width="${sA}" height="${sA}" fill="rgba(52, 152, 219, 0.2)" stroke="#2980b9" stroke-width="2"/>`;
+                svg += `<text x="${sA/2}" y="${sA/2}" font-weight="bold" font-size="16" fill="#2980b9" dominant-baseline="central" text-anchor="middle">${getLabel(sA, sA, `a²=${a*a}`, 'a²')}</text>`;
+
+                // ab (Top-Right)
+                svg += `<rect x="${sA}" y="0" width="${sB}" height="${sA}" fill="rgba(243, 156, 18, 0.2)" stroke="#d35400" stroke-width="2"/>`;
+                svg += `<text x="${sA + sB/2}" y="${sA/2}" font-weight="bold" font-size="15" fill="#d35400" dominant-baseline="central" text-anchor="middle">${getLabel(sB, sA, `ab=${a*b}`, 'ab')}</text>`;
+
+                // ab (Bottom-Left)
+                svg += `<rect x="0" y="${sA}" width="${sA}" height="${sB}" fill="rgba(243, 156, 18, 0.2)" stroke="#d35400" stroke-width="2"/>`;
+                svg += `<text x="${sA/2}" y="${sA + sB/2}" font-weight="bold" font-size="15" fill="#d35400" dominant-baseline="central" text-anchor="middle">${getLabel(sA, sB, `ab=${a*b}`, 'ab')}</text>`;
+
+                // b^2 (Bottom-Right)
+                svg += `<rect x="${sA}" y="${sA}" width="${sB}" height="${sB}" fill="rgba(39, 174, 96, 0.2)" stroke="#27ae60" stroke-width="2"/>`;
+                svg += `<text x="${sA + sB/2}" y="${sA + sB/2}" font-weight="bold" font-size="16" fill="#27ae60" dominant-baseline="central" text-anchor="middle">${getLabel(sB, sB, `b²=${b*b}`, 'b²')}</text>`;
+
+                // Dimensions (Винесені подалі від квадрата, щоб не наїжджали)
+                svg += `<text x="${sA/2}" y="-12" font-weight="bold" fill="#333" font-size="16" text-anchor="middle">a=${a}</text>`;
+                svg += `<text x="${sA + sB/2}" y="-12" font-weight="bold" fill="#333" font-size="16" text-anchor="middle">b=${b}</text>`;
+                svg += `<text x="-12" y="${sA/2}" font-weight="bold" fill="#333" font-size="16" dominant-baseline="central" text-anchor="end">a=${a}</text>`;
+                svg += `<text x="-12" y="${sA + sB/2}" font-weight="bold" fill="#333" font-size="16" dominant-baseline="central" text-anchor="end">b=${b}</text>`;
+
+                document.getElementById('sq-scene').innerHTML = svg;
+
+                const totalArea = (a+b)*(a+b);
+                const a2 = a*a;
+                const b2 = b*b;
+                const ab = a*b;
+
+                document.getElementById('sq-out').innerHTML = `
+                    <div style="font-weight:bold; font-size:1.3rem; color:var(--brand-blue); margin-bottom:15px; text-align:center;">
+                        $(a + b)^2 = a^2 + 2ab + b^2$
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 1.05rem;">
+                        <strong>Площа великого квадрата:</strong><br>
+                        Сторона = $(a+b) = ${a} + ${b} = ${a+b}$<br>
+                        $S = ${a+b}^2 = \\mathbf{${totalArea}}$
+                    </div>
+                    <div style="border-top:2px dashed #dce3ec; padding-top:10px; font-size: 1.05rem;">
+                        <strong>Сума площ внутрішніх фігур:</strong><br>
+                        $a^2 + ab + ab + b^2 = ${a2} + ${ab} + ${ab} + ${b2} = \\mathbf{${a2 + 2*ab + b2}}$
+                    </div>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

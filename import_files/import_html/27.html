@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Первісна та інтеграл | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); flex-shrink: 0; }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: wrap; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+        .nmt-ref-badge.missing { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ТАБЛИЦЯ */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .styled-table th, .styled-table td { padding: 10px 8px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        .styled-table th { background-color: rgba(52, 78, 134, 0.1); color: var(--brand-blue); font-weight: 700; }
+        .styled-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .styled-table .gray-cell { background-color: rgba(0,0,0,0.04); font-weight: bold; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#7f8c8d" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ПОНЯТТЯ ПЕРВІСНОЇ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">1. Поняття первісної та невизначеного інтеграла</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0; font-size: 0.95rem;">Функція $F(x)$ називається <strong>первісною</strong> для функції $f(x)$ на проміжку $I$, якщо для кожного $x \in I$ виконується рівність:</p>
+                    <div class="scrollable-math" style="font-size: 1.3rem; margin: 5px 0; font-weight: bold; color: var(--brand-blue);">$F'(x) = f(x)$</div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.95rem; border-top: 1px dashed var(--border-color); padding-top: 10px;">Сукупність усіх первісних для функції $f(x)$ називається <strong>невизначеним інтегралом</strong>:</p>
+                    <div class="scrollable-math" style="font-size: 1.3rem; margin: 5px 0; font-weight: bold; color: var(--brand-green);">$\int f(x) \, dx = F(x) + C, \quad C \in \mathbb{R}$</div>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; margin-top: 15px;">
+                    <div class="widget-title" style="text-align: center;">Візуалізація: Звідки береться $+ C$?</div>
+                    <p style="margin: 0 0 10px 0; font-size: 0.9rem; text-align: center; color: #7f8c8d;">Похідна (швидкість росту) для всіх цих парабол однакова: $f(x) = 2x$.</p>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Значення $C$: <span id="plusc-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">0.0</span>
+                            <input type="range" id="plusc-slider" class="slider-control" min="-2" max="2" value="0" step="0.5" oninput="renderPlusC()">
+                        </label>
+                    </div>
+                    <div class="grid-2col" style="margin-top: 5px; flex-grow: 1;">
+                        <div class="widget-svg-container" style="background: #fff; min-height: 200px; padding: 0;">
+                            <!-- Збільшено viewBox, щоб уникнути відсікання графіків (y від -7 до 2) -->
+                            <svg viewBox="-3 -7 6 9" width="100%" height="100%" id="plusc-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="plusc-out" style="justify-content: center; text-align: center; font-size: 1.1rem; line-height: 1.6;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ТАБЛИЦЯ ПЕРВІСНИХ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Довідник</span>
+                <h2 class="slide-title">2. Таблиця первісних (невизначених інтегралів)</h2>
+            </div>
+            <div class="slide-body">
+                <table class="styled-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Функція $f(x)$</th>
+                            <th style="width: 55%;">Загальний вигляд первісних<br><span style="font-size: 0.85rem; font-weight: normal;">$F(x) + C$, де $C$ — довільна стала</span></th>
+                            <th style="width: 15%;">НМТ</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 1.1rem;">
+                        <tr><td class="gray-cell">$0$</td><td class="scrollable-math">$C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$1$</td><td class="scrollable-math">$x + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$x^\alpha, \ \alpha \neq -1$</td><td class="scrollable-math">$\dfrac{x^{\alpha+1}}{\alpha+1} + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$\dfrac{1}{x}$</td><td class="scrollable-math">$\ln|x| + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$e^x$</td><td class="scrollable-math">$e^x + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$\sin x$</td><td class="scrollable-math">$-\cos x + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$\cos x$</td><td class="scrollable-math">$\sin x + C$</td><td>✅</td></tr>
+                        <tr><td class="gray-cell">$\dfrac{1}{\cos^2 x}$</td><td class="scrollable-math">$\operatorname{tg} x + C$</td><td>✅</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВИЗНАЧЕНИЙ ІНТЕГРАЛ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Обчислення</span>
+                <h2 class="slide-title">3. Визначений інтеграл та його властивості</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Формула Ньютона-Лейбніца: <span class="nmt-ref-badge" style="margin-left: 10px;">✅ НМТ</span></div>
+                    <div class="scrollable-math" style="font-size: 1.3rem; margin: 10px 0; font-weight: bold; text-align: center;">
+                        $\displaystyle \int_{a}^{b} f(x) \, dx = F(x) \Big|_a^b = F(b) - F(a)$
+                    </div>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; margin-top: 15px;">
+                    <div class="widget-title">Приклад: Знайдіть інтеграл $\displaystyle \int_{1}^{2} (3x^2 - 1) \, dx$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-defint" class="slider-control" min="0" max="3" value="0" oninput="renderStepDefInt()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="defint-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 50px;">
+                            <!-- Text -->
+                        </div>
+                        <div id="defint-render-container" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                            <div class="scrollable-math" id="defint-render" style="font-size: 1.4rem; color: var(--brand-blue); font-weight: bold; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px; width: 100%; text-align: center;">
+                                <!-- MathJS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ПЛОЩА КРИВОЛІНІЙНОЇ ТРАПЕЦІЇ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Геометрія</span>
+                <h2 class="slide-title">4. Площа криволінійної трапеції</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="gap: 15px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <div class="box definition">
+                            <p style="margin: 0; font-size: 0.95rem;"><strong>Криволінійна трапеція</strong> — це фігура, обмежена графіком $y = f(x)$, віссю $Ox$ та прямими $x = a$, $x = b$.</p>
+                        </div>
+                        <div class="box theorem">
+                            <p style="margin: 0; font-size: 0.95rem;"><strong>Геометричний зміст:</strong> Площа дорівнює визначеному інтегралу:</p>
+                            <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold; text-align: center; margin-top: 5px;">$S = \int_{a}^{b} f(x) \, dx$</div>
+                        </div>
+                        <div class="box remark" style="margin-top: auto;">
+                            <p style="margin: 0; font-size: 0.9rem;">Якщо функція $f(x)$ лежить <strong>нижче осі $Ox$</strong>, то інтеграл буде від'ємним. Площу тоді шукають як: $S = -\int f(x) \, dx$.</p>
+                        </div>
+                    </div>
+
+                    <div class="math-widget" style="margin: 0; height: 100%;">
+                        <div class="widget-title" style="text-align: center; font-size: 0.95rem;">Приклад: Площа під $y = x^2 + 1$ від $0$ до $b$</div>
+                        <div class="widget-controls" style="padding: 5px;">
+                            <label class="slider-label" style="width: 100%;">
+                                Межа $b$: <span id="area-b-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">1.0</span>
+                                <input type="range" id="area-b-slider" class="slider-control" min="0.1" max="2" value="1" step="0.1" oninput="renderArea()">
+                            </label>
+                        </div>
+                        <div class="widget-svg-container" style="background: #fff; flex-grow: 1; padding: 0; min-height: 180px;">
+                            <!-- Збільшено viewBox, щоб уникнути відсікання графіка (y від -6 до 1) -->
+                            <svg viewBox="-0.5 -6 3.5 7" width="100%" height="100%" id="area-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div id="area-out" style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--brand-green); margin-top: 5px;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПЛОЩА МІЖ КРИВИМИ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Геометрія</span>
+                <h2 class="slide-title">5. Площа фігури, обмеженої двома кривими</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Головне правило:</strong> Завжди віднімайте «нижню» функцію від «верхньої»!</p>
+                    <div class="scrollable-math" style="font-size: 1.25rem; font-weight: bold; text-align: center; margin-top: 5px;">$S = \int_{a}^{b} \big( f(x)_{верх} - g(x)_{низ} \big) \, dx$</div>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1; margin-top: 0;">
+                    <div class="widget-title">Приклад: Площа між лініями $y=x^2$ та $y=x+2$</div>
+                    <div class="grid-2col" style="flex-grow: 1; align-items: flex-start; gap: 10px;">
+
+                        <!-- SVG Графік -->
+                        <div class="widget-svg-container" style="background: #fff; height: 100%; min-height: 220px; padding: 0;" id="twocurves-container">
+                            <!-- JS -->
+                        </div>
+
+                        <!-- Покроковий розв'язок -->
+                        <div style="display: flex; flex-direction: column; width: 100%;">
+                            <div class="widget-controls" style="margin-bottom: 10px;">
+                                <label class="slider-label" style="width: 100%;">
+                                    Крок: <input type="range" id="step-twocurves" class="slider-control" min="0" max="3" value="0" oninput="renderStepTwoCurves()">
+                                </label>
+                            </div>
+                            <div class="widget-output" style="flex-grow: 1; justify-content: flex-start;">
+                                <div id="tc-desc" style="font-size: 0.95rem; color: #555; margin-bottom: 10px; min-height: 40px;"></div>
+                                <div class="scrollable-math" id="tc-render" style="font-size: 1.2rem; color: var(--brand-blue); font-weight: bold; text-align: center;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            renderStaticGraphs();
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderPlusC();
+                if (currentSlide === 3) renderStepDefInt();
+                if (currentSlide === 4) renderArea();
+                if (currentSlide === 5) renderStepTwoCurves();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Звідки береться + C?
+            window.renderPlusC = function() {
+                const c = parseFloat(document.getElementById('plusc-slider').value);
+                document.getElementById('plusc-val').textContent = c > 0 ? `+${c}` : (c === 0 ? "0.0" : c.toFixed(1));
+
+                const svg = document.getElementById('plusc-svg');
+                let svgHtml = `
+                    <line x1="-3" y1="0" x2="2.8" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="2.5" y="-0.2" font-size="0.4" font-family="sans-serif">x</text>
+                    <line x1="0" y1="1.5" x2="0" y2="-6.5" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="-6.2" font-size="0.4" font-family="sans-serif">y</text>
+                `;
+
+                // F(x) = x^2 + C.
+                const cValues = [-2, -1, 0, 1, 2];
+                cValues.forEach(val => {
+                    let dStr = "";
+                    for(let x = -2.2; x <= 2.2; x += 0.1) {
+                        let y = -(x*x + val);
+                        dStr += (dStr==="" ? `M ${x} ${y}` : ` L ${x} ${y}`);
+                    }
+                    let isCurrent = Math.abs(val - c) < 0.1;
+                    let stroke = isCurrent ? "#3498db" : "#ecf0f1";
+                    let strokeW = isCurrent ? "0.08" : "0.04";
+                    svgHtml += `<path d="${dStr}" fill="none" stroke="${stroke}" stroke-width="${strokeW}" stroke-linecap="round"/>`;
+                });
+
+                // Tangent at x=1 for current C. f(1) = 2*1 = 2. F(1) = 1^2 + c = 1+c
+                let x0 = 1;
+                let y0 = -(1 + c);
+                let k = 2; // Slope is always 2
+
+                let tStr = "";
+                let isFirst = true;
+                for(let x = 0; x <= 2; x += 0.5) {
+                    let py = -(k * (x - x0) - y0); // Inverting for SVG
+                    tStr += (isFirst ? `M ${x} ${py}` : ` L ${x} ${py}`);
+                    isFirst = false;
+                }
+                svgHtml += `<path d="${tStr}" fill="none" stroke="#e74c3c" stroke-width="0.06" stroke-dasharray="0.1,0.1"/>`;
+                svgHtml += `<circle cx="${x0}" cy="${y0}" r="0.12" fill="#e74c3c"/>`;
+
+                svg.innerHTML = `<g transform="translate(0, 0)">${svgHtml}</g>`;
+
+                document.getElementById('plusc-out').innerHTML = `
+                    <div style="margin-bottom: 5px;">$F(x) = x^2 ${c >= 0 ? '+' : ''} ${c.toFixed(1)}$</div>
+                    <div style="font-size: 0.95rem; color: #555;">Похідна (кутовий коефіцієнт у точці $x=1$) <br>завжди дорівнює $\\mathbf{2}$, незалежно від $C$.</div>
+                `;
+                if(window.MathJax) MathJax.typesetClear(); MathJax.typesetPromise();
+            };
+
+            // Слайд 3: Обчислення визначеного інтеграла
+            window.renderStepDefInt = function() {
+                const step = parseInt(document.getElementById('step-defint').value);
+                const desc = document.getElementById('defint-desc');
+                const render = document.getElementById('defint-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Задано інтеграл. Визначаємо межі інтегрування: $a=1, b=2$.";
+                    eq = `\\int_{1}^{2} (3x^2 - 1) \\, dx`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Знаходимо первісну за таблицею (константу $C$ не пишемо).";
+                    eq = `\\left( \\frac{3x^3}{3} - x \\right) \\Bigg|_1^2 = (x^3 - x) \\Bigg|_1^2`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Застосовуємо формулу Ньютона-Лейбніца: $F(b) - F(a)$. Підставляємо спочатку верхню межу ($2$), потім нижню ($1$).";
+                    eq = `(2^3 - 2) - (1^3 - 1)`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Виконуємо арифметичні обчислення.";
+                    eq = `(8 - 2) - (1 - 1) = 6 - 0 = \\mathbf{6}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 4: Площа криволінійної трапеції
+            window.renderArea = function() {
+                const b = parseFloat(document.getElementById('area-b-slider').value);
+                document.getElementById('area-b-val').textContent = b.toFixed(1);
+
+                const svg = document.getElementById('area-svg');
+                let svgHtml = `
+                    <line x1="-0.5" y1="0" x2="2.8" y2="0" stroke="#7f8c8d" stroke-width="0.04" marker-end="url(#arrDark)"/>
+                    <text x="2.6" y="-0.2" font-size="0.3" font-family="sans-serif">x</text>
+                    <line x1="0" y1="0.5" x2="0" y2="-5.5" stroke="#7f8c8d" stroke-width="0.04" marker-end="url(#arrDark)"/>
+                    <text x="0.1" y="-5.2" font-size="0.3" font-family="sans-serif">y</text>
+                `;
+
+                // Area Fill Path
+                let pathFill = `M 0 0 L 0 -1`;
+                for(let x = 0; x <= b; x += 0.05) {
+                    pathFill += ` L ${x} ${-(x*x + 1)}`;
+                }
+                pathFill += ` L ${b} ${-(b*b + 1)} L ${b} 0 Z`;
+
+                svgHtml += `<path d="${pathFill}" fill="rgba(142, 68, 173, 0.2)" stroke="none"/>`;
+
+                // Function curve f(x) = x^2 + 1
+                let dStr = "";
+                for(let x = -0.2; x <= 2.2; x += 0.1) {
+                    let y = -(x*x + 1);
+                    dStr += (dStr==="" ? `M ${x} ${y}` : ` L ${x} ${y}`);
+                }
+                svgHtml += `<path d="${dStr}" fill="none" stroke="#8e44ad" stroke-width="0.08" stroke-linecap="round"/>`;
+
+                // Boundaries
+                svgHtml += `<line x1="${b}" y1="0" x2="${b}" y2="${-(b*b + 1)}" stroke="#7f8c8d" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                svgHtml += `<text x="${b}" y="0.4" font-size="0.3" font-family="sans-serif" text-anchor="middle">b=${b.toFixed(1)}</text>`;
+
+                svg.innerHTML = `<g transform="translate(0, 0)">${svgHtml}</g>`;
+
+                // Area = int_0^b (x^2 + 1) dx = b^3/3 + b
+                let areaVal = (Math.pow(b, 3) / 3) + b;
+                document.getElementById('area-out').innerHTML = `S = $\\mathbf{${areaVal.toFixed(2)}}$ од²`;
+                if(window.MathJax) MathJax.typesetClear([document.getElementById('area-out')]);
+                if(window.MathJax) MathJax.typesetPromise([document.getElementById('area-out')]);
+            };
+
+            // Слайд 5: Статичний графік двох кривих (налаштовані viewBox та координати)
+            function renderStaticGraphs() {
+                let svgHtml = `
+                    <svg viewBox="-3 -5.5 6.5 7" width="100%" height="100%">
+                        <line x1="-2.5" y1="0" x2="3" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                        <line x1="0" y1="1" x2="0" y2="-5" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                `;
+
+                // Area between f(x)=x+2 and g(x)=x^2 from x=-1 to x=2
+                let areaPath = `M -1 -1`;
+                for(let x=-1; x<=2.01; x+=0.05) areaPath += ` L ${x} ${-(x+2)}`;
+                for(let x=2; x>=-1.01; x-=0.05) areaPath += ` L ${x} ${-(x*x)}`;
+                areaPath += ` Z`;
+
+                svgHtml += `<path d="${areaPath}" fill="rgba(243, 156, 18, 0.3)" stroke="none"/>`;
+
+                // f(x) = x+2 (Blue)
+                svgHtml += `<path d="M -2.2 0.2 L 3 -5" fill="none" stroke="#3498db" stroke-width="0.08" stroke-linecap="round"/>`;
+
+                // g(x) = x^2 (Red)
+                let dRed = "";
+                for(let x = -2.2; x <= 2.2; x += 0.1) {
+                    dRed += (dRed==="" ? `M ${x} ${-(x*x)}` : ` L ${x} ${-(x*x)}`);
+                }
+                svgHtml += `<path d="${dRed}" fill="none" stroke="#e74c3c" stroke-width="0.08" stroke-linecap="round"/>`;
+
+                // Intersection markers
+                svgHtml += `<line x1="-1" y1="0" x2="-1" y2="-1" stroke="#7f8c8d" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                svgHtml += `<line x1="2" y1="0" x2="2" y2="-4" stroke="#7f8c8d" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+                svgHtml += `<circle cx="-1" cy="-1" r="0.15" fill="#2c3e50"/>`;
+                svgHtml += `<circle cx="2" cy="-4" r="0.15" fill="#2c3e50"/>`;
+
+                svgHtml += `<text x="-1" y="0.5" font-size="0.4" font-family="sans-serif" text-anchor="middle">-1</text>`;
+                svgHtml += `<text x="2" y="0.5" font-size="0.4" font-family="sans-serif" text-anchor="middle">2</text>`;
+                svgHtml += `<text x="0.5" y="-1.5" font-size="0.8" font-family="sans-serif" font-weight="bold" fill="#d35400" text-anchor="middle">S</text>`;
+
+                svgHtml += `</svg>`;
+                document.getElementById('twocurves-container').innerHTML = svgHtml;
+            }
+
+            window.renderStepTwoCurves = function() {
+                const step = parseInt(document.getElementById('step-twocurves').value);
+                const desc = document.getElementById('tc-desc');
+                const render = document.getElementById('tc-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Маємо дві функції. Спочатку знайдемо межі інтегрування — точки їх перетину.";
+                    eq = `f(x) = x+2, \\quad g(x) = x^2`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Прирівнюємо функції. $x^2 = x + 2 \\implies x^2 - x - 2 = 0$. Корені: $x_1 = -1, x_2 = 2$.";
+                    eq = `[a; b] = [-1; 2]`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> На відрізку $[-1; 2]$ пряма вище параболи. Складаємо інтеграл (верхня мінус нижня).";
+                    eq = `S = \\int_{-1}^{2} (x+2 - x^2) \\, dx`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Знаходимо первісну та застосовуємо межі за формулою Ньютона-Лейбніца.";
+                    eq = `S = \\left( \\frac{x^2}{2} + 2x - \\frac{x^3}{3} \\right) \\Bigg|_{-1}^{2} = \\mathbf{4{,}5}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

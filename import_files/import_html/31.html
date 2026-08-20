@@ -1,0 +1,744 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трикутники | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-green: #27ae60;
+            --brand-yellow: #f39c12;
+            --text-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --shadow: 0 8px 24px rgba(52, 78, 134, 0.08);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.25s ease;
+            --warning-red: #e74c3c;
+            --widget-bg: #eef3f9;
+        }
+
+        [data-theme="dark"] {
+            --brand-blue: #6c8dfa;
+            --brand-green: #2ecc71;
+            --brand-yellow: #f1c40f;
+            --text-dark: #ecf0f1;
+            --bg-light: #151c28;
+            --card-bg: #1f2a3c;
+            --border-color: #31425d;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --widget-bg: #182232;
+        }
+
+        html, body {
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--brand-green);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 100;
+            position: relative;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1060px; height: 100%; max-height: 640px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; position: relative; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.06); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); margin-bottom: 8px; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .widget-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+        .widget-btn { background-color: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.88rem; transition: var(--transition); }
+        .widget-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .widget-btn.active { background-color: var(--brand-yellow); color: var(--text-dark); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 8px 12px; font-size: 0.93rem; border: 1px dashed var(--brand-green); min-height: 38px; display: flex; align-items: center; }
+
+        /* БЕЙДЖ ДОВІДКОВИХ МАТЕРІАЛІВ НМТ */
+        .nmt-ref-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2); vertical-align: middle;
+        }
+
+        /* ІНТЕРАКТИВНИЙ SVG */
+        .dyn-path { transition: d 0.1s ease-out; }
+        .dyn-text { transition: x 0.1s ease-out, y 0.1s ease-out; }
+        .slider-control { width: 100%; margin: 8px 0; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Інтерактивна Геометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТИТУЛЬНИЙ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема / Геометрія</span>
+                <h1 class="slide-title">Трикутники: Повний інтерактивний розбір</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="grid-2col" style="margin-bottom: 12px;">
+                    <div class="box definition">
+                        <div class="box-title">📖 Зміст уроку:</div>
+                        <ul style="line-height: 1.6;">
+                            <li><strong>1.</strong> Основні поняття: сторони, кути та сума кутів ($180^\circ$).</li>
+                            <li><strong>2.</strong> Види трикутників (за сторонами та за кутами).</li>
+                            <li><strong>3.</strong> Властивості зовнішнього кута.</li>
+                            <li><strong>4.</strong> Основні елементи: медіана, бісектриса, висота, середня лінія.</li>
+                            <li><strong>5.</strong> Подібні трикутники: ознаки та відношення площ.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">⚡ Більше візуалізації!</div>
+                        <p>На цьому уроці статика перетворилась на динаміку:</p>
+                        <ul style="font-size: 0.95rem;">
+                            <li>📐 <strong>Деформуй трикутник</strong>, щоб побачити сталість суми кутів.</li>
+                            <li>🧭 <strong>Обертай сторону</strong> для зміни типу трикутника.</li>
+                            <li>📏 <strong>Досліди висоту</strong> в тупокутному трикутнику.</li>
+                            <li>⚖️ <strong>Масштабуй фігури</strong> для розуміння подібності площ.</li>
+                        </ul>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(2)" style="padding: 10px 24px; font-size: 1rem;">Почати дослідження →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: БАЗОВІ ПОНЯТТЯ ТА СУМА КУТІВ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1</span>
+                <h2 class="slide-title">1. Основні поняття та сума кутів (Деформація)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Трикутник</strong> -- фігура, яка складається з трьох точок (вершин), що не лежать на одній прямій, і трьох відрізків (сторін), які їх сполучають.</p>
+                    <p><strong>Периметр ($P$)</strong> -- сума довжин усіх сторін: $P = a + b + c$.</p>
+                </div>
+
+                <div class="grid-2col" style="align-items: stretch;">
+                    <div class="box theorem">
+                        <div class="box-title">
+                            <span>Сума кутів трикутника:</span>
+                            <span class="nmt-ref-badge">📋 Довідник НМТ</span>
+                        </div>
+                        <p>У будь-якому трикутнику сума всіх внутрішніх кутів дорівнює <strong>180°</strong>.</p>
+                        <p style="text-align: center; font-size: 1.25rem; font-weight: bold; color: var(--brand-blue);">
+                            $$\alpha + \beta + \gamma = 180^\circ$$
+                        </p>
+                    </div>
+
+                    <div class="math-widget" style="text-align: center; margin-top: 0;">
+                        <div class="widget-title" style="justify-content: center;">📐 Жива сума кутів:</div>
+                        <p style="font-size: 0.85rem; margin-top:0;">Рухай вершину <strong>C</strong> вліво/вправо:</p>
+                        <input type="range" id="sum-slider" class="slider-control" min="-50" max="250" value="80" oninput="drawSumAngles()">
+                        
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-top: 5px; height: 130px; position: relative;">
+                            <svg viewBox="-60 -20 320 140" width="100%" height="100%">
+                                <!-- Трикутник -->
+                                <path id="sum-tri" class="dyn-path" d="" fill="rgba(52, 152, 219, 0.1)" stroke="#2980b9" stroke-width="3" stroke-linejoin="round"/>
+                                
+                                <text id="sum-lbl-a" x="-15" y="115" font-weight="bold" font-family="sans-serif" font-size="12" fill="#e74c3c">A</text>
+                                <text id="sum-lbl-b" x="205" y="115" font-weight="bold" font-family="sans-serif" font-size="12" fill="#27ae60">B</text>
+                                <text id="sum-lbl-c" class="dyn-text" x="80" y="-5" font-weight="bold" font-family="sans-serif" font-size="12" fill="#f39c12">C</text>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="sum-output" style="display: block; font-weight: bold; margin-top: 5px;">
+                            ∠A + ∠B + ∠C = 180°
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВИДИ ТРИКУТНИКІВ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2</span>
+                <h2 class="slide-title">2. Види трикутників (Жива трансформація)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box definition">
+                        <div class="box-title">За сторонами:</div>
+                        <ul style="font-size: 0.95rem; padding-left: 18px; margin-bottom: 0;">
+                            <li><strong>Різносторонні:</strong> усі сторони різні.</li>
+                            <li><strong>Рівнобедрені:</strong> дві сторони рівні (бічні).</li>
+                            <li><strong>Рівносторонні:</strong> усі сторони рівні (всі кути по 60°).</li>
+                        </ul>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">За кутами:</div>
+                        <ul style="font-size: 0.95rem; padding-left: 18px; margin-bottom: 0;">
+                            <li><strong>Гострокутні:</strong> усі кути < 90°.</li>
+                            <li><strong>Прямокутні:</strong> один кут рівно 90°.</li>
+                            <li><strong>Тупокутні:</strong> один кут > 90°.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧭 Обертай сторону $AC$, щоб змінити тип трикутника:</div>
+                    <input type="range" id="type-slider" class="slider-control" min="20" max="160" value="60" oninput="drawTypeTriangle()">
+                    
+                    <div class="grid-2col" style="align-items: center;">
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; height: 160px; text-align: center;">
+                            <svg viewBox="-50 -130 250 160" width="100%" height="100%">
+                                <path id="type-tri" class="dyn-path" d="" fill="rgba(46, 204, 113, 0.1)" stroke="#27ae60" stroke-width="3" stroke-linejoin="round"/>
+                                <line x1="0" y1="0" x2="150" y2="0" stroke="#27ae60" stroke-width="3"/>
+                                <text x="-10" y="15" font-weight="bold">A</text>
+                                <text x="155" y="15" font-weight="bold">B</text>
+                                <text id="type-lbl-c" class="dyn-text" x="0" y="-105" font-weight="bold">C</text>
+                                <!-- Кут A -->
+                                <path id="type-arc-a" class="dyn-path" d="" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="type-output" style="display: block; font-size: 1.1rem; line-height: 1.6;">
+                            ∠A = <strong>60°</strong><br>
+                            Тип: <strong style="color: var(--brand-blue);" id="type-txt">Гострокутний</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ЗОВНІШНІЙ КУТ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 3</span>
+                <h2 class="slide-title">3. Зовнішній кут трикутника</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Зовнішнім кутом</strong> називається кут, суміжний із внутрішнім кутом цього трикутника.</p>
+                </div>
+
+                <div class="grid-2col" style="align-items: center;">
+                    <div class="box theorem">
+                        <div class="box-title">Властивості:</div>
+                        <ol style="line-height: 1.6; padding-left: 18px;">
+                            <li>Зовнішній кут дорівнює <strong>сумі двох внутрішніх</strong>, не суміжних із ним:<br>
+                            <span style="font-weight:bold; font-size:1.2rem; color:var(--brand-blue);">$$\beta_{\text{зовн}} = \alpha + \gamma$$</span></li>
+                            <li>Він більший за будь-який внутрішній кут, не суміжний із ним.</li>
+                            <li>Сума всіх зовнішніх кутів дорівнює <strong>360°</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🔦 Динамічний зовнішній кут:</div>
+                        <p style="font-size:0.85rem; margin-top:0;">Змінюй внутрішній кут $\gamma$ (рухай вершину $C$):</p>
+                        <input type="range" id="ext-slider" class="slider-control" min="30" max="130" value="60" oninput="drawExterior()">
+                        
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; height: 130px; margin-top: 5px;">
+                            <svg viewBox="-20 -110 280 140" width="100%" height="100%">
+                                <!-- Пряма (продовження) -->
+                                <line x1="0" y1="0" x2="240" y2="0" stroke="gray" stroke-width="2" stroke-dasharray="5"/>
+                                <!-- Трикутник -->
+                                <path id="ext-tri" class="dyn-path" d="" fill="rgba(142, 68, 173, 0.1)" stroke="#8e44ad" stroke-width="3" stroke-linejoin="round"/>
+                                
+                                <text x="50" y="-10" font-weight="bold" fill="#2980b9">α</text>
+                                <text id="ext-lbl-g" class="dyn-text" x="120" y="-70" font-weight="bold" fill="#f39c12">γ</text>
+                                <text x="175" y="-15" font-weight="bold" fill="#c0392b">β_зовн</text>
+                                
+                                <!-- Дуга зовнішнього кута -->
+                                <path id="ext-arc" class="dyn-path" d="" fill="none" stroke="#c0392b" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="ext-output" style="margin-top: 5px; text-align: center; font-weight: bold;">
+                            β_зовн = α + γ
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ОСНОВНІ ЕЛЕМЕНТИ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 4</span>
+                <h2 class="slide-title">4. Лабораторія ліній трикутника</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <ul style="line-height: 1.5; font-size: 0.95rem; margin: 0; padding-left: 20px;">
+                        <li><strong>Медіана</strong> -- до середини сторони. Діляться в точці перетину $2:1$.</li>
+                        <li><strong>Бісектриса</strong> -- ділить кут навпіл.</li>
+                        <li><strong>Висота</strong> -- перпендикуляр ($90^\circ$).</li>
+                        <li><strong>Середня лінія</strong> -- сполучає середини сторін, паралельна основі ($=\frac{1}{2}$ основи).</li>
+                    </ul>
+                </div>
+                
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">🧮 Дослідження ліній (особливо в тупокутному трикутнику!):</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="widget-btn active" id="btn-med" onclick="setLineMode('median')">Медіана</button>
+                        <button class="widget-btn" id="btn-bis" onclick="setLineMode('bisector')">Бісектриса</button>
+                        <button class="widget-btn" id="btn-alt" onclick="setLineMode('altitude')">Висота (Увага!)</button>
+                        <button class="widget-btn" id="btn-mid" onclick="setLineMode('midline')">Середня лінія</button>
+                    </div>
+                    
+                    <p style="font-size: 0.85rem; margin: 0 0 5px 0;">Рухай вершину $C$, щоб зробити трикутник тупокутним:</p>
+                    <input type="range" id="line-slider" class="slider-control" min="-50" max="250" value="100" oninput="drawTriangleLines()">
+                    
+                    <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; height: 180px; position: relative;">
+                        <svg viewBox="-80 -140 340 180" width="100%" height="100%">
+                            <!-- Лінія основи (для тупокутних висот) -->
+                            <line x1="-80" y1="0" x2="260" y2="0" stroke="gray" stroke-width="1.5" stroke-dasharray="4"/>
+                            
+                            <!-- Трикутник -->
+                            <path id="lab-tri" class="dyn-path" d="" fill="rgba(142, 68, 173, 0.05)" stroke="#8e44ad" stroke-width="3" stroke-linejoin="round"/>
+                            
+                            <!-- Досліджувана лінія -->
+                            <line id="lab-line" class="dyn-path" x1="0" y1="0" x2="0" y2="0" stroke="#e74c3c" stroke-width="3"/>
+                            
+                            <!-- Додаткові позначки -->
+                            <path id="lab-mark" class="dyn-path" d="" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                            
+                            <text x="-5" y="15" font-weight="bold">A</text>
+                            <text x="200" y="15" font-weight="bold">B</text>
+                            <text id="lab-lbl-c" class="dyn-text" x="100" y="-110" font-weight="bold">C</text>
+                        </svg>
+                    </div>
+                    <div class="widget-output" id="lab-output" style="margin-top: 5px;">
+                        Медіана ділить протилежну сторону AB навпіл.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ПОДІБНІ ТРИКУТНИКИ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 5</span>
+                <h2 class="slide-title">5. Подібні трикутники ($\sim$)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Подібні трикутники</strong> -- це трикутники, у яких відповідні кути рівні, а відповідні сторони пропорційні (однакова форма, різний розмір).</p>
+                    <p style="text-align: center; font-size: 1.15rem; font-weight: bold; color: var(--brand-blue);">
+                        $$\triangle ABC \sim \triangle A_1B_1C_1 \iff \frac{AB}{A_1B_1} = \frac{BC}{B_1C_1} = \frac{AC}{A_1C_1} = k$$
+                    </p>
+                </div>
+
+                <div class="grid-2col" style="align-items: center;">
+                    <div class="box theorem">
+                        <div class="box-title">Ознаки подібності:</div>
+                        <ol style="line-height: 1.5; font-size: 0.95rem; padding-left: 18px;">
+                            <li><strong>За двома кутами</strong> ($\angle A = \angle A_1, \angle B = \angle B_1$).</li>
+                            <li><strong>За двома сторонами та кутом між ними</strong>.</li>
+                            <li><strong>За трьома сторонами</strong> (усі сторони пропорційні).</li>
+                        </ol>
+                    </div>
+
+                    <div class="box hack">
+                        <div class="box-title">Важливе правило для НМТ:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6; padding-left: 18px;">
+                            <li>Відношення <strong>периметрів</strong> дорівнює $k$.</li>
+                            <li>Відношення <strong>площ</strong> дорівнює квадрату коефіцієнта: $\frac{S_1}{S_2} = k^2$.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚖️ Візуалізатор масштабування (Коефіцієнт $k$):</div>
+                    <input type="range" id="sim-slider" class="slider-control" min="5" max="25" value="15" oninput="drawSimilarity()">
+                    
+                    <div class="grid-2col" style="align-items: center; margin-top: 5px;">
+                        <div style="background: white; border: 1px solid var(--border-color); border-radius: 8px; height: 160px; display: flex; align-items: flex-end; padding: 10px;">
+                            <svg viewBox="0 -150 300 150" width="100%" height="100%">
+                                <!-- Оригінал (k=1) -->
+                                <path d="M 10 0 L 90 0 L 40 -60 Z" fill="rgba(41, 128, 185, 0.2)" stroke="#2980b9" stroke-width="2"/>
+                                <text x="35" y="-20" font-weight="bold" font-size="12">S</text>
+                                
+                                <!-- Подібний (Масштабований) -->
+                                <path id="sim-tri" class="dyn-path" d="" fill="rgba(231, 76, 60, 0.2)" stroke="#e74c3c" stroke-width="2"/>
+                                <text id="sim-lbl-s" class="dyn-text" x="140" y="-20" font-weight="bold" fill="#c0392b" font-size="12">S₂</text>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="sim-output" style="display: block; font-size: 1.05rem; line-height: 1.6;">
+                            Коефіцієнт подібності <strong>k = 1.5</strong><br>
+                            Сторона: $a_2 = 1.5 \cdot a_1$<br>
+                            Площа: $S_2 = \mathbf{2.25} \cdot S_1$ ($k^2$)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ПІДСУМОК ТЕМИ -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Трикутники" успішно завершено!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Ви власноруч перевірили всі геометричні властивості в дії.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Ключові моменти:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li>Сума кутів завжди 180°.</li>
+                            <li>Зовнішній кут дорівнює сумі двох внутрішніх не суміжних.</li>
+                            <li>Медіана -- до середини, Висота -- під 90° (може падати назовні!), Бісектриса -- навпіл кут.</li>
+                            <li>Площі подібних фігур відносяться як $k^2$.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти повний конспект зі всіма ілюстраціями та формулами.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію спочатку</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            
+            // --- Navigation ---
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Run visualizers for specific slides
+                if (currentSlide === 2) drawSumAngles();
+                if (currentSlide === 3) drawTypeTriangle();
+                if (currentSlide === 4) drawExterior();
+                if (currentSlide === 5) drawTriangleLines();
+                if (currentSlide === 6) drawSimilarity();
+                
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Helper: Math to get angle at p2 in degrees
+            function calcAngle(x1, y1, x2, y2, x3, y3) {
+                const a = Math.sqrt(Math.pow(x3-x2,2) + Math.pow(y3-y2,2)); // p2-p3
+                const b = Math.sqrt(Math.pow(x1-x2,2) + Math.pow(y1-y2,2)); // p1-p2
+                const c = Math.sqrt(Math.pow(x1-x3,2) + Math.pow(y1-y3,2)); // p1-p3
+                const cosVal = (a*a + b*b - c*c)/(2*a*b);
+                // Clamp floating point errors
+                const clamped = Math.max(-1, Math.min(1, cosVal));
+                return Math.acos(clamped) * 180 / Math.PI;
+            }
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // 1. Сума кутів (Слайд 2)
+            window.drawSumAngles = function() {
+                const cx = parseInt(document.getElementById('sum-slider').value);
+                const ax = 0, ay = 100, bx = 200, by = 100, cy = 0;
+                
+                document.getElementById('sum-tri').setAttribute('d', `M ${ax} ${ay} L ${bx} ${by} L ${cx} ${cy} Z`);
+                document.getElementById('sum-lbl-c').setAttribute('x', cx - 5);
+                
+                const angA = calcAngle(cx, cy, ax, ay, bx, by);
+                const angB = calcAngle(ax, ay, bx, by, cx, cy);
+                const angC = 180 - angA - angB;
+
+                document.getElementById('sum-lbl-a').textContent = `A (${angA.toFixed(0)}°)`;
+                document.getElementById('sum-lbl-b').textContent = `B (${angB.toFixed(0)}°)`;
+                document.getElementById('sum-lbl-c').textContent = `C (${angC.toFixed(0)}°)`;
+
+                document.getElementById('sum-output').innerHTML = `∠A (${angA.toFixed(0)}°) + ∠B (${angB.toFixed(0)}°) + ∠C (${angC.toFixed(0)}°) = <strong>180°</strong>`;
+            };
+
+            // 2. Види трикутників (Слайд 3)
+            window.drawTypeTriangle = function() {
+                const angleA = parseInt(document.getElementById('type-slider').value);
+                const rad = angleA * Math.PI / 180;
+                const len = 100;
+                const cx = len * Math.cos(rad);
+                const cy = -len * Math.sin(rad); // SVG y is down
+                
+                document.getElementById('type-tri').setAttribute('d', `M 0 0 L 150 0 L ${cx} ${cy} Z`);
+                document.getElementById('type-lbl-c').setAttribute('x', cx - 5);
+                document.getElementById('type-lbl-c').setAttribute('y', cy - 10);
+                
+                // Малюємо дугу для кута A (від осі X до вектора AC)
+                const r = 25;
+                const largeArc = 0; // завжди < 180
+                // Sweep=0 означає рух проти годинникової стрілки, тобто в сторону від'ємних Y (вгору в SVG)
+                document.getElementById('type-arc-a').setAttribute('d', `M ${r} 0 A ${r} ${r} 0 ${largeArc} 0 ${r*Math.cos(rad)} ${-r*Math.sin(rad)}`);
+
+                const angA = angleA;
+                const angB = calcAngle(0,0, 150,0, cx,cy);
+                const angC = 180 - angA - angB;
+                const maxAng = Math.max(angA, angB, angC);
+
+                let typeStr = "Гострокутний";
+                let typeCol = "var(--brand-green)";
+                if (Math.abs(maxAng - 90) < 1) { typeStr = "Прямокутний"; typeCol = "var(--warning-red)"; }
+                else if (maxAng > 90) { typeStr = "Тупокутний"; typeCol = "var(--brand-yellow)"; }
+
+                // ВАЖЛИВО: щоб уникнути помилки видалення ID, зберігаємо структуру HTML у innerHTML
+                document.getElementById('type-output').innerHTML = `
+                    ∠A = <strong>${angA}°</strong>, ∠B = ${angB.toFixed(0)}°, ∠C = ${angC.toFixed(0)}°<br>
+                    Тип: <strong style="color: ${typeCol};" id="type-txt">${typeStr}</strong>
+                `;
+            };
+
+            // 3. Зовнішній кут (Слайд 4)
+            window.drawExterior = function() {
+                const cx = parseInt(document.getElementById('ext-slider').value); // slider is x-coord
+                const ax = 0, ay = 0, bx = 160, by = 0, cy = -80;
+                
+                document.getElementById('ext-tri').setAttribute('d', `M ${ax} ${ay} L ${bx} ${by} L ${cx} ${cy} Z`);
+                document.getElementById('ext-lbl-g').setAttribute('x', cx - 5);
+
+                const angA = calcAngle(cx, cy, ax, ay, bx, by);
+                const angC = calcAngle(ax, ay, cx, cy, bx, by);
+                const extB = angA + angC;
+
+                // Вектор від B до C
+                const radBC = Math.atan2(cy - by, cx - bx);
+                const r = 25;
+                const arcX = bx + r * Math.cos(radBC);
+                const arcY = by + r * Math.sin(radBC);
+                
+                // Малюємо зовнішній кут (від продовження сторони AB до сторони BC)
+                // Sweep=0 малює проти годинникової стрілки (вгору)
+                document.getElementById('ext-arc').setAttribute('d', `M ${bx+r} ${by} A ${r} ${r} 0 0 0 ${arcX} ${arcY}`);
+
+                document.getElementById('ext-output').innerHTML = `Внутрішні: α ≈ ${angA.toFixed(0)}°, γ ≈ ${angC.toFixed(0)}°.<br>Зовнішній кут <strong>β_зовн = ${extB.toFixed(0)}°</strong>.`;
+            };
+
+            // 4. Лабораторія ліній (Слайд 5)
+            let currentLineMode = 'median';
+            window.setLineMode = function(mode) {
+                currentLineMode = mode;
+                ['btn-med', 'btn-bis', 'btn-alt', 'btn-mid'].forEach(id => document.getElementById(id).classList.remove('active'));
+                const idMap = {'median': 'btn-med', 'bisector': 'btn-bis', 'altitude': 'btn-alt', 'midline': 'btn-mid'};
+                document.getElementById(idMap[mode]).classList.add('active');
+                drawTriangleLines();
+            };
+
+            window.drawTriangleLines = function() {
+                const cx = parseInt(document.getElementById('line-slider').value);
+                const ax = 0, ay = 0, bx = 200, by = 0, cy = -100;
+                
+                document.getElementById('lab-tri').setAttribute('d', `M ${ax} ${ay} L ${bx} ${by} L ${cx} ${cy} Z`);
+                document.getElementById('lab-lbl-c').setAttribute('x', cx - 5);
+                
+                const line = document.getElementById('lab-line');
+                const mark = document.getElementById('lab-mark');
+                const out = document.getElementById('lab-output');
+                mark.setAttribute('d', ''); // очистка маркерів
+
+                if (currentLineMode === 'median') {
+                    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+                    line.setAttribute('x2', 100); line.setAttribute('y2', 0);
+                    mark.setAttribute('d', 'M 48 -5 L 48 5 M 52 -5 L 52 5 M 148 -5 L 148 5 M 152 -5 L 152 5');
+                    out.innerHTML = "<strong>Медіана</strong> з'єднує вершину C із серединою сторони AB. Відрізки рівні!";
+                    line.style.stroke = "var(--brand-blue)";
+                } 
+                else if (currentLineMode === 'altitude') {
+                    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+                    line.setAttribute('x2', cx); line.setAttribute('y2', 0);
+                    
+                    let dir = cx < ax ? 1 : -1;
+                    if(cx > ax && cx < bx) dir = 1;
+                    mark.setAttribute('d', `M ${cx} -8 L ${cx + 8*dir} -8 L ${cx + 8*dir} 0`);
+                    
+                    if (cx < ax || cx > bx) {
+                        out.innerHTML = "<strong>Висота</strong> падає на <em>продовження</em> сторони, бо трикутник тупокутний!";
+                        line.style.stroke = "var(--warning-red)";
+                    } else {
+                        out.innerHTML = "<strong>Висота</strong> -- це перпендикуляр до протилежної сторони.";
+                        line.style.stroke = "var(--brand-yellow)";
+                    }
+                }
+                else if (currentLineMode === 'midline') {
+                    const m1x = (ax+cx)/2, m1y = (ay+cy)/2;
+                    const m2x = (bx+cx)/2, m2y = (by+cy)/2;
+                    line.setAttribute('x1', m1x); line.setAttribute('y1', m1y);
+                    line.setAttribute('x2', m2x); line.setAttribute('y2', m2y);
+                    line.style.stroke = "var(--brand-green)";
+                    out.innerHTML = "<strong>Середня лінія</strong> сполучає середини сторін. Вона паралельна основі AB і вдвічі менша за неї.";
+                }
+                else if (currentLineMode === 'bisector') {
+                    const ac = Math.sqrt(Math.pow(cx-ax,2) + Math.pow(cy-ay,2));
+                    const bc = Math.sqrt(Math.pow(cx-bx,2) + Math.pow(cy-by,2));
+                    const ratio = ac / (ac + bc);
+                    const dx = ax + (bx - ax) * ratio;
+                    
+                    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+                    line.setAttribute('x2', dx); line.setAttribute('y2', 0);
+                    line.style.stroke = "#8e44ad";
+                    out.innerHTML = "<strong>Бісектриса</strong> ділить кут C навпіл. Сторону AB ділить пропорційно до бічних сторін.";
+                }
+            };
+
+            // 5. Подібність (Слайд 6)
+            window.drawSimilarity = function() {
+                const k_val = parseInt(document.getElementById('sim-slider').value) / 10;
+                const out = document.getElementById('sim-output');
+                
+                const ox=110, oy=0;
+                const ax=0, ay=0, bx=80, by=0, cx=30, cy=-60;
+                
+                const sx = ax*k_val, sy = ay*k_val;
+                const sbx = bx*k_val, sby = by*k_val;
+                const scx = cx*k_val, scy = cy*k_val;
+
+                document.getElementById('sim-tri').setAttribute('d', `M ${ox+sx} ${oy+sy} L ${ox+sbx} ${oy+sby} L ${ox+scx} ${oy+scy} Z`);
+                document.getElementById('sim-lbl-s').setAttribute('x', ox + scx + 10);
+                document.getElementById('sim-lbl-s').setAttribute('y', oy + scy/2);
+
+                const k2 = (k_val * k_val).toFixed(2);
+                // Додано подвійні бекслеші \\cdot щоб LaTeX рендерився без помилок
+                out.innerHTML = `
+                    Коефіцієнт подібності <strong>k = ${k_val.toFixed(1)}</strong><br>
+                    Сторона: $a_2 = ${k_val.toFixed(1)} \\cdot a_1$<br>
+                    Площа: $S_2 = \\mathbf{${k2}} \\cdot S_1$ ($k^2$)
+                `;
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Тригонометричні рівняння | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ТАБЛИЦЯ */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .styled-table th, .styled-table td { padding: 12px 10px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        .styled-table th { background-color: rgba(142, 68, 173, 0.1); color: #8e44ad; font-weight: 700; }
+        .styled-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .styled-table .gray-cell { background-color: rgba(0,0,0,0.04); font-weight: bold; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Тригонометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: СТРУКТУРА РОЗВ'ЯЗКУ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h1 class="slide-title">1. Розуміння структури розв'язку</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <p style="margin: 0; font-size: 0.95rem;">Оскільки тригонометричні функції циклічні, рівняння типу $\sin x = a$ або $\cos x = a$ описують <strong>точки</strong> на одиничному колі.</p>
+                    <ul style="margin: 5px 0 0 0; font-size: 0.9rem; padding-left: 20px;">
+                        <li>Формули дають змогу записати всі кути, що потрапляють у ці точки, за допомогою параметра <strong>$k \in \mathbb{Z}$</strong>.</li>
+                        <li>Кожне нове значення $k$ ($0, 1, 2, -1 \dots$) — це новий повний оберт або крок до наступної точки.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">Тренажер: $\sin x = a$ та $\cos x = a$</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 300px;">
+                            Значення $a$: <span id="eq-a-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">0.5</span>
+                            <input type="range" id="eq-a" class="slider-control" min="-1" max="1" value="0.5" step="0.1" oninput="renderUnitCircles()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <!-- Синус -->
+                        <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-weight: bold; color: #3498db; margin-bottom: 5px;">Синус (Y): $\sin x = a$</div>
+                            <svg viewBox="-1.3 -1.3 2.6 2.6" width="100%" height="160px" id="circ-sin-svg">
+                                <!-- JS -->
+                            </svg>
+                            <div style="font-size: 0.85rem; text-align: center; margin-top: 5px; color: #555;">Горизонтальна лінія. Точки симетричні відносно осі Oy.</div>
+                        </div>
+
+                        <!-- Косинус -->
+                        <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-weight: bold; color: #f39c12; margin-bottom: 5px;">Косинус (X): $\cos x = a$</div>
+                            <svg viewBox="-1.3 -1.3 2.6 2.6" width="100%" height="160px" id="circ-cos-svg">
+                                <!-- JS -->
+                            </svg>
+                            <div style="font-size: 0.85rem; text-align: center; margin-top: 5px; color: #555;">Вертикальна лінія. Точки симетричні відносно осі Ox.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: АРКФУНКЦІЇ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">2. Що таке аркфункції?</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Обернені тригонометричні функції:</div>
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Аркфункції</strong> — це математичний інструмент для знаходження <strong>кута</strong> за відомим значенням тригонометричної функції. Приставка «arc-» перекладається як «дуга» або «кут».</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li>$\arcsin a$ — це кут (від $-\frac{\pi}{2}$ до $\frac{\pi}{2}$), синус якого дорівнює $a$.</li>
+                        <li>$\arccos a$ — це кут (від $0$ до $\pi$), косинус якого дорівнює $a$.</li>
+                        <li>$\operatorname{arctg} a$ — це кут (від $-\frac{\pi}{2}$ до $\frac{\pi}{2}$), тангенс якого дорівнює $a$.</li>
+                    </ul>
+                </div>
+
+                <div class="box hack" style="margin-top: 20px;">
+                    <div class="box-title">Як швидко знайти значення?</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem; line-height: 1.5;">
+                        Щоб обчислити, наприклад, $\arcsin\left(\frac{1}{2}\right)$, просто поставте собі запитання: <br>
+                        <em>«Синус якого кута дорівнює $\frac{1}{2}$?»</em><br>
+                        Згадавши таблицю значень (яка є в довіднику НМТ), ви знайдете відповідь: це кут $30^\circ$, або $\frac{\pi}{6}$ радіан. <br>
+                        Отже, $\arcsin\left(\frac{1}{2}\right) = \frac{\pi}{6}$.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ЗАГАЛЬНІ ФОРМУЛИ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">УВАГА НМТ!</span>
+                <h2 class="slide-title">3. Загальні формули та їх властивості</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Найпростіші тригонометричні рівняння <span class="nmt-ref-badge" style="background: #e74c3c;">❌ Немає в НМТ</span></div>
+                    <p style="margin: 5px 0 10px 0; font-size: 0.95rem; color: #c0392b; font-weight: bold;">Увага! Цих формул немає у довідкових матеріалах тесту. Їх потрібно знати напам'ять.</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 1.1rem; line-height: 1.8; padding-left: 20px;">
+                        <li><strong>Синус:</strong> $\sin x = a \implies x = (-1)^k \arcsin a + \pi k$</li>
+                        <li><strong>Косинус:</strong> $\cos x = a \implies x = \pm \arccos a + 2\pi k$</li>
+                        <li><strong>Тангенс:</strong> $\operatorname{tg} x = a \implies x = \operatorname{arctg} a + \pi k$</li>
+                    </ul>
+                </div>
+
+                <div class="box error" style="margin-top: 20px;">
+                    <div class="box-title">Властивості обернених функцій <span class="nmt-ref-badge" style="background: #e74c3c;">❌ Немає в НМТ</span></div>
+                    <p style="margin: 5px 0 10px 0; font-size: 0.95rem;">Якщо під знаком аркфункції стоїть <strong>від'ємне число</strong>, обов'язково застосуйте ці правила перед обчисленням за таблицею:</p>
+
+                    <div class="grid-2col" style="gap: 10px;">
+                        <div style="background: rgba(255,255,255,0.6); padding: 10px; border-radius: 6px;">
+                            <div style="font-weight: bold; color: var(--text-dark); margin-bottom: 5px; font-size: 0.9rem;">Віднімаємо від $\pi$:</div>
+                            <div class="scrollable-math">$\arccos(-a) = \pi - \arccos a$</div>
+                            <div class="scrollable-math">$\operatorname{arcctg}(-a) = \pi - \operatorname{arcctg} a$</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.6); padding: 10px; border-radius: 6px;">
+                            <div style="font-weight: bold; color: var(--text-dark); margin-bottom: 5px; font-size: 0.9rem;">Мінус виноситься наперед:</div>
+                            <div class="scrollable-math">$\arcsin(-a) = -\arcsin a$</div>
+                            <div class="scrollable-math">$\operatorname{arctg}(-a) = -\operatorname{arctg} a$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ОКРЕМІ ВИПАДКИ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Важливо</span>
+                <h2 class="slide-title">4. Окремі випадки ($a = -1, 0, 1$)</h2>
+            </div>
+            <div class="slide-body" style="padding-right: 0;">
+                <div class="box remark" style="margin-bottom: 15px; margin-right: 5px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Для цих значень загальні формули з попереднього слайда використовувати <strong>не можна</strong> (це призведе до втрати коренів або помилок)! Відповіді зчитуються безпосередньо з одиничного кола і записуються як одна серія точок.</p>
+                </div>
+
+                <table class="styled-table" style="width: calc(100% - 5px);">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%; background-color: rgba(52, 78, 134, 0.15);">Значення $a$</th>
+                            <th style="width: 40%;">Синус ($\sin x = a$)</th>
+                            <th style="width: 40%;">Косинус ($\cos x = a$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="gray-cell" style="font-size: 1.2rem;">$\mathbf{a = 0}$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #3498db;">$x = \pi k$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #f39c12;">$x = \frac{\pi}{2} + \pi k$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell" style="font-size: 1.2rem;">$\mathbf{a = 1}$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #3498db;">$x = \frac{\pi}{2} + 2\pi k$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #f39c12;">$x = 2\pi k$</td>
+                        </tr>
+                        <tr>
+                            <td class="gray-cell" style="font-size: 1.2rem;">$\mathbf{a = -1}$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #3498db;">$x = -\frac{\pi}{2} + 2\pi k$</td>
+                            <td class="scrollable-math" style="font-size: 1.1rem; color: #f39c12;">$x = \pi + 2\pi k$</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="font-size: 0.85rem; color: #7f8c8d; text-align: center; margin-top: 10px;">
+                    * Для всіх наведених формул $k \in \mathbb{Z}$.
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРАКТИКА -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">5. Практичні приклади</h2>
+            </div>
+            <div class="slide-body">
+
+                <div class="math-widget" style="margin-top: 0;">
+                    <div class="widget-title">Приклад 1: Косинус з мінусом</div>
+                    <div style="font-size: 1.2rem; text-align: center; margin: 10px 0;">Розв'яжіть: $\cos x = -\frac{\sqrt{2}}{2}$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок розв'язку: <input type="range" id="step-ex1" class="slider-control" min="0" max="3" value="0" oninput="renderSteps()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 120px;">
+                        <div id="ex1-desc" style="font-size: 1rem; color: #555; margin-bottom: 10px;"></div>
+                        <div id="ex1-math" class="scrollable-math" style="font-size: 1.3rem; color: var(--brand-blue); font-weight: bold;"></div>
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">Приклад 2: Рівняння з тангенсом</div>
+                    <div style="font-size: 1.2rem; text-align: center; margin: 10px 0;">Розв'яжіть: $\operatorname{tg} x = \sqrt{3}$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок розв'язку: <input type="range" id="step-ex2" class="slider-control" min="0" max="3" value="0" oninput="renderSteps()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 120px;">
+                        <div id="ex2-desc" style="font-size: 1rem; color: #555; margin-bottom: 10px;"></div>
+                        <div id="ex2-math" class="scrollable-math" style="font-size: 1.3rem; color: var(--brand-green); font-weight: bold;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ГРАФІКИ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">6. Перетин на графіках функцій</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Розв'язки рівняння $\sin x = a$ — це абсциси точок перетину графіка функції $y = \sin x$ та горизонтальної прямої $y = a$.</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03);">
+                        <label class="slider-label" style="min-width: 250px;">
+                            Пряма $y = a$: <span id="wave-a-val" style="color:#e74c3c; font-weight:bold; width:30px; text-align:center;">0.5</span>
+                            <input type="range" id="wave-a" class="slider-control" min="-1" max="1" value="0.5" step="0.1" oninput="renderWave()">
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="background: #fff; height: 200px; margin-top: 10px;">
+                        <svg viewBox="-0.5 -1.5 7 3" width="100%" height="100%" id="wave-svg">
+                            <!-- JS -->
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="box hack" style="margin-top: 15px;">
+                    <p style="margin: 0; font-size: 0.9rem;"><strong>Порада для НМТ:</strong> Якщо в тесті просять знайти <em>«кількість коренів на проміжку»</em>, найшвидший спосіб — намалювати графік (хвилю) або одиничне коло і просто <strong>порахувати точки перетину</strong> в заданих межах, замість того, щоб розв'язувати нерівності з $k$.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 6</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderUnitCircles();
+                if (currentSlide === 5) renderSteps();
+                if (currentSlide === 6) renderWave();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Тренажер кіл
+            window.renderUnitCircles = function() {
+                const a = parseFloat(document.getElementById('eq-a').value);
+                document.getElementById('eq-a-val').textContent = a.toFixed(1);
+
+                // Синус (y = a)
+                let sinSvg = `
+                    <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <line x1="0" y1="1.2" x2="0" y2="-1.2" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <circle cx="0" cy="0" r="1" fill="none" stroke="#2c3e50" stroke-width="0.03"/>
+                `;
+                let svgY = -a; // SVG Y is inverted
+                sinSvg += `<line x1="-1.2" y1="${svgY}" x2="1.2" y2="${svgY}" stroke="#3498db" stroke-width="0.04"/>`;
+
+                let sinX = Math.sqrt(1 - a*a);
+                sinSvg += `<circle cx="${sinX}" cy="${svgY}" r="0.07" fill="#e74c3c"/>`;
+                sinSvg += `<circle cx="${-sinX}" cy="${svgY}" r="0.07" fill="#e74c3c"/>`;
+
+                document.getElementById('circ-sin-svg').innerHTML = sinSvg;
+
+                // Косинус (x = a)
+                let cosSvg = `
+                    <line x1="-1.2" y1="0" x2="1.2" y2="0" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <line x1="0" y1="1.2" x2="0" y2="-1.2" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <circle cx="0" cy="0" r="1" fill="none" stroke="#2c3e50" stroke-width="0.03"/>
+                `;
+                let cosX = a;
+                cosSvg += `<line x1="${cosX}" y1="-1.2" x2="${cosX}" y2="1.2" stroke="#f39c12" stroke-width="0.04"/>`;
+
+                let cosY = Math.sqrt(1 - a*a);
+                cosSvg += `<circle cx="${cosX}" cy="${-cosY}" r="0.07" fill="#e74c3c"/>`;
+                cosSvg += `<circle cx="${cosX}" cy="${cosY}" r="0.07" fill="#e74c3c"/>`;
+
+                document.getElementById('circ-cos-svg').innerHTML = cosSvg;
+            };
+
+            // Слайд 5: Покрокові розв'язки
+            window.renderSteps = function() {
+                const s1 = parseInt(document.getElementById('step-ex1').value);
+                const desc1 = document.getElementById('ex1-desc');
+                const math1 = document.getElementById('ex1-math');
+
+                if (s1 === 0) {
+                    desc1.innerHTML = "Початкове рівняння. Починаємо із застосування загальної формули для косинуса.";
+                    math1.innerHTML = `$$\\cos x = -\\frac{\\sqrt{2}}{2}$$`;
+                } else if (s1 === 1) {
+                    desc1.innerHTML = "<strong>Крок 1:</strong> Записуємо формулу: $x = \\pm \\arccos(a) + 2\\pi k$.";
+                    math1.innerHTML = `$$x = \\pm \\arccos\\left(-\\frac{\\sqrt{2}}{2}\\right) + 2\\pi k$$`;
+                } else if (s1 === 2) {
+                    desc1.innerHTML = "<strong>Крок 2:</strong> Обчислюємо арккосинус від'ємного числа: $\\arccos(-a) = \\pi - \\arccos a$. За таблицею $\\arccos(\\frac{\\sqrt{2}}{2}) = \\frac{\\pi}{4}$.";
+                    math1.innerHTML = `$$\\pi - \\frac{\\pi}{4} = \\frac{4\\pi}{4} - \\frac{\\pi}{4} = \\mathbf{\\frac{3\\pi}{4}}$$`;
+                } else if (s1 === 3) {
+                    desc1.innerHTML = "<strong>Крок 3: Відповідь.</strong> Підставляємо обчислене значення назад у формулу.";
+                    math1.innerHTML = `$$x = \\pm \\frac{3\\pi}{4} + 2\\pi k, \\quad k \\in \\mathbb{Z}$$`;
+                }
+
+                const s2 = parseInt(document.getElementById('step-ex2').value);
+                const desc2 = document.getElementById('ex2-desc');
+                const math2 = document.getElementById('ex2-math');
+
+                if (s2 === 0) {
+                    desc2.innerHTML = "Початкове рівняння з тангенсом.";
+                    math2.innerHTML = `$$\\operatorname{tg} x = \\sqrt{3}$$`;
+                } else if (s2 === 1) {
+                    desc2.innerHTML = "<strong>Крок 1:</strong> Застосовуємо формулу: $x = \\operatorname{arctg}(a) + \\pi k$. (Зверніть увагу: тут $\\pi k$, а не $2\\pi k$).";
+                    math2.innerHTML = `$$x = \\operatorname{arctg}(\\sqrt{3}) + \\pi k$$`;
+                } else if (s2 === 2) {
+                    desc2.innerHTML = "<strong>Крок 2:</strong> Знаходимо значення за таблицею. Тангенс дорівнює $\\sqrt{3}$ при куті $60^\\circ$ або $\\frac{\\pi}{3}$ радіан.";
+                    math2.innerHTML = `$$\\operatorname{arctg}(\\sqrt{3}) = \\frac{\\pi}{3}$$`;
+                } else if (s2 === 3) {
+                    desc2.innerHTML = "<strong>Крок 3: Відповідь.</strong> Записуємо фінальний результат.";
+                    math2.innerHTML = `$$x = \\frac{\\pi}{3} + \\pi k, \\quad k \\in \\mathbb{Z}$$`;
+                }
+
+                if(window.MathJax) MathJax.typesetClear([desc1, math1, desc2, math2]);
+                if(window.MathJax) MathJax.typesetPromise([desc1, math1, desc2, math2]);
+            };
+
+            // Слайд 6: Хвиля та перетин
+            window.renderWave = function() {
+                const a = parseFloat(document.getElementById('wave-a').value);
+                document.getElementById('wave-a-val').textContent = a.toFixed(1);
+
+                let svg = `
+                    <!-- Осі -->
+                    <line x1="-0.5" y1="0" x2="6.8" y2="0" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="6.5" y="0.2" font-size="0.2" font-family="sans-serif">x</text>
+                    <line x1="0" y1="1.3" x2="0" y2="-1.3" stroke="#7f8c8d" stroke-width="0.02" marker-end="url(#arrDark)"/>
+                    <text x="0.1" y="-1.1" font-size="0.2" font-family="sans-serif">y</text>
+                `;
+
+                // Розмітка Pi
+                const pi = Math.PI;
+                const ticks = [
+                    {v: pi/2, l: "π/2"}, {v: pi, l: "π"},
+                    {v: 3*pi/2, l: "3π/2"}, {v: 2*pi, l: "2π"}
+                ];
+                ticks.forEach(t => {
+                    svg += `<line x1="${t.v}" y1="-0.05" x2="${t.v}" y2="0.05" stroke="#333" stroke-width="0.02"/>`;
+                    svg += `<text x="${t.v}" y="0.25" font-size="0.18" font-family="sans-serif" text-anchor="middle">${t.l}</text>`;
+                });
+
+                // Графік синуса
+                let d = "";
+                for(let x = 0; x <= 2.1*pi; x += 0.05) {
+                    let y = -Math.sin(x);
+                    d += (d==="" ? `M ${x} ${y}` : ` L ${x} ${y}`);
+                }
+                svg += `<path d="${d}" fill="none" stroke="#3498db" stroke-width="0.05"/>`;
+
+                // Пряма y = a
+                svg += `<line x1="0" y1="${-a}" x2="6.5" y2="${-a}" stroke="#e74c3c" stroke-width="0.04" stroke-dasharray="0.1,0.1"/>`;
+
+                // Точки перетину
+                let baseAsin = Math.asin(a);
+                // Корні на проміжку [0, 2pi]
+                let root1, root2;
+
+                if (a >= 0) {
+                    root1 = baseAsin;
+                    root2 = pi - baseAsin;
+                } else {
+                    root1 = pi - baseAsin;
+                    root2 = 2*pi + baseAsin;
+                }
+
+                if (a === 1 || a === -1) {
+                    // Один корінь на періоді
+                    let rx = a === 1 ? pi/2 : 3*pi/2;
+                    svg += `<circle cx="${rx}" cy="${-a}" r="0.08" fill="#2c3e50"/>`;
+                    svg += `<line x1="${rx}" y1="0" x2="${rx}" y2="${-a}" stroke="#7f8c8d" stroke-width="0.02" stroke-dasharray="0.05,0.05"/>`;
+                } else {
+                    [root1, root2].forEach(rx => {
+                        svg += `<circle cx="${rx}" cy="${-a}" r="0.08" fill="#2c3e50"/>`;
+                        svg += `<line x1="${rx}" y1="0" x2="${rx}" y2="${-a}" stroke="#7f8c8d" stroke-width="0.02" stroke-dasharray="0.05,0.05"/>`;
+                    });
+                }
+
+                document.getElementById('wave-svg').innerHTML = svg;
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

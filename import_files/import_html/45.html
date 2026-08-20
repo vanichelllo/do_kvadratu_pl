@@ -1,0 +1,627 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Координати | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.25s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+        
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+        
+        .widget-svg-container { background: radial-gradient(circle at center, #ffffff 0%, #eaf0f6 100%); border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); min-height: 280px; }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 0.95rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: flex-start; overflow-y: auto; min-height: 280px; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; cursor: ew-resize; accent-color: var(--brand-blue); }
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+        
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Вектори та Координати</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВСТУП -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Координати на площині та у просторі</h1>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Означення:</div>
+                        <p style="margin: 0; font-size: 0.95rem;"><strong>Прямокутна система координат (Декартова)</strong> -- це спосіб задання положення точки за допомогою чисел (координат). Утворена взаємно перпендикулярними осями, що перетинаються в початку $O(0; 0; 0)$.</p>
+                    </div>
+
+                    <div class="box remark" style="margin: 0;">
+                        <div class="box-title">Назви осей:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">
+                            <li>$Ox$ -- вісь <strong>абсцис</strong>;</li>
+                            <li>$Oy$ -- вісь <strong>ординат</strong>;</li>
+                            <li>$Oz$ -- вісь <strong>аплікат</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧊 Досліди просторову систему координат:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label">X: <input type="range" id="p-x" class="slider-control" min="-6" max="6" value="4" oninput="renderCoordScene()"></label>
+                        <label class="slider-label">Y: <input type="range" id="p-y" class="slider-control" min="-6" max="6" value="5" oninput="renderCoordScene()"></label>
+                        <label class="slider-label">Z: <input type="range" id="p-z" class="slider-control" min="-6" max="6" value="4" oninput="renderCoordScene()"></label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">🔄 Оберт: <input type="range" id="c-rot" class="slider-control" min="-90" max="90" value="45" oninput="renderCoordScene()"></label>
+                    </div>
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="coord-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="coord-out">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ВІДСТАНІ ТА СЕРЕДИНА -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Формули</span>
+                <h2 class="slide-title">Відстані та поділ відрізків</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="margin-bottom: 10px;">
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Відстань між точками $A$ і $B$:</div>
+                        <p style="text-align: center; font-size: 1.1rem; font-weight: bold; margin: 10px 0;">$$d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}$$</p>
+                    </div>
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Середина відрізка $C(x_c; y_c; z_c)$:</div>
+                        <p style="text-align: center; font-size: 1.1rem; font-weight: bold; margin: 10px 0;">$$x_c = \frac{x_1 + x_2}{2}, \quad y_c = \frac{y_1 + y_2}{2}$$</p>
+                    </div>
+                </div>
+                
+                <div class="box error" style="margin-bottom: 10px;">
+                    <p style="margin:0; font-size:0.95rem;"><strong>Увага:</strong> При обчисленні координат середини використовується <strong>ДОДАВАННЯ</strong> (середнє арифметичне). Не плутайте з обчисленням координат вектора (де використовується віднімання)!</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">📏 Досліди відрізок $AB$ та його середину $M$:</div>
+                    
+                    <div class="widget-controls">
+                        <span style="font-weight:bold; color:var(--brand-blue); margin-right:10px;">Точка B:</span>
+                        <label class="slider-label">X: <input type="range" id="b-x" class="slider-control" min="-6" max="6" value="5" oninput="renderDistScene()"></label>
+                        <label class="slider-label">Y: <input type="range" id="b-y" class="slider-control" min="-6" max="6" value="4" oninput="renderDistScene()"></label>
+                        <label class="slider-label">Z: <input type="range" id="b-z" class="slider-control" min="-6" max="6" value="5" oninput="renderDistScene()"></label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="dist-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="dist-out">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: СПЕЦИФІЧНІ ВІДСТАНІ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Секрети НМТ</span>
+                <h2 class="slide-title">Специфічні відстані (Лайфхаки)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <p style="margin:0; font-size:1rem;"><strong>Відстань від точки $P(x; y; z)$ до:</strong><br>
+                    • <strong>початку координат:</strong> $d = \sqrt{x^2 + y^2 + z^2}$<br>
+                    • <strong>координатної площини (напр. $xy$):</strong> $d = |z|$ (модуль відсутньої координати)<br>
+                    • <strong>координатної осі (напр. $Oz$):</strong> $d = \sqrt{x^2 + y^2}$ (відстань без урахування осі)</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">📐 Досліди відстані від точки $P(4; 5; 6)$:</div>
+                    
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-spec-1" onclick="setSpecStep(1)">До площини XY</button>
+                        <button class="btn-toggle" id="btn-spec-2" onclick="setSpecStep(2)">До осі Z</button>
+                        <button class="btn-toggle" id="btn-spec-3" onclick="setSpecStep(3)">До початку координат (O)</button>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">🔄 Оберт: <input type="range" id="spec-rot" class="slider-control" min="-90" max="90" value="45" oninput="renderSpecScene()"></label>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="spec-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="spec-out">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: РІВНЯННЯ СФЕРИ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Рівняння</span>
+                <h2 class="slide-title">Рівняння ліній та поверхонь</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="margin-bottom: 10px;">
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Рівняння кола (2D):</div>
+                        <p style="text-align: center; font-size: 1.1rem; font-weight: bold; margin: 10px 0;">$$(x - a)^2 + (y - b)^2 = R^2$$</p>
+                    </div>
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Рівняння сфери (3D):</div>
+                        <p style="text-align: center; font-size: 1.1rem; font-weight: bold; margin: 10px 0;">$$(x - a)^2 + (y - b)^2 + (z - c)^2 = R^2$$</p>
+                    </div>
+                </div>
+
+                <div class="box error" style="margin-bottom: 10px;">
+                    <p style="margin:0; font-size:0.95rem;"><strong>Типова пастка:</strong> Уважно зі знаками! У формулі стоїть <strong>мінус</strong>. Якщо центр має координату $-3$, то в дужках буде $(x + 3)^2$.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 Генератор рівняння сфери:</div>
+                    <div class="widget-controls" style="justify-content: center;">
+                        <span style="font-weight:bold; color:var(--brand-blue); margin-right:10px;">Центр Q:</span>
+                        <label class="slider-label">a: <input type="range" id="eq-a" class="slider-control" min="-5" max="5" value="2" oninput="renderEqScene()"></label>
+                        <label class="slider-label">b: <input type="range" id="eq-b" class="slider-control" min="-5" max="5" value="-3" oninput="renderEqScene()"></label>
+                        <label class="slider-label">c: <input type="range" id="eq-c" class="slider-control" min="-5" max="5" value="1" oninput="renderEqScene()"></label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">R: <input type="range" id="eq-r" class="slider-control" min="1" max="6" value="4" oninput="renderEqScene()"></label>
+                    </div>
+                    
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container">
+                            <svg viewBox="-120 -120 240 240" width="100%" height="100%">
+                                <defs>
+                                    <radialGradient id="sphereGrad" cx="35%" cy="35%" r="65%">
+                                        <stop offset="0%" stop-color="#a1c4fd"/>
+                                        <stop offset="100%" stop-color="#344e86"/>
+                                    </radialGradient>
+                                </defs>
+                                <g id="eq-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="eq-out" style="justify-content: center; text-align: center; padding: 20px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 4</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial render
+                if (currentSlide === 1) renderCoordScene();
+                if (currentSlide === 2) renderDistScene();
+                if (currentSlide === 3) renderSpecScene();
+                if (currentSlide === 4) renderEqScene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= 3D ПРОЄКЦІЙНИЙ РУШІЙ =================
+            // Масштаб збільшено для кращої видимості (було 14, стало 17)
+            function project(x, y, z, rotZ) {
+                let az = rotZ * Math.PI/180;
+                let tilt = 25 * Math.PI/180; 
+                
+                let rx = x * Math.cos(az) - y * Math.sin(az);
+                let ry = x * Math.sin(az) + y * Math.cos(az);
+                
+                let px = -rx;
+                let py = ry * Math.cos(tilt) - z * Math.sin(tilt);
+                let depth = ry * Math.sin(tilt) + z * Math.cos(tilt);
+                
+                const scale = 17; // Збільшений масштаб
+                return { px: px * scale, py: py * scale, z: depth };
+            }
+
+            function drawLine(p1, p2, rotZ, props) {
+                let pt1 = project(p1.x, p1.y, p1.z, rotZ);
+                let pt2 = project(p2.x, p2.y, p2.z, rotZ);
+                return `<line x1="${pt1.px}" y1="${pt1.py}" x2="${pt2.px}" y2="${pt2.py}" ${props} />`;
+            }
+
+            function drawPoint(p, rotZ, color, radius=5) {
+                let pt = project(p.x, p.y, p.z, rotZ);
+                return `<circle cx="${pt.px}" cy="${pt.py}" r="${radius}" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
+            }
+
+            // Текст із білою обводкою (halo) для ідеальної читабельності поверх ліній
+            function drawText(p, text, dx, dy, rotZ, color, size="15") {
+                let pt = project(p.x, p.y, p.z, rotZ);
+                return `<text x="${pt.px + dx}" y="${pt.py + dy}" font-weight="bold" font-size="${size}" fill="${color}" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" paint-order="stroke">${text}</text>`;
+            }
+
+            function drawAxes(rotZ, size=8) {
+                let svg = "";
+                // Пунктири у від'ємні напрямки
+                svg += drawLine({x:-size, y:0, z:0}, {x:0, y:0, z:0}, rotZ, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"');
+                svg += drawLine({x:0, y:-size, z:0}, {x:0, y:0, z:0}, rotZ, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"');
+                svg += drawLine({x:0, y:0, z:-size}, {x:0, y:0, z:0}, rotZ, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"');
+                
+                // Основні додатні осі (товстіші)
+                svg += drawLine({x:0, y:0, z:0}, {x:size, y:0, z:0}, rotZ, 'stroke="#2c3e50" stroke-width="3" stroke-linecap="round"');
+                svg += drawLine({x:0, y:0, z:0}, {x:0, y:size, z:0}, rotZ, 'stroke="#2c3e50" stroke-width="3" stroke-linecap="round"');
+                svg += drawLine({x:0, y:0, z:0}, {x:0, y:0, z:size}, rotZ, 'stroke="#2c3e50" stroke-width="3" stroke-linecap="round"');
+                
+                svg += drawText({x:size+0.5, y:0, z:0}, "x", -5, 20, rotZ, "#2c3e50", "16");
+                svg += drawText({x:0, y:size+0.5, z:0}, "y", 10, 15, rotZ, "#2c3e50", "16");
+                svg += drawText({x:0, y:0, z:size+0.5}, "z", 10, 5, rotZ, "#2c3e50", "16");
+                svg += drawText({x:0, y:0, z:0}, "O", -20, 10, rotZ, "#2c3e50", "16");
+                return svg;
+            }
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Координати
+            window.renderCoordScene = function() {
+                const x = parseInt(document.getElementById('p-x').value);
+                const y = parseInt(document.getElementById('p-y').value);
+                const z = parseInt(document.getElementById('p-z').value);
+                const rotZ = parseInt(document.getElementById('c-rot').value);
+
+                let svg = drawAxes(rotZ, 8);
+                
+                const pXY = {x:x, y:y, z:0};
+                const pX = {x:x, y:0, z:0};
+                const pY = {x:0, y:y, z:0};
+                const pZ = {x:0, y:0, z:z};
+                const P = {x:x, y:y, z:z};
+
+                const style = 'stroke="#3498db" stroke-width="2" stroke-dasharray="5"';
+                svg += drawLine(pX, pXY, rotZ, style);
+                svg += drawLine(pY, pXY, rotZ, style);
+                svg += drawLine(pXY, P, rotZ, style);
+                svg += drawLine(pZ, P, rotZ, style);
+                svg += drawLine({x:x, y:0, z:z}, P, rotZ, style);
+                svg += drawLine({x:0, y:y, z:z}, P, rotZ, style);
+                svg += drawLine(pX, {x:x, y:0, z:z}, rotZ, style);
+                svg += drawLine(pZ, {x:x, y:0, z:z}, rotZ, style);
+                svg += drawLine(pY, {x:0, y:y, z:z}, rotZ, style);
+                svg += drawLine(pZ, {x:0, y:y, z:z}, rotZ, style);
+
+                svg += drawPoint(pX, rotZ, "#e74c3c", 4);
+                svg += drawPoint(pY, rotZ, "#27ae60", 4);
+                svg += drawPoint(pZ, rotZ, "#8e44ad", 4);
+                svg += drawPoint(P, rotZ, "#344e86", 6);
+
+                svg += drawText(pX, x.toString(), -10, 20, rotZ, "#e74c3c");
+                svg += drawText(pY, y.toString(), 10, 20, rotZ, "#27ae60");
+                svg += drawText(pZ, z.toString(), 15, 5, rotZ, "#8e44ad");
+                svg += drawText(P, `P(${x}; ${y}; ${z})`, 12, -5, rotZ, "#344e86", "18");
+
+                document.getElementById('coord-scene').innerHTML = svg;
+
+                let location = "";
+                if(x===0 && y===0 && z===0) location = "Початок координат";
+                else if(x===0 && y===0) location = "На осі аплікат (Oz)";
+                else if(x===0 && z===0) location = "На осі ординат (Oy)";
+                else if(y===0 && z===0) location = "На осі абсцис (Ox)";
+                else if(z===0) location = "У площині XY";
+                else if(x===0) location = "У площині YZ";
+                else if(y===0) location = "У площині XZ";
+                else location = "У просторі";
+
+                document.getElementById('coord-out').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color:var(--brand-blue);">Абсциса (x):</strong> ${x}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color:var(--brand-green);">Ордината (y):</strong> ${y}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color:purple;">Апліката (z):</strong> ${z}
+                    </div>
+                    <div style="margin-top: 15px; font-weight:bold; font-size:1.1rem; color:#d35400;">
+                        Положення: ${location}
+                    </div>
+                `;
+            };
+
+            // Слайд 2: Відстані та Середина
+            window.renderDistScene = function() {
+                const bx = parseInt(document.getElementById('b-x').value);
+                const by = parseInt(document.getElementById('b-y').value);
+                const bz = parseInt(document.getElementById('b-z').value);
+                const rotZ = 45; 
+
+                let svg = drawAxes(rotZ, 9);
+                
+                const A = {x: -3, y: -3, z: -2};
+                const B = {x: bx, y: by, z: bz};
+                const M = {x: (A.x+B.x)/2, y: (A.y+B.y)/2, z: (A.z+B.z)/2};
+
+                const styleProj = 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"';
+                svg += drawLine(A, {x:A.x, y:A.y, z:0}, rotZ, styleProj);
+                svg += drawLine(B, {x:B.x, y:B.y, z:0}, rotZ, styleProj);
+
+                svg += drawLine(A, B, rotZ, 'stroke="#344e86" stroke-width="5" stroke-linecap="round"');
+                
+                svg += drawPoint(A, rotZ, "#e74c3c", 5);
+                svg += drawPoint(B, rotZ, "#27ae60", 5);
+                svg += drawPoint(M, rotZ, "#f1c40f", 6);
+
+                svg += drawText(A, `A(-3;-3;-2)`, -30, 25, rotZ, "#e74c3c");
+                svg += drawText(B, `B(${bx};${by};${bz})`, 10, -5, rotZ, "#27ae60");
+                svg += drawText(M, `M`, 10, 20, rotZ, "#d35400", "18");
+
+                document.getElementById('dist-scene').innerHTML = svg;
+
+                const dx = B.x - A.x; const dy = B.y - A.y; const dz = B.z - A.z;
+                const dsq = dx*dx + dy*dy + dz*dz;
+                const d = Math.sqrt(dsq);
+
+                document.getElementById('dist-out').innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <strong style="color:var(--brand-blue);">Середина відрізка (Точка M):</strong><br>
+                        $x_c = \\frac{-3 + ${B.x}}{2} = ${M.x}$<br>
+                        $y_c = \\frac{-3 + ${B.y}}{2} = ${M.y}$<br>
+                        $z_c = \\frac{-2 + ${B.z}}{2} = ${M.z}$<br>
+                        <strong style="font-size: 1.15rem;">$M(${M.x}; ${M.y}; ${M.z})$</strong>
+                    </div>
+                    <div>
+                        <strong style="color:var(--brand-green);">Відстань AB:</strong><br>
+                        $d = \\sqrt{(${B.x} - (-3))^2 + (${B.y} - (-3))^2 + (${B.z} - (-2))^2}$<br>
+                        $d = \\sqrt{${dx}^2 + ${dy}^2 + ${dz}^2} = \\sqrt{${dsq}} \\approx \\mathbf{${d.toFixed(1)}}$
+                    </div>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 3: Специфічні відстані
+            let specStep = 1;
+            window.setSpecStep = function(step) {
+                specStep = step;
+                [1, 2, 3].forEach(i => document.getElementById(`btn-spec-${i}`).classList.remove('active'));
+                document.getElementById(`btn-spec-${step}`).classList.add('active');
+                renderSpecScene();
+            }
+
+            window.renderSpecScene = function() {
+                const rotZ = parseInt(document.getElementById('spec-rot').value);
+                const P = {x: 4, y: 5, z: 6};
+                
+                let svg = drawAxes(rotZ, 8);
+                const pXY = {x: 4, y: 5, z: 0};
+                const pZ = {x: 0, y: 0, z: 6};
+                const O = {x: 0, y: 0, z: 0};
+
+                const styleBase = 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="5"';
+                svg += drawLine({x:4,y:0,z:0}, pXY, rotZ, styleBase);
+                svg += drawLine({x:0,y:5,z:0}, pXY, rotZ, styleBase);
+                if(specStep !== 1) svg += drawLine(pXY, P, rotZ, styleBase);
+                if(specStep !== 2) svg += drawLine(pZ, P, rotZ, styleBase);
+
+                let outHTML = "";
+
+                if (specStep === 1) { 
+                    svg += drawLine(P, pXY, rotZ, 'stroke="#e74c3c" stroke-width="5" stroke-linecap="round"');
+                    svg += drawPoint(pXY, rotZ, "#e74c3c", 5);
+                    svg += drawText({x:4, y:5, z:3}, `d = 6`, 15, 5, rotZ, "#e74c3c", "18");
+                    outHTML = `
+                        <div style="margin-bottom: 10px;">Відстань від $P(4; 5; 6)$ до <strong>площини XY</strong>:</div>
+                        <div style="margin-bottom: 10px; color: #555;">Проєкція точки на площину $XY$ -- це точка $P_{xy}(4; 5; 0)$.</div>
+                        <div style="color: var(--brand-blue);">Відстань дорівнює модулю координати $z$:</div>
+                        <div style="font-size: 1.2rem; margin-top: 10px;">$d = |6| = \\mathbf{6}$</div>
+                    `;
+                } else if (specStep === 2) { 
+                    svg += drawLine(P, pZ, rotZ, 'stroke="#27ae60" stroke-width="5" stroke-linecap="round"');
+                    svg += drawPoint(pZ, rotZ, "#27ae60", 5);
+                    svg += drawText({x:2, y:2.5, z:6}, `d = √41`, 5, -10, rotZ, "#27ae60", "18");
+                    outHTML = `
+                        <div style="margin-bottom: 10px;">Відстань від $P(4; 5; 6)$ до <strong>осі Z</strong>:</div>
+                        <div style="margin-bottom: 10px; color: #555;">Проєкція точки на вісь $Z$ -- це точка $P_z(0; 0; 6)$.</div>
+                        <div style="color: var(--brand-green);">Відстань розраховується без урахування $z$:</div>
+                        <div style="font-size: 1.2rem; margin-top: 10px;">$d = \\sqrt{x^2 + y^2} = \\sqrt{4^2 + 5^2} = \\mathbf{\\sqrt{41}}$</div>
+                    `;
+                } else { 
+                    svg += drawLine(P, O, rotZ, 'stroke="#8e44ad" stroke-width="5" stroke-linecap="round"');
+                    svg += drawText({x:2, y:2.5, z:3}, `d = √77`, -15, -15, rotZ, "#8e44ad", "18");
+                    outHTML = `
+                        <div style="margin-bottom: 10px;">Відстань від $P(4; 5; 6)$ до <strong>початку координат O(0;0;0)</strong>:</div>
+                        <div style="color: purple;">$d = \\sqrt{x^2 + y^2 + z^2}$</div>
+                        <div style="font-size: 1.2rem; margin-top: 10px;">$d = \\sqrt{4^2 + 5^2 + 6^2} = \\sqrt{16 + 25 + 36} = \\mathbf{\\sqrt{77}}$</div>
+                    `;
+                }
+
+                svg += drawPoint(P, rotZ, "#344e86", 7);
+                svg += drawText(P, "P(4; 5; 6)", 15, -10, rotZ, "#344e86", "20");
+
+                document.getElementById('spec-scene').innerHTML = svg;
+                document.getElementById('spec-out').innerHTML = outHTML;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 4: Рівняння сфери
+            window.renderEqScene = function() {
+                const a = parseInt(document.getElementById('eq-a').value);
+                const b = parseInt(document.getElementById('eq-b').value);
+                const c = parseInt(document.getElementById('eq-c').value);
+                const r = parseInt(document.getElementById('eq-r').value);
+                
+                const rotZ = 30; 
+
+                let svg = drawAxes(rotZ, 9);
+                const Q = {x: a, y: b, z: c};
+
+                svg += drawLine(Q, {x:a, y:b, z:0}, rotZ, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"');
+                svg += drawPoint({x:a, y:b, z:0}, rotZ, "#7f8c8d", 4);
+
+                const projQ = project(Q.x, Q.y, Q.z, rotZ);
+                // Масштаб 17.
+                svg += `<circle cx="${projQ.px}" cy="${projQ.py}" r="${r * 17}" fill="url(#sphereGrad)" fill-opacity="0.85" stroke="#344e86" stroke-width="2"/>`;
+                
+                svg += drawPoint(Q, rotZ, "#e74c3c", 6);
+                svg += drawText(Q, `Q(${a}; ${b}; ${c})`, -15, -15, rotZ, "#2c3e50", "18");
+
+                document.getElementById('eq-scene').innerHTML = svg;
+
+                const termX = a === 0 ? "x^2" : (a > 0 ? `(x - ${a})^2` : `(x + ${Math.abs(a)})^2`);
+                const termY = b === 0 ? "y^2" : (b > 0 ? `(y - ${b})^2` : `(y + ${Math.abs(b)})^2`);
+                const termZ = c === 0 ? "z^2" : (c > 0 ? `(z - ${c})^2` : `(z + ${Math.abs(c)})^2`);
+                
+                document.getElementById('eq-out').innerHTML = `
+                    <div style="color:var(--brand-green); font-size: 1.2rem; margin-bottom: 15px;">
+                        Радіус $R = ${r} \\implies R^2 = \\mathbf{${r*r}}$
+                    </div>
+                    <div style="color:var(--brand-blue); background: var(--bg-light); padding: 15px; border-radius: 8px;">
+                        $$${termX} + ${termY} + ${termZ} = ${r*r}$$
+                    </div>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

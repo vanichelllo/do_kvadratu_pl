@@ -1,0 +1,677 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конус | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.25s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+        
+        .widget-svg-container { background: radial-gradient(circle at center, #ffffff 0%, #eaf0f6 100%); border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 12px; font-size: 0.95rem; border: 1px dashed var(--brand-green); line-height: 1.6; }
+
+        .slider-control { flex-grow: 1; min-width: 120px; margin: 0 10px; cursor: ew-resize; accent-color: var(--brand-blue); }
+        .slider-label { font-weight: bold; font-size: 0.9rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+        
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Стереометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВСТУП -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тіла обертання</span>
+                <h1 class="slide-title">Конус: Базові поняття та Формули</h1>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: stretch;">
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Означення:</div>
+                        <p style="margin: 0; font-size: 0.95rem;"><strong>Конус (прямий круговий)</strong> -- це тіло, утворене обертанням прямокутного трикутника навколо одного з його катетів (який стає віссю та висотою).</p>
+                        <p style="font-size: 0.95rem; margin: 10px 0 0 0;">Ключовий зв'язок (Піфагор): <strong>$L^2 = H^2 + R^2$</strong>.</p>
+                    </div>
+
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Головні формули <span class="nmt-ref-badge">📋</span></div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">
+                            <li><strong>Об'єм:</strong> $V = \frac{1}{3} \pi R^2 H$ <strong style="color:var(--brand-yellow);">(Як у піраміди!)</strong></li>
+                            <li><strong>Бічна поверхня:</strong> $S_{\text{б}} = \pi R L$ ($L$ -- твірна)</li>
+                            <li><strong>Повна поверхня:</strong> $S_{\text{повн}} = \pi R(L + R)$</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧊 Досліди утворення конуса в 3D:</div>
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-cone-1" onclick="setConeStep(1)">1. Конус</button>
+                        <button class="btn-toggle" id="btn-cone-2" onclick="setConeStep(2)">2. Внутрішній прямокутний трикутник</button>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт: <input type="range" id="cone-rot-y" class="slider-control" min="-180" max="180" value="45" oninput="renderConeScene()">
+                        </label>
+                        <label class="slider-label">
+                            🔄 Нахил: <input type="range" id="cone-rot-x" class="slider-control" min="5" max="60" value="20" oninput="renderConeScene()">
+                        </label>
+                    </div>
+                    <div class="widget-svg-container" style="height: 250px;">
+                        <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                            <g id="cone-scene"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ПЕРЕРІЗ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Властивості</span>
+                <h2 class="slide-title">Осьовий переріз конуса</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark">
+                    <p style="margin:0; font-size:1rem;"><strong>Осьовий переріз конуса</strong> -- це рівнобедрений трикутник з основою $2R$ та бічними сторонами $L$. Кут при вершині часто використовується для знаходження $R, H, L$ через тригонометрію.</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">📐 Досліди осьовий переріз (Рівнобедрений трикутник):</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            🔄 Оберт площини:
+                            <input type="range" id="sec-rot-y" class="slider-control" min="-90" max="90" value="-30" oninput="renderSecScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="height: 300px;">
+                        <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                            <g id="sec-scene"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: РОЗГОРТКА -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Лайфхак НМТ</span>
+                <h2 class="slide-title">Секрет розгортки: Сектор круга</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: stretch; margin-bottom: 10px;">
+                    <div class="box hack" style="margin: 0;">
+                        <div class="box-title">Суть бічної поверхні:</div>
+                        <p style="font-size: 0.95rem; margin-bottom: 5px;">Розгортка бічної поверхні -- це <strong>сектор круга</strong>, радіус якого дорівнює твірній $L$, а довжина дуги -- $2\pi R$.</p>
+                    </div>
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Кут розгортки ($\alpha$):</div>
+                        <p style="text-align: center; font-size: 1.15rem; font-weight: bold; margin: 10px 0;">$$\alpha = \frac{360^\circ \cdot R}{L}$$</p>
+                        <p style="font-size: 0.85rem; margin: 0; text-align: center;">Доводить, що чим ширша основа, тим більше розкривається сектор.</p>
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">✂️ Змінюй пропорцію R до L та спостерігай за сектором:</div>
+                    
+                    <div class="widget-controls">
+                        <label class="slider-label" style="flex-grow:0;">
+                            Відношення ($R / L$):
+                            <input type="range" id="net-ratio" class="slider-control" min="10" max="95" value="40" oninput="renderNetScene()">
+                            <span id="net-ratio-val" style="display:inline-block; width: 40px; text-align: right; color:var(--brand-blue);">0.40</span>
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="height: 250px;">
+                        <svg viewBox="-200 -120 400 240" width="100%" height="100%">
+                            <g id="net-scene"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ПРАКТИЧНА ЗАДАЧА (КАЛЬКУЛЯТОР 3D) -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Практикум</span>
+                <h2 class="slide-title">Динамічний калькулятор об'єму</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box example">
+                    <div class="box-title">Типова задача з НМТ:</div>
+                    <p style="font-size: 0.95rem;">Радіус основи конуса дорівнює $R$, а твірна -- $L$. Знайдіть об'єм конуса.</p>
+                    <p style="font-size: 0.95rem; margin-bottom: 0;"><strong>Алгоритм:</strong> 1) Знаходимо висоту: $H = \sqrt{L^2 - R^2}$. 2) Рахуємо об'єм: $V = \frac{1}{3} \pi R^2 H$.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 3D Калькулятор (Вводь дані -- конус змінить розміри):</div>
+                    <div class="widget-controls" style="justify-content: center;">
+                        <label class="slider-label">
+                            Радіус ($R$):
+                            <input type="range" id="calc-r" class="slider-control" min="20" max="80" value="50" oninput="renderCalcScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            Твірна ($L$):
+                            <input type="range" id="calc-l" class="slider-control" min="50" max="150" value="130" oninput="renderCalcScene()">
+                        </label>
+                    </div>
+                    
+                    <div class="grid-2col" style="align-items: center; margin-top: 5px;">
+                        <div class="widget-svg-container" style="height: 200px;">
+                            <svg viewBox="-120 -120 240 240" width="100%" height="100%">
+                                <g id="calc-3d-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="calc-out" style="display: flex; flex-direction: column; justify-content: center; text-align: left; font-size: 1.05rem; height: 200px; padding: 10px 20px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПІДСУМОК -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Конус" засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Конус підкорений.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Золоті правила:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li>$V = \frac{1}{3} \pi R^2 H$ (Як піраміда, пам'ятай про $\frac{1}{3}$).</li>
+                            <li>Всі задачі зводяться до прямокутного $\triangle$ з катетами $H$, $R$ та гіпотенузою $L$.</li>
+                            <li><strong>Осьовий переріз</strong> -- рівнобедрений трикутник ($2R$ основа, $L$ бічні).</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти конспект з ілюстраціями та формулами.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial render
+                if (currentSlide === 1) renderConeScene();
+                if (currentSlide === 2) renderSecScene();
+                if (currentSlide === 3) renderNetScene();
+                if (currentSlide === 4) renderCalcScene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= 3D ПРОЄКЦІЙНИЙ РУШІЙ =================
+            function project3D(x, y, z, angleYDeg, angleXDeg) {
+                let ay = angleYDeg * Math.PI / 180;
+                let ax = angleXDeg * Math.PI / 180;
+
+                let x1 = x * Math.cos(ay) - z * Math.sin(ay);
+                let z1 = x * Math.sin(ay) + z * Math.cos(ay);
+                let y1 = y;
+
+                let y2 = y1 * Math.cos(ax) - z1 * Math.sin(ax);
+                let z2 = y1 * Math.sin(ax) + z1 * Math.cos(ax);
+                
+                return { px: x1, py: -y2, zDepth: z2 };
+            }
+
+            function drawLine3D(x1, y1, z1, x2, y2, z2, angleY, angleX, props) {
+                const pt1 = project3D(x1, y1, z1, angleY, angleX);
+                const pt2 = project3D(x2, y2, z2, angleY, angleX);
+                return `<line x1="${pt1.px}" y1="${pt1.py}" x2="${pt2.px}" y2="${pt2.py}" ${props} />`;
+            }
+
+            function drawPoint3D(x, y, z, angleY, angleX, color, radius=4) {
+                const pt = project3D(x, y, z, angleY, angleX);
+                return `<circle cx="${pt.px}" cy="${pt.py}" r="${radius}" fill="${color}"/>`;
+            }
+
+            function drawText3D(x, y, z, text, dx, dy, angleY, angleX, color, size="16") {
+                const pt = project3D(x, y, z, angleY, angleX);
+                return `<text x="${pt.px + dx}" y="${pt.py + dy}" font-weight="bold" font-size="${size}" fill="${color}">${text}</text>`;
+            }
+
+            function drawShadow(R, angleY, angleX, yPos = 0) {
+                let rx = R * 1.1; 
+                let ry = R * Math.sin(angleX * Math.PI / 180) * 1.1;
+                let center = project3D(0, yPos, 0, angleY, angleX);
+                return `<ellipse cx="${center.px}" cy="${center.py}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.06)" stroke="none"/>`;
+            }
+
+            // Малює еліпс основи (повертає задню і передню дуги)
+            function buildCircle3D(R, yPos, angleY, angleX, propsBack, propsFront, fillFront="none") {
+                let center = project3D(0, yPos, 0, angleY, angleX);
+                let rx = R;
+                let ry = R * Math.sin(angleX * Math.PI / 180);
+                
+                let backSVG = `<path d="M ${center.px - rx} ${center.py} A ${rx} ${ry} 0 0 1 ${center.px + rx} ${center.py}" fill="none" ${propsBack}/>`;
+                let fillSVG = fillFront !== "none" ? `<ellipse cx="${center.px}" cy="${center.py}" rx="${rx}" ry="${ry}" fill="${fillFront}" stroke="none"/>` : "";
+                let frontSVG = fillSVG + `<path d="M ${center.px + rx} ${center.py} A ${rx} ${ry} 0 0 1 ${center.px - rx} ${center.py}" fill="none" ${propsFront}/>`;
+
+                return { back: backSVG, front: frontSVG };
+            }
+
+            function drawRightAngle3D(xO,yO,zO, xA,yA,zA, xB,yB,zB, size, angleY, angleX) {
+                let lenA = Math.hypot(xA - xO, yA - yO, zA - zO) || 1;
+                let ux = (xA - xO)/lenA, uy = (yA - yO)/lenA, uz = (zA - zO)/lenA;
+                let lenB = Math.hypot(xB - xO, yB - yO, zB - zO) || 1;
+                let vx = (xB - xO)/lenB, vy = (yB - yO)/lenB, vz = (zB - zO)/lenB;
+                let pt1 = {x: xO + ux*size, y: yO + uy*size, z: zO + uz*size};
+                let pt2 = {x: xO + ux*size + vx*size, y: yO + uy*size + vy*size, z: zO + uz*size + vz*size};
+                let pt3 = {x: xO + vx*size, y: yO + vy*size, z: zO + vz*size};
+                
+                let proj1 = project3D(pt1.x, pt1.y, pt1.z, angleY, angleX);
+                let proj2 = project3D(pt2.x, pt2.y, pt2.z, angleY, angleX);
+                let proj3 = project3D(pt3.x, pt3.y, pt3.z, angleY, angleX);
+                let projO = project3D(xO, yO, zO, angleY, angleX);
+                
+                return `<polyline points="${proj1.px},${proj1.py} ${proj2.px},${proj2.py} ${proj3.px},${proj3.py}" fill="rgba(243, 156, 18, 0.4)" stroke="#e67e22" stroke-width="2" stroke-linejoin="round"/>`;
+            }
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Конус
+            let coneStep = 1;
+            window.setConeStep = function(step) {
+                coneStep = step;
+                [1, 2].forEach(i => document.getElementById(`btn-cone-${i}`).classList.remove('active'));
+                document.getElementById(`btn-cone-${step}`).classList.add('active');
+                renderConeScene();
+            }
+
+            window.renderConeScene = function() {
+                const angleY = parseInt(document.getElementById('cone-rot-y').value); 
+                const angleX = parseInt(document.getElementById('cone-rot-x').value); 
+
+                const R = 70; 
+                const H = 120; 
+                const yB = -H/2 + 20; // Центр основи (трохи нижче центру SVG для композиції)
+                const yS = yB + H;    // Вершина S
+
+                let svg = drawShadow(R, angleY, angleX, yB);
+
+                // Основа
+                const sBack = 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"';
+                const sFront = 'stroke="#344e86" stroke-width="3"';
+                const baseCirc = buildCircle3D(R, yB, angleY, angleX, sBack, sFront, "none");
+                
+                svg += baseCirc.back;
+
+                // Для ідеального силуету конуса ми малюємо лінії від вершини до країв спроектованого еліпса
+                const cO = project3D(0, yB, 0, angleY, angleX);
+                const cS = project3D(0, yS, 0, angleY, angleX);
+                
+                // Твірні силуету (завжди -R і +R по осі X в проекції)
+                svg += `<line x1="${cO.px - R}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="3"/>`;
+                svg += `<line x1="${cO.px + R}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="3"/>`;
+                
+                // Якщо є внутрішній трикутник
+                if (coneStep === 2) {
+                    // Радіус повертається разом з Y-обертанням
+                    const vA = {x: R*Math.cos(angleY * Math.PI/180), y: yB, z: -R*Math.sin(angleY * Math.PI/180)};
+                    const pA = project3D(vA.x, vA.y, vA.z, 0, angleX); // 0 тут бо ми вже обернули точку вручну
+                    const pO = project3D(0, yB, 0, 0, angleX);
+                    const pS = project3D(0, yS, 0, 0, angleX);
+
+                    // Заливка трикутника (напівпрозора)
+                    svg += `<polygon points="${pO.px},${pO.py} ${pA.px},${pA.py} ${pS.px},${pS.py}" fill="rgba(243, 156, 18, 0.4)" stroke="none"/>`;
+                    
+                    // Лінії: H, R, L
+                    svg += `<line x1="${pO.px}" y1="${pO.py}" x2="${pS.px}" y2="${pS.py}" stroke="#e74c3c" stroke-width="4"/>`; // H
+                    svg += `<line x1="${pO.px}" y1="${pO.py}" x2="${pA.px}" y2="${pA.py}" stroke="#27ae60" stroke-width="4"/>`; // R
+                    svg += `<line x1="${pA.px}" y1="${pA.py}" x2="${pS.px}" y2="${pS.py}" stroke="#8e44ad" stroke-width="4"/>`; // L
+
+                    // Значок 90 град
+                    svg += drawRightAngle3D(0, yB, 0, 0, yS, 0, vA.x, vA.y, vA.z, 12, 0, angleX);
+
+                    // Точки та підписи
+                    svg += `<circle cx="${pO.px}" cy="${pO.py}" r="5" fill="#e74c3c"/>`;
+                    svg += `<circle cx="${pS.px}" cy="${pS.py}" r="4" fill="#333"/>`;
+                    svg += `<circle cx="${pA.px}" cy="${pA.py}" r="5" fill="#27ae60"/>`;
+                    
+                    svg += `<text x="${pO.px - 15}" y="${(pO.py+pS.py)/2}" font-weight="bold" fill="#e74c3c" font-size="20">H</text>`;
+                    svg += `<text x="${(pO.px+pA.px)/2}" y="${(pO.py+pA.py)/2 + 20}" font-weight="bold" fill="#27ae60" font-size="20">R</text>`;
+                    svg += `<text x="${(pA.px+pS.px)/2 + 10}" y="${(pA.py+pS.py)/2 - 5}" font-weight="bold" fill="#8e44ad" font-size="20">L</text>`;
+                }
+
+                svg += baseCirc.front;
+
+                // Заливка для "скляного" ефекту
+                svg += `<polygon points="${cO.px - R},${cO.py} ${cO.px + R},${cO.py} ${cS.px},${cS.py}" fill="rgba(52, 152, 219, 0.05)" stroke="none"/>`;
+
+                document.getElementById('cone-scene').innerHTML = svg;
+            };
+
+            // Слайд 2: Осьовий Переріз
+            window.renderSecScene = function() {
+                const angleY = parseInt(document.getElementById('sec-rot-y').value); 
+                const angleX = 20;
+
+                const R = 75; 
+                const H = 130; 
+                const yB = -H/2 + 20;
+                const yS = yB + H;
+
+                let svg = drawShadow(R, angleY, angleX, yB);
+
+                const botCirc = buildCircle3D(R, yB, angleY, angleX, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"', 'stroke="#344e86" stroke-width="3"', "none");
+                svg += botCirc.back;
+
+                const cO = project3D(0, yB, 0, angleY, angleX);
+                const cS = project3D(0, yS, 0, angleY, angleX);
+                
+                svg += `<line x1="${cO.px - R}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="2" stroke-dasharray="4"/>`;
+                svg += `<line x1="${cO.px + R}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="2" stroke-dasharray="4"/>`;
+
+                // Переріз обертається разом з Y
+                const p1 = project3D(-R, yB, 0, angleY, angleX);
+                const p2 = project3D(R, yB, 0, angleY, angleX);
+
+                svg += `<polygon points="${p1.px},${p1.py} ${p2.px},${p2.py} ${cS.px},${cS.py}" fill="rgba(243, 156, 18, 0.6)" stroke="#d35400" stroke-width="2"/>`;
+
+                svg += drawLine3D(0, yB, 0, 0, yS, 0, angleY, angleX, 'stroke="#e74c3c" stroke-width="3" stroke-dasharray="4"'); // H
+                svg += drawRightAngle3D(0, yB, 0, 0, yS, 0, R, yB, 0, 15, angleY, angleX);
+
+                // Підписи
+                svg += `<text x="${cO.px - 15}" y="${(cO.py+cS.py)/2}" font-weight="bold" fill="#e74c3c" font-size="18">H</text>`;
+                svg += `<text x="${(cO.px+p2.px)/2}" y="${(cO.py+p2.py)/2 + 20}" font-weight="bold" fill="#333" font-size="16">R</text>`;
+                svg += `<text x="${(cO.px+p1.px)/2}" y="${(cO.py+p1.py)/2 + 20}" font-weight="bold" fill="#333" font-size="16">R</text>`;
+                svg += `<text x="${(p2.px+cS.px)/2 + 15}" y="${(p2.py+cS.py)/2}" font-weight="bold" fill="#d35400" font-size="18">L</text>`;
+                svg += `<text x="${(p1.px+cS.px)/2 - 25}" y="${(p1.py+cS.py)/2}" font-weight="bold" fill="#d35400" font-size="18">L</text>`;
+
+                svg += botCirc.front;
+                document.getElementById('sec-scene').innerHTML = svg;
+            };
+
+            // Слайд 3: Розгортка
+            window.renderNetScene = function() {
+                const ratio = parseFloat(document.getElementById('net-ratio').value) / 100; // 0.1 to 0.95
+                document.getElementById('net-ratio-val').innerText = ratio.toFixed(2);
+                
+                const scene = document.getElementById('net-scene');
+                let svg = "";
+                
+                const L = 100; // Твірна - фіксований радіус сектора на екрані
+                const R = L * ratio; 
+                
+                // Кут розгортки: alpha = 360 * R / L
+                const alphaDeg = 360 * ratio;
+                const alphaRad = alphaDeg * Math.PI / 180;
+                
+                // Центр сектора зверху екрана
+                const cx = 0;
+                const cy = -80;
+
+                // Для SVG дуги нам треба початкова і кінцева точки
+                // Повертаємо сектор так, щоб він дивився рівно вниз (симетрично відносно осі Y)
+                const startAngle = (Math.PI - alphaRad) / 2;
+                const endAngle = startAngle + alphaRad;
+
+                const startX = cx + L * Math.cos(startAngle);
+                const startY = cy + L * Math.sin(startAngle);
+                
+                const endX = cx + L * Math.cos(endAngle);
+                const endY = cy + L * Math.sin(endAngle);
+
+                // Прапорець для великої дуги (> 180 град)
+                const largeArcFlag = alphaDeg > 180 ? 1 : 0;
+
+                // Малюємо сектор (Бічна поверхня)
+                svg += `<path d="M ${cx} ${cy} L ${startX} ${startY} A ${L} ${L} 0 ${largeArcFlag} 1 ${endX} ${endY} Z" fill="rgba(52, 152, 219, 0.15)" stroke="#2980b9" stroke-width="3"/>`;
+
+                // Дуга кута alpha біля вершини
+                const arcR = 25;
+                const arcStartX = cx + arcR * Math.cos(startAngle);
+                const arcStartY = cy + arcR * Math.sin(startAngle);
+                const arcEndX = cx + arcR * Math.cos(endAngle);
+                const arcEndY = cy + arcR * Math.sin(endAngle);
+                svg += `<path d="M ${arcStartX} ${arcStartY} A ${arcR} ${arcR} 0 ${largeArcFlag} 1 ${arcEndX} ${arcEndY}" fill="none" stroke="#7f8c8d" stroke-width="2"/>`;
+                svg += `<text x="${cx}" y="${cy + arcR + 15}" font-weight="bold" fill="#333" font-size="14" text-anchor="middle">α=${Math.round(alphaDeg)}°</text>`;
+
+                // Підписи L
+                const midX = cx + (L/2) * Math.cos(startAngle) - 15;
+                const midY = cy + (L/2) * Math.sin(startAngle) - 5;
+                svg += `<text x="${midX}" y="${midY}" font-weight="bold" fill="#2980b9" font-size="16">L</text>`;
+
+                // Довжина дуги
+                svg += `<text x="${cx}" y="${cy + L + 20}" font-weight="bold" fill="#e74c3c" font-size="16" text-anchor="middle">Довжина дуги = 2πR</text>`;
+
+                // Основа (Коло радіуса R). Центр кола має бути точно під центром дуги
+                // Дотична точка:
+                const touchX = cx + L * Math.cos(Math.PI/2);
+                const touchY = cy + L * Math.sin(Math.PI/2);
+                const circleCenterY = touchY + R;
+
+                svg += `<circle cx="${touchX}" cy="${circleCenterY}" r="${R}" fill="rgba(243, 156, 18, 0.15)" stroke="#d35400" stroke-width="3"/>`;
+                
+                // Радіус на колі основи
+                svg += `<line x1="${touchX}" y1="${circleCenterY}" x2="${touchX + R}" y2="${circleCenterY}" stroke="#d35400" stroke-width="2"/>`;
+                svg += `<circle cx="${touchX}" cy="${circleCenterY}" r="3" fill="#d35400"/>`;
+                svg += `<text x="${touchX + R/2}" y="${circleCenterY - 5}" font-weight="bold" fill="#d35400" font-size="14" text-anchor="middle">R</text>`;
+
+                scene.innerHTML = svg;
+            };
+
+            // Слайд 4: Калькулятор 3D
+            window.renderCalcScene = function() {
+                const r = parseFloat(document.getElementById('calc-r').value);
+                const l = parseFloat(document.getElementById('calc-l').value);
+                const out = document.getElementById('calc-out');
+                const scene = document.getElementById('calc-3d-scene');
+
+                if (r >= l) {
+                    out.innerHTML = `<span style='color:var(--warning-red); font-weight:bold;'>Помилка:</span> Твірна $L$ (гіпотенуза) має бути суворо більшою за радіус $R$ (катет). Збільште $L$ або зменште $R$.`;
+                    scene.innerHTML = "";
+                    if(window.MathJax) MathJax.typesetPromise();
+                    return;
+                }
+
+                const h = Math.sqrt(l*l - r*r);
+                const V = (1/3) * Math.PI * r * r * h;
+
+                // Масштабування для SVG
+                const maxDim = Math.max(r, h);
+                const scale = 80 / maxDim; // 80 - безпечний радіус
+                
+                const R_svg = r * scale;
+                const H_svg = h * scale;
+                const angleX = 20;
+                // Автоматичний оберт для краси
+                const angleY = (Date.now() / 30) % 360; 
+
+                const yB = -H_svg/2 + 20;
+                const yS = yB + H_svg;
+
+                let svg = drawShadow(R_svg, 0, angleX, yB);
+
+                const botCirc = buildCircle3D(R_svg, yB, 0, angleX, 'stroke="#bdc3c7" stroke-width="2" stroke-dasharray="4"', 'stroke="#344e86" stroke-width="3"', "rgba(52, 152, 219, 0.05)");
+                svg += botCirc.back;
+
+                const cO = project3D(0, yB, 0, 0, angleX);
+                const cS = project3D(0, yS, 0, 0, angleX);
+                
+                svg += `<line x1="${cO.px - R_svg}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="3"/>`;
+                svg += `<line x1="${cO.px + R_svg}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#344e86" stroke-width="3"/>`;
+
+                // Внутрішній трикутник завжди дивиться на нас
+                svg += `<polygon points="${cO.px},${cO.py} ${cO.px + R_svg},${cO.py} ${cS.px},${cS.py}" fill="rgba(243, 156, 18, 0.3)" stroke="none"/>`;
+                
+                svg += `<line x1="${cO.px}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#e74c3c" stroke-width="3.5"/>`;
+                svg += `<line x1="${cO.px}" y1="${cO.py}" x2="${cO.px + R_svg}" y2="${cO.py}" stroke="#27ae60" stroke-width="3.5"/>`;
+                svg += `<line x1="${cO.px + R_svg}" y1="${cO.py}" x2="${cS.px}" y2="${cS.py}" stroke="#8e44ad" stroke-width="3.5"/>`;
+
+                // Підписи на 3D моделі
+                svg += `<text x="${cO.px - 15}" y="${(cO.py+cS.py)/2}" font-weight="bold" fill="#e74c3c" font-size="16">H</text>`;
+                svg += `<text x="${cO.px + R_svg/2}" y="${cO.py + 15}" font-weight="bold" fill="#27ae60" font-size="16">R=${r}</text>`;
+                svg += `<text x="${(cO.px + R_svg + cS.px)/2 + 10}" y="${(cO.py + cS.py)/2}" font-weight="bold" fill="#8e44ad" font-size="16">L=${l}</text>`;
+
+                svg += botCirc.front;
+
+                scene.innerHTML = svg;
+
+                // Форматований вивід (Математика)
+                out.innerHTML = `
+                    <div style="margin-bottom: 10px; color:var(--brand-green);">
+                        <strong>1. Висота $H$ (Теорема Піфагора):</strong><br>
+                        $H = \\sqrt{L^2 - R^2} = \\sqrt{${l}^2 - ${r}^2} = \\mathbf{${Number.isInteger(h) ? h : h.toFixed(1)}}$
+                    </div>
+                    <div style="color:var(--brand-blue);">
+                        <strong>2. Знаходимо об'єм $V$:</strong><br>
+                        $V = \\frac{1}{3}\\pi R^2 H = \\frac{1}{3}\\pi \\cdot ${r}^2 \\cdot ${Number.isInteger(h) ? h : h.toFixed(1)} = \\mathbf{${Number.isInteger(r*r*h/3) ? r*r*h/3 : (r*r*h/3).toFixed(1)}\\pi}$
+                    </div>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

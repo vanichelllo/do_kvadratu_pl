@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Піраміда | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.25s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        /* Радіальний градієнт для ефекту простору */
+        .widget-svg-container { background: radial-gradient(circle at center, #ffffff 0%, #eaf0f6 100%); border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 12px; font-size: 0.95rem; border: 1px dashed var(--brand-green); line-height: 1.6; }
+
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+
+        .slider-control { flex-grow: 1; min-width: 120px; margin: 0 10px; cursor: ew-resize; accent-color: var(--brand-blue); }
+        .slider-label { font-weight: bold; font-size: 0.9rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Стереометрія</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ВСТУП -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Многогранники</span>
+                <h1 class="slide-title">Піраміда: Базові поняття та Формули</h1>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: stretch;">
+                    <div class="box definition" style="margin: 0;">
+                        <div class="box-title">Означення:</div>
+                        <p style="margin: 0; font-size: 0.95rem;"><strong>Піраміда</strong> — це багатогранник, одна грань якого є довільним многокутником (основа), а решта граней — трикутники зі спільною вершиною.</p>
+                        <p style="font-size: 0.95rem; margin: 10px 0 0 0;">Піраміда називається <strong>правильною</strong>, якщо її основа — правильний многокутник, а висота $H$ падає рівно в його <strong>центр</strong>.</p>
+                    </div>
+
+                    <div class="box theorem" style="margin: 0;">
+                        <div class="box-title">Головні формули <span class="nmt-ref-badge">📋</span></div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">
+                            <li><strong>Об'єм:</strong> $V = \frac{1}{3} S_{\text{осн}} \cdot H$ <strong style="color:var(--brand-yellow);">(Не забудь 1/3!)</strong></li>
+                            <li><strong>Бічна поверхня:</strong> $S_{\text{б}} = \frac{1}{2} P_{\text{осн}} \cdot m$ <br><small>($m$ — <strong>апофема</strong>, висота бічної грані)</small></li>
+                            <li><strong>Повна поверхня:</strong> $S_{\text{повн}} = S_{\text{б}} + S_{\text{осн}}$ <small>(основа одна!)</small></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🧊 Досліди правильну чотирикутну піраміду в 3D:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            🔄 Оберт (Y): <input type="range" id="pyr-rot-y" class="slider-control" min="-80" max="80" value="-30" oninput="renderPyrScene()">
+                        </label>
+                        <label class="slider-label">
+                            🔄 Нахил (X): <input type="range" id="pyr-rot-x" class="slider-control" min="5" max="60" value="25" oninput="renderPyrScene()">
+                        </label>
+                    </div>
+                    <div class="widget-svg-container" style="height: 250px;">
+                        <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                            <g id="pyr-scene-faces"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: СЕКРЕТИ АПОФЕМИ ТА ДІАГОНАЛІ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Секрети НМТ</span>
+                <h2 class="slide-title">Головні перерізи піраміди</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box error">
+                    <p style="margin:0; font-size:0.95rem;">
+                        <strong>Не плутайте діагональний переріз та переріз з апофемою!</strong><br>
+                        1. Переріз через діагональ основи зв'язує <strong>висоту ($H$)</strong> та <strong>бічне ребро ($L$)</strong>: $L^2 = H^2 + (\frac{d}{2})^2$.<br>
+                        2. Переріз через середини сторін зв'язує <strong>висоту ($H$)</strong> та <strong>апофему ($m$)</strong>: $m^2 = H^2 + r^2$ ($r$ - радіус вписаного кола).
+                    </p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">🧊 Досліди внутрішні перерізи:</div>
+
+                    <div class="widget-controls">
+                        <button class="btn-toggle active" id="btn-sec-1" onclick="setSecStep(1)">1. Піраміда</button>
+                        <button class="btn-toggle" id="btn-sec-2" onclick="setSecStep(2)">2. Діагональний переріз (H, L)</button>
+                        <button class="btn-toggle" id="btn-sec-3" onclick="setSecStep(3)">3. Переріз з апофемою (H, m, r)</button>
+
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="sec-rot-y" class="slider-control" min="-80" max="80" value="-35" oninput="renderSecScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-svg-container" style="height: 280px;">
+                        <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                            <g id="sec-scene-faces"></g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ЛАЙФХАК ПРЯМОКУТНОГО ТРИКУТНИКА -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Лайфхак НМТ</span>
+                <h2 class="slide-title">Основа висоти у прямокутному трикутнику</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack">
+                    <p style="margin:0; font-size:1rem;">Якщо в основі піраміди <strong>прямокутний трикутник</strong>, а всі бічні ребра рівні (або нахилені під однаковим кутом), то висота піраміди падає <strong>ТОЧНО В СЕРЕДИНУ ГІПОТЕНУЗИ (Центр описаного кола)</strong>!</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 10px;">
+                    <div class="widget-title">📐 Досліди просторове коло:</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label">
+                            Змінюй вершину прямого кута:
+                            <input type="range" id="hack-c" class="slider-control" min="-60" max="60" value="30" oninput="renderHackScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="hack-rot-y" class="slider-control" min="-80" max="80" value="-20" oninput="renderHackScene()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="align-items: center; margin-top: 5px;">
+                        <div class="widget-svg-container" style="height: 250px;">
+                            <svg viewBox="-130 -160 260 260" width="100%" height="100%">
+                                <g id="hack-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="hack-out" style="display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 0.95rem; height: 250px; padding: 10px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ПРАКТИЧНА ЗАДАЧА (КАЛЬКУЛЯТОР) -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Практикум</span>
+                <h2 class="slide-title">Динамічний калькулятор об'єму</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box example">
+                    <div class="box-title">Задача:</div>
+                    <p style="font-size: 0.95rem;">Знайдіть об'єм правильної чотирикутної піраміди, сторона основи якої дорівнює $a$, а висота — $H$.</p>
+                    <p style="font-size: 0.95rem; margin-bottom: 0;"><strong>Рішення:</strong> 1) В основі квадрат: $S_{\text{осн}} = a^2$. 2) Об'єм: $V = \frac{1}{3} a^2 \cdot H$.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 Змінюй параметри — піраміда фізично змінить розміри відносно сітки:</div>
+                    <div class="widget-controls" style="justify-content: center;">
+                        <label class="slider-label">
+                            Сторона ($a$):
+                            <input type="range" id="calc-a" class="slider-control" min="30" max="120" value="70" oninput="renderCalcScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            Висота ($H$):
+                            <input type="range" id="calc-h" class="slider-control" min="30" max="150" value="90" oninput="renderCalcScene()">
+                        </label>
+                        <div style="width: 1px; height: 30px; background: #ccc; margin: 0 10px;"></div>
+                        <label class="slider-label">
+                            🔄 Оберт:
+                            <input type="range" id="calc-rot-y" class="slider-control" min="-80" max="80" value="30" oninput="renderCalcScene()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="align-items: center; margin-top: 5px;">
+                        <div class="widget-svg-container" style="height: 220px;">
+                            <svg viewBox="-150 -150 300 300" width="100%" height="100%">
+                                <g id="calc-3d-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="calc-out" style="display: flex; flex-direction: column; justify-content: center; text-align: center; font-size: 1.1rem; height: 220px;">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПІДСУМОК -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Піраміда" засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Тепер ви знаєте всі секрети пірамід на НМТ.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Золоті правила:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li>$V = \frac{1}{3} S_{\text{осн}} \cdot H$ — не забувай про $\frac{1}{3}$!</li>
+                            <li>Апофема ($m$) — це висота грані. $m^2 = H^2 + r^2$.</li>
+                            <li>У прямокутному трикутнику висота падає в <strong>середину гіпотенузи</strong>.</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Матеріали для друку:</div>
+                        <p>Натисніть кнопку <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти конспект з 3D ілюстраціями та формулами.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити теорію</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial render for widgets
+                if (currentSlide === 1) renderPyrScene();
+                if (currentSlide === 2) renderSecScene();
+                if (currentSlide === 3) renderHackScene();
+                if (currentSlide === 4) renderCalcScene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= 3D ПРОЄКЦІЙНИЙ РУШІЙ =================
+            function project3D(x, y, z, angleYDeg, angleXDeg) {
+                let ay = angleYDeg * Math.PI / 180;
+                let ax = angleXDeg * Math.PI / 180;
+
+                // Оберт навколо осі Y
+                let x1 = x * Math.cos(ay) - z * Math.sin(ay);
+                let z1 = x * Math.sin(ay) + z * Math.cos(ay);
+                let y1 = y;
+
+                // Нахил камери (Оберт навколо X).
+                let y2 = y1 * Math.cos(ax) - z1 * Math.sin(ax);
+                let z2 = y1 * Math.sin(ax) + z1 * Math.cos(ax);
+                let x2 = x1;
+
+                // SVG координати (Y йде вниз)
+                return { px: x2, py: -y2, zDepth: z2 };
+            }
+
+            function createFace(vertices, fill, stroke, strokeWidth, angleY, angleX) {
+                let projPts = vertices.map(v => project3D(v.x, v.y, v.z, angleY, angleX));
+                let zCenter = projPts.reduce((sum, p) => sum + p.zDepth, 0) / projPts.length;
+                let ptsStr = projPts.map(p => `${p.px},${p.py}`).join(" ");
+                let svg = `<polygon points="${ptsStr}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+                return { svg: svg, z: zCenter };
+            }
+
+            function drawLine3D(p1, p2, angleY, angleX, props) {
+                const pt1 = project3D(p1.x, p1.y, p1.z, angleY, angleX);
+                const pt2 = project3D(p2.x, p2.y, p2.z, angleY, angleX);
+                return `<line x1="${pt1.px}" y1="${pt1.py}" x2="${pt2.px}" y2="${pt2.py}" ${props} />`;
+            }
+
+            function drawPoint3D(p, angleY, angleX, color, radius=4) {
+                const pt = project3D(p.x, p.y, p.z, angleY, angleX);
+                return `<circle cx="${pt.px}" cy="${pt.py}" r="${radius}" fill="${color}"/>`;
+            }
+
+            function drawText3D(p, text, dx, dy, angleY, angleX, color, size="16") {
+                const pt = project3D(p.x, p.y, p.z, angleY, angleX);
+                return `<text x="${pt.px + dx}" y="${pt.py + dy}" font-weight="bold" font-size="${size}" fill="${color}">${text}</text>`;
+            }
+
+            // Малює значок прямого кута в 3D
+            function drawRightAngle3D(pO, pA, pB, size, angleY, angleX) {
+                // Вектор OA
+                let lenA = Math.hypot(pA.x - pO.x, pA.y - pO.y, pA.z - pO.z) || 1;
+                let ux = (pA.x - pO.x)/lenA, uy = (pA.y - pO.y)/lenA, uz = (pA.z - pO.z)/lenA;
+
+                // Вектор OB
+                let lenB = Math.hypot(pB.x - pO.x, pB.y - pO.y, pB.z - pO.z) || 1;
+                let vx = (pB.x - pO.x)/lenB, vy = (pB.y - pO.y)/lenB, vz = (pB.z - pO.z)/lenB;
+
+                let pt1 = {x: pO.x + ux*size, y: pO.y + uy*size, z: pO.z + uz*size};
+                let pt2 = {x: pO.x + ux*size + vx*size, y: pO.y + uy*size + vy*size, z: pO.z + uz*size + vz*size};
+                let pt3 = {x: pO.x + vx*size, y: pO.y + vy*size, z: pO.z + vz*size};
+
+                let proj1 = project3D(pt1.x, pt1.y, pt1.z, angleY, angleX);
+                let proj2 = project3D(pt2.x, pt2.y, pt2.z, angleY, angleX);
+                let proj3 = project3D(pt3.x, pt3.y, pt3.z, angleY, angleX);
+                let projO = project3D(pO.x, pO.y, pO.z, angleY, angleX);
+
+                return `<polyline points="${proj1.px},${proj1.py} ${proj2.px},${proj2.py} ${proj3.px},${proj3.py}" fill="rgba(231, 76, 60, 0.4)" stroke="#c0392b" stroke-width="2" stroke-linejoin="round"/>`;
+            }
+
+            // Малює еліптичну тінь
+            function drawShadow(R, angleY, angleX) {
+                // Тінь завжди лежить на y=0. Радіус залежить від нахилу камери.
+                let rx = R * 1.3; // трохи ширше
+                let ry = R * Math.sin(angleX * Math.PI / 180) * 1.3;
+                let center = project3D(0, 0, 0, angleY, angleX);
+                return `<ellipse cx="${center.px}" cy="${center.py + 5}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.06)" stroke="none"/>`;
+            }
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: 3D Піраміда
+            window.renderPyrScene = function() {
+                const angleY = parseInt(document.getElementById('pyr-rot-y').value);
+                const angleX = parseInt(document.getElementById('pyr-rot-x').value);
+
+                const s = 65;
+                const h = 100;
+
+                const vA = {x:-s, y: 0, z: s};
+                const vB = {x: s, y: 0, z: s};
+                const vC = {x: s, y: 0, z:-s};
+                const vD = {x:-s, y: 0, z:-s};
+                const vS = {x: 0, y: h, z: 0};
+                const vO = {x: 0, y: 0, z: 0};
+
+                let svg = drawShadow(s*Math.SQRT2, angleY, angleX);
+
+                let faces = [
+                    createFace([vA, vB, vC, vD], "#e8f0f8", "#8e44ad", 3, angleY, angleX), // Base
+                    createFace([vA, vB, vS], "#fcfdfe", "#8e44ad", 3, angleY, angleX), // Front
+                    createFace([vB, vC, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX), // Right
+                    createFace([vC, vD, vS], "#e8f0f8", "#8e44ad", 3, angleY, angleX), // Back
+                    createFace([vD, vA, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX)  // Left
+                ];
+
+                faces.sort((a,b) => a.z - b.z);
+                svg += faces.map(f => f.svg).join("");
+
+                // Додаємо висоту H і точки для наочності
+                svg += drawLine3D(vS, vO, angleY, angleX, 'stroke="#e74c3c" stroke-width="4" stroke-dasharray="4"');
+                svg += drawPoint3D(vO, angleY, angleX, "#e74c3c", 5);
+                svg += drawPoint3D(vS, angleY, angleX, "#333", 5);
+
+                svg += drawText3D({x:0, y:h/2, z:0}, "H", 10, 5, angleY, angleX, "#e74c3c", "18");
+                svg += drawText3D(vO, "O", -15, 15, angleY, angleX, "#e74c3c", "16");
+                svg += drawText3D(vS, "S", -5, -15, angleY, angleX, "#333", "18");
+
+                document.getElementById('pyr-scene-faces').innerHTML = svg;
+            };
+
+            // Слайд 2: Перерізи
+            let secStep = 1;
+            window.setSecStep = function(step) {
+                secStep = step;
+                [1, 2, 3].forEach(i => document.getElementById(`btn-sec-${i}`).classList.remove('active'));
+                document.getElementById(`btn-sec-${step}`).classList.add('active');
+                renderSecScene();
+            }
+
+            window.renderSecScene = function() {
+                const angleY = parseInt(document.getElementById('sec-rot-y').value);
+                const angleX = 25;
+
+                const s = 70;
+                const h = 110;
+
+                const vA = {x:-s, y: 0, z: s};
+                const vB = {x: s, y: 0, z: s};
+                const vC = {x: s, y: 0, z:-s};
+                const vD = {x:-s, y: 0, z:-s};
+                const vS = {x: 0, y: h, z: 0};
+                const vO = {x: 0, y: 0, z: 0};
+
+                let svgHTML = drawShadow(s*Math.SQRT2, angleY, angleX);
+
+                let faces = [
+                    createFace([vA, vB, vC, vD], "#e8f0f8", "#8e44ad", 3, angleY, angleX),
+                    createFace([vA, vB, vS], "#fcfdfe", "#8e44ad", 3, angleY, angleX),
+                    createFace([vB, vC, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX),
+                    createFace([vC, vD, vS], "#e8f0f8", "#8e44ad", 3, angleY, angleX),
+                    createFace([vD, vA, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX)
+                ];
+
+                faces.sort((a,b) => a.z - b.z);
+                svgHTML += faces.map(f => f.svg).join("");
+
+                if (secStep === 2) {
+                    // Діагональний переріз (через A, C, S)
+                    svgHTML += `<polygon points="${project3D(vA.x, vA.y, vA.z, angleY, angleX).px},${project3D(vA.x, vA.y, vA.z, angleY, angleX).py} ${project3D(vC.x, vC.y, vC.z, angleY, angleX).px},${project3D(vC.x, vC.y, vC.z, angleY, angleX).py} ${project3D(vS.x, vS.y, vS.z, angleY, angleX).px},${project3D(vS.x, vS.y, vS.z, angleY, angleX).py}" fill="rgba(46, 204, 113, 0.7)" stroke="#27ae60" stroke-width="2" stroke-linejoin="round"/>`;
+
+                    svgHTML += drawLine3D(vO, vA, angleY, angleX, 'stroke="#27ae60" stroke-width="4"'); // d/2
+                    svgHTML += drawLine3D(vO, vS, angleY, angleX, 'stroke="#e74c3c" stroke-width="5"'); // H
+                    svgHTML += drawLine3D(vS, vA, angleY, angleX, 'stroke="#344e86" stroke-width="5"'); // L
+
+                    // Прямий кут у точці О між висотою і половиною діагоналі
+                    svgHTML += drawRightAngle3D(vO, vS, vA, 15, angleY, angleX);
+
+                    const midH = {x: 0, y: h/2, z: 0};
+                    const midD = {x: vA.x/2, y: 0, z: vA.z/2};
+                    const midL = {x: vA.x/2, y: h/2, z: vA.z/2};
+
+                    svgHTML += drawText3D(midD, "d/2", -20, 20, angleY, angleX, "#27ae60", "20");
+                    svgHTML += drawText3D(midH, "H", 15, 0, angleY, angleX, "#e74c3c", "22");
+                    svgHTML += drawText3D(midL, "L", -25, -10, angleY, angleX, "#344e86", "22");
+                }
+
+                if (secStep === 3) {
+                    // Переріз з апофемою (через середини сторін)
+                    const vM = {x: s, y: 0, z: 0};
+                    const vM2 = {x: -s, y: 0, z: 0};
+
+                    svgHTML += `<polygon points="${project3D(vM.x, vM.y, vM.z, angleY, angleX).px},${project3D(vM.x, vM.y, vM.z, angleY, angleX).py} ${project3D(vM2.x, vM2.y, vM2.z, angleY, angleX).px},${project3D(vM2.x, vM2.y, vM2.z, angleY, angleX).py} ${project3D(vS.x, vS.y, vS.z, angleY, angleX).px},${project3D(vS.x, vS.y, vS.z, angleY, angleX).py}" fill="rgba(243, 156, 18, 0.7)" stroke="#d35400" stroke-width="2" stroke-linejoin="round"/>`;
+
+                    svgHTML += drawLine3D(vO, vM, angleY, angleX, 'stroke="#d35400" stroke-width="4"'); // r
+                    svgHTML += drawLine3D(vO, vS, angleY, angleX, 'stroke="#e74c3c" stroke-width="5"'); // H
+                    svgHTML += drawLine3D(vS, vM, angleY, angleX, 'stroke="#8e44ad" stroke-width="5"'); // m
+
+                    // Прямий кут у точці О
+                    svgHTML += drawRightAngle3D(vO, vS, vM, 15, angleY, angleX);
+
+                    const midH = {x: 0, y: h/2, z: 0};
+                    const midR = {x: s/2, y: 0, z: 0};
+                    const midM = {x: s/2, y: h/2, z: 0};
+
+                    svgHTML += drawText3D(midR, "r", -5, 20, angleY, angleX, "#d35400", "20");
+                    svgHTML += drawText3D(midH, "H", -25, 0, angleY, angleX, "#e74c3c", "22");
+                    svgHTML += drawText3D(midM, "m", 15, 0, angleY, angleX, "#8e44ad", "22");
+                }
+
+                document.getElementById('sec-scene-faces').innerHTML = svgHTML;
+            };
+
+            // Слайд 3: Лайфхак з гіпотенузою (З ОПИСАНИМ КОЛОМ)
+            window.renderHackScene = function() {
+                const cPos = parseInt(document.getElementById('hack-c').value); // -60 to 60
+                const angleY = parseInt(document.getElementById('hack-rot-y').value);
+                const angleX = 25;
+
+                const R = 75; // Напівгіпотенуза
+                const H = 110;
+
+                const vA = {x: -R, y: 0, z: 0};
+                const vB = {x: R, y: 0, z: 0};
+                const vO = {x: 0, y: 0, z: 0};
+
+                // Вершина C на півколі (X^2 + Z^2 = R^2)
+                const zC = Math.sqrt(R*R - cPos*cPos);
+                const vC = {x: cPos, y: 0, z: zC};
+                const vS = {x: 0, y: H, z: 0};
+
+                let svg = drawShadow(R, angleY, angleX);
+
+                // Описане коло в 3D (Тільки півколо для наочності, або повне)
+                let circlePts = "";
+                for(let i=0; i<=40; i++) {
+                    let ang = i * Math.PI / 40; // Від 0 до PI (передня частина)
+                    let px = R * Math.cos(ang);
+                    let pz = R * Math.sin(ang);
+                    let p = project3D(px, 0, pz, angleY, angleX);
+                    circlePts += `${p.px},${p.py} `;
+                }
+                svg += `<polyline points="${circlePts}" fill="none" stroke="#27ae60" stroke-width="2" stroke-dasharray="6"/>`;
+
+                let faces = [
+                    createFace([vA, vB, vC], "#e8f0f8", "#2980b9", 3, angleY, angleX), // Base
+                    createFace([vA, vB, vS], "#fcfdfe", "#8e44ad", 3, angleY, angleX), // Back face
+                    createFace([vB, vC, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX), // Front right
+                    createFace([vC, vA, vS], "#fcfdfe", "#8e44ad", 3, angleY, angleX)  // Front left
+                ];
+
+                faces.sort((a,b) => a.z - b.z);
+                svg += faces.map(f => f.svg).join("");
+
+                // Медіана (CO) та Висота (SO)
+                svg += drawLine3D(vC, vO, angleY, angleX, 'stroke="#27ae60" stroke-width="3" stroke-dasharray="4"');
+                svg += drawLine3D(vS, vO, angleY, angleX, 'stroke="#e74c3c" stroke-width="4" stroke-dasharray="4"');
+
+                // Значок прямого кута в C (спирається на діаметр)
+                svg += drawRightAngle3D(vC, vA, vB, 15, angleY, angleX);
+                // Значок прямого кута висоти в O
+                svg += drawRightAngle3D(vO, vS, vC, 15, angleY, angleX);
+
+                svg += drawPoint3D(vA, angleY, angleX, "#333", 5);
+                svg += drawPoint3D(vB, angleY, angleX, "#333", 5);
+                svg += drawPoint3D(vC, angleY, angleX, "#27ae60", 6);
+                svg += drawPoint3D(vO, angleY, angleX, "#e74c3c", 5);
+                svg += drawPoint3D(vS, angleY, angleX, "#333", 5);
+
+                svg += drawText3D(vC, "C (90°)", -20, 25, angleY, angleX, "#27ae60", "16");
+                svg += drawText3D(vO, "O", -5, 20, angleY, angleX, "#e74c3c", "18");
+                svg += drawText3D({x:0, y:H/2, z:0}, "H", 15, 0, angleY, angleX, "#e74c3c", "20");
+                svg += drawText3D({x:cPos/2, y:0, z:zC/2}, "R", 10, 15, angleY, angleX, "#27ae60", "18"); // Radius text
+
+                document.getElementById('hack-scene').innerHTML = svg;
+
+                const L = Math.sqrt(H*H + R*R);
+                document.getElementById('hack-out').innerHTML = `
+                    Гіпотенуза $AB = ${R*2}$.<br>
+                    Медіана $CO = R = ${R}$ <span style="color:#27ae60;">(Радіус описаного кола)</span>.<br>
+                    <strong style="color:var(--brand-blue);">Висота $H$ завжди падає в точку $O$ (середину $AB$).</strong><br><br>
+                    Всі бічні ребра рівні: $L = \\sqrt{H^2 + R^2} \\approx ${L.toFixed(1)}$.
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Слайд 4: Калькулятор + 3D
+            window.renderCalcScene = function() {
+                const a = parseFloat(document.getElementById('calc-a').value);
+                const h = parseFloat(document.getElementById('calc-h').value);
+                const angleY = parseInt(document.getElementById('calc-rot-y').value);
+                const out = document.getElementById('calc-out');
+
+                const angleX = 25;
+
+                // Для SVG відображення розміри трохи корегуємо, щоб завжди влазило,
+                // але їхня ВІДНОСНА пропорція зберігається.
+                const s = a * 0.7;
+                const H_svg = h * 0.7;
+
+                const vA = {x:-s, y: 0, z: s};
+                const vB = {x: s, y: 0, z: s};
+                const vC = {x: s, y: 0, z:-s};
+                const vD = {x:-s, y: 0, z:-s};
+                const vS = {x: 0, y: H_svg, z: 0};
+
+                // Малюємо координатну сітку/площину на землі для масштабу
+                let svg = "";
+                const gridSize = 100;
+                for(let i=-gridSize; i<=gridSize; i+=25) {
+                    svg += drawLine3D({x:i, y:0, z:-gridSize}, {x:i, y:0, z:gridSize}, angleY, angleX, 'stroke="rgba(0,0,0,0.05)" stroke-width="1"');
+                    svg += drawLine3D({x:-gridSize, y:0, z:i}, {x:gridSize, y:0, z:i}, angleY, angleX, 'stroke="rgba(0,0,0,0.05)" stroke-width="1"');
+                }
+
+                let faces = [
+                    createFace([vA, vB, vC, vD], "#e8f0f8", "#8e44ad", 3, angleY, angleX),
+                    createFace([vA, vB, vS], "#fcfdfe", "#8e44ad", 3, angleY, angleX),
+                    createFace([vB, vC, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX),
+                    createFace([vC, vD, vS], "#e8f0f8", "#8e44ad", 3, angleY, angleX),
+                    createFace([vD, vA, vS], "#eef4fa", "#8e44ad", 3, angleY, angleX)
+                ];
+
+                faces.sort((a,b) => a.z - b.z);
+                svg += faces.map(f => f.svg).join("");
+
+                // Розмірні лінії
+                svg += drawLine3D({x:vA.x, y:0, z:vA.z+10}, {x:vB.x, y:0, z:vB.z+10}, angleY, angleX, 'stroke="#2980b9" stroke-width="2"');
+                svg += drawText3D({x:0, y:0, z:s+15}, `a=${a}`, -15, 15, angleY, angleX, "#2980b9", "16");
+
+                svg += drawLine3D(vS, {x:0,y:0,z:0}, angleY, angleX, 'stroke="#e74c3c" stroke-width="3" stroke-dasharray="4"');
+                svg += drawText3D({x:0, y:H_svg/2, z:0}, `H=${h}`, 10, 5, angleY, angleX, "#e74c3c", "16");
+
+                document.getElementById('calc-3d-scene').innerHTML = svg;
+
+                const sBase = a * a;
+                const v = (1/3) * sBase * h;
+
+                out.innerHTML = `
+                    <div style="margin-bottom: 10px; color:var(--brand-blue);">
+                        $S_{\\text{осн}} = a^2 = ${a}^2 = \\mathbf{${sBase}}$
+                    </div>
+                    <div style="color:var(--brand-green);">
+                        $V = \\frac{1}{3} S_{\\text{осн}} \\cdot H = \\frac{1}{3} \\cdot ${sBase} \\cdot ${h} = \\mathbf{${v.toFixed(1)}}$
+                    </div>
+                `;
+                if(window.MathJax) MathJax.typesetPromise();
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

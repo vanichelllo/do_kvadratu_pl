@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Системи нерівностей | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ТАБЛИЦЯ */
+        .styled-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.95rem; background-color: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .styled-table th, .styled-table td { padding: 12px 15px; border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        .styled-table th { background-color: rgba(142, 68, 173, 0.1); color: #8e44ad; font-weight: 700; }
+        .styled-table tr:hover { background-color: rgba(0,0,0,0.02); }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- ГЛОБАЛЬНІ SVG ПАТЕРНИ ДЛЯ ШТРИХОВКИ -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+
+            <!-- Синя штриховка (зверху осі) -->
+            <pattern id="hatch-blue" width="0.3" height="1" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="-10" x2="0" y2="10" stroke="#3498db" stroke-width="0.05"/>
+            </pattern>
+
+            <!-- Червона штриховка (знизу осі) -->
+            <pattern id="hatch-red" width="0.3" height="1" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+                <line x1="0" y1="-10" x2="0" y2="10" stroke="#e74c3c" stroke-width="0.05"/>
+            </pattern>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОСНОВНІ ПОНЯТТЯ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h1 class="slide-title">Системи нерівностей: Основи</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 1rem;"><strong>Системою нерівностей</strong> називають кілька нерівностей, для яких потрібно знайти всі спільні розв'язки.</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 0.95rem; padding-left: 20px;">
+                        <li><strong>Розв'язком системи</strong> є значення змінної, яке перетворює <strong>кожну</strong> нерівність системи на правильну числову нерівність.</li>
+                        <li><strong>Розв'язати систему</strong> — означає знайти множину всіх її розв'язків (<strong>переріз множин</strong>) або довести, що їх немає.</li>
+                    </ul>
+                </div>
+
+                <div class="box theorem" style="margin-top: 20px;">
+                    <div class="box-title">Алгоритм розв'язання системи:</div>
+                    <ol style="margin: 5px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li>Розв'язати кожну нерівність системи окремо (як самостійну задачу).</li>
+                        <li>Зобразити множину розв'язків кожної нерівності на <strong>одній</strong> числовій прямій. Зручно штрихувати їх по різні боки (одна зверху осі, інша — знизу).</li>
+                        <li>Знайти ділянку, де розв'язки всіх нерівностей накладаються один на одного (<strong>переріз</strong>).</li>
+                        <li>Записати результат у вигляді числового проміжку.</li>
+                    </ol>
+                </div>
+
+                <div class="box error" style="margin-top: 20px;">
+                    <div class="box-title">Не плутайте Систему та Сукупність!</div>
+                    <ul style="margin: 5px 0 0 0; font-size: 0.9rem; padding-left: 20px;">
+                        <li><strong>Система</strong> $\begin{cases} \dots \end{cases}$ — це логічне <strong>«І»</strong>. Ми шукаємо виключно <strong>переріз</strong> (спільну зону накладання).</li>
+                        <li><strong>Сукупність</strong> $\left[ \begin{array}{l} \dots \\ \dots \end{array} \right.$ — це логічне <strong>«АБО»</strong>. Ми беремо <strong>об'єднання</strong> всіх заштрихованих проміжків.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ІНТЕРАКТИВНИЙ ТРЕНАЖЕР ПЕРЕРІЗУ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Візуалізація</span>
+                <h2 class="slide-title">Тренажер: Як утворюється переріз?</h2>
+            </div>
+            <div class="slide-body">
+                <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Змінюйте межі та знаки нерівностей, щоб побачити, як накладання штриховок утворює розв'язок системи.</p>
+
+                <div class="math-widget">
+                    <!-- Панель керування -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px;">
+                        <!-- Перша нерівність -->
+                        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <div style="font-weight: bold; color: var(--brand-blue); width: 100px;">Нерівність 1:</div>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-toggle active" id="btn-sim-sign1-gt" onclick="updateSimSign(1, '>')">$>$</button>
+                                <button class="btn-toggle" id="btn-sim-sign1-lt" onclick="updateSimSign(1, '<')">$<$</button>
+                            </div>
+                            <label class="slider-label" style="flex-grow: 1;">
+                                Точка $A$: <span id="sim-val1-display" style="color:var(--brand-blue); width: 25px;">-2</span>
+                                <input type="range" id="sim-val1" class="slider-control" min="-8" max="8" value="-2" step="1" oninput="renderSimScene()">
+                            </label>
+                        </div>
+
+                        <!-- Друга нерівність -->
+                        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                            <div style="font-weight: bold; color: var(--warning-red); width: 100px;">Нерівність 2:</div>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-toggle" id="btn-sim-sign2-gt" onclick="updateSimSign(2, '>')">$>$</button>
+                                <button class="btn-toggle active" id="btn-sim-sign2-lt" onclick="updateSimSign(2, '<')">$<$</button>
+                            </div>
+                            <label class="slider-label" style="flex-grow: 1;">
+                                Точка $B$: <span id="sim-val2-display" style="color:var(--warning-red); width: 25px;">3</span>
+                                <input type="range" id="sim-val2" class="slider-control" min="-8" max="8" value="3" step="1" oninput="renderSimScene()">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Візуалізація -->
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <div class="widget-output" style="justify-content: center; text-align: center;">
+                            <div id="sim-system" class="scrollable-math" style="font-size: 1.8rem; margin-bottom: 15px;">
+                                <!-- JS -->
+                            </div>
+                            <div id="sim-result" class="scrollable-math" style="font-size: 1.5rem; font-weight: bold;">
+                                <!-- JS -->
+                            </div>
+                        </div>
+                        <div class="widget-svg-container" style="background: #fff; min-height: 200px;">
+                            <svg viewBox="-9 -3 18 6" width="100%" height="100%" id="sim-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВІЗУАЛЬНИЙ АНАЛІЗ ПЕРЕРІЗІВ (ТАБЛИЦЯ) -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Довідник</span>
+                <h2 class="slide-title">Типові випадки перерізу (для $a < b$)</h2>
+            </div>
+            <div class="slide-body" style="padding-right: 0;">
+                <table class="styled-table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Вигляд системи</th>
+                            <th style="width: 50%;">Схема на осі</th>
+                            <th style="width: 30%;">Результат (переріз)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="scrollable-math">$\begin{cases} x > a \\ x > b \end{cases}$</td>
+                            <td>
+                                <svg viewBox="-1 -2 7 4" width="100%" height="60px">
+                                    <line x1="-1" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                    <!-- Синя: > 1 (зверху) -->
+                                    <rect x="1" y="-1.2" width="5" height="1.2" fill="url(#hatch-blue)"/>
+                                    <line x1="1" y1="0" x2="6" y2="0" stroke="#3498db" stroke-width="0.1"/>
+                                    <!-- Червона: > 3 (знизу) -->
+                                    <rect x="3" y="0" width="3" height="1.2" fill="url(#hatch-red)"/>
+                                    <line x1="3" y1="0" x2="6" y2="0" stroke="#e74c3c" stroke-width="0.1"/>
+
+                                    <circle cx="1" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="1" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">a</text>
+                                    <circle cx="3" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="3" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">b</text>
+                                </svg>
+                            </td>
+                            <td class="scrollable-math">$x \in (b; +\infty)$</td>
+                        </tr>
+                        <tr>
+                            <td class="scrollable-math">$\begin{cases} x < a \\ x < b \end{cases}$</td>
+                            <td>
+                                <svg viewBox="-1 -2 7 4" width="100%" height="60px">
+                                    <line x1="-1" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                    <!-- Синя: < 1 (зверху) -->
+                                    <rect x="-1" y="-1.2" width="2" height="1.2" fill="url(#hatch-blue)"/>
+                                    <line x1="-1" y1="0" x2="1" y2="0" stroke="#3498db" stroke-width="0.1"/>
+                                    <!-- Червона: < 3 (знизу) -->
+                                    <rect x="-1" y="0" width="4" height="1.2" fill="url(#hatch-red)"/>
+                                    <line x1="-1" y1="0" x2="3" y2="0" stroke="#e74c3c" stroke-width="0.1"/>
+
+                                    <circle cx="1" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="1" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">a</text>
+                                    <circle cx="3" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="3" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">b</text>
+                                </svg>
+                            </td>
+                            <td class="scrollable-math">$x \in (-\infty; a)$</td>
+                        </tr>
+                        <tr>
+                            <td class="scrollable-math">$\begin{cases} x > a \\ x < b \end{cases}$</td>
+                            <td>
+                                <svg viewBox="-1 -2 7 4" width="100%" height="60px">
+                                    <line x1="-1" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                    <!-- Синя: > 1 (зверху) -->
+                                    <rect x="1" y="-1.2" width="5" height="1.2" fill="url(#hatch-blue)"/>
+                                    <line x1="1" y1="0" x2="6" y2="0" stroke="#3498db" stroke-width="0.1"/>
+                                    <!-- Червона: < 3 (знизу) -->
+                                    <rect x="-1" y="0" width="4" height="1.2" fill="url(#hatch-red)"/>
+                                    <line x1="-1" y1="0" x2="3" y2="0" stroke="#e74c3c" stroke-width="0.1"/>
+
+                                    <circle cx="1" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="1" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">a</text>
+                                    <circle cx="3" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="3" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">b</text>
+                                </svg>
+                            </td>
+                            <td class="scrollable-math">$x \in (a; b)$</td>
+                        </tr>
+                        <tr>
+                            <td class="scrollable-math">$\begin{cases} x < a \\ x > b \end{cases}$</td>
+                            <td>
+                                <svg viewBox="-1 -2 7 4" width="100%" height="60px">
+                                    <line x1="-1" y1="0" x2="6" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                    <!-- Синя: < 1 (зверху) -->
+                                    <rect x="-1" y="-1.2" width="2" height="1.2" fill="url(#hatch-blue)"/>
+                                    <line x1="-1" y1="0" x2="1" y2="0" stroke="#3498db" stroke-width="0.1"/>
+                                    <!-- Червона: > 3 (знизу) -->
+                                    <rect x="3" y="0" width="3" height="1.2" fill="url(#hatch-red)"/>
+                                    <line x1="3" y1="0" x2="6" y2="0" stroke="#e74c3c" stroke-width="0.1"/>
+
+                                    <circle cx="1" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="1" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">a</text>
+                                    <circle cx="3" cy="0" r="0.15" fill="#fff" stroke="#333" stroke-width="0.05"/>
+                                    <text x="3" y="0.8" font-size="0.6" font-family="sans-serif" text-anchor="middle">b</text>
+                                </svg>
+                            </td>
+                            <td style="color: var(--warning-red); font-weight: bold; font-size: 1.1rem; vertical-align: middle;">$x \in \varnothing$ <br><span style="font-size: 0.8rem; color: #555;">(немає розв.)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ПРАВИЛО "БІЛЬШЕ БІЛЬШОГО" ТА ТРЕНАЖЕР -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Лайфхак</span>
+                <h2 class="slide-title">Правило «Більше більшого, менше меншого»</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box hack" style="margin-bottom: 20px;">
+                    <p style="margin: 0; font-size: 1rem;">Якщо обидві нерівності системи мають \textbf{однакові знаки}, результат можна визначити без малювання осі:</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 0.95rem; padding-left: 20px;">
+                        <li>Для знаків «$>$»: обираємо <strong>найбільше</strong> число.<br>Наприклад: $\begin{cases} x > 2 \\ x > 7 \end{cases} \implies \mathbf{x > 7}$.</li>
+                        <li>Для знаків «$<$»: обираємо <strong>найменше</strong> число.<br>Наприклад: $\begin{cases} x < -1 \\ x < 5 \end{cases} \implies \mathbf{x < -1}$.</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">Тренажер: Знайдіть переріз за правилом</div>
+
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03); padding: 10px;">
+                        <label class="slider-label" style="min-width: 200px;">
+                            Число $b$: <span id="hack-b-val" style="color:var(--brand-blue); font-weight:bold; width:30px; text-align:center;">5</span>
+                            <input type="range" id="hack-b" class="slider-control" min="-5" max="10" value="5" step="1" oninput="renderHackScene()">
+                        </label>
+
+                        <div style="display: flex; gap: 10px; margin-left: 20px;">
+                            <button class="btn-toggle active" id="btn-hack-gt" onclick="setHackSign('>')">Система $>$</button>
+                            <button class="btn-toggle" id="btn-hack-lt" onclick="setHackSign('<')">Система $<$</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <div class="widget-output" style="justify-content: center; text-align: center;">
+                            <div id="hack-system" class="scrollable-math" style="font-size: 1.8rem; margin-bottom: 15px;">
+                                <!-- JS -->
+                            </div>
+                            <div id="hack-result" class="scrollable-math" style="font-size: 1.4rem; font-weight: bold; color: var(--brand-green);">
+                                <!-- JS -->
+                            </div>
+                        </div>
+                        <div class="widget-svg-container" style="background: #fff; min-height: 180px;">
+                            <svg viewBox="-7 -2.5 19 5" width="100%" height="100%" id="hack-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ПРАКТИЧНИЙ РОЗБІР -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Покроковий розв'язок системи</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="flex-grow: 1; display: flex; flex-direction: column; margin-top: 0;">
+                    <div class="widget-title">Розв'яжіть систему: $\begin{cases} 2x - 1 > 5 \\ 3x - 10 \leq 8 \end{cases}$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px; width: 100%;">
+                            Етап розв'язку: <input type="range" id="sys-step" class="slider-control" min="0" max="3" value="0" oninput="renderSysMethod()">
+                        </label>
+                    </div>
+
+                    <div class="grid-2col" style="flex-grow: 1; margin-top: 10px;">
+                        <div class="widget-output" style="justify-content: flex-start;">
+                            <div id="sys-desc" style="font-size: 1rem; color: #444; margin-bottom: 15px; min-height: 50px;">
+                                <!-- Text -->
+                            </div>
+                            <div class="scrollable-math" id="sys-render" style="font-size: 1.4rem; color: var(--brand-blue); font-weight: bold;">
+                                <!-- MathJS -->
+                            </div>
+                        </div>
+                        <div class="widget-svg-container" style="background: #fff; min-height: 200px;">
+                            <svg viewBox="0 -2 10 4" width="100%" height="100%" id="sys-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 2) renderSimScene();
+                if (currentSlide === 4) renderHackScene();
+                if (currentSlide === 5) renderSysMethod();
+
+                // Small delay to allow element rendering before MathJax
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 2: Інтерактивний Тренажер Систем
+            let simSign1 = '>';
+            let simSign2 = '<';
+
+            window.updateSimSign = function(eqNum, sign) {
+                if (eqNum === 1) {
+                    simSign1 = sign;
+                    document.getElementById('btn-sim-sign1-gt').classList.toggle('active', sign === '>');
+                    document.getElementById('btn-sim-sign1-lt').classList.toggle('active', sign === '<');
+                } else {
+                    simSign2 = sign;
+                    document.getElementById('btn-sim-sign2-gt').classList.toggle('active', sign === '>');
+                    document.getElementById('btn-sim-sign2-lt').classList.toggle('active', sign === '<');
+                }
+                renderSimScene();
+            };
+
+            window.renderSimScene = function() {
+                const val1 = parseInt(document.getElementById('sim-val1').value);
+                const val2 = parseInt(document.getElementById('sim-val2').value);
+                document.getElementById('sim-val1-display').textContent = val1;
+                document.getElementById('sim-val2-display').textContent = val2;
+
+                const sysEl = document.getElementById('sim-system');
+                const resEl = document.getElementById('sim-result');
+                const svgEl = document.getElementById('sim-svg');
+
+                // Math Update
+                sysEl.innerHTML = `$\\begin{cases} x ${simSign1} ${val1} \\\\ x ${simSign2} ${val2} \\end{cases}$`;
+
+                // Calculate Intersection
+                let min = -Infinity, max = Infinity;
+                if (simSign1 === '>') min = Math.max(min, val1); else max = Math.min(max, val1);
+                if (simSign2 === '>') min = Math.max(min, val2); else max = Math.min(max, val2);
+
+                let hasIntersection = min < max;
+                if (!hasIntersection) {
+                    resEl.innerHTML = `$x \\in \\varnothing$ (немає розв'язків)`;
+                    resEl.style.color = "var(--warning-red)";
+                } else if (min === -Infinity) {
+                    resEl.innerHTML = `$x \\in (-\\infty; ${max})$`;
+                    resEl.style.color = "var(--brand-green)";
+                } else if (max === Infinity) {
+                    resEl.innerHTML = `$x \\in (${min}; +\\infty)$`;
+                    resEl.style.color = "var(--brand-green)";
+                } else {
+                    resEl.innerHTML = `$x \\in (${min}; ${max})$`;
+                    resEl.style.color = "var(--brand-green)";
+                }
+
+                // SVG Update
+                let svg = `
+                    <line x1="-9" y1="0" x2="9" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="8.5" y="0.5" font-size="0.6" font-family="sans-serif">x</text>
+                `;
+
+                // Draw Rect 1 (Blue, Top)
+                if (simSign1 === '>') {
+                    svg += `<rect x="${val1}" y="-1.5" width="${9 - val1}" height="1.5" fill="url(#hatch-blue)"/>`;
+                    svg += `<line x1="${val1}" y1="0" x2="9" y2="0" stroke="#3498db" stroke-width="0.1"/>`;
+                } else {
+                    svg += `<rect x="-9" y="-1.5" width="${val1 + 9}" height="1.5" fill="url(#hatch-blue)"/>`;
+                    svg += `<line x1="-9" y1="0" x2="${val1}" y2="0" stroke="#3498db" stroke-width="0.1"/>`;
+                }
+
+                // Draw Rect 2 (Red, Bottom)
+                if (simSign2 === '>') {
+                    svg += `<rect x="${val2}" y="0" width="${9 - val2}" height="1.5" fill="url(#hatch-red)"/>`;
+                    svg += `<line x1="${val2}" y1="0" x2="9" y2="0" stroke="#e74c3c" stroke-width="0.1"/>`;
+                } else {
+                    svg += `<rect x="-9" y="0" width="${val2 + 9}" height="1.5" fill="url(#hatch-red)"/>`;
+                    svg += `<line x1="-9" y1="0" x2="${val2}" y2="0" stroke="#e74c3c" stroke-width="0.1"/>`;
+                }
+
+                // Intersection Highlight (Green Area)
+                if (hasIntersection) {
+                    let drawMin = min === -Infinity ? -9 : min;
+                    let drawMax = max === Infinity ? 9 : max;
+                    svg += `<rect x="${drawMin}" y="-1.5" width="${drawMax - drawMin}" height="3" fill="#27ae60" opacity="0.25"/>`;
+                    svg += `<line x1="${drawMin}" y1="0" x2="${drawMax}" y2="0" stroke="#27ae60" stroke-width="0.2"/>`;
+                }
+
+                // Points
+                svg += `<circle cx="${val1}" cy="0" r="0.2" fill="#fff" stroke="#3498db" stroke-width="0.08"/>`;
+                svg += `<text x="${val1}" y="1" font-size="0.6" fill="#3498db" text-anchor="middle" font-weight="bold">${val1}</text>`;
+
+                // Offset text slightly if points overlap
+                let yOffset2 = (val1 === val2) ? 1.7 : 1;
+                svg += `<circle cx="${val2}" cy="0" r="0.2" fill="#fff" stroke="#e74c3c" stroke-width="0.08"/>`;
+                svg += `<text x="${val2}" y="${yOffset2}" font-size="0.6" fill="#e74c3c" text-anchor="middle" font-weight="bold">${val2}</text>`;
+
+                svgEl.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([sysEl, resEl]);
+                if(window.MathJax) MathJax.typesetPromise([sysEl, resEl]);
+            };
+
+            // Слайд 4: Правило "Більше більшого"
+            let hackSign = '>';
+            window.setHackSign = function(sign) {
+                hackSign = sign;
+                document.getElementById('btn-hack-gt').classList.toggle('active', sign === '>');
+                document.getElementById('btn-hack-lt').classList.toggle('active', sign === '<');
+                renderHackScene();
+            };
+
+            window.renderHackScene = function() {
+                const bVal = parseInt(document.getElementById('hack-b').value);
+                document.getElementById('hack-b-val').textContent = bVal;
+
+                const aVal = 2; // Фіксоване число для порівняння
+                const sysEl = document.getElementById('hack-system');
+                const resEl = document.getElementById('hack-result');
+                const svgEl = document.getElementById('hack-svg');
+
+                // Math Update
+                sysEl.innerHTML = `$\\begin{cases} x ${hackSign} ${aVal} \\\\ x ${hackSign} ${bVal} \\end{cases}$`;
+
+                let ans;
+                if (hackSign === '>') {
+                    ans = Math.max(aVal, bVal);
+                    resEl.innerHTML = `$\\implies x > ${ans}$`;
+                } else {
+                    ans = Math.min(aVal, bVal);
+                    resEl.innerHTML = `$\\implies x < ${ans}$`;
+                }
+
+                // SVG Update
+                let svg = `
+                    <line x1="-7" y1="0" x2="12" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="11.5" y="0.6" font-size="0.6">x</text>
+                `;
+
+                if (hackSign === '>') {
+                    // aVal (синя, зверху)
+                    svg += `<rect x="${aVal}" y="-1.5" width="${12-aVal}" height="1.5" fill="url(#hatch-blue)"/>`;
+                    svg += `<line x1="${aVal}" y1="0" x2="12" y2="0" stroke="#3498db" stroke-width="0.1"/>`;
+
+                    // bVal (червона, знизу)
+                    svg += `<rect x="${bVal}" y="0" width="${12-bVal}" height="1.5" fill="url(#hatch-red)"/>`;
+                    svg += `<line x1="${bVal}" y1="0" x2="12" y2="0" stroke="#e74c3c" stroke-width="0.1"/>`;
+
+                    // Highlight overlap
+                    svg += `<line x1="${ans}" y1="0" x2="12" y2="0" stroke="#27ae60" stroke-width="0.2"/>`;
+                } else {
+                    // aVal (синя, зверху)
+                    svg += `<rect x="-7" y="-1.5" width="${aVal+7}" height="1.5" fill="url(#hatch-blue)"/>`;
+                    svg += `<line x1="-7" y1="0" x2="${aVal}" y2="0" stroke="#3498db" stroke-width="0.1"/>`;
+
+                    // bVal (червона, знизу)
+                    svg += `<rect x="-7" y="0" width="${bVal+7}" height="1.5" fill="url(#hatch-red)"/>`;
+                    svg += `<line x1="-7" y1="0" x2="${bVal}" y2="0" stroke="#e74c3c" stroke-width="0.1"/>`;
+
+                    // Highlight overlap
+                    svg += `<line x1="-7" y1="0" x2="${ans}" y2="0" stroke="#27ae60" stroke-width="0.2"/>`;
+                }
+
+                // Points
+                svg += `<circle cx="${aVal}" cy="0" r="0.25" fill="#fff" stroke="#333" stroke-width="0.08"/>`;
+                svg += `<text x="${aVal}" y="1.2" font-size="0.7" text-anchor="middle" font-weight="bold">${aVal}</text>`;
+
+                if (aVal !== bVal) {
+                    svg += `<circle cx="${bVal}" cy="0" r="0.25" fill="#fff" stroke="#333" stroke-width="0.08"/>`;
+                    svg += `<text x="${bVal}" y="1.2" font-size="0.7" text-anchor="middle" font-weight="bold">${bVal}</text>`;
+                }
+
+                svgEl.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([sysEl, resEl]);
+                if(window.MathJax) MathJax.typesetPromise([sysEl, resEl]);
+            };
+
+            // Слайд 5: Розв'язок системи
+            window.renderSysMethod = function() {
+                const step = parseInt(document.getElementById('sys-step').value);
+                const desc = document.getElementById('sys-desc');
+                const render = document.getElementById('sys-render');
+                const svgCont = document.getElementById('sys-svg');
+
+                let text = ""; let eq = "";
+                let svg = `
+                    <line x1="1" y1="0" x2="9" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="8.8" y="0.4" font-size="0.4">x</text>
+                `;
+
+                if (step === 0) {
+                    text = "Маємо систему двох лінійних нерівностей. Згідно з алгоритмом, розв'язуємо кожну окремо.";
+                    eq = `\\begin{cases} 2x - 1 > 5 \\\\ 3x - 10 \\leq 8 \\end{cases}`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1: Спрощення.</strong> Переносимо числа праворуч. У першому рівнянні: $2x > 6$. У другому: $3x \\leq 18$. Отримуємо найпростіший вигляд.";
+                    eq = `\\begin{aligned} &\\begin{cases} 2x > 6 \\\\ 3x \\leq 18 \\end{cases} \\\\ \\implies &\\begin{cases} x > 3 \\\\ x \\leq 6 \\end{cases} \\end{aligned}`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2: Візуалізація на осі.</strong> Штрихуємо $x > 3$ зверху (синім), а $x \\leq 6$ знизу (червоним). Увага на дужки: $3$ виколота, $6$ зафарбована.";
+                    eq = `\\begin{cases} x > 3 \\\\ x \\leq 6 \\end{cases}`;
+
+                    // Штриховка x > 3
+                    svg += `<rect x="3" y="-1" width="6" height="1" fill="url(#hatch-blue)"/>`;
+                    svg += `<line x1="3" y1="0" x2="9" y2="0" stroke="#3498db" stroke-width="0.1"/>`;
+
+                    // Штриховка x <= 6
+                    svg += `<rect x="1" y="0" width="5" height="1" fill="url(#hatch-red)"/>`;
+                    svg += `<line x1="1" y1="0" x2="6" y2="0" stroke="#e74c3c" stroke-width="0.1"/>`;
+
+                    // Точки
+                    svg += `<circle cx="3" cy="0" r="0.2" fill="#fff" stroke="#333" stroke-width="0.08"/>`;
+                    svg += `<text x="3" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">3</text>`;
+
+                    svg += `<circle cx="6" cy="0" r="0.2" fill="#333"/>`;
+                    svg += `<text x="6" y="0.8" font-size="0.5" text-anchor="middle" font-weight="bold">6</text>`;
+
+                } else if (step === 3) {
+                    text = "<strong>Крок 3: Переріз та відповідь.</strong> Шукаємо зону, де присутні ОБИДВІ штриховки (накладання). Це проміжок від $3$ до $6$.";
+                    eq = `x \\in (3; 6]`;
+
+                    // Штриховка x > 3 (бліда)
+                    svg += `<rect x="3" y="-1" width="6" height="1" fill="url(#hatch-blue)" opacity="0.3"/>`;
+                    // Штриховка x <= 6 (бліда)
+                    svg += `<rect x="1" y="0" width="5" height="1" fill="url(#hatch-red)" opacity="0.3"/>`;
+
+                    // HIGHLIGHT INTERSECTION
+                    svg += `<line x1="3" y1="0" x2="6" y2="0" stroke="#8e44ad" stroke-width="0.25"/>`;
+
+                    // Точки
+                    svg += `<circle cx="3" cy="0" r="0.2" fill="#fff" stroke="#8e44ad" stroke-width="0.1"/>`;
+                    svg += `<text x="3" y="0.8" font-size="0.5" fill="#8e44ad" text-anchor="middle" font-weight="bold">3</text>`;
+
+                    svg += `<circle cx="6" cy="0" r="0.2" fill="#8e44ad"/>`;
+                    svg += `<text x="6" y="0.8" font-size="0.5" fill="#8e44ad" text-anchor="middle" font-weight="bold">6</text>`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                svgCont.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Init call
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

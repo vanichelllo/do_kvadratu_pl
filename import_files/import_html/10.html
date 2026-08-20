@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Ірраціональні рівняння | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            loader: {load: ['[tex]/cancel']},
+            tex: {
+                packages: {'[+]': ['cancel']},
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: var(--transition); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); font-size: 1rem; display: flex; align-items: center; gap: 6px; margin: 0; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОСНОВНІ ПРИНЦИПИ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Ірраціональні рівняння</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 1rem;"><strong>Ірраціональним</strong> називають рівняння, у якому змінна міститься під знаком кореня (радикала).</p>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">🔑 Золоте правило позбавлення кореня:</div>
+                    <div class="widget-controls" style="background: rgba(41, 128, 185, 0.05);">
+                        <button class="btn-toggle active" id="btn-rule-0" onclick="renderRuleScene(false)">Рівняння з коренем</button>
+                        <span style="font-size: 1.5rem; color: var(--brand-blue);">👉</span>
+                        <button class="btn-toggle" id="btn-rule-1" onclick="renderRuleScene(true)">Піднести до $n$-го степеня</button>
+                    </div>
+
+                    <div class="widget-output" id="rule-out" style="min-height: 120px; font-size: 1.8rem; background: #fff;">
+                        <!-- JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: СИСТЕМА ТА ОДЗ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Правила</span>
+                <h2 class="slide-title">Рівносильна система на НМТ</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem" style="margin-bottom: 10px;">
+                    <div class="box-title">Головна теорема: <span class="nmt-ref-badge">📋 Довідник</span></div>
+                    <p style="margin: 5px 0; font-size: 0.95rem;">Це найпопулярніший тип рівнянь на НМТ. Його розв'язання рівносильне системі:</p>
+                    <div class="scrollable-math" style="font-size: 1.4rem; text-align: center; margin: 10px 0;">
+                        $ \sqrt{f(x)} = g(x) \iff \begin{cases} f(x) = (g(x))^2 \\ g(x) \geq 0 \end{cases} $
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚠️ Чому $g(x) \geq 0$ обов'язково?</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 250px;">
+                            Значення правої частини $g(x)$: <input type="range" id="g-val" class="slider-control" min="-5" max="5" value="-2" oninput="renderDomainScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" id="domain-out" style="min-height: 120px; font-size: 1.3rem;">
+                        <!-- JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: КЛАСИЧНИЙ ПРИКЛАД -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Детальний розбір (Приклад 1)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget" style="margin-bottom: 15px;">
+                    <div class="widget-title">🔄 Покроковий розв'язок:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px;">
+                            Крок: <input type="range" id="ex1-step" class="slider-control" min="0" max="4" value="0" oninput="renderEx1Scene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 200px; font-size: 1.2rem;">
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Розв'яжіть: $\sqrt{x+1} = x - 1$</div>
+                        <div class="scrollable-math" id="ex1-render" style="min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+                            <!-- JS -->
+                        </div>
+                        <div id="ex1-desc" style="font-size: 0.95rem; color: #7f8c8d; margin-top: 10px; min-height: 24px; text-align: center;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: ДВА КОРЕНІ ТА ХАКИ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Ускладнення</span>
+                <h2 class="slide-title">Два корені та непарні степені</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Приклад 2 (Два корені):</div>
+                        <div style="font-weight: bold; text-align: center; font-size: 1.2rem; margin: 10px 0;">$\sqrt{x+2} = \sqrt{2x-3}$</div>
+                        <ol style="margin: 0; padding-left: 20px; font-size: 0.95rem; line-height: 1.6;">
+                            <li><strong>ОДЗ:</strong> обидва вирази $\geq 0$.<br> $x \geq -2$ та $x \geq 1{,}5$. Спільне: $x \geq 1{,}5$.</li>
+                            <li><strong>Квадрат:</strong> $x + 2 = 2x - 3 \implies x = 5$.</li>
+                            <li><strong>Перевірка:</strong> $5 \geq 1{,}5$ — підходить.</li>
+                        </ol>
+                        <div style="font-weight: bold; color: var(--brand-green); margin-top: 10px;">Відповідь: 5.</div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="box hack" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <div class="box-title">Лайфхак для непарних:</div>
+                            <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Якщо рівняння містить корінь <strong>непарного</strong> степеня (наприклад, $\sqrt[3]{x}$), то жодних обмежень на праву частину або підкореневий вираз накладати не потрібно!</p>
+                            <div style="font-weight: bold; font-size: 1.1rem; color: #d35400; text-align: center; margin-top: 10px;">
+                                $\sqrt[3]{f(x)} = g(x) \implies f(x) = (g(x))^3$
+                            </div>
+                            <p style="margin: 5px 0 0 0; font-size: 0.85rem; text-align: center;">Просто підносьте до куба і жодних ОДЗ!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: ДОДАТКОВІ ПРИКЛАДИ ТА ПАСТКИ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Типові пастки НМТ</span>
+                <h2 class="slide-title">Приклад 3: Добуток дорівнює нулю</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Дуже часто на іспитах дають рівняння, де змінна є і під коренем, і поза ним. Тут треба бути максимально обережним з ОДЗ!</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🎯 Тренажер: Знайди пастку</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px;">
+                            Крок: <input type="range" id="trap-step" class="slider-control" min="0" max="3" value="0" oninput="renderTrapScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 200px; font-size: 1.2rem;">
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Розв'яжіть: $(x + 3)\sqrt{x - 4} = 0$</div>
+                        <div id="trap-render" style="min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+                            <!-- JS -->
+                        </div>
+                        <div id="trap-desc" style="font-size: 0.95rem; color: #7f8c8d; margin-top: 10px; min-height: 24px; text-align: center;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ЗАМІНА ЗМІННОЇ -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Просунутий рівень</span>
+                <h2 class="slide-title">Приклад 4: Заміна змінної</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Якщо в рівнянні є $\sqrt{x}$ та $x$, ми можемо скористатися тим, що $x = (\sqrt{x})^2$, і звести його до звичайного квадратного рівняння.</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🔄 Покрокова заміна:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px;">
+                            Крок: <input type="range" id="subst-step" class="slider-control" min="0" max="3" value="0" oninput="renderSubstScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 200px; font-size: 1.2rem;">
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Розв'яжіть: $x - 5\sqrt{x} + 6 = 0$</div>
+                        <div class="scrollable-math" id="subst-render" style="min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+                            <!-- JS -->
+                        </div>
+                        <div id="subst-desc" style="font-size: 0.95rem; color: #7f8c8d; margin-top: 10px; min-height: 24px; text-align: center;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: НЕПАРНИЙ СТЕПІНЬ ПРАКТИКА -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Приклад 5: Корінь непарного степеня</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box remark" style="margin-bottom: 10px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Давайте застосуємо лайфхак з 4-го слайду на практиці. Побачили $\sqrt[3]{...}$? Радіємо, бо це найпростіше рівняння!</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚡ Швидке розв'язання:</div>
+                    <div class="widget-controls">
+                        <label class="slider-label" style="min-width: 150px;">
+                            Крок: <input type="range" id="odd-step" class="slider-control" min="0" max="2" value="0" oninput="renderOddScene()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="min-height: 200px; font-size: 1.2rem;">
+                        <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 10px; font-size: 1.1rem;">Розв'яжіть: $\sqrt[3]{2x + 5} = 3$</div>
+                        <div class="scrollable-math" id="odd-render" style="min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+                            <!-- JS -->
+                        </div>
+                        <div id="odd-desc" style="font-size: 0.95rem; color: #7f8c8d; margin-top: 10px; min-height: 24px; text-align: center;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 8: ПІДСУМОК -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок уроку</span>
+                <h1 class="slide-title">🎉 Тему "Ірраціональні рівняння" засвоєно!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Тепер ви готові до найскладніших завдань НМТ з коренями!</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Золоті правила:</div>
+                        <ul style="font-size: 0.95rem; line-height: 1.6;">
+                            <li><strong>Парний корінь:</strong> Права частина <strong>обов'язково</strong> має бути $\geq 0$.</li>
+                            <li><strong>Непарний корінь:</strong> Ніяких ОДЗ! Просто підносимо обидві частини до потрібного степеня.</li>
+                            <li><strong>Перевірка:</strong> У будь-якій незрозумілій ситуації підставляйте знайдені корені у початкове рівняння. Це врятує бали!</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Секрет швидкості:</div>
+                        <p style="margin: 0 0 10px 0; font-size: 0.95rem;">Якщо в рівнянні є квадратний корінь і лінійна функція (як у Прикладі 1), не забувайте формули скороченого множення $(a \pm b)^2$. І завжди відкидайте корені, які роблять вираз $g(x)$ від'ємним.</p>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Почати заново</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Initial renders
+                if (currentSlide === 1) renderRuleScene(false);
+                if (currentSlide === 2) renderDomainScene();
+                if (currentSlide === 3) renderEx1Scene();
+                if (currentSlide === 5) renderTrapScene();
+                if (currentSlide === 6) renderSubstScene();
+                if (currentSlide === 7) renderOddScene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Золоте правило
+            window.renderRuleScene = function(powerApplied) {
+                document.getElementById('btn-rule-0').classList.toggle('active', !powerApplied);
+                document.getElementById('btn-rule-1').classList.toggle('active', powerApplied);
+
+                const render = document.getElementById('rule-out');
+                let html = "";
+
+                if (!powerApplied) {
+                    html = `$\\sqrt[n]{f(x)} = g(x)$`;
+                } else {
+                    html = `$\\mathbf{f(x) = (g(x))^n}$`;
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render]);
+                render.innerHTML = html;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render]);
+            };
+
+            // Слайд 2: Пояснення ОДЗ (g(x) >= 0)
+            window.renderDomainScene = function() {
+                const gVal = parseInt(document.getElementById('g-val').value);
+                const render = document.getElementById('domain-out');
+
+                let html = "";
+
+                if (gVal < 0) {
+                    html = `
+                        <div style="font-size: 1.6rem; margin-bottom: 10px;">
+                            $\\sqrt{f(x)} =$ <span style="color: var(--warning-red); font-weight: bold;">$${gVal}$</span>
+                        </div>
+                        <div style="color: var(--warning-red); font-weight: bold; font-size: 1.2rem;">Коренів немає ($\\varnothing$)!</div>
+                        <div style="font-size: 0.95rem; color: #555; margin-top: 5px;">
+                            Корінь парного степеня не може дорівнювати від'ємному числу. Розв'язувати далі не потрібно.
+                        </div>
+                    `;
+                } else {
+                    html = `
+                        <div style="font-size: 1.6rem; margin-bottom: 10px;">
+                            $\\sqrt{f(x)} =$ <span style="color: var(--brand-green); font-weight: bold;">$${gVal}$</span>
+                        </div>
+                        <div style="color: var(--brand-green); font-weight: bold; font-size: 1.2rem;">Все правильно! Можна підносити до квадрата.</div>
+                        <div style="font-size: 0.95rem; color: #555; margin-top: 5px;">
+                            Права частина невід'ємна. Отримаємо $f(x) = ${gVal}^2 = ${gVal*gVal}$.
+                        </div>
+                    `;
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render]);
+                render.innerHTML = html;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render]);
+            };
+
+            // Слайд 3: Покроковий розв'язок
+            window.renderEx1Scene = function() {
+                const step = parseInt(document.getElementById('ex1-step').value);
+                const render = document.getElementById('ex1-render');
+                const desc = document.getElementById('ex1-desc');
+
+                let html = "";
+                let text = "";
+
+                if (step === 0) {
+                    html = `$\\text{Зачекайте на крок 1...}$`;
+                    text = "Починаємо завжди з обмежень для правої частини.";
+                } else if (step === 1) {
+                    html = `$\\text{ОДЗ: } x - 1 \\geq 0 \\implies \\mathbf{x \\geq 1}$`;
+                    text = "Крок 1: Права частина має бути невід'ємною. Запам'ятаємо цю умову.";
+                } else if (step === 2) {
+                    html = `$(\\sqrt{x+1})^2 = (x-1)^2 \\implies x + 1 = x^2 - 2x + 1$`;
+                    text = "Крок 2: Підносимо обидві частини рівняння до квадрата (використовуємо формулу скороченого множення).";
+                } else if (step === 3) {
+                    html = `$x^2 - 3x = 0 \\implies x(x - 3) = 0 \\implies \\mathbf{x_1 = 0, \\; x_2 = 3}$`;
+                    text = "Крок 3: Переносимо все в один бік і знаходимо корені утвореного квадратного рівняння.";
+                } else if (step === 4) {
+                    html = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                            <div style="margin-bottom: 5px;">
+                                $x_1 = $ <span style="color: var(--warning-red); text-decoration: line-through; font-weight: bold;">$0$</span>
+                                <span style="font-size: 0.9em; margin-left: 10px;">$(0 \\not\\geq 1)$</span>
+                            </div>
+                            <div>
+                                $x_2 = $ <span style="color: var(--brand-green); font-weight: bold;">$3$</span>
+                                <span style="font-size: 0.9em; margin-left: 10px;">$(3 \\geq 1)$</span>
+                            </div>
+                        </div>
+                    `;
+                    text = "Крок 4: Перевірка! Корінь $0$ не задовольняє умову $x \\geq 1$ (сторонній). Залишається лише $3$. Відповідь: 3.";
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render, desc]);
+                render.innerHTML = html;
+                desc.innerHTML = text;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render, desc]);
+            };
+
+            // Слайд 5: Тренажер пастки НМТ
+            window.renderTrapScene = function() {
+                const step = parseInt(document.getElementById('trap-step').value);
+                const render = document.getElementById('trap-render');
+                const desc = document.getElementById('trap-desc');
+
+                let html = "";
+                let text = "";
+
+                if (step === 0) {
+                    html = `$\\text{Добуток дорівнює нулю... Що робити?}$`;
+                    text = "Добуток дорівнює нулю, коли хоча б один із множників дорівнює нулю.";
+                } else if (step === 1) {
+                    html = `
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div>$x + 3 = 0 \\implies \\mathbf{x_1 = -3}$</div>
+                            <div>$\\sqrt{x - 4} = 0 \\implies \\mathbf{x_2 = 4}$</div>
+                        </div>
+                    `;
+                    text = "Крок 1: Прирівняли кожен множник до нуля. Знайшли два кандидати на відповідь.";
+                } else if (step === 2) {
+                    html = `
+                        <div style="font-size: 1.4rem; color: var(--warning-red); font-weight: bold;">
+                            ОДЗ: $x - 4 \\geq 0 \\implies x \\geq 4$
+                        </div>
+                    `;
+                    text = "Крок 2: Згадуємо про корінь! Підкореневий вираз має бути обов'язково невід'ємним.";
+                } else if (step === 3) {
+                    html = `
+                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                            <div style="margin-bottom: 5px;">
+                                $x_1 = $ <span style="color: var(--warning-red); text-decoration: line-through; font-weight: bold;">$-3$</span>
+                                <span style="font-size: 0.9em; margin-left: 10px;">$(-3 \\text{ не більше } 4)$</span>
+                            </div>
+                            <div>
+                                $x_2 = $ <span style="color: var(--brand-green); font-weight: bold;">$4$</span>
+                                <span style="font-size: 0.9em; margin-left: 10px;">$(4 \\geq 4)$</span>
+                            </div>
+                        </div>
+                    `;
+                    text = "Крок 3: Перевірка ОДЗ. Корінь -3 — це пастка, він не підходить! Відповідь: 4.";
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render, desc]);
+                render.innerHTML = html;
+                desc.innerHTML = text;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render, desc]);
+            };
+
+            // Слайд 6: Заміна змінної
+            window.renderSubstScene = function() {
+                const step = parseInt(document.getElementById('subst-step').value);
+                const render = document.getElementById('subst-render');
+                const desc = document.getElementById('subst-desc');
+
+                let html = "";
+                let text = "";
+
+                if (step === 0) {
+                    html = `$\\text{Очікуємо крок 1...}$`;
+                    text = "Бачимо $x$ та $\\sqrt{x}$. Потрібно звести це до квадратного рівняння.";
+                } else if (step === 1) {
+                    html = `$\\text{Нехай } \\sqrt{x} = t, \\quad t \\geq 0. \\implies x = t^2$`;
+                    text = "Крок 1: Робимо заміну змінної. Оскільки корінь не буває від'ємним, $t$ має бути $\\geq 0$.";
+                } else if (step === 2) {
+                    html = `$t^2 - 5t + 6 = 0 \\implies \\mathbf{t_1 = 2, \\; t_2 = 3}$`;
+                    text = "Крок 2: Розв'язуємо звичайне квадратне рівняння відносно $t$ (наприклад, за теоремою Вієта). Обидва корені $> 0$.";
+                } else if (step === 3) {
+                    html = `
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div>$\\sqrt{x} = 2 \\implies \\mathbf{x_1 = 4}$</div>
+                            <div>$\\sqrt{x} = 3 \\implies \\mathbf{x_2 = 9}$</div>
+                        </div>
+                    `;
+                    text = "Крок 3: Повертаємося до змінної $x$. Підносимо до квадрата. Відповідь: 4; 9.";
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render, desc]);
+                render.innerHTML = html;
+                desc.innerHTML = text;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render, desc]);
+            };
+
+            // Слайд 7: Непарний степінь
+            window.renderOddScene = function() {
+                const step = parseInt(document.getElementById('odd-step').value);
+                const render = document.getElementById('odd-render');
+                const desc = document.getElementById('odd-desc');
+
+                let html = "";
+                let text = "";
+
+                if (step === 0) {
+                    html = `$\\text{Потрібно позбутися кубічного кореня...}$`;
+                    text = "Тут немає жодних обмежень чи ОДЗ, бо корінь непарного степеня існує завжди.";
+                } else if (step === 1) {
+                    html = `$(\\sqrt[3]{2x + 5})^3 = 3^3 \\implies 2x + 5 = 27$`;
+                    text = "Крок 1: Підносимо обидві частини рівняння до куба.";
+                } else if (step === 2) {
+                    html = `$2x = 27 - 5 \\implies 2x = 22 \\implies \\mathbf{x = 11}$`;
+                    text = "Крок 2: Розв'язуємо звичайне лінійне рівняння. Відповідь: 11.";
+                }
+
+                if (window.MathJax && window.MathJax.typesetClear) MathJax.typesetClear([render, desc]);
+                render.innerHTML = html;
+                desc.innerHTML = text;
+                if (window.MathJax && window.MathJax.typesetPromise) MathJax.typesetPromise([render, desc]);
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

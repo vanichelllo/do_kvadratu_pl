@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Показникові рівняння | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        /* ВИПРАВЛЕННЯ ДЛЯ ЗАГОЛОВКА: flex-start замість space-between */
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: flex-start; gap: 6px; flex-wrap: wrap; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.remark { border-left-color: #3498db; background-color: rgba(52, 152, 219, 0.06); }
+        .box.remark .box-title { color: #2980b9; }
+
+        .nmt-ref-badge { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; font-size: 0.74rem; padding: 3px 8px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; text-align: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#7f8c8d" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОСНОВНІ ПОНЯТТЯ ТА АНАЛІЗ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h1 class="slide-title">1. Основні поняття</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Показниковими</strong> називаються рівняння, у яких невідома змінна міститься в показнику степеня.<br>
+                    Найпростіше показникове рівняння має вигляд:</p>
+                    <div class="scrollable-math" style="font-size: 1.3rem; margin: 10px 0; font-weight: bold;">$a^{x} = b, \quad \text{де } a > 0, a \neq 1$</div>
+                </div>
+
+                <div class="box remark" style="margin-top: 20px;">
+                    <div class="box-title">Сценарії розв'язку</div>
+                    <p style="margin: 0; font-size: 0.95rem;">Оскільки показникова функція завжди набуває додатних значень ($a^x > 0$), маємо два сценарії:</p>
+                    <ul style="margin: 10px 0 0 0; font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li>Якщо $\mathbf{b > 0}$, рівняння має єдиний корінь: $x = \log_{a}b$ (або обчислюємо усно).</li>
+                        <li>Якщо $\mathbf{b \leq 0}$, рівняння <strong>не має коренів</strong> ($x \in \varnothing$).</li>
+                    </ul>
+                </div>
+
+                <div class="math-widget" style="margin-top: 15px;">
+                    <div class="widget-title">Тренажер: $2^x = b$</div>
+                    <div class="widget-controls" style="background: rgba(0,0,0,0.03); padding: 5px;">
+                        <button class="btn-toggle active" id="btn-b-pos" onclick="renderBaseScene(4)">$b = 4$</button>
+                        <button class="btn-toggle" id="btn-b-zero" onclick="renderBaseScene(0)">$b = 0$</button>
+                        <button class="btn-toggle" id="btn-b-neg" onclick="renderBaseScene(-2)">$b = -2$</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 5px;">
+                        <div class="widget-svg-container" style="min-height: 180px; background: #fff;">
+                            <!-- ВИПРАВЛЕННЯ: Нові координати viewBox для ідеального розміщення графіка -->
+                            <svg viewBox="-3.5 -6 7 9" width="100%" height="100%" id="base-svg">
+                                <!-- JS -->
+                            </svg>
+                        </div>
+                        <div class="widget-output" id="base-out" style="min-height: 180px; justify-content: center; text-align: left;">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: МЕТОД 1 - СПІЛЬНА ОСНОВА -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Метод 1: Зведення до спільної основи</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <p style="margin: 0; font-size: 0.95rem;">Це базовий метод, що ґрунтується на властивості монотонності: <strong>якщо основи рівні, то й показники рівні.</strong></p>
+                    <div class="scrollable-math" style="font-size: 1.2rem; margin-top: 5px; color: var(--brand-blue); font-weight: bold;">$a^{f(x)} = a^{g(x)} \iff f(x) = g(x)$</div>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title">Приклад: $4^{x-1} = 32$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-m1" class="slider-control" min="0" max="3" value="0" oninput="renderStepM1()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="m1-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 50px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="m1-render" style="font-size: 1.4rem; color: var(--brand-blue); font-weight: bold; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box hack" style="margin-top: 15px;">
+                    <!-- ВИПРАВЛЕННЯ: Текст більше не розлітається по краях -->
+                    <div class="box-title">Корисні перетворення (дріб $\to$ степінь):</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Якщо в рівнянні є десяткові дроби, одразу переводьте їх у звичайні, а потім — у степінь із від'ємним показником. Це відкриє шлях до спільної основи!</p>
+                    <div class="scrollable-math" style="margin-top: 5px; font-weight: bold;">$0{,}5 = 2^{-1}; \quad 0{,}25 = 2^{-2}; \quad 0{,}2 = 5^{-1}; \quad 0{,}125 = 2^{-3}$</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: МЕТОД 2 - СПІЛЬНИЙ МНОЖНИК -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Метод 2: Винесення спільного множника</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <p style="margin: 0; font-size: 0.95rem;">Застосовується, коли маємо суму або різницю показникових виразів з однаковою основою. Завжди виносимо за дужки степінь із <strong>найменшим</strong> показником.</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title">Приклад: $3^{x+2} - 3^x = 24$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-m2" class="slider-control" min="0" max="3" value="0" oninput="renderStepM2()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="m2-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 50px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="m2-render" style="font-size: 1.4rem; color: var(--brand-green); font-weight: bold; background: rgba(39, 174, 96, 0.05); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: МЕТОД 3 - ЗАМІНА -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Метод 3: Введення нової змінної (заміна)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <p style="margin: 0; font-size: 0.95rem;">Використовується для рівнянь, що зводяться до квадратних (містять вирази $a^{2x}$ та $a^x$). Робимо заміну $\mathbf{a^x = t}$, причому обов'язкова умова $\mathbf{t > 0}$.</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title">Приклад: $4^x - 6 \cdot 2^x + 8 = 0$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-m3" class="slider-control" min="0" max="4" value="0" oninput="renderStepM3()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="m3-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 50px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="m3-render" style="font-size: 1.3rem; color: #8e44ad; font-weight: bold; background: rgba(142, 68, 173, 0.05); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box error" style="margin-top: 15px;">
+                    <div class="box-title">Пастка із заміною!</div>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Ніколи не забувайте: якщо після заміни $a^x = t$ ви отримали від'ємне число або нуль (наприклад, $t = -5$), цей корінь <strong>відкидається</strong>! Рівняння $a^x = -5$ розв'язків не має.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: МЕТОД 4 - ДІЛЕННЯ -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Метод 4: Ділення обох частин</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <p style="margin: 0; font-size: 0.95rem;">Якщо рівняння містить вирази з <strong>різними</strong> основами, але <strong>однаковими</strong> показниками степеня, обидві частини можна поділити на один із цих виразів (оскільки $a^x \neq 0$).</p>
+                </div>
+
+                <div class="math-widget" style="flex-grow: 1;">
+                    <div class="widget-title">Приклад: $2^x = 5^x$</div>
+
+                    <div class="widget-controls">
+                        <label class="slider-label" style="width: 100%;">
+                            Крок: <input type="range" id="step-m4" class="slider-control" min="0" max="2" value="0" oninput="renderStepM4()">
+                        </label>
+                    </div>
+
+                    <div class="widget-output" style="flex-grow: 1; justify-content: flex-start; margin-top: 10px;">
+                        <div id="m4-desc" style="font-size: 1.05rem; color: #555; margin-bottom: 15px; min-height: 50px;">
+                            <!-- Text -->
+                        </div>
+                        <div class="scrollable-math" id="m4-render" style="font-size: 1.4rem; color: var(--brand-yellow); font-weight: bold; background: rgba(243, 156, 18, 0.05); padding: 15px; border-radius: 8px;">
+                            <!-- MathJS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 5</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 1) renderBaseScene(4);
+                if (currentSlide === 2) renderStepM1();
+                if (currentSlide === 3) renderStepM2();
+                if (currentSlide === 4) renderStepM3();
+                if (currentSlide === 5) renderStepM4();
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+                }, 50);
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 1: Базове рівняння на графіку (виправлено координати та малювання)
+            window.renderBaseScene = function(bVal) {
+                document.getElementById('btn-b-pos').classList.toggle('active', bVal === 4);
+                document.getElementById('btn-b-zero').classList.toggle('active', bVal === 0);
+                document.getElementById('btn-b-neg').classList.toggle('active', bVal === -2);
+
+                const svg = document.getElementById('base-svg');
+                const out = document.getElementById('base-out');
+
+                let svgHtml = `
+                    <!-- Осі координат -->
+                    <line x1="-3.2" y1="0" x2="3.2" y2="0" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="3" y="0.5" font-size="0.4" font-family="sans-serif">x</text>
+
+                    <line x1="0" y1="2.5" x2="0" y2="-5.5" stroke="#7f8c8d" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                    <text x="0.2" y="-5.1" font-size="0.4" font-family="sans-serif">y</text>
+
+                    <text x="-0.3" y="0.5" font-size="0.35" font-family="sans-serif">0</text>
+                `;
+
+                // Графік 2^x (оскільки координата Y в SVG йде зверху вниз, ми використовуємо svgY = -y)
+                let d = "";
+                for(let x = -3.2; x <= 3.2; x += 0.05) {
+                    let y = Math.pow(2, x);
+                    if (y <= 5.8) {
+                        let svgY = -y;
+                        d += (d==="" ? `M ${x} ${svgY}` : ` L ${x} ${svgY}`);
+                    }
+                }
+                svgHtml += `<path d="${d}" fill="none" stroke="#3498db" stroke-width="0.1" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+                // Пряма y = b та перетин
+                let html = ``;
+                if (bVal === 4) {
+                    svgHtml += `<line x1="-3.2" y1="-4" x2="3.2" y2="-4" stroke="#e74c3c" stroke-width="0.08" stroke-dasharray="0.2,0.2"/>`;
+                    svgHtml += `<circle cx="2" cy="-4" r="0.15" fill="#2c3e50"/>`;
+                    svgHtml += `<line x1="2" y1="0" x2="2" y2="-4" stroke="#7f8c8d" stroke-width="0.05" stroke-dasharray="0.1,0.1"/>`;
+                    svgHtml += `<text x="-0.5" y="-3.8" font-size="0.4" font-family="sans-serif" fill="#e74c3c">4</text>`;
+                    svgHtml += `<text x="1.9" y="0.6" font-size="0.4" font-family="sans-serif">2</text>`;
+
+                    html = `
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--brand-blue); font-weight: bold;">$2^x = 4$</div>
+                        <div style="font-size: 0.95rem; line-height: 1.5;">Пряма $y=4$ перетинає графік $y=2^x$ в одній точці.</div>
+                        <div style="font-size: 1.1rem; margin-top: 10px;">Корінь: $\\mathbf{x = 2}$</div>
+                    `;
+                } else if (bVal === 0) {
+                    svgHtml += `<line x1="-3.2" y1="0" x2="3.2" y2="0" stroke="#e74c3c" stroke-width="0.08" stroke-dasharray="0.2,0.2"/>`;
+
+                    html = `
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--warning-red); font-weight: bold;">$2^x = 0$</div>
+                        <div style="font-size: 0.95rem; line-height: 1.5;">Пряма $y=0$ (вісь $Ox$) є асимптотою, графік до неї лише наближається. Перетину немає.</div>
+                        <div style="font-size: 1.1rem; margin-top: 10px;">$\\mathbf{x \\in \\varnothing}$</div>
+                    `;
+                } else {
+                    svgHtml += `<line x1="-3.2" y1="2" x2="3.2" y2="2" stroke="#e74c3c" stroke-width="0.08" stroke-dasharray="0.2,0.2"/>`;
+                    svgHtml += `<text x="-0.7" y="1.8" font-size="0.4" font-family="sans-serif" fill="#e74c3c">-2</text>`;
+
+                    html = `
+                        <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--warning-red); font-weight: bold;">$2^x = -2$</div>
+                        <div style="font-size: 0.95rem; line-height: 1.5;">Показникова функція завжди додатна. Пряма $y=-2$ лежить під віссю $Ox$. Перетину немає.</div>
+                        <div style="font-size: 1.1rem; margin-top: 10px;">$\\mathbf{x \\in \\varnothing}$</div>
+                    `;
+                }
+
+                svg.innerHTML = svgHtml;
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 2: Метод 1
+            window.renderStepM1 = function() {
+                const step = parseInt(document.getElementById('step-m1').value);
+                const desc = document.getElementById('m1-desc');
+                const render = document.getElementById('m1-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкове рівняння. Мета — зробити основи зліва і справа однаковими.";
+                    eq = `4^{x-1} = 32`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Помічаємо, що 4 і 32 — це степені двійки. Записуємо їх як $2^2$ та $2^5$.";
+                    eq = `(2^{\\mathbf{2}})^{x-1} = 2^{\\mathbf{5}}`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Застосовуємо властивість степеня до степеня $(a^n)^m = a^{nm}$. Перемножуємо показники зліва.";
+                    eq = `2^{\\mathbf{2x-2}} = 2^5`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Основи ($2$) однакові, тому прирівнюємо самі показники і розв'язуємо просте лінійне рівняння.";
+                    eq = `\\begin{aligned} 2x - 2 &= 5 \\\\ 2x &= 7 \\implies \\mathbf{x = 3{,}5} \\end{aligned}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 3: Метод 2
+            window.renderStepM2 = function() {
+                const step = parseInt(document.getElementById('step-m2').value);
+                const desc = document.getElementById('m2-desc');
+                const render = document.getElementById('m2-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкове рівняння. Маємо різницю показникових виразів з однаковою основою ($3$).";
+                    eq = `3^{x+2} - 3^x = 24`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Виносимо за дужки спільний множник з найменшим показником — це $3^x$. У дужках залишається $3^2$ від першого доданка і $1$ від другого.";
+                    eq = `\\mathbf{3^x} \\cdot (3^2 - 1) = 24`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Обчислюємо значення виразу в дужках: $9 - 1 = 8$.";
+                    eq = `3^x \\cdot \\mathbf{8} = 24`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Ділимо обидві частини на $8$. Зводимо до спільної основи.";
+                    eq = `\\begin{aligned} 3^x &= \\frac{24}{8} \\\\ 3^x &= 3^1 \\implies \\mathbf{x = 1} \\end{aligned}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 4: Метод 3
+            window.renderStepM3 = function() {
+                const step = parseInt(document.getElementById('step-m3').value);
+                const desc = document.getElementById('m3-desc');
+                const render = document.getElementById('m3-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкове рівняння. Помічаємо $4^x$ та $2^x$. Очевидно, що це рівняння зводиться до квадратного.";
+                    eq = `4^x - 6 \\cdot 2^x + 8 = 0`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Оскільки $4^x = (2^2)^x = (2^x)^2$, вводимо нову змінну $\\mathbf{t = 2^x}$, причому $\\mathbf{t > 0}$.";
+                    eq = `t^2 - 6t + 8 = 0`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Розв'язуємо квадратне рівняння (наприклад, за теоремою Вієта: сума $6$, добуток $8$). Обидва корені додатні.";
+                    eq = `t_1 = 2, \\quad t_2 = 4`;
+                } else if (step === 3) {
+                    text = "<strong>Крок 3:</strong> Повертаємось до початкової змінної $x$. Отримуємо два прості рівняння.";
+                    eq = `\\begin{bmatrix} 2^x = 2 \\\\ 2^x = 4 \\end{bmatrix}`;
+                } else if (step === 4) {
+                    text = "<strong>Крок 4:</strong> Розв'язуємо їх і записуємо відповідь.";
+                    eq = `\\begin{bmatrix} 2^x = 2^1 \\implies \\mathbf{x = 1} \\\\ 2^x = 2^2 \\implies \\mathbf{x = 2} \\end{bmatrix}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Слайд 5: Метод 4
+            window.renderStepM4 = function() {
+                const step = parseInt(document.getElementById('step-m4').value);
+                const desc = document.getElementById('m4-desc');
+                const render = document.getElementById('m4-render');
+
+                let text = ""; let eq = "";
+
+                if (step === 0) {
+                    text = "Початкове рівняння. Основи різні ($2$ та $5$), але показники однакові ($x$).";
+                    eq = `2^x = 5^x`;
+                } else if (step === 1) {
+                    text = "<strong>Крок 1:</strong> Поділимо обидві частини на $5^x$. Оскільки $5^x > 0$ для будь-якого $x$, ми не втратимо корені і не поділимо на нуль.";
+                    eq = `\\frac{2^x}{5^x} = \\frac{5^x}{5^x} \\implies \\left(\\frac{2}{5}\\right)^x = 1`;
+                } else if (step === 2) {
+                    text = "<strong>Крок 2:</strong> Одиничку завжди можна подати як будь-яке число в нульовому степені. Прирівнюємо показники.";
+                    eq = `\\left(\\frac{2}{5}\\right)^x = \\left(\\frac{2}{5}\\right)^{\\mathbf{0}} \\implies \\mathbf{x = 0}`;
+                }
+
+                desc.innerHTML = text;
+                render.innerHTML = `$$${eq}$$`;
+                if(window.MathJax) MathJax.typesetClear([desc, render]);
+                if(window.MathJax) MathJax.typesetPromise([desc, render]);
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

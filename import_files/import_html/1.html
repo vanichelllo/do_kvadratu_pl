@@ -1,0 +1,1059 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Числові множини та операції з ними | ДО КВАДРАТУ</title>
+
+    <!-- MathJax для ідеального рендерингу математичних формул -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-blue-light: #4b6cb7;
+            --brand-green: #27ae60;
+            --brand-yellow: #f39c12;
+            --brand-yellow-light: #f1c40f;
+            --text-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --shadow: 0 8px 24px rgba(52, 78, 134, 0.08);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition: all 0.25s ease;
+            --warning-red: #e74c3c;
+            --widget-bg: #eef3f9;
+        }
+
+        [data-theme="dark"] {
+            --brand-blue: #6c8dfa;
+            --brand-blue-light: #8faaff;
+            --brand-green: #2ecc71;
+            --brand-yellow: #f1c40f;
+            --text-dark: #ecf0f1;
+            --bg-light: #151c28;
+            --card-bg: #1f2a3c;
+            --border-color: #31425d;
+            --shadow: 0 8px 30px rgba(0,0,0,0.4);
+            --widget-bg: #182232;
+        }
+
+        html, body {
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* ШАПКА ТА НАВІГАЦІЯ */
+        .navbar {
+            background-color: var(--card-bg);
+            border-bottom: 3px solid var(--brand-green);
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            z-index: 100;
+            position: relative;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 800;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .timer-badge {
+            font-family: monospace;
+            background: rgba(52, 78, 134, 0.1);
+            color: var(--brand-blue);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-action, .btn-primary {
+            background-color: var(--brand-green);
+            color: white;
+            padding: 7px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1.5px solid var(--brand-blue);
+            color: var(--text-dark);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+
+        .btn-pdf { border-color: var(--warning-red); color: var(--warning-red); }
+        .btn-pdf:hover { background-color: var(--warning-red); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow-light)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ДЛЯ СЛАЙДІВ */
+        .presentation-viewport {
+            height: calc(100vh - 125px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+        }
+
+        .slide-card {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 1040px;
+            height: 100%;
+            max-height: 640px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            padding: 24px 34px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .slide-card.active { display: flex; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.06); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.08); }
+        .box.error .box-title { color: var(--warning-red); }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.remark { border-left-color: #34495e; background-color: rgba(52, 73, 94, 0.06); }
+        .box.remark .box-title { color: #34495e; }
+
+        /* БЕЙДЖ ДЛЯ ДОВІДКОВИХ МАТЕРІАЛІВ НМТ (\nmtlabel) */
+        .nmt-ref-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            font-size: 0.74rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+            vertical-align: middle;
+        }
+
+        /* СІТКИ */
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        /* ВІДЖЕТИ ТА ТРЕНАЖЕРИ */
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-top: 8px; }
+        .widget-title { font-weight: 700; color: var(--brand-blue); margin-bottom: 8px; font-size: 0.92rem; display: flex; align-items: center; gap: 6px; }
+        .widget-inputs { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+        .widget-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); font-size: 0.95rem; }
+        .widget-btn { background-color: var(--brand-blue); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.88rem; transition: var(--transition); }
+        .widget-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 8px 12px; font-size: 0.93rem; border: 1px dashed var(--brand-green); min-height: 38px; display: flex; align-items: center; }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+
+        .venn-text { font-family: var(--font-main); font-weight: bold; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <!-- ШАПКА -->
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg id="app-logo" class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Інтерактивна теорія</span>
+        </a>
+
+        <div class="nav-controls">
+            <a href="#" class="btn-secondary btn-pdf" title="Завантажити повний конспект">📄 Завантажити PDF</a>
+            <span class="timer-badge" id="speaker-timer">00:00</span>
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ТИТУЛЬНИЙ ТА СТРУКТУРА -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Тема 01 / Повний курс алгебри</span>
+                <h1 class="slide-title">Числові множини та операції з ними</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="grid-2col" style="margin-bottom: 12px;">
+                    <div class="box definition">
+                        <div class="box-title">📖 Повний зміст уроку:</div>
+                        <ul>
+                            <li><strong>1.</strong> Що таке множина? Належність ($\in, \notin$) та операції ($\cup, \cap$).</li>
+                            <li><strong>2.</strong> Основні числові множини ($\mathbb{N}, \mathbb{Z}, \mathbb{Q}, \mathbb{I}, \mathbb{R}$).</li>
+                            <li><strong>3.</strong> Взаємозв'язок множин та ланцюжок вкладеності.</li>
+                            <li><strong>4.</strong> Натуральні числа: прості/складені, НСД, НСК, подільність.</li>
+                            <li><strong>5.</strong> Цілі числа: геометричний зміст та властивості модуля.</li>
+                            <li><strong>6.</strong> Раціональні числа: звичайні та десяткові дроби.</li>
+                            <li><strong>7.</strong> Стандартний вигляд числа.</li>
+                        </ul>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">⚡ Позначки та інструменти в презентації:</div>
+                        <p>• Бейджем <span class="nmt-ref-badge">📋 Є в довідкових матеріалах НМТ</span> виділено формули, які офіційно надаються в зошиті на іспиті.</p>
+                        <p>• Використовуйте <strong>живі калькулятори</strong> на кожному кроці для глибшого розуміння матеріалу.</p>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button class="btn-primary" onclick="goToSlide(2)" style="padding: 10px 24px; font-size: 1rem;">Розпочати урок →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: 1. ЩО ТАКЕ МНОЖИНА? -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1</span>
+                <h2 class="slide-title">1. Що таке множина? Позначення та елементи</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><strong>Множина</strong> -- це набір певних об'єктів, які мають спільну ознаку. Об'єкти множини називають <strong>елементами</strong>.</p>
+                    <p style="text-align: center; font-size: 1.1rem;">$$A = \{1, 2, 3\} \quad \text{-- множина } A \text{ з елементами 1, 2, 3}$$</p>
+                    <p><strong>Позначення:</strong></p>
+                    <ul>
+                        <li>$a \in A$ -- елемент $a$ <strong>належить</strong> множині $A$</li>
+                        <li>$b \notin A$ -- елемент $b$ <strong>не належить</strong> множині $A$</li>
+                        <li>$\emptyset$ -- <strong>порожня множина</strong> (множина, яка не містить жодного елемента)</li>
+                    </ul>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Приклад з конспекту:</div>
+                        <p>Нехай $A = \{2, 4, 6\}$. Тоді:</p>
+                        <p style="font-size: 1.15rem; font-weight: bold; text-align: center;">$$2 \in A, \quad 3 \notin A$$</p>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🔍 Живий тестер: Чи належить елемент множині?</div>
+                        <div class="widget-inputs">
+                            <label>Множина: { <input type="text" id="elem-set" class="widget-input" value="2, 4, 6" style="width: 100px;"> }</label>
+                            <label>Елемент: <input type="number" id="elem-val" class="widget-input" value="2" style="width: 55px;"></label>
+                            <button class="widget-btn" onclick="checkMembership()">Перевірити</button>
+                        </div>
+                        <div class="widget-output" id="elem-output">2 ∈ {2, 4, 6} -- Елемент належить множині!</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ОПЕРАЦІЇ З МНОЖИНАМИ -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 1 (Продовження)</span>
+                <h2 class="slide-title">Операції з множинами: Об'єднання ($\cup$) та Перетин ($\cap$)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box definition">
+                        <div class="box-title">Об'єднання множин ($A \cup B$)</div>
+                        <p><strong>Об'єднання множин</strong> $A \cup B$ -- це множина всіх елементів, які належать <strong>хоча б одній</strong> з множин $A$ або $B$ (зсипаємо всі елементи в один набір без повторів).</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Перетин множин ($A \cap B$)</div>
+                        <p><strong>Перетин множин</strong> $A \cap B$ -- це множина всіх елементів, які належать <strong>одночасно і множині $A$, і множині $B$</strong> (лише спільна частина).</p>
+                    </div>
+                </div>
+
+                <div class="box example">
+                    <div class="box-title">Розбір прикладу:</div>
+                    <p>Нехай $A = \{1, 2, 3\}, \quad B = \{2, 3, 4\}$. Тоді:</p>
+                    <p style="font-size: 1.15rem; text-align: center;">$$A \cup B = \{1, 2, 3, 4\}, \qquad A \cap B = \{2, 3\}.$$</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">⚙️ Інтерактивний калькулятор об'єднання та перетину:</div>
+                    <div class="widget-inputs">
+                        <label>A = { <input type="text" id="setA-input" class="widget-input" value="1, 2, 3" style="width: 100px;"> }</label>
+                        <label>B = { <input type="text" id="setB-input" class="widget-input" value="2, 3, 4" style="width: 100px;"> }</label>
+                        <button class="widget-btn" onclick="calcSets()">Обчислити</button>
+                    </div>
+                    <div class="widget-output" id="sets-output">
+                        A ∪ B = { 1, 2, 3, 4 } &nbsp;|&nbsp; A ∩ B = { 2, 3 }
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: 2. ОСНОВНІ ЧИСЛОВІ МНОЖИНИ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 2</span>
+                <h2 class="slide-title">2. Основні числові множини</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <ul style="margin: 0; padding-left: 20px; line-height: 1.65;">
+                        <li><strong>Натуральні числа ($\mathbb{N}$):</strong> Числа, що використовуються при лічбі: $1, 2, 3, \dots$. <br>
+                        <span style="color: var(--warning-red); font-weight: bold;">⚠️ Число 0 НЕ є натуральним!</span></li>
+                        
+                        <li><strong>Цілі числа ($\mathbb{Z}$):</strong> Натуральні, протилежні їм та число нуль: $\{\dots, -2, -1, 0, 1, 2, \dots\}$.</li>
+                        
+                        <li><strong>Раціональні числа ($\mathbb{Q}$):</strong> Числа, які можна подати у вигляді дробу $\frac{p}{q}$, де $p \in \mathbb{Z}, q \in \mathbb{N}$.<br>
+                        <em>Приклади:</em> $\frac{1}{2}; \ -3; \ 0,75; \ 0,(3)$.</li>
+                        
+                        <li><strong>Ірраціональні числа ($\mathbb{I}$):</strong> Числа, які неможливо подати у вигляді звичайного дробу (нескінченні неперіодичні десяткові дроби).<br>
+                        <em>Приклади:</em> $\sqrt{2}; \ \pi; \ e$.</li>
+                        
+                        <li><strong>Дійсні числа ($\mathbb{R}$):</strong> Усі раціональні та ірраціональні числа разом: $\mathbb{R} = \mathbb{Q} \cup \mathbb{I}$.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: 3. ВЗАЄМОЗВ'ЯЗОК МНОЖИН -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 3</span>
+                <h2 class="slide-title">3. Взаємозв'язок множин (Діаграма Ейлера-Венна)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: center;">
+                    <div>
+                        <div class="box hack">
+                            <div class="box-title">🚀 Лайфхак для НМТ:</div>
+                            <p>Запам'ятай ланцюжок вкладеності:</p>
+                            <p style="font-size: 1.18rem; font-weight: bold; text-align: center;">$$\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R}$$</p>
+                            <p>Будь-яке натуральне число є одночасно і цілим, і раціональним, і дійсним!</p>
+                        </div>
+
+                        <div class="math-widget">
+                            <div class="widget-title">🧭 Автоматичний класифікатор числа:</div>
+                            <div class="widget-inputs">
+                                <label>Введи число: <input type="text" id="class-val" class="widget-input" value="-5" style="width: 80px;"> </label>
+                                <button class="widget-btn" onclick="classifyNumber()">Визначити</button>
+                            </div>
+                            <div class="widget-output" id="class-res">
+                                -5 належить: ℤ (ціле), ℚ (раціональне), ℝ (дійсне).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SVG Класифікація чисел -->
+                    <div style="background: var(--card-bg); border: 1.5px solid var(--border-color); border-radius: 10px; padding: 6px; text-align: center;">
+                        <svg viewBox="0 0 360 220" width="100%" height="200">
+                            <!-- R -->
+                            <ellipse cx="180" cy="110" rx="175" ry="105" fill="rgba(142,68,173,0.08)" stroke="#8e44ad" stroke-width="2"/>
+                            <text x="180" y="24" class="venn-text" text-anchor="middle" fill="#8e44ad">Дійсні числа ℝ</text>
+                            <!-- I -->
+                            <circle cx="285" cy="120" r="46" fill="rgba(243,156,18,0.15)" stroke="#f39c12" stroke-width="2"/>
+                            <text x="285" y="115" class="venn-text" text-anchor="middle" fill="#d35400">𝕀</text>
+                            <text x="285" y="132" font-size="11" text-anchor="middle" fill="#7f8c8d">√2, π, e</text>
+                            <!-- Q -->
+                            <ellipse cx="125" cy="120" rx="100" ry="85" fill="rgba(41,128,185,0.1)" stroke="#2980b9" stroke-width="2"/>
+                            <text x="125" y="55" class="venn-text" text-anchor="middle" fill="#2980b9">ℚ</text>
+                            <!-- Z -->
+                            <ellipse cx="125" cy="140" rx="72" ry="58" fill="rgba(22,160,133,0.12)" stroke="#16a085" stroke-width="2"/>
+                            <text x="125" y="98" class="venn-text" text-anchor="middle" fill="#16a085">ℤ</text>
+                            <!-- N -->
+                            <ellipse cx="125" cy="162" rx="40" ry="30" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2"/>
+                            <text x="125" y="166" class="venn-text" text-anchor="middle" fill="#c0392b">ℕ</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: 4.1 ПРОСТІ ТА СКЛАДЕНІ ЧИСЛА -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 4.1</span>
+                <h2 class="slide-title">4. Натуральні числа $\mathbb{N}$: Прості та складені числа</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Прості числа:</strong> натуральні числа, більші за 1, які мають тільки два дільники -- 1 і саме число.</p>
+                    <p style="text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--brand-blue);">$$2, 3, 5, 7, 11, 13, 17, 19, 23, \dots$$</p>
+                    <p><strong>Складені числа:</strong> натуральні числа, які мають більше ніж два дільники.</p>
+                    <p>$$4 = 2 \cdot 2, \quad 6 = 2 \cdot 3, \quad 12 = 2^2 \cdot 3$$</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="box remark">
+                        <div class="box-title">Зауваження:</div>
+                        <p>Число <strong>1</strong> не є ні простим, ні складеним, оскільки воно має лише один дільник (саме себе).</p>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🔍 Перевір число: просте чи складене?</div>
+                        <div class="widget-inputs">
+                            <label>Число: <input type="number" id="prime-input" class="widget-input" value="17" style="width: 80px;"></label>
+                            <button class="widget-btn" onclick="checkPrime()">Аналіз</button>
+                        </div>
+                        <div class="widget-output" id="prime-output">17 -- просте число (дільники: 1, 17).</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: 4.2 НСД ТА НСК -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 4.2</span>
+                <h2 class="slide-title">Найбільший спільний дільник (НСД) та Найменше спільне кратне (НСК)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритми пошуку НСД та НСК:</div>
+                    <p><strong>Найбільший спільний дільник (НСД)</strong> -- найбільше число, на яке діляться обидва заданих числа.<br>
+                    <em>Алгоритм:</em> розкласти на множники та перемножити <strong>спільні</strong> множники у найменших степенях.</p>
+                    <p>$$\text{НСД}(12, 18): \quad 12 = 2^2 \cdot \underline{3}, \quad 18 = \underline{2} \cdot 3^2 \implies 2 \cdot 3 = \mathbf{6}$$</p>
+                    <p><strong>Найменше спільне кратне (НСК)</strong> -- найменше число, яке ділиться на обидва заданих числа.<br>
+                    <em>Алгоритм:</em> виписати розклад одного числа та доповнити його множниками іншого, яких не вистачає.</p>
+                    <p>$$\text{НСК}(12, 18): \quad 12 \cdot 3 = \mathbf{36}$$</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">🧮 Калькулятор розкладу, НСД та НСК:</div>
+                    <div class="widget-inputs">
+                        <label>a: <input type="number" id="gcd-a" class="widget-input" value="12" style="width: 70px;"></label>
+                        <label>b: <input type="number" id="gcd-b" class="widget-input" value="18" style="width: 70px;"></label>
+                        <button class="widget-btn" onclick="calcGcdLcm()">Розрахувати</button>
+                    </div>
+                    <div class="widget-output" id="gcd-output">
+                        НСД(12, 18) = 6 &nbsp;|&nbsp; НСК(12, 18) = 36
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 8: 4.3 ОЗНАКИ ПОДІЛЬНОСТІ -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 4.3</span>
+                <h2 class="slide-title">Ознаки подільності чисел</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box remark">
+                        <div class="box-title">Число ділиться:</div>
+                        <ul>
+                            <li><strong>на 2 якщо</strong> остання цифра парна ($0, 2, 4, 6, 8$).</li>
+                            <li><strong>на 3 якщо</strong> сума цифр числа ділиться на 3.</li>
+                            <li><strong>на 5 якщо</strong> остання цифра $0$ або $5$.</li>
+                            <li><strong>на 9 якщо</strong> сума цифр числа ділиться на 9.</li>
+                            <li><strong>на 10 якщо</strong> остання цифра $0$.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <div class="box hack">
+                            <div class="box-title">Лайфхак для НМТ:</div>
+                            <p>Якщо число ділиться одночасно на 2 і на 3, то воно обов'язково ділиться на <strong>6</strong>. Це часто допомагає при скороченні дробів на НМТ!</p>
+                        </div>
+
+                        <div class="math-widget">
+                            <div class="widget-title">⚡ Детектор подільності будь-якого числа:</div>
+                            <div class="widget-inputs">
+                                <label>Число: <input type="number" id="div-test-input" class="widget-input" value="1350" style="width: 100px;"></label>
+                                <button class="widget-btn" onclick="testDivisibility()">Аналізувати</button>
+                            </div>
+                            <div class="widget-output" id="div-test-output">
+                                1350 ділиться на: 2 (парне), 3 (сума=9), 5 (закінчується на 0), 6, 9 (сума=9), 10.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 9: 5. ЦІЛІ ЧИСЛА: МОДУЛЬ (\nmtlabel) -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 5.1</span>
+                <h2 class="slide-title">5. Цілі числа $\mathbb{Z}$: Модуль числа</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">
+                        <span>Означення модуля</span>
+                        <span class="nmt-ref-badge">📋 Є в довідкових матеріалах НМТ</span>
+                    </div>
+                    <p><strong>Модуль числа</strong> $a$ (позначення $|a|$) -- це <strong>відстань</strong> від початку відліку (точки 0) до точки, що зображує це число на координатній прямій.</p>
+                    <p style="font-size: 1.15rem; text-align: center;">$$|a| = \begin{cases} a, & \text{якщо } a \ge 0 \\ -a, & \text{якщо } a < 0 \end{cases}$$</p>
+                </div>
+
+                <!-- SVG Геометричний зміст модуля -->
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; text-align: center;">
+                    <div style="font-weight: bold; color: var(--brand-blue); margin-bottom: 4px;">Геометричний зміст модуля (відстань на координатній прямій)</div>
+                    <svg viewBox="0 0 500 75" width="100%" height="75">
+                        <line x1="20" y1="42" x2="480" y2="42" stroke="#2c3e50" stroke-width="2"/>
+                        <polygon points="480,37 490,42 480,47" fill="#2c3e50"/>
+                        <text x="485" y="58" font-size="12" fill="#2c3e50">x</text>
+                        <!-- Точки -->
+                        <line x1="140" y1="37" x2="140" y2="47" stroke="#2c3e50" stroke-width="1.5"/>
+                        <text x="140" y="60" font-size="11" text-anchor="middle">-3</text>
+                        <line x1="250" y1="35" x2="250" y2="49" stroke="#2c3e50" stroke-width="2"/>
+                        <text x="250" y="60" font-size="12" font-weight="bold" text-anchor="middle">0</text>
+                        <line x1="390" y1="37" x2="390" y2="47" stroke="#2c3e50" stroke-width="1.5"/>
+                        <text x="390" y="60" font-size="11" text-anchor="middle">4</text>
+                        <!-- Дуги -->
+                        <path d="M 140 35 Q 195 8 250 35" fill="none" stroke="#2980b9" stroke-width="2"/>
+                        <text x="195" y="18" fill="#2980b9" font-size="12" font-weight="bold" text-anchor="middle">|-3| = 3</text>
+                        <path d="M 250 35 Q 320 6 390 35" fill="none" stroke="#c0392b" stroke-width="2"/>
+                        <text x="320" y="16" fill="#c0392b" font-size="12" font-weight="bold" text-anchor="middle">|4| = 4</text>
+                        <circle cx="140" cy="42" r="4" fill="#2980b9"/>
+                        <circle cx="250" cy="42" r="4" fill="#2c3e50"/>
+                        <circle cx="390" cy="42" r="4" fill="#c0392b"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 10: ВЛАСТИВОСТІ МОДУЛЯ ТА ПОМИЛКИ (\nmtlabel) -->
+        <section class="slide-card" data-slide="10">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 5.2</span>
+                <h2 class="slide-title">Властивості модуля та типова помилка</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box theorem">
+                        <div class="box-title">Властивості модуля:</div>
+                        <ul>
+                            <li>$|a| \ge 0$ (модуль не може бути від'ємним);</li>
+                            <li>$|a| = |-a|$ (модулі протилежних чисел рівні);</li>
+                            <li>
+                                $\mathbf{\sqrt{a^2} = |a|}$ &nbsp;
+                                <span class="nmt-ref-badge">📋 Є в довідкових матеріалах НМТ</span><br>
+                                <em>(Дуже часто зустрічається в завданнях на спрощення!)</em>.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="box error">
+                        <div class="box-title">Поширена помилка:</div>
+                        <p>Учні часто думають, що $-a$ -- це обов'язково від'ємне число.</p>
+                        <p>Насправді, якщо $a = -5$, то $-a = -(-5) = 5$. Запис $|a| = -a$ для від'ємних чисел якраз і робить результат <strong>додатним</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-title">📐 Інтерактивний повзунок модуля $|x|$:</div>
+                    <div class="widget-inputs" style="justify-content: center;">
+                        <label>Змінюй значення $x$: <input type="range" id="mod-slider" min="-7" max="7" value="-4" oninput="drawModuleSvg()" style="width: 200px; margin-left: 10px;"></label>
+                        <span id="mod-val-label" style="font-weight: bold; color: var(--brand-blue); margin-left: 10px;">x = -4</span>
+                    </div>
+                    <div style="background: var(--card-bg); border-radius: 6px; border: 1px solid var(--border-color); text-align: center; padding: 4px;">
+                        <svg id="mod-svg" width="100%" height="75" viewBox="0 0 500 75"></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 11: 6.1 ВИДИ ДРОБІВ -->
+        <section class="slide-card" data-slide="11">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 6.1</span>
+                <h2 class="slide-title">6. Раціональні числа $\mathbb{Q}$: Визначення та види дробів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Раціональні числа</strong> -- це числа, які можна записати у вигляді дробу $\frac{a}{b}$, де $a \in \mathbb{Z}$ (ціле), $b \in \mathbb{N}$ (натуральне).</p>
+                    <div class="grid-3col" style="margin-top: 8px;">
+                        <div class="box" style="border-left-color: var(--brand-blue); margin: 0;">
+                            <strong>Правильний дріб</strong><br>
+                            Чисельник < Знаменник<br>
+                            $(\frac{2}{3}, \frac{11}{12}) \quad \mathbf{< 1}$
+                        </div>
+                        <div class="box" style="border-left-color: var(--brand-yellow); margin: 0;">
+                            <strong>Неправильний дріб</strong><br>
+                            Чисельник $\ge$ Знаменник<br>
+                            $(\frac{7}{4}, \frac{5}{5}) \quad \mathbf{\ge 1}$
+                        </div>
+                        <div class="box" style="border-left-color: var(--brand-green); margin: 0;">
+                            <strong>Мішане число</strong><br>
+                            Ціла + дробова частини<br>
+                            $(2\frac{1}{3}, 3\frac{2}{5})$
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2col" style="margin-top: 6px;">
+                    <div class="box example">
+                        <div class="box-title">Перетворення:</div>
+                        <p>1. <strong>Неправильний $\to$ мішане:</strong><br>
+                        $\frac{17}{5} = 3\frac{2}{5} \quad (17 \div 5 = 3 \text{ та } 2 \text{ в остачі})$</p>
+                        <p>2. <strong>Мішане $\to$ неправильний:</strong><br>
+                        $4\frac{2}{3} = \frac{4 \cdot 3 + 2}{3} = \frac{14}{3}$</p>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">🔄 Конвертер: Дріб ↔ Мішане число</div>
+                        <div class="widget-inputs">
+                            <label>Чисельник: <input type="number" id="frac-num" class="widget-input" value="17" style="width: 55px;"></label>
+                            <label>Знаменник: <input type="number" id="frac-den" class="widget-input" value="5" style="width: 55px;"></label>
+                            <button class="widget-btn" onclick="convertFraction()">Перетворити</button>
+                        </div>
+                        <div class="widget-output" id="frac-output">17 / 5 = 3 цілих і 2/5 (3 2/5)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 12: 6.2 ОПЕРАЦІЇ ЗІ ЗВИЧАЙНИМИ ДРОБАМИ -->
+        <section class="slide-card" data-slide="12">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 6.2</span>
+                <h2 class="slide-title">Основна властивість дробу та операції зі звичайними дробами</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem">
+                    <div class="box-title">Основна властивість дробу:</div>
+                    <p>Значення дробу не зміниться, якщо чисельник і знаменник помножити або поділити на одне й те саме число, відмінне від нуля: $\frac{a}{b} = \frac{a \cdot k}{b \cdot k}$.</p>
+                </div>
+
+                <div class="grid-3col">
+                    <div class="box example">
+                        <div class="box-title">Додавання/Віднімання</div>
+                        <p>Через спільний знаменник:</p>
+                        $$\frac{2}{3} + \frac{1}{4} = \frac{2 \cdot 4 + 1 \cdot 3}{12} = \mathbf{\frac{11}{12}}$$
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Множення</div>
+                        <p>Скорочуємо перед множенням:</p>
+                        $$\frac{4}{5} \cdot \frac{15}{16} = \frac{1 \cdot 3}{1 \cdot 4} = \mathbf{\frac{3}{4}}$$
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Ділення</div>
+                        <p>Множимо на перевернутий дріб:</p>
+                        $$\frac{2}{3} \div \frac{5}{7} = \frac{2}{3} \cdot \frac{7}{5} = \mathbf{\frac{14}{15}}$$
+                    </div>
+                </div>
+
+                <div class="box remark" style="margin-top: 6px;">
+                    <div class="box-title">Зауваження:</div>
+                    <p style="margin: 0;">При множенні або діленні <strong>мішаних чисел</strong> обов'язково спочатку перетворюй їх у <strong>неправильні дроби</strong>!<br>
+                    $$1\frac{1}{2} \cdot 2\frac{2}{3} = \frac{3}{2} \cdot \frac{8}{3} = \frac{24}{6} = \mathbf{4}$$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 13: 6.3 ДЕСЯТКОВІ ДРОБИ -->
+        <section class="slide-card" data-slide="13">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 6.3</span>
+                <h2 class="slide-title">Десяткові дроби та правило стрибка коми</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div class="box definition">
+                        <div class="box-title">Множення десяткових дробів:</div>
+                        <ol style="margin: 0; padding-left: 18px;">
+                            <li>Помножити як натуральні числа, не звертаючи уваги на коми.</li>
+                            <li>Відокремити комою справа стільки цифр, скільки їх стоїть після коми в обох множниках разом.</li>
+                        </ol>
+                        <p style="margin-top: 8px;"><strong>Приклад:</strong> $0,25 \cdot 0,3 = \mathbf{0,075}$<br>
+                        <small><em>Пояснення:</em> $25 \cdot 3 = 75$. У першому числі 2 знаки після коми, у другому -- 1. Разом має бути 3 знаки $\to 0,075$.</small></p>
+                    </div>
+
+                    <div class="box definition">
+                        <div class="box-title">Ділення на десятковий дріб:</div>
+                        <p>Щоб поділити число на десятковий дріб, потрібно в діленому і дільнику перенести кому вправо на стільки знаків, скільки їх є в дільнику після коми.</p>
+                        <div style="background: var(--card-bg); padding: 6px; border-radius: 6px; text-align: center; font-weight: bold; border: 1px solid var(--border-color); font-size: 1.1rem;">
+                            $$1,26 \div 0,3 \xrightarrow{\text{на 1 знак}} 12,6 \div 3 = \mathbf{4,2}$$
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2col" style="margin-top: 4px;">
+                    <div class="box error">
+                        <div class="box-title">Типова помилка:</div>
+                        <p style="margin: 0; font-size: 0.88rem;">Переносити кому лише в дільнику. <em>Правильно:</em> Кількість знаків диктує <strong>дільник</strong>, але виконуємо перенос в <strong>обох</strong> числах одночасно!</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак для НМТ:</div>
+                        <p style="margin: 0; font-size: 0.88rem;">Часто простіше перетворити десятковий дріб у звичайний: $$0,25 \div 0,5 = \frac{1}{4} \div \frac{1}{2} = \frac{1}{4} \cdot \frac{2}{1} = \frac{1}{2} = \mathbf{0,5}$$</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 14: 7. СТАНДАРТНИЙ ВИГЛЯД ЧИСЛА -->
+        <section class="slide-card" data-slide="14">
+            <div class="slide-header">
+                <span class="slide-tag">Розділ 7</span>
+                <h2 class="slide-title">7. Стандартний вигляд числа $a \cdot 10^n$</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <p><strong>Стандартним виглядом числа</strong> називають його запис у вигляді:</p>
+                    <p style="font-size: 1.2rem; text-align: center; font-weight: bold;">$$a \cdot 10^n, \quad \text{де } \mathbf{1 \le |a| < 10}, \ n \in \mathbb{Z}$$</p>
+                    <p>• $a$ -- <strong>значуща частина числа</strong> (одна ненульова цифра перед комою!).<br>
+                    • $n$ -- <strong>порядок числа</strong>.</p>
+                </div>
+
+                <div class="grid-2col">
+                    <div class="box example">
+                        <div class="box-title">Приклади:</div>
+                        <ul>
+                            <li>$1234 = 1,234 \cdot 10^3$ (порядок $3$)</li>
+                            <li>$0,0075 = 7,5 \cdot 10^{-3}$ (порядок $-3$)</li>
+                        </ul>
+                    </div>
+
+                    <div class="math-widget">
+                        <div class="widget-title">⚙️ Інтерактивний конвертер у стандартний вигляд:</div>
+                        <div class="widget-inputs">
+                            <label>Число: <input type="number" id="sci-input" step="any" class="widget-input" value="0.00045" style="width: 120px;"></label>
+                            <button class="widget-btn" onclick="calcSciNotation()">Конвертувати</button>
+                        </div>
+                        <div class="widget-output" id="sci-output">
+                            0.00045 = <strong>4,5 × 10⁻⁴</strong> &nbsp;(значуща частина: 4.5, порядок: -4)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 15: ПІДСУМКОВА ШПАРГАЛКА -->
+        <section class="slide-card" data-slide="15">
+            <div class="slide-header">
+                <span class="slide-tag">Підсумок теми</span>
+                <h1 class="slide-title">🎉 Усю теорію пройдено!</h1>
+            </div>
+            <div class="slide-body" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="color: var(--brand-green); margin-bottom: 15px;">Усі 7 теоретичних розділів успішно засвоєно та візуалізовано.</h3>
+                <div class="grid-2col" style="text-align: left;">
+                    <div class="box definition">
+                        <div class="box-title">📌 Головні формули та правила теми:</div>
+                        <ul>
+                            <li>$\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R}$</li>
+                            <li>$\sqrt{a^2} = |a| \ge 0$ <span class="nmt-ref-badge">📋 Довідник НМТ</span></li>
+                            <li>$a \cup b$ -- всі разом, $a \cap b$ -- тільки спільні</li>
+                            <li>$1$ -- ні просте, ні складене, $0 \notin \mathbb{N}$</li>
+                            <li>Стандартний вигляд: $a \cdot 10^n$, де $1 \le |a| < 10$</li>
+                        </ul>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">📄 Конспект для друку:</div>
+                        <p>Скористайтеся кнопкою <strong>«Завантажити PDF»</strong> у верхній панелі, щоб зберегти друковану версію конспекту.</p>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px; font-size: 1rem;">🔄 Повторити теорію спочатку</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ФУТЕР -->
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 15</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT ЛОГІКА ТА ІНТЕРАКТИВНІ ТРЕНАЖЕРИ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let secondsElapsed = 0;
+            let isDarkTheme = false;
+
+            const progressBar = document.getElementById('progress-bar');
+            const slideCounter = document.getElementById('slide-counter');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const btnTheme = document.getElementById('btn-theme');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const timerElement = document.getElementById('speaker-timer');
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+
+                currentSlide = index;
+
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentSlide - 1);
+                });
+
+                slideCounter.textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                progressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+                btnPrev.style.opacity = currentSlide === 1 ? '0.5' : '1';
+                btnNext.style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 10) drawModuleSvg();
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            btnNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+            btnPrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+
+            btnTheme.addEventListener('click', () => {
+                isDarkTheme = !isDarkTheme;
+                document.body.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+                if (currentSlide === 10) drawModuleSvg();
+            });
+
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') btnFullscreen.click();
+            });
+
+            setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                timerElement.textContent = `${mins}:${secs}`;
+            }, 1000);
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // 1. Належність елемента (Слайд 2)
+            window.checkMembership = function() {
+                const rawSet = document.getElementById('elem-set').value.split(',').map(s => s.trim());
+                const val = document.getElementById('elem-val').value.trim();
+                const out = document.getElementById('elem-output');
+                if (rawSet.includes(val)) {
+                    out.innerHTML = `<span style="color:var(--brand-green); font-weight:bold;">${val} ∈ {${rawSet.join(', ')}}</span> -- Елемент належить множині!`;
+                } else {
+                    out.innerHTML = `<span style="color:var(--warning-red); font-weight:bold;">${val} ∉ {${rawSet.join(', ')}}</span> -- Елемент НЕ належить множині!`;
+                }
+            };
+
+            // 2. Об'єднання та перетин (Слайд 3)
+            window.calcSets = function() {
+                const parse = (s) => new Set(s.split(',').map(x => x.trim()).filter(x => x !== ''));
+                const A = parse(document.getElementById('setA-input').value);
+                const B = parse(document.getElementById('setB-input').value);
+
+                const union = Array.from(new Set([...A, ...B])).sort((a,b)=>a-b);
+                const intersect = Array.from(new Set([...A].filter(x => B.has(x)))).sort((a,b)=>a-b);
+
+                document.getElementById('sets-output').innerHTML =
+                    `A ∪ B = { ${union.join(', ')} } &nbsp;|&nbsp; A ∩ B = { ${intersect.length ? intersect.join(', ') : '∅'} }`;
+            };
+
+            // 3. Класифікатор чисел (Слайд 5)
+            window.classifyNumber = function() {
+                const input = document.getElementById('class-val').value.trim();
+                const val = parseFloat(input.replace(',', '.'));
+                const res = document.getElementById('class-res');
+                if (isNaN(val)) { res.innerText = "Введіть коректне число"; return; }
+
+                let sets = ['ℝ (дійсне)'];
+                if (Number.isInteger(val)) {
+                    sets.push('ℤ (ціле)');
+                    sets.push('ℚ (раціональне)');
+                    if (val > 0) sets.push('ℕ (натуральне)');
+                } else {
+                    sets.push('ℚ (раціональне)');
+                }
+                res.innerHTML = `Число <strong>${input}</strong> належить: ${sets.join(', ')}.`;
+            };
+
+            // 4. Перевірка простого числа (Слайд 6)
+            window.checkPrime = function() {
+                const n = parseInt(document.getElementById('prime-input').value);
+                const out = document.getElementById('prime-output');
+                if (isNaN(n) || n <= 0) { out.innerText = "Введіть натуральне число > 0"; return; }
+                if (n === 1) { out.innerHTML = "<strong>1</strong> -- ні просте, ні складене (має лише 1 дільник)."; return; }
+
+                let divisors = [];
+                for (let i = 1; i <= n; i++) {
+                    if (n % i === 0) divisors.push(i);
+                }
+
+                if (divisors.length === 2) {
+                    out.innerHTML = `<span style="color:var(--brand-green); font-weight:bold;">${n} -- ПРОСТЕ число</span> (дільники: 1, ${n}).`;
+                } else {
+                    out.innerHTML = `<span style="color:var(--brand-blue); font-weight:bold;">${n} -- СКЛАДЕНЕ число</span> (дільники: ${divisors.join(', ')}).`;
+                }
+            };
+
+            // 5. НСД та НСК (Слайд 7)
+            window.calcGcdLcm = function() {
+                const a = parseInt(document.getElementById('gcd-a').value) || 1;
+                const b = parseInt(document.getElementById('gcd-b').value) || 1;
+                const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+                const g = gcd(a, b);
+                const l = Math.abs(a * b) / g;
+                document.getElementById('gcd-output').innerHTML =
+                    `НСД(${a}, ${b}) = <strong>${g}</strong> &nbsp;|&nbsp; НСК(${a}, ${b}) = <strong>${l}</strong>`;
+            };
+
+            // 6. Детектор подільності (Слайд 8)
+            window.testDivisibility = function() {
+                const n = parseInt(document.getElementById('div-test-input').value);
+                const out = document.getElementById('div-test-output');
+                if (isNaN(n)) { out.innerText = "Введіть ціле число"; return; }
+
+                let res = [];
+                if (n % 2 === 0) res.push("2 (парне)");
+                if (n % 3 === 0) res.push("3 (сума цифр ділиться на 3)");
+                if (n % 5 === 0) res.push("5 (закінчується на 0 або 5)");
+                if (n % 6 === 0) res.push("6 (ділиться на 2 і на 3)");
+                if (n % 9 === 0) res.push("9 (сума цифр ділиться на 9)");
+                if (n % 10 === 0) res.push("10 (закінчується на 0)");
+
+                out.innerHTML = res.length > 0 
+                    ? `Число ${n} ділиться на: <strong>${res.join(', ')}</strong>.` 
+                    : `Число ${n} не ділиться на жодне з чисел 2, 3, 5, 6, 9, 10.`;
+            };
+
+            // 7. Візуалізатор модуля SVG (Слайд 10)
+            window.drawModuleSvg = function() {
+                const xVal = parseInt(document.getElementById('mod-slider').value);
+                document.getElementById('mod-val-label').innerText = `x = ${xVal}`;
+                const svg = document.getElementById('mod-svg');
+                const strokeColor = isDarkTheme ? '#ecf0f1' : '#2c3e50';
+                const originX = 250; const scale = 28; 
+                const targetX = originX + (xVal * scale);
+
+                svg.innerHTML = `
+                    <line x1="20" y1="50" x2="480" y2="50" stroke="${strokeColor}" stroke-width="2"/>
+                    <line x1="${originX}" y1="42" x2="${originX}" y2="58" stroke="${strokeColor}" stroke-width="2"/>
+                    <text x="${originX}" y="70" text-anchor="middle" fill="${strokeColor}" font-size="12">0</text>
+                    <circle cx="${targetX}" cy="50" r="5" fill="#e74c3c"/>
+                    <text x="${targetX}" y="70" text-anchor="middle" fill="#e74c3c" font-weight="bold" font-size="13">${xVal}</text>
+                    <path d="M ${Math.min(originX, targetX)} 42 Q ${(originX + targetX)/2} 10 ${Math.max(originX, targetX)} 42" fill="none" stroke="#27ae60" stroke-width="2.5" stroke-dasharray="4"/>
+                    <text x="${(originX + targetX)/2}" y="20" text-anchor="middle" fill="#27ae60" font-weight="bold" font-size="13">|${xVal}| = ${Math.abs(xVal)}</text>
+                `;
+            };
+
+            // 8. Конвертер дробів (Слайд 11)
+            window.convertFraction = function() {
+                const num = parseInt(document.getElementById('frac-num').value);
+                const den = parseInt(document.getElementById('frac-den').value);
+                const out = document.getElementById('frac-output');
+                if (isNaN(num) || isNaN(den) || den === 0) { out.innerText = "Помилка введення значень"; return; }
+
+                const whole = Math.floor(num / den);
+                const rem = num % den;
+                if (rem === 0) {
+                    out.innerHTML = `${num} / ${den} = <strong>${whole}</strong> (ціле число)`;
+                } else {
+                    out.innerHTML = `${num} / ${den} = <strong>${whole} цілих і ${rem}/${den}</strong> ($${whole}\\frac{${rem}}{${den}}$)`;
+                }
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            // 9. Стандартний вигляд (Слайд 14)
+            window.calcSciNotation = function() {
+                const val = parseFloat(document.getElementById('sci-input').value);
+                if (isNaN(val) || val === 0) return;
+                const [m, e] = val.toExponential().split('e');
+                const formattedM = parseFloat(m).toString().replace('.', ',');
+                document.getElementById('sci-output').innerHTML =
+                    `${val} = <strong>${formattedM} × 10<sup>${parseInt(e)}</sup></strong> &nbsp;(значуща частина: ${formattedM}, порядок: ${parseInt(e)})`;
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

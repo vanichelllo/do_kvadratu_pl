@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Квадратична функція | ДО КВАДРАТУ</title>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52, 78, 134, 0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        [data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+
+        html, body { max-width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); transition: background-color 0.3s, color 0.3s; }
+        * { box-sizing: border-box; }
+
+        /* НАВІГАЦІЯ */
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 100; position: relative; }
+        .brand-logo-container { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-dark); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 6px; }
+        .nav-controls { display: flex; align-items: center; gap: 10px; }
+
+        .btn-primary { background-color: var(--brand-green); color: white; padding: 7px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); font-size: 0.9rem; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background-color: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: var(--transition); font-size: 0.9rem; }
+        .btn-secondary:hover { background-color: var(--brand-blue); color: white; }
+        .btn-toggle { background-color: var(--widget-bg); color: var(--brand-blue); border: 1px solid var(--brand-blue); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: var(--transition); font-size: 0.85rem;}
+        .btn-toggle.active { background-color: var(--brand-blue); color: white; }
+
+        /* ПРОГРЕС-БАР */
+        .progress-container { width: 100%; height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); width: 0%; transition: width 0.3s ease; }
+
+        /* В'ЮПОРТ ТА КАРТКИ */
+        .presentation-viewport { height: calc(100vh - 125px); display: flex; align-items: center; justify-content: center; padding: 15px 20px; }
+        .slide-card { background-color: var(--card-bg); width: 100%; max-width: 1080px; height: 100%; max-height: 680px; border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--border-color); padding: 24px 34px; display: none; flex-direction: column; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+        .slide-card.active { display: flex; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slide-header { border-bottom: 2px solid var(--bg-light); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0; }
+        .slide-tag { color: var(--brand-green); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.5px; }
+        .slide-title { margin: 2px 0 0 0; color: var(--brand-blue); font-size: 1.6rem; font-weight: 700; line-height: 1.25; }
+        .slide-body { flex-grow: 1; font-size: 0.98rem; line-height: 1.55; color: var(--text-dark); overflow-y: auto; padding-right: 5px; }
+
+        /* БЛОКИ КОНСПЕКТУ */
+        .box { padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; background-color: var(--bg-light); border-left: 4px solid var(--brand-blue); }
+        .box-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; color: var(--brand-blue); font-size: 1.02rem; }
+        .box.definition { border-left-color: var(--brand-blue); }
+        .box.hack { border-left-color: var(--brand-yellow); background-color: rgba(243, 156, 18, 0.08); }
+        .box.hack .box-title { color: #d35400; }
+        .box.theorem { border-left-color: #8e44ad; background-color: rgba(142, 68, 173, 0.06); }
+        .box.theorem .box-title { color: #8e44ad; }
+        .box.example { border-left-color: var(--brand-green); background-color: rgba(39, 174, 96, 0.05); }
+        .box.example .box-title { color: var(--brand-green); }
+        .box.error { border-left-color: var(--warning-red); background-color: rgba(231, 76, 60, 0.05); }
+        .box.error .box-title { color: var(--warning-red); }
+
+        /* СІТКИ ТА ВІДЖЕТИ */
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+        .grid-2col > * { flex: 1 1 300px; }
+
+        .math-widget { background-color: var(--widget-bg); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+        .widget-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; }
+
+        .widget-svg-container { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; padding: 10px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.02); }
+        .widget-output { background: var(--card-bg); border-radius: 6px; padding: 15px; font-size: 1.05rem; border: 1px dashed var(--brand-green); line-height: 1.6; display: flex; flex-direction: column; justify-content: center; text-align: left; }
+
+        .slider-control { flex-grow: 1; min-width: 90px; margin: 0 10px; accent-color: var(--brand-blue); cursor: ew-resize;}
+        .slider-label { font-weight: bold; font-size: 0.85rem; color: var(--text-dark); display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid #dce3ec;}
+
+        .scrollable-math { overflow-x: auto; white-space: nowrap; padding-bottom: 5px; max-width: 100%; }
+
+        /* ТРЕНАЖЕР ТЕСТ */
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; cursor: pointer; font-weight: 600; text-align: center; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); background: #eef3f9; }
+        .quiz-option.correct { background: rgba(39, 174, 96, 0.1); border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { background: rgba(231, 76, 60, 0.1); border-color: var(--warning-red); color: var(--warning-red); }
+
+        /* ФУТЕР */
+        .controls-footer { height: 56px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0; }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-buttons { display: flex; gap: 8px; }
+        kbd { background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 3px; padding: 2px 6px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Маркери для стрілок SVG -->
+    <svg style="width:0; height:0; position:absolute;" aria-hidden="true" focusable="false">
+        <defs>
+            <marker id="arrDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#333" /></marker>
+        </defs>
+    </svg>
+
+    <header class="navbar">
+        <a href="#" class="brand-logo-container">
+            <svg class="logo-svg" viewBox="0 0 280 280">
+                <rect width="280" height="280" rx="12" ry="12" fill="#ffffff"/>
+                <line x1="140" y1="0" x2="140" y2="280" stroke="#344e86" stroke-width="14"/>
+                <line x1="0" y1="140" x2="280" y2="140" stroke="#344e86" stroke-width="14"/>
+                <g transform="translate(70, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/><line x1="0" y1="-24" x2="0" y2="24"/></g>
+                <g transform="translate(210, 70)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-24" y1="0" x2="24" y2="0"/></g>
+                <g transform="translate(70, 210)" stroke="#344e86" stroke-width="16" stroke-linecap="round"><line x1="-18" y1="-18" x2="16" y2="16"/><line x1="18" y1="-18" x2="-16" y2="16"/></g>
+                <g transform="translate(210, 210)" fill="#344e86"><circle cx="0" cy="-22" r="9"/><circle cx="0" cy="22" r="9"/></g>
+            </svg>
+            <span>ДО КВАДРАТУ | Алгебра</span>
+        </a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- СЛАЙД 1: ОСНОВНІ ПОНЯТТЯ -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Квадратична функція: Перше знайомство</h1>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення:</div>
+                    <p style="margin: 0; font-size: 0.95rem;"><strong>Квадратичною</strong> називають функцію виду $\mathbf{y = ax^2 + bx + c}$, де $x$ — аргумент, $a, b, c$ — параметри ($a \neq 0$). Графіком цієї функції є <strong>парабола</strong>.</p>
+                </div>
+
+                <div class="box theorem" style="margin-top: 15px;">
+                    <div class="box-title">Вплив коефіцієнтів на вигляд графіка:</div>
+                    <ul style="font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                        <li><strong>Коефіцієнт $a$:</strong> відповідає за напрямок віток. Якщо $a > 0$ — вітки вгору $\cup$, якщо $a < 0$ — вітки вниз $\cap$. Також він визначає "ширину" параболи.</li>
+                        <li><strong>Коефіцієнт $c$:</strong> ордината точки перетину з віссю $Oy$. Парабола завжди перетинає вісь $y$ у точці $(0; c)$.</li>
+                        <li><strong>Дискримінант ($D = b^2 - 4ac$):</strong> визначає кількість точок перетину з віссю $Ox$ (нулів функції).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 2: ВЕРШИНА ПАРАБОЛИ -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Елементи графіка</span>
+                <h2 class="slide-title">Вершина параболи та вісь симетрії</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col">
+                    <div>
+                        <div class="box theorem" style="margin: 0;">
+                            <div class="box-title">Координати вершини $(x_0; y_0)$:</div>
+                            <div class="scrollable-math" style="font-size: 1.3rem; text-align: center; margin: 10px 0; color: #8e44ad; font-weight: bold;">
+                                $x_0 = -\frac{b}{2a}, \quad y_0 = f(x_0)$
+                            </div>
+                            <ul style="font-size: 0.9rem; line-height: 1.5; padding-left: 15px; margin-bottom: 0;">
+                                <li>Пряма $x = x_0$ є <strong>віссю симетрії</strong>.</li>
+                                <li>Якщо $a > 0$, то найменше значення $y_{min} = y_0$.</li>
+                                <li>Якщо $a < 0$, то найбільше значення $y_{max} = y_0$.</li>
+                            </ul>
+                        </div>
+
+                        <div class="box hack" style="margin-top: 10px;">
+                            <div class="box-title">Лайфхак для знаходження $y_0$:</div>
+                            <p style="margin: 5px 0 10px 0; font-size: 0.9rem;">Якщо підставляти $x_0$ довго через великі числа, використайте дискримінант:</p>
+                            <div class="scrollable-math" style="font-size: 1.2rem; text-align: center; font-weight: bold; color: #d35400;">
+                                $y_0 = -\frac{D}{4a}$
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="math-widget" style="margin-top: 0;">
+                        <div class="widget-controls" style="padding: 5px;">
+                            <label class="slider-label">Зсув $x_0$: <input type="range" id="v-x0" class="slider-control" min="-3" max="3" value="1.5" step="0.5" oninput="renderVertexScene()"></label>
+                            <label class="slider-label">Зсув $y_0$: <input type="range" id="v-y0" class="slider-control" min="-3" max="3" value="-1" step="0.5" oninput="renderVertexScene()"></label>
+                        </div>
+                        <div class="widget-svg-container" style="min-height: 220px; background: #fff;">
+                            <svg viewBox="-4 -4 8 8" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-4" y1="-3" x2="4" y2="-3"/><line x1="-4" y1="-2" x2="4" y2="-2"/><line x1="-4" y1="-1" x2="4" y2="-1"/><line x1="-4" y1="1" x2="4" y2="1"/><line x1="-4" y1="2" x2="4" y2="2"/><line x1="-4" y1="3" x2="4" y2="3"/>
+                                    <line x1="-3" y1="-4" x2="-3" y2="4"/><line x1="-2" y1="-4" x2="-2" y2="4"/><line x1="-1" y1="-4" x2="-1" y2="4"/><line x1="1" y1="-4" x2="1" y2="4"/><line x1="2" y1="-4" x2="2" y2="4"/><line x1="3" y1="-4" x2="3" y2="4"/>
+                                </g>
+                                <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <g id="vertex-scene"></g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 3: ВПЛИВ ПАРАМЕТРІВ A, B, C -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Вплив коефіцієнтів $a, b, c$ на графік</h2>
+            </div>
+            <div class="slide-body">
+                <p style="font-size: 0.95rem; margin-bottom: 10px;">Дослідіть, як змінюється парабола $\mathbf{y = ax^2 + bx + c}$ при зміні кожного параметра.</p>
+
+                <div class="math-widget">
+                    <div class="grid-2col">
+                        <!-- Controls -->
+                        <div class="widget-output" style="padding: 10px; background: transparent; border: none; justify-content: flex-start;">
+                            <div class="scrollable-math" id="param-formula" style="font-size: 1.3rem; margin-bottom: 15px; font-weight: bold; color: var(--brand-blue); text-align: center;">$y = x^2$</div>
+
+                            <div style="background: rgba(41, 128, 185, 0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--brand-blue);">
+                                <label class="slider-label" style="border:none; background:transparent; padding:0; justify-content: space-between;">
+                                    <span>Коефіцієнт $a$: <span id="val-a" style="font-weight:bold; color:var(--brand-blue);">1</span></span>
+                                    <input type="range" id="param-a" class="slider-control" style="max-width: 150px;" min="-3" max="3" value="1" step="0.2" oninput="renderParamScene()">
+                                </label>
+                                <div style="font-size: 0.8rem; color: #555; margin-top: 5px;">Напрямок віток та ширина (розтяг/стиснення).</div>
+                            </div>
+
+                            <div style="background: rgba(39, 174, 96, 0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--brand-green);">
+                                <label class="slider-label" style="border:none; background:transparent; padding:0; justify-content: space-between;">
+                                    <span>Коефіцієнт $b$: <span id="val-b" style="font-weight:bold; color:var(--brand-green);">0</span></span>
+                                    <input type="range" id="param-b" class="slider-control" style="max-width: 150px;" min="-4" max="4" value="0" step="1" oninput="renderParamScene()">
+                                </label>
+                                <div style="font-size: 0.8rem; color: #555; margin-top: 5px;">Рухає вершину. Зверніть увагу на зв'язок знаків $a$ та $b$.</div>
+                            </div>
+
+                            <div style="background: rgba(243, 156, 18, 0.05); padding: 10px; border-radius: 8px; border-left: 3px solid #d35400;">
+                                <label class="slider-label" style="border:none; background:transparent; padding:0; justify-content: space-between;">
+                                    <span>Вільний член $c$: <span id="val-c" style="font-weight:bold; color:#d35400;">0</span></span>
+                                    <input type="range" id="param-c" class="slider-control" style="max-width: 150px;" min="-4" max="4" value="0" step="1" oninput="renderParamScene()">
+                                </label>
+                                <div style="font-size: 0.8rem; color: #555; margin-top: 5px;">Точка перетину з віссю $Oy$ — це завжди $(0; c)$.</div>
+                            </div>
+                        </div>
+
+                        <!-- SVG -->
+                        <div class="widget-svg-container" style="min-height: 250px; background: #fdfdfd;">
+                            <svg viewBox="-5 -5 10 10" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-5" y1="-4" x2="5" y2="-4"/><line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="-2" x2="5" y2="-2"/><line x1="-5" y1="-1" x2="5" y2="-1"/><line x1="-5" y1="1" x2="5" y2="1"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="3" x2="5" y2="3"/><line x1="-5" y1="4" x2="5" y2="4"/>
+                                    <line x1="-4" y1="-5" x2="-4" y2="5"/><line x1="-3" y1="-5" x2="-3" y2="5"/><line x1="-2" y1="-5" x2="-2" y2="5"/><line x1="-1" y1="-5" x2="-1" y2="5"/><line x1="1" y1="-5" x2="1" y2="5"/><line x1="2" y1="-5" x2="2" y2="5"/><line x1="3" y1="-5" x2="3" y2="5"/><line x1="4" y1="-5" x2="4" y2="5"/>
+                                </g>
+                                <line x1="-5" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <g id="param-scene"></g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 4: АНАЛІЗ ЗА ДИСКРИМІНАНТОМ -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Дискримінант та нулі функції</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box theorem" style="margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 0.95rem;">Дискримінант ($D = b^2 - 4ac$) рівняння $ax^2 + bx + c = 0$ визначає <strong>кількість точок перетину параболи з віссю $Ox$</strong> (нулів функції).</p>
+                </div>
+
+                <div class="math-widget">
+                    <div class="widget-controls" style="background: transparent; padding: 0;">
+                        <button class="btn-toggle active" id="btn-d-pos" onclick="setDMode('pos')">$D > 0$ (Два нулі)</button>
+                        <button class="btn-toggle" id="btn-d-zero" onclick="setDMode('zero')">$D = 0$ (Один нуль)</button>
+                        <button class="btn-toggle" id="btn-d-neg" onclick="setDMode('neg')">$D < 0$ (Немає нулів)</button>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 10px;">
+                        <div class="widget-svg-container" style="min-height: 220px; background: #fdfdfd;">
+                            <svg viewBox="-4 -2 8 6" width="100%" height="100%">
+                                <g stroke="#ecf0f1" stroke-width="0.05">
+                                    <line x1="-4" y1="-1" x2="4" y2="-1"/><line x1="-4" y1="1" x2="4" y2="1"/><line x1="-4" y1="2" x2="4" y2="2"/><line x1="-4" y1="3" x2="4" y2="3"/>
+                                    <line x1="-3" y1="-2" x2="-3" y2="4"/><line x1="-2" y1="-2" x2="-2" y2="4"/><line x1="-1" y1="-2" x2="-1" y2="4"/><line x1="1" y1="-2" x2="1" y2="4"/><line x1="2" y1="-2" x2="2" y2="4"/><line x1="3" y1="-2" x2="3" y2="4"/>
+                                </g>
+                                <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                                <line x1="0" y1="-2" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                                <g id="d-scene"></g>
+                            </svg>
+                        </div>
+                        <div class="widget-output" style="min-height: 220px; justify-content: center; text-align: left;" id="d-out">
+                            <!-- JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box error" style="margin-top: 15px;">
+                    <p style="margin: 0; font-size: 0.9rem;"><strong>Часта помилка!</strong> Відсутність перетину з $Ox$ ($D < 0$) <strong>не означає</strong>, що графіка не існує. Це означає, що вся парабола "висить" над віссю (якщо $a>0$) або лежить повністю під нею (якщо $a<0$).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 5: АЛГОРИТМ ЧИТАННЯ ГРАФІКА -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методика</span>
+                <h2 class="slide-title">Алгоритм визначення знаків $a, b, c, D$</h2>
+            </div>
+            <div class="slide-body">
+                <p style="font-size: 1rem; margin-bottom: 15px;">На НМТ часто дають графік і просять визначити знаки коефіцієнтів. Використовуй цей простий 4-кроковий алгоритм:</p>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="box" style="margin: 0; background: #fff; border-left-color: var(--brand-blue);">
+                        <strong style="color: var(--brand-blue);">Крок 1: Знак $a$ (Напрямок віток)</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Дивимось на вітки параболи: якщо вгору — $\mathbf{a > 0}$, якщо вниз — $\mathbf{a < 0}$.</p>
+                    </div>
+
+                    <div class="box" style="margin: 0; background: #fff; border-left-color: #d35400;">
+                        <strong style="color: #d35400;">Крок 2: Знак $c$ (Перетин з $Oy$)</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Дивимось, де графік перетинає вертикальну вісь $y$. Якщо вище початку координат — $\mathbf{c > 0}$, нижче — $\mathbf{c < 0}$, проходить через нуль — $\mathbf{c = 0}$.</p>
+                    </div>
+
+                    <div class="box" style="margin: 0; background: #fff; border-left-color: var(--brand-green);">
+                        <strong style="color: var(--brand-green);">Крок 3: Знак $b$ (Положення вершини)</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Використовуємо $x_0 = \frac{-b}{2a}$. Лайфхак:<br>
+                        - Якщо вершина <strong>справа</strong> від $Oy$, то $a$ і $b$ мають <strong>різні</strong> знаки ($a \cdot b < 0$).<br>
+                        - Якщо вершина <strong>зліва</strong> від $Oy$, то $a$ і $b$ мають <strong>однакові</strong> знаки ($a \cdot b > 0$).</p>
+                    </div>
+
+                    <div class="box" style="margin: 0; background: #fff; border-left-color: #8e44ad;">
+                        <strong style="color: #8e44ad;">Крок 4: Знак $D$ (Перетин з $Ox$)</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.95rem;">Рахуємо кількість перетинів з горизонтальною віссю $x$: два перетини $\to \mathbf{D > 0}$, дотикається $\to \mathbf{D = 0}$, не перетинає $\to \mathbf{D < 0}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 6: ТРЕНАЖЕР ЧИТАННЯ ГРАФІКА 1 -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Практика НМТ</span>
+                <h2 class="slide-title">Тренажер 1: Знайди знаки</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: flex-start;">
+                    <!-- Графік завдання -->
+                    <div class="widget-svg-container" style="min-height: 250px; background: #fff;">
+                        <svg viewBox="-2 -1.5 6 6" width="100%" height="100%">
+                            <g stroke="#ecf0f1" stroke-width="0.05">
+                                <line x1="-2" y1="-1" x2="4" y2="-1"/><line x1="-2" y1="1" x2="4" y2="1"/><line x1="-2" y1="2" x2="4" y2="2"/><line x1="-2" y1="3" x2="4" y2="3"/><line x1="-2" y1="4" x2="4" y2="4"/>
+                                <line x1="-1" y1="-1.5" x2="-1" y2="4.5"/><line x1="1" y1="-1.5" x2="1" y2="4.5"/><line x1="2" y1="-1.5" x2="2" y2="4.5"/><line x1="3" y1="-1.5" x2="3" y2="4.5"/>
+                            </g>
+                            <line x1="-2" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <line x1="0" y1="-1.5" x2="0" y2="4.5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                            <text x="3.8" y="-0.2" font-size="0.3">x</text><text x="0.2" y="-1.2" font-size="0.3">y</text>
+
+                            <g id="quiz1-scene"></g>
+                        </svg>
+                    </div>
+
+                    <!-- Питання -->
+                    <div class="math-widget" style="margin-top: 0; padding: 15px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">Визначте знаки $a, b, c$ та $D$ за графіком:</div>
+
+                        <div style="display:flex; flex-direction:column; gap:10px;" id="quiz1-container">
+                            <div class="quiz-option" onclick="checkAnswer(1, this, false)">$a > 0, b > 0, c > 0, D > 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(1, this, true)">$a < 0, b > 0, c > 0, D > 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(1, this, false)">$a < 0, b < 0, c > 0, D > 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(1, this, false)">$a < 0, b > 0, c < 0, D < 0$</div>
+                        </div>
+
+                        <div id="quiz1-feedback" style="margin-top: 15px; font-size: 0.9rem; line-height: 1.5; display: none;">
+                            <!-- Feedback injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЛАЙД 7: ТРЕНАЖЕР ЧИТАННЯ ГРАФІКА 2 -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика НМТ</span>
+                <h2 class="slide-title">Тренажер 2: Знайди знаки</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-2col" style="align-items: flex-start;">
+                    <!-- Графік завдання 2 -->
+                    <div class="widget-svg-container" style="min-height: 250px; background: #fff;">
+                        <svg viewBox="-5 -4 7 7" width="100%" height="100%">
+                            <g stroke="#ecf0f1" stroke-width="0.05">
+                                <line x1="-5" y1="-3" x2="2" y2="-3"/><line x1="-5" y1="-2" x2="2" y2="-2"/><line x1="-5" y1="-1" x2="2" y2="-1"/><line x1="-5" y1="1" x2="2" y2="1"/><line x1="-5" y1="2" x2="2" y2="2"/>
+                                <line x1="-4" y1="-4" x2="-4" y2="3"/><line x1="-3" y1="-4" x2="-3" y2="3"/><line x1="-2" y1="-4" x2="-2" y2="3"/><line x1="-1" y1="-4" x2="-1" y2="3"/><line x1="1" y1="-4" x2="1" y2="3"/>
+                            </g>
+                            <line x1="-5" y1="0" x2="2" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
+                            <line x1="0" y1="-4" x2="0" y2="3" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
+                            <text x="1.8" y="-0.2" font-size="0.3">x</text><text x="0.2" y="-3.7" font-size="0.3">y</text>
+
+                            <g id="quiz2-scene"></g>
+                        </svg>
+                    </div>
+
+                    <!-- Питання -->
+                    <div class="math-widget" style="margin-top: 0; padding: 15px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">Визначте знаки $a, b, c$ та $D$ за графіком:</div>
+
+                        <div style="display:flex; flex-direction:column; gap:10px;" id="quiz2-container">
+                            <div class="quiz-option" onclick="checkAnswer(2, this, true)">$a > 0, b > 0, c < 0, D > 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(2, this, false)">$a > 0, b < 0, c < 0, D > 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(2, this, false)">$a > 0, b > 0, c > 0, D < 0$</div>
+                            <div class="quiz-option" onclick="checkAnswer(2, this, false)">$a < 0, b < 0, c < 0, D > 0$</div>
+                        </div>
+
+                        <div id="quiz2-feedback" style="margin-top: 15px; font-size: 0.9rem; line-height: 1.5; display: none;">
+                            <!-- Feedback injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn-primary" onclick="goToSlide(1)" style="padding: 10px 24px;">🔄 Повторити спочатку</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div style="font-size: 0.85rem; color: #7f8c8d;">
+            Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        // Утиліта для побудови ІДЕАЛЬНО ГЛАДКОЇ параболи
+        function getParabolaPath(a, b, c, xMin, xMax, step = 0.05) {
+            let path = "";
+            for (let x = xMin; x <= xMax; x += step) {
+                let y = a * x * x + b * x + c;
+                // В SVG вісь Y направлена вниз, тому беремо -y
+                path += (path === "" ? `M ${x} ${-y}` : ` L ${x} ${-y}`);
+            }
+            return path;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 1;
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+
+            window.goToSlide = function(index) {
+                if (index < 1) index = 1;
+                if (index > totalSlides) index = totalSlides;
+                currentSlide = index;
+                slides.forEach((slide, i) => { slide.classList.toggle('active', i === currentSlide - 1); });
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                if (currentSlide === 2) renderVertexScene();
+                if (currentSlide === 3) renderParamScene();
+                if (currentSlide === 4) renderDScene();
+                if (currentSlide === 6) renderQuiz1Scene();
+                if (currentSlide === 7) renderQuiz2Scene();
+
+                if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                let isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', !isDarkTheme ? 'dark' : 'light');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // ================= ІНТЕРАКТИВНІ ФУНКЦІЇ =================
+
+            // Слайд 2: Тренажер вершини
+            window.renderVertexScene = function() {
+                let x0 = parseFloat(document.getElementById('v-x0').value);
+                let y0 = parseFloat(document.getElementById('v-y0').value);
+                const scene = document.getElementById('vertex-scene');
+
+                // Рівняння: y = (x - x0)^2 + y0  =>  y = x^2 - 2*x0*x + (x0^2 + y0)
+                let a = 1;
+                let b = -2 * x0;
+                let c = x0 * x0 + y0;
+
+                let svg = `<path d="${getParabolaPath(a, b, c, -5, 5)}" fill="none" stroke="#8e44ad" stroke-width="0.12"/>`;
+
+                // Вісь симетрії
+                svg += `<line x1="${x0}" y1="-4" x2="${x0}" y2="4" stroke="#2c3e50" stroke-dasharray="0.2,0.2" stroke-width="0.05"/>`;
+
+                // Вершина
+                svg += `<circle cx="${x0}" cy="${-y0}" r="0.15" fill="#8e44ad"/>`;
+                svg += `<text x="${x0+0.2}" y="${-y0-0.2}" font-size="0.4" fill="#8e44ad" font-weight="bold">(x₀; y₀)</text>`;
+
+                scene.innerHTML = svg;
+            };
+
+            // Слайд 3: Тренажер параметрів a, b, c
+            window.renderParamScene = function() {
+                let a = parseFloat(document.getElementById('param-a').value);
+                let b = parseFloat(document.getElementById('param-b').value);
+                let c = parseFloat(document.getElementById('param-c').value);
+
+                // Якщо a = 0, робимо його мінімально ненульовим щоб залишилась парабола
+                if (a === 0) { a = 0.2; document.getElementById('param-a').value = a; }
+
+                document.getElementById('val-a').textContent = a;
+                document.getElementById('val-b').textContent = b;
+                document.getElementById('val-c').textContent = c;
+
+                const scene = document.getElementById('param-scene');
+
+                let svg = `<path d="${getParabolaPath(a, b, c, -6, 6)}" fill="none" stroke="#3498db" stroke-width="0.12"/>`;
+
+                let x0 = -b / (2*a);
+                let y0 = a*x0*x0 + b*x0 + c;
+
+                // Вісь симетрії та вершина
+                if (y0 <= 5.5 && y0 >= -5.5 && x0 >= -5 && x0 <= 5) {
+                    svg += `<line x1="${x0}" y1="-5" x2="${x0}" y2="5" stroke="#27ae60" stroke-dasharray="0.2,0.2" stroke-width="0.05"/>`;
+                    svg += `<circle cx="${x0}" cy="${-y0}" r="0.15" fill="#27ae60"/>`;
+                }
+
+                // Перетин з Oy (точка c)
+                if (c <= 5.5 && c >= -5.5) {
+                    svg += `<circle cx="0" cy="${-c}" r="0.15" fill="#d35400"/>`;
+                }
+
+                scene.innerHTML = svg;
+
+                // Update formula display
+                let signB = b < 0 ? "-" : "+";
+                let signC = c < 0 ? "-" : "+";
+                let valB = Math.abs(b) === 1 ? "" : Math.abs(b);
+                let termB = b === 0 ? "" : ` ${signB} ${valB}x`;
+                let termC = c === 0 ? "" : ` ${signC} ${Math.abs(c)}`;
+                let valA = a === 1 ? "" : (a === -1 ? "-" : a);
+
+                let formulaHtml = `$y = ${valA}x^2${termB}${termC}$`;
+                const formulaContainer = document.getElementById('param-formula');
+
+                if(window.MathJax) MathJax.typesetClear([formulaContainer]);
+                formulaContainer.innerHTML = formulaHtml;
+                if(window.MathJax) MathJax.typesetPromise([formulaContainer]);
+            };
+
+            // Слайд 4: Дискримінант
+            let dMode = 'pos';
+            window.setDMode = function(mode) {
+                dMode = mode;
+                document.getElementById('btn-d-pos').classList.toggle('active', mode === 'pos');
+                document.getElementById('btn-d-zero').classList.toggle('active', mode === 'zero');
+                document.getElementById('btn-d-neg').classList.toggle('active', mode === 'neg');
+                renderDScene();
+            };
+
+            window.renderDScene = function() {
+                const scene = document.getElementById('d-scene');
+                const out = document.getElementById('d-out');
+                let svg = "";
+                let html = "";
+
+                if (dMode === 'pos') {
+                    // y = x^2 - 2 (D = 0 - 4(1)(-2) = 8 > 0)
+                    svg += `<path d="${getParabolaPath(1, 0, -2, -4, 4)}" fill="none" stroke="#2980b9" stroke-width="0.1"/>`;
+                    let root = Math.sqrt(2);
+                    svg += `<circle cx="${root}" cy="0" r="0.15" fill="#e74c3c"/>`;
+                    svg += `<circle cx="${-root}" cy="0" r="0.15" fill="#e74c3c"/>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); font-size: 1.1rem; margin-bottom: 10px;">Дискримінант $D > 0$</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Рівняння $ax^2+bx+c=0$ має <strong>два різні корені</strong> ($x_1$ та $x_2$).</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Парабола перетинає вісь $Ox$ у двох точках. Знак функції змінюється з плюса на мінус і навпаки.</p>
+                    `;
+                } else if (dMode === 'zero') {
+                    // y = x^2 (D = 0)
+                    svg += `<path d="${getParabolaPath(1, 0, 0, -4, 4)}" fill="none" stroke="#2980b9" stroke-width="0.1"/>`;
+                    svg += `<circle cx="0" cy="0" r="0.15" fill="#e74c3c"/>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); font-size: 1.1rem; margin-bottom: 10px;">Дискримінант $D = 0$</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Рівняння має <strong>один корінь</strong> (або два однакові).</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Парабола лише <strong>дотикається</strong> до осі $Ox$ своєю вершиною і не перетинає її. Знакосталість не змінюється (тут $y \geq 0$).</p>
+                    `;
+                } else if (dMode === 'neg') {
+                    // y = x^2 + 1 (D = -4 < 0)
+                    svg += `<path d="${getParabolaPath(1, 0, 1, -4, 4)}" fill="none" stroke="#2980b9" stroke-width="0.1"/>`;
+
+                    html = `
+                        <div style="font-weight: bold; color: var(--brand-blue); font-size: 1.1rem; margin-bottom: 10px;">Дискримінант $D < 0$</div>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Рівняння <strong>не має дійсних коренів</strong>.</p>
+                        <p style="font-size: 0.95rem; line-height: 1.5; color: #444;">Парабола <strong>не має спільних точок</strong> з віссю $Ox$. Вона повністю розташована вище або нижче осі (тут $y > 0$ для всіх $x$).</p>
+                    `;
+                }
+
+                scene.innerHTML = svg;
+                if(window.MathJax) MathJax.typesetClear([out]);
+                out.innerHTML = html;
+                if(window.MathJax) MathJax.typesetPromise([out]);
+            };
+
+            // Слайд 6 та 7: Quiz
+            window.renderQuiz1Scene = function() {
+                const scene = document.getElementById('quiz1-scene');
+                // y = -x^2 + 3x + 1
+                let svg = `<path d="${getParabolaPath(-1, 3, 1, -2, 5)}" fill="none" stroke="#2c3e50" stroke-width="0.1"/>`;
+
+                // Точки та підказки
+                svg += `<circle cx="0" cy="-1" r="0.12" fill="#d35400"/>`;
+                svg += `<text x="-0.3" y="-0.9" font-size="0.3" fill="#d35400">c</text>`;
+
+                svg += `<circle cx="1.5" cy="-3.25" r="0.12" fill="#27ae60"/>`;
+                svg += `<text x="1.5" y="-3.4" font-size="0.3" fill="#27ae60" text-anchor="middle">x₀</text>`;
+                svg += `<line x1="1.5" y1="0" x2="1.5" y2="-3.25" stroke="#27ae60" stroke-dasharray="0.1,0.1" stroke-width="0.03"/>`;
+
+                scene.innerHTML = svg;
+            }
+
+            window.renderQuiz2Scene = function() {
+                const scene = document.getElementById('quiz2-scene');
+                // y = 0.5x^2 + 2x - 1 (Vertex at x=-2)
+                let svg = `<path d="${getParabolaPath(0.5, 2, -1, -5, 2)}" fill="none" stroke="#2c3e50" stroke-width="0.1"/>`;
+
+                // Точки та підказки
+                svg += `<circle cx="0" cy="1" r="0.12" fill="#d35400"/>`;
+                svg += `<text x="0.2" y="1.2" font-size="0.3" fill="#d35400">c</text>`;
+
+                svg += `<circle cx="-2" cy="3" r="0.12" fill="#27ae60"/>`;
+                svg += `<text x="-2" y="3.4" font-size="0.3" fill="#27ae60" text-anchor="middle">x₀</text>`;
+                svg += `<line x1="-2" y1="0" x2="-2" y2="3" stroke="#27ae60" stroke-dasharray="0.1,0.1" stroke-width="0.03"/>`;
+
+                scene.innerHTML = svg;
+            }
+
+            window.checkAnswer = function(quizNum, element, isCorrect) {
+                const container = document.getElementById(`quiz${quizNum}-container`);
+                const options = container.querySelectorAll('.quiz-option');
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'wrong');
+                    opt.style.pointerEvents = 'none';
+                });
+
+                const feedback = document.getElementById(`quiz${quizNum}-feedback`);
+                feedback.style.display = 'block';
+
+                if (quizNum === 1) {
+                    if (isCorrect) {
+                        element.classList.add('correct');
+                        feedback.innerHTML = `
+                            <strong style="color: var(--brand-green);">✅ Правильно! Ідеальний аналіз:</strong>
+                            <ul style="margin-top: 5px; padding-left: 15px;">
+                                <li>Вітки вниз $\\implies \\mathbf{a < 0}$</li>
+                                <li>Перетин з $Oy$ вище нуля $\\implies \\mathbf{c > 0}$</li>
+                                <li>Вершина справа ($x_0 > 0$), $a < 0$, отже $\\mathbf{b > 0}$</li>
+                                <li>Два перетини з $Ox \\implies \\mathbf{D > 0}$</li>
+                            </ul>
+                            <button class="btn-primary" onclick="resetQuiz(${quizNum})" style="margin-top: 10px; padding: 5px 10px;">Спробувати ще раз</button>
+                        `;
+                    } else {
+                        element.classList.add('wrong');
+                        options[1].classList.add('correct');
+                        feedback.innerHTML = `
+                            <strong style="color: var(--warning-red);">❌ Помилка. Розберемо кроки:</strong>
+                            <ul style="margin-top: 5px; padding-left: 15px;">
+                                <li>Вітки напрямлені <strong>вниз</strong>, тому $a < 0$.</li>
+                                <li>Точка $c$ на осі $Oy$ лежить <strong>вище</strong> нуля, тому $c > 0$.</li>
+                                <li>Вершина $x_0$ <strong>справа</strong>. Якщо $a<0$, то $b$ має бути з іншим знаком ($b>0$), щоб мінуси скоротились.</li>
+                                <li>Є дві точки перетину з $Ox$, тому $D > 0$.</li>
+                            </ul>
+                            <button class="btn-primary" onclick="resetQuiz(${quizNum})" style="margin-top: 10px; padding: 5px 10px;">Спробувати ще раз</button>
+                        `;
+                    }
+                } else if (quizNum === 2) {
+                    if (isCorrect) {
+                        element.classList.add('correct');
+                        feedback.innerHTML = `
+                            <strong style="color: var(--brand-green);">✅ Правильно! Чудова робота:</strong>
+                            <ul style="margin-top: 5px; padding-left: 15px;">
+                                <li>Вітки вгору $\\implies \\mathbf{a > 0}$</li>
+                                <li>Перетин з $Oy$ нижче нуля $\\implies \\mathbf{c < 0}$</li>
+                                <li>Вершина зліва ($x_0 < 0$), $a > 0$, отже $\\mathbf{b > 0}$ (однакові знаки)</li>
+                                <li>Два перетини з $Ox \\implies \\mathbf{D > 0}$</li>
+                            </ul>
+                            <button class="btn-primary" onclick="resetQuiz(${quizNum})" style="margin-top: 10px; padding: 5px 10px;">Спробувати ще раз</button>
+                        `;
+                    } else {
+                        element.classList.add('wrong');
+                        options[0].classList.add('correct');
+                        feedback.innerHTML = `
+                            <strong style="color: var(--warning-red);">❌ Помилка. Знайдемо, де схибили:</strong>
+                            <ul style="margin-top: 5px; padding-left: 15px;">
+                                <li>Вітки напрямлені <strong>вгору</strong>, тому $a > 0$.</li>
+                                <li>Перетин з $Oy$ (помаранчева точка) <strong>нижче</strong> нуля, тому $c < 0$.</li>
+                                <li>Вершина $x_0$ <strong>зліва</strong>. Для цього $a$ і $b$ повинні мати однакові знаки. Оскільки $a>0$, то й $b > 0$.</li>
+                                <li>Два перетини з $Ox \implies D > 0$.</li>
+                            </ul>
+                            <button class="btn-primary" onclick="resetQuiz(${quizNum})" style="margin-top: 10px; padding: 5px 10px;">Спробувати ще раз</button>
+                        `;
+                    }
+                }
+                if(window.MathJax) MathJax.typesetPromise([feedback]);
+            };
+
+            window.resetQuiz = function(quizNum) {
+                const container = document.getElementById(`quiz${quizNum}-container`);
+                const options = container.querySelectorAll('.quiz-option');
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'wrong');
+                    opt.style.pointerEvents = 'auto';
+                });
+                document.getElementById(`quiz${quizNum}-feedback`).style.display = 'none';
+            };
+
+            // Init
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
