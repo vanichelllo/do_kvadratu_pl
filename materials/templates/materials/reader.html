@@ -3,54 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ material.title }} | Читання</title>
+    <title>{{ material.title }} | Інтерактивний конспект</title>
     <style>
-        body {
-            background-color: #2c3e50; /* Темний фон для комфортного читання */
+        body, html {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            height: 100%;
+            background-color: #2c3e50;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            user-select: none; /* Заборона виділення тексту */
-            -webkit-user-select: none;
+            font-family: sans-serif;
+            overflow: hidden; /* Забороняємо прокрутку основної сторінки, крутитися буде лише презентація */
         }
+
+        /* Верхня панель (Header) */
         .reader-header {
-            width: 100%;
-            max-width: 900px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            padding: 15px 20px;
+            background-color: #1a252f;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
         }
-        .btn-back {
-            background-color: #ffcc00;
-            color: #344e86;
-            padding: 10px 20px;
+
+        .btn-back, .btn-download {
+            padding: 10px 15px;
             text-decoration: none;
             font-weight: bold;
             border-radius: 8px;
-            font-family: sans-serif;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
         }
-        .pdf-title {
+
+        .btn-back {
+            background-color: #344e86;
             color: white;
-            font-family: sans-serif;
+            border: 1px solid #344e86;
+        }
+
+        .btn-back:hover {
+            background-color: #2a3f6e;
+        }
+
+        .btn-download {
+            background-color: #ffcc00;
+            color: #344e86;
+        }
+
+        .btn-download:hover {
+            background-color: #e6b800;
+        }
+
+        .header-title {
+            color: white;
             font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        #pdf-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+
+        /* Контейнер для презентації */
+        .iframe-container {
+            flex-grow: 1;
             width: 100%;
-            max-width: 900px;
+            background-color: #ffffff;
         }
-        canvas {
+
+        iframe {
             width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            height: 100%;
+            border: none;
+            display: block;
         }
-        /* Якщо учень спробує роздрукувати сторінку - вона буде порожньою */
+
+        /* Мобільна адаптація */
+        @media (max-width: 600px) {
+            .header-title { display: none; } /* На телефонах ховаємо назву, щоб влізли обидві кнопки */
+            .reader-header { padding: 15px 10px; }
+        }
+
         @media print {
             body { display: none !important; }
         }
@@ -61,61 +98,44 @@
 
     <div class="reader-header">
         <a href="{% url 'cabinet' %}" class="btn-back">⬅ В кабінет</a>
-        <div class="pdf-title">{{ material.title }}</div>
+        <div class="header-title">{{ material.title }}</div>
+
+        <!-- Кнопка завантаження PDF -->
+        {% if material.file %}
+            <a href="{{ material.file.url }}" target="_blank" download class="btn-download">📥 Завантажити PDF</a>
+        {% endif %}
     </div>
 
-    <div id="pdf-container">
-        <!-- Сюди магічним чином завантажаться сторінки -->
+    <div class="iframe-container">
+        <!-- Вікно для ізольованого відображення HTML-коду -->
+        <iframe id="presentation-frame" sandbox="allow-scripts allow-same-origin"></iframe>
     </div>
-
-    <!-- Підключення бібліотеки PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<!-- Безпечне передавання HTML-коду у JavaScript -->
+    {{ material.html_content|default_if_none:""|json_script:"html-data" }}
 
     <script>
-        // Блокуємо спроби зберегти сторінку клавіатурою (Ctrl+S, Ctrl+P)
+        // Блокуємо спроби зберегти сторінку клавіатурою
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && (e.key === 's' || e.key === 'p' || e.key === 'c')) {
                 e.preventDefault();
             }
         });
 
-        // Беремо зашифрований файл із Django і декодуємо
-        var pdfData = atob('{{ pdf_base64 }}');
-        var pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        // 1. Безпечно дістаємо HTML-код із бази
+        const htmlContent = JSON.parse(document.getElementById('html-data').textContent);
+        const iframe = document.getElementById('presentation-frame');
 
-        var loadingTask = pdfjsLib.getDocument({data: pdfData});
-
-        loadingTask.promise.then(function(pdf) {
-            var container = document.getElementById('pdf-container');
-
-            // Проходимось по всіх сторінках PDF
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                pdf.getPage(pageNum).then(function(page) {
-                    // Трохи збільшуємо якість для ПК
-                    var scale = window.innerWidth < 768 ? 1.2 : 2.0;
-                    var viewport = page.getViewport({scale: scale});
-
-                    // Створюємо полотно для малювання
-                    var canvas = document.createElement('canvas');
-                    var context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    // Обгортка потрібна, щоб сторінки не плуталися місцями при завантаженні
-                    var wrapper = document.createElement('div');
-                    wrapper.style.order = pageNum;
-                    wrapper.appendChild(canvas);
-                    container.appendChild(wrapper);
-
-                    var renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    page.render(renderContext);
-                });
-            }
-        });
+        // 2. Якщо код є - відмальовуємо його через надійний srcdoc
+        if (htmlContent && htmlContent.trim() !== "") {
+            iframe.srcdoc = htmlContent;
+        } else {
+            // Якщо пусто - показуємо повідомлення-заглушку
+            iframe.srcdoc = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%; font-family: sans-serif; color: #666; background-color: #f9f9f9; text-align: center; padding: 20px;">
+                    <h2>Інтерактивна презентація ще не додана.<br>Будь ласка, скористайтеся завантаженням PDF.</h2>
+                </div>
+            `;
+        }
     </script>
 </body>
 </html>
