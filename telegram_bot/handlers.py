@@ -1,25 +1,19 @@
 import io
 import aiohttp
 from pypdf import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.colors import Color
 
 from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, BufferedInputFile
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, BufferedInputFile, WebAppInfo
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from asgiref.sync import sync_to_async
 
-from materials.models import StudyMaterial, Order, OrderItem
-from django.utils.timezone import now
+from materials.models import StudyMaterial
 from django.contrib.auth import get_user_model
-from django.core.paginator import Paginator
 from django.conf import settings
-from datetime import datetime
 
 User = get_user_model()
 router = Router()
@@ -27,12 +21,8 @@ router = Router()
 BOT_NAME = "do_kvadratu"
 CONTACT = "@do_kvadratu"
 
-# Тимчасова пам'ять кошиків
-user_carts = {}
-pending_orders = {}
 
-
-# ─── НАЛАШТУВАННЯ ДІАГНОСТИЧНОГО ТЕСТУ (КВІЗУ) ───────────────
+# ─── СТАНИ FSM ───────────────────────────────────────────────
 class QuizFSM(StatesGroup):
     answering_choice = State()
     answering_short = State()
@@ -50,6 +40,7 @@ class SupportFSM(StatesGroup):
     waiting_for_question = State()
 
 
+# ─── ЗАПИТАННЯ ДІАГНОСТИЧНОГО ТЕСТУ ──────────────────────────
 DIAGNOSTIC_QUESTIONS = [
     {"q": "<b>1/22.</b> Розв’яжіть рівняння: 3x / 4 = 6.", "t": "6. Лінійні рівняння. Лінійні рівняння з параметром",
      "type": "choice", "opts": ["2", "4.5", "8", "18", "24"], "ans": 2},
@@ -109,61 +100,7 @@ DIAGNOSTIC_QUESTIONS = [
 ]
 
 
-# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ТА PDF ─────────────────
-@sync_to_async
-def create_bot_order_in_db(telegram_id, full_name, total_price, item_ids):
-    user, _ = User.objects.get_or_create(
-        username=str(telegram_id),
-        defaults={
-            'first_name': full_name[:30],
-            'email': f"{telegram_id}@telegram.bot"
-        }
-    )
-    order = Order.objects.create(
-        user=user,
-        total_amount=total_price,
-        status='pending',
-        source='bot'
-    )
-    materials = StudyMaterial.objects.filter(id__in=item_ids)
-    for mat in materials:
-        OrderItem.objects.create(order=order, material=mat, price=mat.price)
-    return order.id
-
-
-@sync_to_async
-def mark_bot_order_as_paid(order_id):
-    try:
-        order = Order.objects.get(id=order_id)
-        order.status = 'paid'
-        order.paid_at = now()
-        order.save()
-    except Exception as e:
-        print(f"Помилка оновлення статусу замовлення {order_id}: {e}")
-
-
-@sync_to_async
-def get_materials_page(page_number, per_page=10, is_bundle=False):
-    materials = StudyMaterial.objects.filter(is_published=True, is_bundle=is_bundle).order_by('id')
-    paginator = Paginator(materials, per_page)
-    if page_number > paginator.num_pages or page_number < 1:
-        return [], paginator.num_pages
-    return list(paginator.page(page_number).object_list), paginator.num_pages
-
-
-@sync_to_async
-def get_cart_details(item_ids):
-    materials = StudyMaterial.objects.filter(id__in=item_ids)
-    total_price = sum(item.price for item in materials if not item.is_free)
-    titles = [item.title for item in materials]
-    return total_price, titles
-
-
-@sync_to_async
-def get_materials_by_ids(item_ids):
-    return list(StudyMaterial.objects.filter(id__in=item_ids))
-
-
+# ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ────────────────────────
 @sync_to_async
 def get_free_materials_urls():
     materials = StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id')
@@ -184,43 +121,11 @@ def get_recommendations_for_topics(wrong_topics):
     return list(set(recommendations))
 
 
-async def merge_and_watermark(pdf_urls: list, user_id: int) -> bytes:
-    watermark_buffer = io.BytesIO()
-    c = canvas.Canvas(watermark_buffer, pagesize=A4)
-    c.setFillColor(Color(0.5, 0.5, 0.5, alpha=0.2))
-    c.setFont("Helvetica-Bold", 36)
-    c.translate(300, 400)
-    c.rotate(45)
-    c.drawCentredString(0, 0, f"DO KVADRATU | USER ID: {user_id}")
-    c.save()
-
-    watermark_buffer.seek(0)
-    watermark_page = PdfReader(watermark_buffer).pages[0]
-
-    writer = PdfWriter()
-    async with aiohttp.ClientSession() as session:
-        for file_index, url in enumerate(pdf_urls):
-            if url.startswith("http://"):
-                url = url.replace("http://", "https://")
-            async with session.get(url) as resp:
-                if resp.status == 200:
-                    pdf_bytes = await resp.read()
-                    reader = PdfReader(io.BytesIO(pdf_bytes))
-                    for page_index, page in enumerate(reader.pages):
-                        if file_index > 0 and page_index == 0:
-                            continue
-                        page.merge_page(watermark_page)
-                        writer.add_page(page)
-
-    output_buffer = io.BytesIO()
-    writer.write(output_buffer)
-    output_buffer.seek(0)
-    return output_buffer.read()
-
-
 # ─── КЛАВІАТУРИ ──────────────────────────────────────────────
 def get_main_menu_keyboard():
     builder = InlineKeyboardBuilder()
+    # Інтеграція платформи прямо в Telegram
+    builder.button(text="🌐 Мій кабінет (Платформа)", web_app=WebAppInfo(url="https://dokvadratu.onrender.com/cabinet/"))
     builder.button(text="🎓 Підготовка до НМТ", callback_data="menu_nmt_main")
     builder.button(text="🎒 Заняття (5-10 класи)", callback_data="menu_5_10")
     builder.button(text="🎯 Інші навчальні потреби", callback_data="menu_other")
@@ -233,12 +138,64 @@ def get_main_menu_keyboard():
 def get_nmt_menu_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="🎯 Перевір свій рівень (Тест)", callback_data="start_quiz")
-    builder.button(text="📚 Окремі теми", callback_data="menu_materials_1")
-    builder.button(text="📦 Готові пакети", callback_data="menu_bundles_1")
+    # Магазин тепер відкривається через WebApp
+    builder.button(text="🛍️ Магазин конспектів", web_app=WebAppInfo(url="https://dokvadratu.onrender.com/materials/"))
     builder.button(text="🎁 Вся база для НМТ (1 файлом)", callback_data="download_all_free")
     builder.button(text="← До головного меню", callback_data="back_main")
     builder.adjust(1)
     return builder.as_markup()
+
+
+# ─── ГОЛОВНЕ МЕНЮ ТА ІНФО ────────────────────────────────────
+@router.message(Command("start"))
+async def cmd_start(message: types.Message, state: FSMContext):
+    await state.clear()
+    welcome_text = f"Вітаю! Це бот проєкту <b>{BOT_NAME}</b>\n\nТвій головний помічник у вивченні математики та підготовці до іспитів.\nОбери потрібний розділ нижче:"
+    await message.answer(welcome_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
+
+
+@router.callback_query(F.data == "back_main")
+async def back_to_main(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    menu_text = f"Ти у головному меню проєкту <b>{BOT_NAME}</b>\n\nОбери розділ:"
+    if callback.message.document or callback.message.photo:
+        try:
+            await callback.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
+        await callback.message.answer(menu_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
+    else:
+        await callback.message.edit_text(menu_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu_about")
+async def show_about(callback: types.CallbackQuery):
+    text = "👨‍🏫 <b>Про мене</b>\n\nПривіт! Я — Іван, професійний викладач математики із 7-річним досвідом. У 2024–2025 роках я працював вчителем математики, а зараз продовжую роботу в державній школі..."
+    builder = InlineKeyboardBuilder()
+    builder.button(text="← До головного меню", callback_data="back_main")
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu_socials")
+async def show_socials(callback: types.CallbackQuery):
+    text = f"📱 <b>Мої соцмережі</b>\n\nПідписуйся, щоб отримувати розбори складних задач та лайфхаки для НМТ!\n\nЗв'язок зі мною: {CONTACT}"
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Instagram", url="https://instagram.com/do_kvadratu")
+    builder.button(text="Telegram-канал", url="https://t.me/do_kvadratu")
+    builder.button(text="← До головного меню", callback_data="back_main")
+    builder.adjust(1)
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu_nmt_main")
+async def show_nmt_main(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    text = "📚 <b>Підготовка до НМТ</b>\n\nТут зібрано все необхідне для твого успіху на іспиті:"
+    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_nmt_menu_keyboard())
+    await callback.answer()
 
 
 # ─── ЛОГІКА ДІАГНОСТИЧНОГО ТЕСТУ (КВІЗУ) ─────────────────────
@@ -315,12 +272,14 @@ async def finish_quiz(message: types.Message, state: FSMContext):
     wrong_topics = data.get("wrong_topics", [])
     total = len(DIAGNOSTIC_QUESTIONS)
     await state.clear()
+
     if score == total:
         level_text = "🔥 <b>Блискучий результат!</b> У тебе ідеальна база. Ти готовий(а) до найскладніших завдань."
     elif score >= total * 0.6:
         level_text = "👍 <b>Гарний рівень, але є прогалини.</b> Зверни увагу на теми, в яких були допущені помилки."
     else:
         level_text = "⚠️ <b>База потребує серйозної роботи.</b> Рекомендую терміново почати системне повторення матеріалу."
+
     final_text = f"🏁 <b>Діагностику завершено!</b>\n\nТвій результат: <b>{score} з {total}</b> правильних відповідей.\n{level_text}\n"
     if wrong_topics:
         recommendations = await get_recommendations_for_topics(wrong_topics)
@@ -328,144 +287,21 @@ async def finish_quiz(message: types.Message, state: FSMContext):
             final_text += "\n💡 <b>Тобі варто звернути увагу на ці конспекти:</b>\n"
             for rec in recommendations:
                 final_text += f"— <i>{rec}</i>\n"
-            final_text += "\nУсі вони вже чекають на тебе в нашому каталозі!"
+            final_text += "\nУсі вони вже чекають на тебе на нашій платформі!"
+
     builder = InlineKeyboardBuilder()
-    builder.button(text="📚 Відкрити каталог тем", callback_data="menu_materials_1")
-    builder.button(text="📦 Переглянути готові пакети", callback_data="menu_bundles_1")
+    builder.button(text="📚 Знайти ці теми на платформі",
+                   web_app=WebAppInfo(url="https://dokvadratu.onrender.com/materials/"))
     builder.button(text="← До меню НМТ", callback_data="menu_nmt_main")
     builder.adjust(1)
+
     try:
         await message.edit_text(final_text, parse_mode="HTML", reply_markup=builder.as_markup())
     except Exception:
         await message.answer(final_text, parse_mode="HTML", reply_markup=builder.as_markup())
 
 
-# ─── ГОЛОВНЕ МЕНЮ ТА ІНФО ────────────────────────────────────
-@router.message(Command("start"))
-async def cmd_start(message: types.Message, state: FSMContext):
-    await state.clear()
-    welcome_text = f"Вітаю! Це бот проєкту <b>{BOT_NAME}</b>\n\nТвій головний помічник у вивченні математики та підготовці до іспитів.\nОбери потрібний розділ нижче:"
-    await message.answer(welcome_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
-
-
-@router.callback_query(F.data == "back_main")
-async def back_to_main(callback: types.CallbackQuery, state: FSMContext):
-    await state.clear()
-    menu_text = f"Ти у головному меню проєкту <b>{BOT_NAME}</b>\n\nОбери розділ:"
-    if callback.message.document or callback.message.photo:
-        try:
-            await callback.message.edit_reply_markup(reply_markup=None)
-        except Exception:
-            pass
-        await callback.message.answer(menu_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
-    else:
-        await callback.message.edit_text(menu_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu_about")
-async def show_about(callback: types.CallbackQuery):
-    text = "👨‍🏫 <b>Про мене</b>\n\nПривіт! Я — Іван, професійний викладач математики із 7-річним досвідом. У 2024–2025 роках я працював вчителем математики, а зараз продовжую роботу в державній школі..."
-    builder = InlineKeyboardBuilder()
-    builder.button(text="← До головного меню", callback_data="back_main")
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu_socials")
-async def show_socials(callback: types.CallbackQuery):
-    text = f"📱 <b>Мої соцмережі</b>\n\nПідписуйся, щоб отримувати розбори складних задач та лайфхаки для НМТ!\n\nЗв'язок зі мною: {CONTACT}"
-    builder = InlineKeyboardBuilder()
-    builder.button(text="Instagram", url="https://instagram.com/do_kvadratu")
-    builder.button(text="Telegram-канал", url="https://t.me/do_kvadratu")
-    builder.button(text="← До головного меню", callback_data="back_main")
-    builder.adjust(1)
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu_nmt_main")
-async def show_nmt_main(callback: types.CallbackQuery, state: FSMContext):
-    await state.clear()
-    text = "📚 <b>Підготовка до НМТ</b>\n\nТут зібрано все необхідне для твого успіху на іспиті:"
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=get_nmt_menu_keyboard())
-    await callback.answer()
-
-
-# ─── ЛОГІКА ВІДОБРАЖЕННЯ ТА КОШИКА ──────────────────────────
-async def render_materials_page(callback: types.CallbackQuery, page: int, is_bundle: bool):
-    user_id = callback.from_user.id
-    if user_id not in user_carts:
-        user_carts[user_id] = set()
-    materials_list, total_pages = await get_materials_page(page, is_bundle=is_bundle)
-    if not materials_list:
-        await callback.answer("Матеріалів поки немає.", show_alert=True)
-        return
-    builder = InlineKeyboardBuilder()
-    cb_prefix = "bundle" if is_bundle else "single"
-    for item in materials_list:
-        price_text = "БЕЗКОШТОВНО" if item.is_free else f"{item.price} грн"
-        mark = "✅ " if item.id in user_carts[user_id] else ("📦 " if is_bundle else "📄 ")
-        short_title = item.title[:30] + "..." if len(item.title) > 30 else item.title
-        builder.button(text=f"{mark}{short_title} — {price_text}",
-                       callback_data=f"toggle_mat_{item.id}_{page}_{cb_prefix}")
-    builder.adjust(1)
-    nav_buttons = []
-    nav_cb = "menu_bundles_" if is_bundle else "menu_materials_"
-    if page > 1:
-        nav_buttons.append(InlineKeyboardButton(text="← Попередня", callback_data=f"{nav_cb}{page - 1}"))
-    if page < total_pages:
-        nav_buttons.append(InlineKeyboardButton(text="Наступна →", callback_data=f"{nav_cb}{page + 1}"))
-    if nav_buttons:
-        builder.row(*nav_buttons)
-    if user_carts[user_id]:
-        builder.row(InlineKeyboardButton(text=f"🛒 Отримати обрані ({len(user_carts[user_id])} шт.)",
-                                         callback_data="checkout_cart"))
-    builder.row(InlineKeyboardButton(text="← Назад", callback_data="menu_nmt_main"))
-    title_str = "Готові пакети" if is_bundle else "Конспекти окремих тем"
-    text = f"<b>{title_str}</b> (Сторінка {page} з {total_pages})\n\nНатискай на матеріали, щоб додати їх до збірки."
-    await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
-
-
-@router.callback_query(F.data.startswith("menu_materials_"))
-async def show_materials_catalog(callback: types.CallbackQuery):
-    try:
-        parts = callback.data.split("_")
-        current_page = int(parts[2]) if len(parts) > 2 else 1
-        await render_materials_page(callback, current_page, is_bundle=False)
-        await callback.answer()
-    except Exception:
-        await callback.answer("Помилка завантаження.", show_alert=True)
-
-
-@router.callback_query(F.data.startswith("menu_bundles_"))
-async def show_bundles_catalog(callback: types.CallbackQuery):
-    try:
-        parts = callback.data.split("_")
-        current_page = int(parts[2]) if len(parts) > 2 else 1
-        await render_materials_page(callback, current_page, is_bundle=True)
-        await callback.answer()
-    except Exception:
-        await callback.answer("Помилка завантаження.", show_alert=True)
-
-
-@router.callback_query(F.data.startswith("toggle_mat_"))
-async def toggle_material(callback: types.CallbackQuery):
-    parts = callback.data.split("_")
-    item_id = int(parts[2])
-    page = int(parts[3])
-    is_bundle = (parts[4] == "bundle")
-    user_id = callback.from_user.id
-    if user_id not in user_carts:
-        user_carts[user_id] = set()
-    if item_id in user_carts[user_id]:
-        user_carts[user_id].remove(item_id)
-    else:
-        user_carts[user_id].add(item_id)
-    await render_materials_page(callback, page, is_bundle)
-    await callback.answer()
-
-
+# ─── БЕЗКОШТОВНІ МАТЕРІАЛИ (Вся база) ────────────────────────
 @router.callback_query(F.data == "download_all_free")
 async def send_all_free_materials(callback: types.CallbackQuery):
     await callback.answer()
@@ -503,131 +339,7 @@ async def send_all_free_materials(callback: types.CallbackQuery):
         await wait_msg.edit_text("❌ Сталася помилка при формуванні файлу.")
 
 
-# ─── ОФОРМЛЕННЯ ЗАМОВЛЕННЯ ──────────────────────────────────
-@router.callback_query(F.data == "checkout_cart")
-async def process_checkout(callback: types.CallbackQuery):
-    user = callback.from_user
-    if user.id not in user_carts or not user_carts[user.id]:
-        await callback.answer("Ваш кошик порожній!", show_alert=True)
-        return
-
-    item_ids = list(user_carts[user.id])
-    total_price, titles = await get_cart_details(item_ids)
-
-    # Зберігаємо замовлення в базу
-    db_order_id = await create_bot_order_in_db(user.id, user.full_name, total_price, item_ids)
-
-    if total_price == 0:
-        await mark_bot_order_as_paid(db_order_id)
-        await callback.message.edit_text("⏳ <i>Формуємо твої безкоштовні матеріали. Це займе кілька секунд...</i>",
-                                         parse_mode="HTML")
-        try:
-            materials = await get_materials_by_ids(item_ids)
-            urls = [mat.file.url for mat in materials if mat.file]
-            if not urls:
-                await callback.message.answer("Помилка: файли відсутні у базі!")
-                return
-            watermarked_pdf = await merge_and_watermark(urls, user.id)
-            filename = "Безкоштовні_матеріали.pdf" if len(materials) > 1 else f"{materials[0].title}.pdf"
-            await callback.bot.send_document(
-                user.id, document=BufferedInputFile(watermarked_pdf, filename=filename),
-                caption="📄 Тримай свої матеріали!\n\n🔒 <i>Файл персоналізовано спеціально для тебе.</i>",
-                protect_content=True
-            )
-            if user.id in user_carts:
-                user_carts[user.id].clear()
-            builder = InlineKeyboardBuilder()
-            builder.button(text="← До головного меню", callback_data="back_main")
-            await callback.message.answer("Успішно завантажено! Обирай що далі:", reply_markup=builder.as_markup())
-            try:
-                admin_id = int(settings.TELEGRAM_ADMIN_ID)
-                await callback.bot.send_message(admin_id,
-                                              f"✅ <b>Нове безкоштовне замовлення</b>\nУчень: {user.full_name} (<code>{user.id}</code>)\nСтатус: Видано автоматично.",
-                                              parse_mode="HTML")
-            except Exception:
-                pass
-        except Exception as e:
-            print(f"Помилка видачі безкоштовних файлів: {e}")
-            await callback.message.answer("Сталася помилка при зшиванні файлів.")
-        await callback.answer()
-        return
-
-    # Логіка для ПЛАТНИХ матеріалів
-    title_text = f"Збірка конспектів ({len(item_ids)} шт.)"
-    builder = InlineKeyboardBuilder()
-
-    pending_orders[user.id] = {
-        "db_order_id": db_order_id,
-        "username": user.full_name,
-        "items": item_ids,
-        "title": title_text,
-        "price": total_price,
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    try:
-        admin_id = int(settings.TELEGRAM_ADMIN_ID)
-        await callback.bot.send_message(admin_id,
-                                      f"<b>Нове замовлення (Кошик)</b>\n\nУчень: {user.full_name}\nID: <code>{user.id}</code>\nСума: {total_price} грн\n\nОчікуємо підтвердження оплати...",
-                                      parse_mode="HTML")
-    except Exception:
-        pass
-
-    card_number = "5408810041945642"
-    builder.button(text="Я оплатив(ла)", callback_data="paid_confirm")
-    builder.button(text="← Назад", callback_data="menu_materials_1")
-    builder.adjust(1)
-    await callback.message.edit_text(
-        f"<b>Оплата замовлення</b>\n\nТовар: {title_text}\nСума до сплати: <b>{total_price} грн</b>\n\n"
-        f"1. Перекажи кошти на картку (натисни, щоб скопіювати):\n<code>{card_number}</code>\n\n"
-        f"2. Після оплати обов'язково натисни кнопку нижче.",
-        parse_mode="HTML", reply_markup=builder.as_markup()
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data == "paid_confirm")
-async def paid_confirm(callback: types.CallbackQuery):
-    user = callback.from_user
-    order = pending_orders.get(user.id)
-    if not order:
-        await callback.answer("Замовлення не знайдено.", show_alert=True)
-        return
-    try:
-        admin_id = int(settings.TELEGRAM_ADMIN_ID)
-        await callback.bot.send_message(admin_id,
-                                      f"💸 <b>{user.full_name}</b> підтвердив(ла) оплату!\n\nID: <code>{user.id}</code>\nОчікувана сума: <b>{order['price']} грн</b>\n\nЩоб підтвердити замовлення і видати матеріали, надішли команду:\n<code>/approve {user.id}</code>",
-                                      parse_mode="HTML")
-    except Exception:
-        pass
-    builder = InlineKeyboardBuilder()
-    builder.button(text="← До головного меню", callback_data="back_main")
-    await callback.message.edit_text(
-        f"Дякую! Твоє повідомлення отримано.\nЯ перевірю надходження коштів і надішлю матеріали сюди.\n\nЯкщо є питання, пиши: {CONTACT}",
-        parse_mode="HTML", reply_markup=builder.as_markup())
-    await callback.answer()
-
-
-# Обробка кнопки нагадування "Спробувати ще раз"
-@router.callback_query(F.data.startswith("repay_"))
-async def repay_reminder(callback: types.CallbackQuery):
-    card_number = "5408810041945642"
-    builder = InlineKeyboardBuilder()
-    builder.button(text="Я оплатив(ла)", callback_data="paid_confirm")
-    builder.button(text="← До головного меню", callback_data="back_main")
-    builder.adjust(1)
-
-    await callback.message.edit_text(
-        f"<b>Оплата замовлення</b>\n\n"
-        f"Перекажи кошти на картку (натисни, щоб скопіювати):\n<code>{card_number}</code>\n\n"
-        f"Після оплати обов'язково натисни кнопку нижче.",
-        parse_mode="HTML",
-        reply_markup=builder.as_markup()
-    )
-    await callback.answer()
-
-
-# Обробка кнопки "Потрібна допомога"
+# ─── ПІДТРИМКА (Питання від користувачів) ────────────────────
 @router.callback_query(F.data == "ask_help")
 async def ask_help_callback(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("Напиши своє запитання сюди, і я відповім тобі найближчим часом:")
@@ -641,7 +353,7 @@ async def handle_support_question(message: types.Message, state: FSMContext):
         admin_id = int(settings.TELEGRAM_ADMIN_ID)
         await message.bot.send_message(
             admin_id,
-            f"⚠️ <b>Питання від учня (Допомога з оплатою/матеріалами)</b>\n"
+            f"⚠️ <b>Питання від учня (Підтримка)</b>\n"
             f"Від: {message.from_user.full_name}\n"
             f"ID: <code>{message.from_user.id}</code>\n\n"
             f"<b>Текст:</b> {message.text}",
@@ -649,62 +361,10 @@ async def handle_support_question(message: types.Message, state: FSMContext):
         )
     except Exception:
         pass
-
     builder = InlineKeyboardBuilder()
     builder.button(text="← До головного меню", callback_data="back_main")
     await message.answer("Дякую! Я отримав твоє повідомлення і скоро відпишу.", reply_markup=builder.as_markup())
     await state.clear()
-
-
-# ─── АДМІНСЬКА КОМАНДА ВІДПРАВКИ ────────────────────────────
-@router.message(Command("approve"))
-async def approve_order(message: types.Message):
-    try:
-        admin_id = int(settings.TELEGRAM_ADMIN_ID)
-    except Exception:
-        return
-    if message.from_user.id != admin_id:
-        return
-    parts = message.text.split()
-    if len(parts) != 2 or not parts[1].isdigit():
-        await message.reply("Використання: <code>/approve ID_користувача</code>", parse_mode="HTML")
-        return
-    user_id = int(parts[1])
-    order = pending_orders.get(user_id)
-    if not order:
-        await message.reply(f"Активних замовлень для ID {user_id} не знайдено.")
-        return
-    await message.reply(
-        "⏳ <i>Генерую водяні знаки, зшиваю файли та завантажую матеріали... Це може зайняти до хвилини.</i>",
-        parse_mode="HTML")
-    try:
-        materials = await get_materials_by_ids(order["items"])
-        urls = [mat.file.url for mat in materials if mat.file]
-        if not urls:
-            await message.reply("Помилка: у цих матеріалах відсутні файли!")
-            return
-        await message.bot.send_message(user_id,
-                                      "<b>Оплата успішна!</b> 🎉\n\nТвоє замовлення готове. Бажаю ефективної підготовки!",
-                                      parse_mode="HTML")
-        watermarked_pdf = await merge_and_watermark(urls, user_id)
-        if len(materials) == 1:
-            filename = f"{materials[0].title}.pdf"
-        else:
-            filename = "Персональна_збірка_конспектів.pdf"
-        await message.bot.send_document(
-            user_id, document=BufferedInputFile(watermarked_pdf, filename=filename),
-            caption="📄 Твої матеріали\n\n🔒 <i>Файл персоналізовано та захищено авторським правом. Пересилання заборонено.</i>",
-            protect_content=True
-        )
-        if "db_order_id" in order:
-            await mark_bot_order_as_paid(order["db_order_id"])
-        if user_id in user_carts:
-            user_carts[user_id].clear()
-        del pending_orders[user_id]
-        await message.reply(
-            f"✅ Замовлення завершено! Персоналізований файл надіслано учню {user_id}. У базі збережено!")
-    except Exception as e:
-        await message.reply(f"Помилка при відправці файлів: {e}")
 
 
 # ─── АДМІНСЬКА КОМАНДА ДЛЯ НАПИСАННЯ УЧНЮ ЗА ID ───────────────
@@ -726,13 +386,13 @@ async def admin_send_message(message: types.Message):
             parse_mode="HTML"
         )
         return
-
     target_user_id = int(parts[1])
     text_to_send = parts[2]
 
     try:
         await message.bot.send_message(target_user_id, text_to_send, parse_mode="HTML")
-        await message.reply(f"✅ Повідомлення успішно надіслано користувачу <code>{target_user_id}</code>!", parse_mode="HTML")
+        await message.reply(f"✅ Повідомлення успішно надіслано користувачу <code>{target_user_id}</code>!",
+                            parse_mode="HTML")
     except Exception as e:
         await message.reply(f"❌ Не вдалося надіслати повідомлення: {e}")
 
@@ -832,7 +492,6 @@ async def enroll_phone(message: types.Message, state: FSMContext):
 @router.message(F.text & ~F.text.startswith('/'))
 async def catch_all_text(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
-
     if current_state is None:
         try:
             admin_id = int(settings.TELEGRAM_ADMIN_ID)
@@ -847,7 +506,6 @@ async def catch_all_text(message: types.Message, state: FSMContext):
             )
         except Exception:
             pass
-
         builder = InlineKeyboardBuilder()
         builder.button(text="← До головного меню", callback_data="back_main")
         await message.answer(
