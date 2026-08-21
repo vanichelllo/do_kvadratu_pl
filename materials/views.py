@@ -151,10 +151,14 @@ def add_to_cart(request, material_id):
         return redirect('cabinet')
 
     # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
-    # Якщо матеріал безкоштовний (або ціна 0), одразу додаємо в кабінет і минаємо кошик
     if material.is_free or material.price == 0:
-        request.user.purchased_materials.add(material)
-        messages.success(request, f"🎉 Безкоштовний матеріал «{material.title}» додано до вашого кабінету!")
+        if material.is_bundle:
+            for sub_material in material.included_materials.all():
+                request.user.purchased_materials.add(sub_material)
+            messages.success(request, f"🎉 Всі матеріали з пакету «{material.title}» додано до вашого кабінету!")
+        else:
+            request.user.purchased_materials.add(material)
+            messages.success(request, f"🎉 Безкоштовний матеріал «{material.title}» додано до вашого кабінету!")
         return redirect('cabinet')
     # =========================================
 
@@ -324,8 +328,12 @@ def buy_material_view(request, material_id):
 
     # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
     if material.is_free or material.price == 0:
-        my_user.purchased_materials.add(material)
-        messages.success(request, f"Успіх! Конспект «{material.title}» успішно отримано.")
+        if material.is_bundle:
+            for sub_material in material.included_materials.all():
+                my_user.purchased_materials.add(sub_material)
+        else:
+            my_user.purchased_materials.add(material)
+        messages.success(request, f"Успіх! «{material.title}» успішно отримано.")
         return redirect('cabinet')
     # =========================================
 
@@ -388,13 +396,13 @@ def pay_from_balance(request):
             )
 
             for item in cart.items.all():
-                # Видаємо сам матеріал
-                request.user.purchased_materials.add(item.material)
-
-                # ДОДАНО: Розпакування пакету (видаємо всі вкладені конспекти)
+                # Якщо це пакет - розпаковуємо його (сам пакет НЕ додаємо)
                 if item.material.is_bundle:
                     for sub_material in item.material.included_materials.all():
                         request.user.purchased_materials.add(sub_material)
+                # Якщо це звичайний конспект - просто додаємо його
+                else:
+                    request.user.purchased_materials.add(item.material)
 
                 OrderItem.objects.create(
                     order=order,
@@ -558,11 +566,13 @@ def mono_webhook(request):
                         if order.items.exists():
                             # 1. Товари є — значить це покупка
                             for item in order.items.all():
-                                order.user.purchased_materials.add(item.material)
-                                # Розпаковуємо пакет
                                 if item.material.is_bundle:
+                                    # Розпаковуємо пакет
                                     for sub_material in item.material.included_materials.all():
                                         order.user.purchased_materials.add(sub_material)
+                                else:
+                                    # Звичайний матеріал
+                                    order.user.purchased_materials.add(item.material)
 
                             cart = Cart.objects.filter(user=order.user).first()
                             if cart:

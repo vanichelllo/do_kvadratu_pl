@@ -43,7 +43,17 @@ class CustomUser(AbstractUser):
                 with transaction.atomic():
                     self.balance -= material.price
                     self.save()
-                    self.purchased_materials.add(material)
+
+                    # === МАГІЯ РОЗПАКУВАННЯ ПАКЕТІВ ===
+                    if material.is_bundle:
+                        for sub_material in material.included_materials.all():
+                            self.purchased_materials.add(sub_material)
+                    else:
+                        self.purchased_materials.add(material)
+                    # ==================================
+
+                    # В історію покупок завжди записуємо оригінальний товар (Пакет або конспект),
+                    # щоб зберігся правильний фінансовий чек
                     PurchaseHistory.objects.create(
                         student=self,
                         material=material,
