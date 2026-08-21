@@ -267,7 +267,25 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['purchased_materials'] = self.request.user.purchased_materials.all()
+
+        # 1. Отримуємо всі куплені матеріали з бази
+        purchased_qs = self.request.user.purchased_materials.all()
+
+        # 2. Перетворюємо на звичайний список, щоб відсортувати
+        purchased_list = list(purchased_qs)
+
+        # 3. Функція, яка "витягує" перше число з назви (напр. "21" із "21. Показникові рівняння")
+        def get_number(material):
+            match = re.match(r'^(\d+)', material.title)
+            if match:
+                return int(match.group(1))
+            return 99999  # Якщо числа немає, кидаємо в кінець списку
+
+        # 4. Сортуємо список за цими числами
+        purchased_list.sort(key=get_number)
+
+        # 5. Передаємо відсортований список у шаблон
+        context['purchased_materials'] = purchased_list
         context['form'] = UserProfileForm(instance=self.request.user)
         return context
 
@@ -350,7 +368,17 @@ def buy_material_view(request, material_id):
 @api_view(['GET'])
 def api_materials_list(request):
     materials = StudyMaterial.objects.filter(is_published=True).select_related('category')
-    serializer = StudyMaterialSerializer(materials, many=True)
+
+    # Перетворюємо на список і сортуємо
+    materials_list = list(materials)
+
+    def get_number(material):
+        match = re.match(r'^(\d+)', material.title)
+        return int(match.group(1)) if match else 99999
+
+    materials_list.sort(key=get_number)
+
+    serializer = StudyMaterialSerializer(materials_list, many=True)
     return Response({
         'status': 'success',
         'materials': serializer.data
@@ -364,7 +392,15 @@ def api_bot_user_library(request, telegram_id):
     if not user:
         return Response({'status': 'error', 'message': 'Учня не знайдено в базі платформи.'}, status=404)
 
-    purchased = user.purchased_materials.all()
+    # Отримуємо матеріали, перетворюємо на список і сортуємо для Telegram-бота
+    purchased = list(user.purchased_materials.all())
+
+    def get_number(material):
+        match = re.match(r'^(\d+)', material.title)
+        return int(match.group(1)) if match else 99999
+
+    purchased.sort(key=get_number)
+
     serializer = PurchasedMaterialSerializer(purchased, many=True)
 
     return Response({
