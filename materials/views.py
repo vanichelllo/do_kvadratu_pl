@@ -301,7 +301,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
 
 # ==========================================
-# Безпечне читання матеріалу з Cloudinary
+# Безпечне читання матеріалу з Cloudinary + HTML Презентації
 # ==========================================
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
@@ -309,20 +309,37 @@ def download_material_view(request, material_id):
 
     # Перевірка доступу
     if material not in request.user.purchased_materials.all():
-        raise Http404("У вас немає доступу до цього файлу.")
+        raise Http404("У вас немає доступу до цього матеріалу.")
 
+    # 1. ПЕРЕВІРКА НА ІНТЕРАКТИВНУ ПРЕЗЕНТАЦІЮ
+    # Якщо поле html_presentation заповнене, просто віддаємо готовий код як веб-сторінку
+    if getattr(material, 'html_presentation', None):
+        return HttpResponse(material.html_presentation)
+
+    # 2. ЯКЩО HTML НЕМАЄ - ПРАЦЮЄМО З PDF
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
     try:
-        # Використовуємо офіційний метод SDK Cloudinary,
-        # який автоматично використовує ваші ключі для доступу (обходячи 401 помилку)
-        with material.file.open('rb') as f:
-            file_bytes = f.read()
-    except Exception as e:
-        raise Http404(f"Помилка читання файлу з хмари. Деталі: {e}")
+        # Отримуємо публічний URL файлу з Cloudinary
+        file_url = material.file.url
 
-    # Кодуємо в текст (Base64)
+        # Примусово робимо HTTPS
+        if file_url.startswith('http://'):
+            file_url = file_url.replace('http://', 'https://')
+
+        # Завантажуємо файл у пам'ять сервера (безпечно для Cloudinary)
+        response = requests.get(file_url, timeout=10)
+
+        if response.status_code == 200:
+            file_bytes = response.content
+        else:
+            raise Exception(f"Cloudinary повернув статус: {response.status_code}")
+
+    except Exception as e:
+        raise Http404(f"Помилка завантаження файлу з хмари. Деталі: {e}")
+
+    # Кодуємо в текст (Base64) для веб-читалки
     pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
 
     context = {
@@ -577,8 +594,6 @@ def topup_balance_view(request):
             messages.error(request, "Помилка з'єднання з Monobank.")
             return redirect('cabinet')
 
-    return redirect('cabinet')
-
 
 @csrf_exempt
 def mono_webhook(request):
@@ -591,42 +606,44 @@ def mono_webhook(request):
             # Обробляємо лише успішні оплати
             if status == 'success' and invoice_id:
                 try:
-                    # Шукаємо замовлення за ID інвойсу, оскільки Монобанк не завжди повертає reference
                     order = Order.objects.get(mono_invoice_id=invoice_id)
 
                     if order.status != 'paid':
-                        order.status = 'paid'
-                        order.save()
+                        # ВАЖЛИВО: Транзакція гарантує, що якщо код впаде при видачі тем,
+                        # статус 'paid' скасується, і Монобанк зможе успішно повторити запит!
+                        with transaction.atomic():
+                            order.status = 'paid'
+                            order.save()
 
-                        # ПЕРЕВІРКА: Це покупка матеріалів чи поповнення балансу?
-                        if order.items.exists():
-                            # 1. Товари є — значить це покупка
-                            for item in order.items.all():
-                                if item.material.is_bundle:
-                                    # Розпаковуємо пакет
-                                    for sub_material in item.material.included_materials.all():
-                                        order.user.purchased_materials.add(sub_material)
-                                else:
-                                    # Звичайний матеріал
-                                    order.user.purchased_materials.add(item.material)
+                            # БЕЗПЕЧНИЙ ПОШУК (працює завжди, незалежно від related_name)
+                            order_items = OrderItem.objects.filter(order=order)
 
-                            cart = Cart.objects.filter(user=order.user).first()
-                            if cart:
-                                cart.items.all().delete()
+                            if order_items.exists():
+                                # 1. Це покупка
+                                for item in order_items:
+                                    if item.material.is_bundle:
+                                        # Видаємо всі теми з пакета
+                                        for sub_material in item.material.included_materials.all():
+                                            order.user.purchased_materials.add(sub_material)
+                                    else:
+                                        order.user.purchased_materials.add(item.material)
 
-                            msg = f"🛒 Нова покупка на сайті!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
-                            send_telegram_notification(msg)
+                                # Надійне очищення кошика
+                                CartItem.objects.filter(cart__user=order.user).delete()
 
-                        else:
-                            # 2. Товарів немає — значить це просто поповнення балансу
-                            order.user.balance += float(order.total_amount)
-                            order.user.save()
+                                msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
+                                send_telegram_notification(msg)
 
-                            msg = f"💰 Нове поповнення балансу!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
-                            send_telegram_notification(msg)
+                            else:
+                                # 2. Це поповнення балансу
+                                order.user.balance += float(order.total_amount)
+                                order.user.save()
+
+                                msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
+                                send_telegram_notification(msg)
 
                 except Order.DoesNotExist:
-                    pass  # Замовлення не знайдено (можливо інший платіж або тестовий інвойс)
+                    pass  # Замовлення не знайдено
 
             return HttpResponse("OK", status=200)
         except Exception as e:
