@@ -1,3 +1,5 @@
+import os
+import io
 import base64
 import hashlib
 import ecdsa
@@ -5,6 +7,7 @@ import re
 import requests
 import json
 import time
+import random  # ДОДАНО ДЛЯ ГЕНЕРАЦІЇ ПРАКТИКИ
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
@@ -18,7 +21,7 @@ from django.conf import settings
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem
+    MatchItem, PracticeAttempt
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -106,21 +109,15 @@ def diagnostic_test_view(request):
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
         # === СОРТУВАННЯ ЗА НОМЕРОМ ===
-        # Функція, яка "витягує" перше число з назви (напр. "25" із "25. Числові послідовності")
         def extract_number(text):
             match = re.match(r'^(\d+)', text)
             if match:
                 return int(match.group(1))
-            return 99999  # Якщо числа немає, кидаємо в самий кінець
+            return 99999
 
-        # 1. Сортуємо слабкі місця
         weak_topics.sort(key=lambda t: extract_number(t.name))
-
-        # 2. Сортуємо рекомендації
         recommendations_list = list(recommended_materials)
         recommendations_list.sort(key=lambda m: extract_number(m.title))
-
-        # 3. Сортуємо загальну статистику
         sorted_stats = sorted(topics_stats.values(), key=lambda s: extract_number(s['topic'].name))
 
         context = {
@@ -134,6 +131,104 @@ def diagnostic_test_view(request):
         return render(request, 'materials/diagnostic_results.html', context)
 
     return render(request, 'materials/diagnostic_test.html', {'questions': questions})
+
+
+# ==========================================
+# НОВИЙ ВУЗОЛ: ПРАКТИКА НМТ ПІСЛЯ УРОКУ
+# ==========================================
+@login_required
+def practice_session_view(request, material_id):
+    material = get_object_or_404(StudyMaterial, id=material_id)
+
+    # ПЕРЕВІРКА ВІДПОВІДЕЙ ТА ЗБЕРЕЖЕННЯ (Режим POST)
+    if request.method == 'POST':
+        total_score = 0
+        max_score = 0
+
+        # Отримуємо рядок з ID питань і перетворюємо у список
+        question_ids_str = request.POST.get('question_ids', '')
+        if question_ids_str:
+            q_id_list = [int(x) for x in question_ids_str.split(',')]
+        else:
+            q_id_list = []
+
+        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items')
+
+        for q in questions:
+            if q.question_type == 'CHOICE':
+                max_score += 1
+                user_ans = request.POST.get(f'q_{q.id}')
+                if user_ans:
+                    try:
+                        opt = AnswerOption.objects.get(id=int(user_ans))
+                        if opt.is_correct:
+                            total_score += 1
+                    except AnswerOption.DoesNotExist:
+                        pass
+
+            elif q.question_type == 'MATCH':
+                max_score += 3
+                for item in q.match_items.all():
+                    user_match = request.POST.get(f'match_{item.id}')
+                    if user_match and int(user_match) == item.correct_option.id:
+                        total_score += 1
+
+            elif q.question_type == 'SHORT':
+                max_score += 2
+                user_ans = request.POST.get(f'q_{q.id}')
+                if user_ans:
+                    user_clean = str(user_ans).strip().replace(',', '.')
+                    correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
+                    if user_clean == correct_clean:
+                        total_score += 2
+
+        # Зберігаємо результат у базу
+        PracticeAttempt.objects.create(
+            user=request.user,
+            material=material,
+            score=total_score,
+            max_score=max_score
+        )
+
+        messages.success(request, f"🎯 Практику завершено! Ваш результат: {total_score} з {max_score} балів.")
+        return redirect('cabinet')
+
+    # ГЕНЕРАЦІЯ НОВОГО ВАРІАНТА (Режим GET)
+    pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items')
+
+    choice_pool = list(pool.filter(question_type='CHOICE'))
+    match_pool = list(pool.filter(question_type='MATCH'))
+    short_pool = list(pool.filter(question_type='SHORT'))
+
+    q_choice = random.sample(choice_pool, min(10, len(choice_pool)))
+    q_match = random.sample(match_pool, min(2, len(match_pool)))
+    q_short = random.sample(short_pool, min(1, len(short_pool)))
+
+    # Перемішуємо тільки тестові питання
+    random.shuffle(q_choice)
+
+    selected_questions = q_choice + q_match + q_short
+
+    if len(selected_questions) == 0:
+        messages.info(request, "Для цієї теми ще не додано практичних завдань.")
+        return redirect('cabinet')
+
+    # Збираємо ID для прихованого поля форми
+    question_ids_str = ','.join(str(q.id) for q in selected_questions)
+
+    context = {
+        'material': material,
+        'q_choice': q_choice,
+        'q_match': q_match,
+        'q_short': q_short,
+        'question_ids_str': question_ids_str,
+        'total_selected': len(selected_questions)
+    }
+
+    return render(request, 'materials/practice_session.html', context)
+
+
+# ==========================================
 
 
 @login_required
@@ -150,7 +245,6 @@ def add_to_cart(request, material_id):
         messages.warning(request, "Ви вже придбали цей матеріал!")
         return redirect('cabinet')
 
-    # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
     if material.is_free or material.price == 0:
         if material.is_bundle:
             for sub_material in material.included_materials.all():
@@ -160,7 +254,6 @@ def add_to_cart(request, material_id):
             request.user.purchased_materials.add(material)
             messages.success(request, f"🎉 Безкоштовний матеріал «{material.title}» додано до вашого кабінету!")
         return redirect('cabinet')
-    # =========================================
 
     cart, created = Cart.objects.get_or_create(user=request.user)
 
@@ -268,23 +361,17 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Отримуємо всі куплені матеріали з бази
         purchased_qs = self.request.user.purchased_materials.all()
-
-        # 2. Перетворюємо на звичайний список, щоб відсортувати
         purchased_list = list(purchased_qs)
 
-        # 3. Функція, яка "витягує" перше число з назви (напр. "21" із "21. Показникові рівняння")
         def get_number(material):
             match = re.match(r'^(\d+)', material.title)
             if match:
                 return int(match.group(1))
-            return 99999  # Якщо числа немає, кидаємо в кінець списку
+            return 99999
 
-        # 4. Сортуємо список за цими числами
         purchased_list.sort(key=get_number)
 
-        # 5. Передаємо відсортований список у шаблон
         context['purchased_materials'] = purchased_list
         context['form'] = UserProfileForm(instance=self.request.user)
         return context
@@ -301,34 +388,40 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
 
 # ==========================================
-# Безпечне читання матеріалу з Cloudinary + HTML Презентації
+# Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
 # ==========================================
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
-    # Перевірка доступу
     if material not in request.user.purchased_materials.all():
         raise Http404("У вас немає доступу до цього матеріалу.")
 
-    # 1. ПЕРЕВІРКА НА ІНТЕРАКТИВНУ ПРЕЗЕНТАЦІЮ
-    # Якщо поле html_presentation заповнене, просто віддаємо готовий код як веб-сторінку
-    if getattr(material, 'html_presentation', None):
-        return HttpResponse(material.html_presentation)
+    # ПЕРЕВІРКА НА ІНТЕРАКТИВНУ ПРЕЗЕНТАЦІЮ
+    if getattr(material, 'html_content', None):
+        html_code = material.html_content
 
-    # 2. ЯКЩО HTML НЕМАЄ - ПРАЦЮЄМО З PDF
+        # МАГІЯ: Динамічно генеруємо кнопку "Практика НМТ"
+        practice_btn = f'''
+            <a href="/practice/{material.id}/" class="btn-primary" style="background-color: var(--brand-yellow); color: #fff; text-decoration: none; margin-right: 15px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
+                🎯 Практика НМТ
+            </a>
+        '''
+
+        # Вставляємо кнопку ПЕРЕД блоком <div class="nav-controls">
+        html_code = html_code.replace('<div class="nav-controls">', f'{practice_btn}<div class="nav-controls">')
+
+        return HttpResponse(html_code)
+
+    # ЯКЩО HTML НЕМАЄ - ПРАЦЮЄМО З PDF
     if not material.file:
         raise Http404("Файл ще не завантажено на сервер.")
 
     try:
-        # Отримуємо публічний URL файлу з Cloudinary
         file_url = material.file.url
-
-        # Примусово робимо HTTPS
         if file_url.startswith('http://'):
             file_url = file_url.replace('http://', 'https://')
 
-        # Завантажуємо файл у пам'ять сервера (безпечно для Cloudinary)
         response = requests.get(file_url, timeout=10)
 
         if response.status_code == 200:
@@ -339,7 +432,6 @@ def download_material_view(request, material_id):
     except Exception as e:
         raise Http404(f"Помилка завантаження файлу з хмари. Деталі: {e}")
 
-    # Кодуємо в текст (Base64) для веб-читалки
     pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
 
     context = {
@@ -347,9 +439,6 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
-
-
-# ==========================================
 
 
 @login_required(login_url='/login/')
@@ -361,7 +450,6 @@ def buy_material_view(request, material_id):
         messages.info(request, f"Ви вже маєте конспект «{material.title}».")
         return redirect('cabinet')
 
-    # === МАГІЯ ДЛЯ БЕЗКОШТОВНИХ МАТЕРІАЛІВ ===
     if material.is_free or material.price == 0:
         if material.is_bundle:
             for sub_material in material.included_materials.all():
@@ -370,7 +458,6 @@ def buy_material_view(request, material_id):
             my_user.purchased_materials.add(material)
         messages.success(request, f"Успіх! «{material.title}» успішно отримано.")
         return redirect('cabinet')
-    # =========================================
 
     success = my_user.buy_material(material)
 
@@ -386,7 +473,6 @@ def buy_material_view(request, material_id):
 def api_materials_list(request):
     materials = StudyMaterial.objects.filter(is_published=True).select_related('category')
 
-    # Перетворюємо на список і сортуємо
     materials_list = list(materials)
 
     def get_number(material):
@@ -409,7 +495,6 @@ def api_bot_user_library(request, telegram_id):
     if not user:
         return Response({'status': 'error', 'message': 'Учня не знайдено в базі платформи.'}, status=404)
 
-    # Отримуємо матеріали, перетворюємо на список і сортуємо для Telegram-бота
     purchased = list(user.purchased_materials.all())
 
     def get_number(material):
@@ -449,11 +534,9 @@ def pay_from_balance(request):
             )
 
             for item in cart.items.all():
-                # Якщо це пакет - розпаковуємо його (сам пакет НЕ додаємо)
                 if item.material.is_bundle:
                     for sub_material in item.material.included_materials.all():
                         request.user.purchased_materials.add(sub_material)
-                # Якщо це звичайний конспект - просто додаємо його
                 else:
                     request.user.purchased_materials.add(item.material)
 
@@ -515,7 +598,6 @@ def pay_with_mono(request):
         'Content-Type': 'application/json'
     }
 
-    # ЖОРСТКО ПРОПИСУЄМО HTTPS, щоб Render не губив запити
     payload = {
         "amount": amount_kopecks,
         "ccy": 980,
@@ -554,7 +636,6 @@ def topup_balance_view(request):
             messages.error(request, "Будь ласка, введіть коректну суму.")
             return redirect('cabinet')
 
-        # Створюємо "порожнє" замовлення для відстеження поповнення через invoice_id
         with transaction.atomic():
             order = Order.objects.create(
                 user=request.user,
@@ -569,7 +650,6 @@ def topup_balance_view(request):
             'Content-Type': 'application/json'
         }
 
-        # ЖОРСТКО ПРОПИСУЄМО HTTPS
         payload = {
             "amount": amount_kopecks,
             "ccy": 980,
@@ -603,39 +683,31 @@ def mono_webhook(request):
             invoice_id = data.get('invoiceId')
             status = data.get('status')
 
-            # Обробляємо лише успішні оплати
             if status == 'success' and invoice_id:
                 try:
                     order = Order.objects.get(mono_invoice_id=invoice_id)
 
                     if order.status != 'paid':
-                        # ВАЖЛИВО: Транзакція гарантує, що якщо код впаде при видачі тем,
-                        # статус 'paid' скасується, і Монобанк зможе успішно повторити запит!
                         with transaction.atomic():
                             order.status = 'paid'
                             order.save()
 
-                            # БЕЗПЕЧНИЙ ПОШУК (працює завжди, незалежно від related_name)
                             order_items = OrderItem.objects.filter(order=order)
 
                             if order_items.exists():
-                                # 1. Це покупка
                                 for item in order_items:
                                     if item.material.is_bundle:
-                                        # Видаємо всі теми з пакета
                                         for sub_material in item.material.included_materials.all():
                                             order.user.purchased_materials.add(sub_material)
                                     else:
                                         order.user.purchased_materials.add(item.material)
 
-                                # Надійне очищення кошика
                                 CartItem.objects.filter(cart__user=order.user).delete()
 
                                 msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
                                 send_telegram_notification(msg)
 
                             else:
-                                # 2. Це поповнення балансу
                                 order.user.balance += float(order.total_amount)
                                 order.user.save()
 
@@ -643,7 +715,7 @@ def mono_webhook(request):
                                 send_telegram_notification(msg)
 
                 except Order.DoesNotExist:
-                    pass  # Замовлення не знайдено
+                    pass
 
             return HttpResponse("OK", status=200)
         except Exception as e:

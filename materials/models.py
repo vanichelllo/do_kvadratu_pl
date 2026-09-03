@@ -27,7 +27,6 @@ class StudyMaterial(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
 
-    # --- ОНОВЛЕНО ДЛЯ МОНОБАНКУ (Розширений опис за замовчуванням та Фото) ---
     description = models.TextField(
         verbose_name="Опис матеріалу",
         blank=True,
@@ -35,9 +34,7 @@ class StudyMaterial(models.Model):
         default="Авторський конспект від освітнього проєкту «До Квадрату» — це ваш надійний помічник для успішного складання НМТ з математики. Матеріал створений з урахуванням 7-річного досвіду викладання та містить лише найголовніше: структуровану теорію без зайвої води, усі необхідні базові формули, алгоритми розв'язання та детальний розбір типових практичних завдань. Ідеально підходить як для самостійного вивчення теми з нуля, так і для швидкого повторення перед іспитом."
     )
     image = models.ImageField(upload_to='material_images/', blank=True, null=True, verbose_name="Обкладинка (Фото)")
-    # -------------------------------------------
 
-    # ОНОВЛЕНО: Намертво прив'язуємо це поле до хмари Cloudinary
     file = models.FileField(
         upload_to='documents/',
         storage=RawMediaCloudinaryStorage(),
@@ -60,7 +57,6 @@ class StudyMaterial(models.Model):
                                                 verbose_name="Матеріали, що входять у пакет")
 
     def save(self, *args, **kwargs):
-        # Перевіряємо, чи це нове завантаження файлу
         is_new_file = False
         if not self.pk:
             is_new_file = True
@@ -72,32 +68,24 @@ class StudyMaterial(models.Model):
             except type(self).DoesNotExist:
                 is_new_file = True
 
-        # Якщо завантажено новий PDF-файл (перевіряємо поле self.file)
         if is_new_file and self.file and self.file.name.lower().endswith('.pdf'):
             try:
                 merger = PdfWriter()
-
-                # 1. Знаходимо intro.pdf у корені проєкту
                 intro_path = os.path.join(settings.BASE_DIR, 'intro.pdf')
 
-                # Якщо файл інтро існує, ставимо його першим
                 if os.path.exists(intro_path):
                     merger.append(intro_path)
 
-                # 2. Додаємо сам матеріал
                 merger.append(self.file.file)
 
-                # 3. Зберігаємо результат у віртуальну пам'ять
                 buffer = io.BytesIO()
                 merger.write(buffer)
                 merger.close()
 
-                # 4. Підміняємо оригінальний файл на об'єднаний
                 self.file.save(self.file.name, ContentFile(buffer.getvalue()), save=False)
             except Exception as e:
                 print(f"Помилка об'єднання PDF: {e}")
 
-        # Зберігаємо модель у базу даних
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -170,14 +158,28 @@ class DiagnosticTopic(models.Model):
 
 
 class Question(models.Model):
-    # Оновлено назви для зручності в адмінці
     TYPE_CHOICES = (
         ('CHOICE', 'Один з п\'яти (1 бал)'),
         ('MATCH', 'Відповідність (до 3 балів)'),
         ('SHORT', 'Коротка відповідь (2 бали)'),
     )
 
-    topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='questions', verbose_name="Тема")
+    # Додано: Рівні складності
+    DIFFICULTY_CHOICES = (
+        (1, 'Базовий (Легкий)'),
+        (2, 'Стандартний (Середній)'),
+        (3, 'Профільний (Складний)'),
+    )
+
+    # Змінено: topic тепер може бути порожнім, бо завдання може належати тільки до практики
+    topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='questions', null=True,
+                              blank=True, verbose_name="Тема (для діагностики)")
+
+    # НОВІ ПОЛЯ: Мульти-теги та складність
+    materials = models.ManyToManyField('StudyMaterial', blank=True, related_name='practice_questions',
+                                       verbose_name="Теги (До яких уроків належить)")
+    difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=2, verbose_name="Складність")
+
     question_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='CHOICE', verbose_name="Тип завдання")
     text = models.TextField(verbose_name="Текст запитання")
     image = models.ImageField(upload_to='diagnostic_questions/', blank=True, null=True,
@@ -190,10 +192,6 @@ class Question(models.Model):
 
 
 class AnswerOption(models.Model):
-    """
-    Працює для CHOICE як варіанти відповідей (з позначкою is_correct).
-    Працює для MATCH як права колонка (А, Б, В, Г, Д) - тут is_correct не враховується.
-    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
     text = models.CharField(max_length=255, verbose_name="Текст варіанту (напр. '5 см' або 'А')")
     is_correct = models.BooleanField(default=False, verbose_name="Це правильна відповідь? (тільки для CHOICE)")
@@ -202,16 +200,34 @@ class AnswerOption(models.Model):
         return self.text
 
 
-# ==========================================
-# НОВА МОДЕЛЬ: ЛІВА ЧАСТИНА ВІДПОВІДНОСТІ
-# ==========================================
 class MatchItem(models.Model):
-    """Ліва частина завдання на відповідність (цифри 1, 2, 3)"""
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='match_items',
                                  verbose_name="Завдання")
     text = models.CharField(max_length=255, verbose_name="Умова (ліва колонка, напр. '1. Функція парна')")
-    # Зв'язуємо кожну цифру (1-3) з правильною буквою (А-Д) з таблиці AnswerOption
     correct_option = models.ForeignKey(AnswerOption, on_delete=models.CASCADE, verbose_name="Правильний варіант (А-Д)")
 
     def __str__(self):
         return f"{self.text} -> {self.correct_option.text}"
+
+
+# ==========================================
+# НОВА МОДЕЛЬ: ІСТОРІЯ ПРОХОДЖЕННЯ ПРАКТИКИ
+# ==========================================
+class PracticeAttempt(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_attempts')
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='attempts',
+                                 verbose_name="Тема (Урок)")
+    score = models.PositiveIntegerField(verbose_name="Набрано балів")
+    max_score = models.PositiveIntegerField(default=18, verbose_name="Максимум балів")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата проходження")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Спроба проходження"
+        verbose_name_plural = "Спроби проходження"
+
+    def get_percent(self):
+        return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
+
+    def __str__(self):
+        return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"

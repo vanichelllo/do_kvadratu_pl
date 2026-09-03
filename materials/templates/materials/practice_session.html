@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практика НМТ: {{ material.title }} | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root {
+            --brand-blue: #344e86;
+            --brand-green: #27ae60;
+            --bg-light: #f4f6fa;
+            --card-bg: #ffffff;
+            --border-color: #dce3ec;
+            --text-dark: #2c3e50;
+            --font-main: 'Segoe UI', system-ui, sans-serif;
+        }
+        body { font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); margin: 0; padding: 0; }
+        * { box-sizing: border-box; }
+
+        .navbar { background-color: var(--card-bg); border-bottom: 3px solid var(--brand-blue); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: sticky; top: 0; z-index: 100;}
+        .brand-logo { font-weight: 800; font-size: 1.15rem; color: var(--brand-blue); text-decoration: none; }
+        .btn-exit { color: #e74c3c; text-decoration: none; font-weight: bold; border: 1px solid #e74c3c; padding: 6px 14px; border-radius: 6px; transition: 0.2s;}
+        .btn-exit:hover { background-color: #e74c3c; color: white; }
+
+        .container { max-width: 800px; margin: 30px auto; padding: 0 15px; }
+        .header-block { background: var(--card-bg); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); text-align: center;}
+        .header-block h1 { margin: 0 0 10px 0; color: var(--brand-blue); font-size: 1.5rem;}
+        .badge { background: rgba(39, 174, 96, 0.1); color: var(--brand-green); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;}
+
+        .question-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);}
+        .q-number { font-weight: 900; color: var(--brand-blue); font-size: 1.1rem; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; margin-bottom: 15px;}
+        .q-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 15px;}
+        .q-image { max-width: 100%; border-radius: 8px; margin-bottom: 15px; }
+
+        /* Варіанти відповідей CHOICE */
+        .option-label { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; background: var(--bg-light);}
+        .option-label:hover { border-color: var(--brand-blue); background: rgba(52, 78, 134, 0.03);}
+        input[type="radio"] { accent-color: var(--brand-blue); transform: scale(1.2); }
+
+        /* Завдання на відповідність MATCH */
+        .match-grid-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .match-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .match-table th, .match-table td { border: 1px solid var(--border-color); padding: 10px; }
+        .match-table th { background: var(--bg-light); color: var(--brand-blue); }
+        .match-table td:first-child { text-align: left; font-weight: bold; width: 50%; }
+        .match-options-list { background: var(--bg-light); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.95rem;}
+        .match-options-list p { margin: 5px 0; }
+
+        /* Коротка відповідь SHORT */
+        .short-input { width: 100%; max-width: 200px; padding: 12px; font-size: 1.1rem; border: 2px solid var(--brand-blue); border-radius: 8px; outline: none; text-align: center;}
+
+        .btn-submit { display: block; width: 100%; background: var(--brand-green); color: white; border: none; padding: 16px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-top: 30px; margin-bottom: 50px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);}
+        .btn-submit:hover { background: #219653; transform: translateY(-2px);}
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="brand-logo">ДО КВАДРАТУ | Практика</div>
+        <a href="{% url 'cabinet' %}" class="btn-exit" onclick="return confirm('Ви впевнені? Прогрес не буде збережено.');">Скасувати</a>
+    </header>
+
+    <div class="container">
+        <div class="header-block">
+            <h1>Тестування: {{ material.title }}</h1>
+            <span class="badge">Формат НМТ: {{ total_selected }} завдань (Max 18 балів)</span>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <!-- Передаємо ID завдань для перевірки на сервері -->
+            <input type="hidden" name="question_ids" value="{{ question_ids_str }}">
+
+            {% set counter = 1 %}
+
+            <!-- 1. ЗАВДАННЯ З ВИБОРОМ ОДНІЄЇ ВІДПОВІДІ (1-10) -->
+            {% for q in q_choice %}
+            <div class="question-card">
+                <div class="q-number">Завдання {{ forloop.counter }} з {{ total_selected }}</div>
+                <div class="q-text">{{ q.text|safe }}</div>
+                {% if q.image %}
+                    <img src="{{ q.image.url }}" class="q-image" alt="Завдання">
+                {% endif %}
+
+                <div class="options-container">
+                    {% for opt in q.options.all %}
+                    <label class="option-label">
+                        <input type="radio" name="q_{{ q.id }}" value="{{ opt.id }}" required>
+                        <span>{{ opt.text|safe }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- 2. ЗАВДАННЯ НА ВІДПОВІДНІСТЬ (11-12) -->
+            {% for q in q_match %}
+            <div class="question-card">
+                <div class="q-number">Завдання {{ q_choice|length|add:forloop.counter }} з {{ total_selected }}</div>
+                <div class="q-text">{{ q.text|safe }}</div>
+                {% if q.image %}
+                    <img src="{{ q.image.url }}" class="q-image" alt="Завдання">
+                {% endif %}
+
+                <div class="match-grid-container">
+                    <div class="match-options-list">
+                        <strong>Варіанти (А-Д):</strong>
+                        {% for opt in q.options.all %}
+                            <p>{{ opt.text|safe }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <table class="match-table">
+                        <thead>
+                            <tr>
+                                <th>Умова (1-3)</th>
+                                <!-- Виводимо лише першу літеру (А, Б, В...) для шапки таблиці -->
+                                {% for opt in q.options.all %}
+                                    <th>{{ opt.text|slice:":1" }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in q.match_items.all %}
+                            <tr>
+                                <td>{{ item.text|safe }}</td>
+                                {% for opt in q.options.all %}
+                                    <td><input type="radio" name="match_{{ item.id }}" value="{{ opt.id }}" required></td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- 3. ЗАВДАННЯ З КОРОТКОЮ ВІДПОВІДДЮ (13) -->
+            {% for q in q_short %}
+            <div class="question-card">
+                <div class="q-number">Завдання {{ q_choice|length|add:q_match|length|add:forloop.counter }} з {{ total_selected }}</div>
+                <div class="q-text">{{ q.text|safe }}</div>
+                {% if q.image %}
+                    <img src="{{ q.image.url }}" class="q-image" alt="Завдання">
+                {% endif %}
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 5px;">Введіть десятковий дріб або ціле число:</p>
+                    <input type="text" name="q_{{ q.id }}" class="short-input" placeholder="Напр. -2.5" required>
+                </div>
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-submit">✅ Завершити тестування</button>
+        </form>
+    </div>
+</body>
+</html>

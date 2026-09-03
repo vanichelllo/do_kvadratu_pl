@@ -6,9 +6,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from users.views import register_view
 from django.contrib.auth.views import LoginView, LogoutView
-from materials.views import mono_webhook
 
-# ІМПОРТ З MATERIALS ОНОВЛЕНО (додано booking_view)
+# ІМПОРТ З MATERIALS ОНОВЛЕНО (додано practice_session_view)
 from materials.views import (
     MaterialListView,
     MaterialDetailView,
@@ -29,7 +28,8 @@ from materials.views import (
     diagnostic_test_view,
     OfferView,
     PrivacyView,
-    booking_view  # <--- ДОДАНО СЮДИ
+    booking_view,
+    practice_session_view  # <--- ДОДАНО СЮДИ
 )
 
 urlpatterns = [
@@ -51,6 +51,10 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
 
     path('download/<int:material_id>/', download_material_view, name='download_material'),
+
+    # Практика НМТ після уроку
+    path('practice/<int:material_id>/', practice_session_view, name='practice_session'),  # <--- НОВИЙ МАРШРУТ
+
     path('api/bot/library/<str:telegram_id>/', api_bot_user_library),
     path('material/<int:pk>/', MaterialDetailView.as_view(), name='material_detail'),
     path('accounts/', include('allauth.urls')),
@@ -82,7 +86,7 @@ urlpatterns = [
     path('privacy/', PrivacyView.as_view(), name='privacy'),
     path('bot/', include('telegram_bot.urls')),
 
-    # Календар запису (Вживаємо функцію напряму, без слова views)
+    # Календар запису
     path('booking/', booking_view, name='booking'),
 ]
 
