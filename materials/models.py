@@ -184,6 +184,10 @@ class Question(models.Model):
     text = models.TextField(verbose_name="Текст запитання")
     image = models.ImageField(upload_to='diagnostic_questions/', blank=True, null=True,
                               verbose_name="Картинка (якщо є)")
+
+    # === НОВЕ ПОЛЕ ДЛЯ SVG ===
+    svg_code = models.TextField(blank=True, null=True, verbose_name="SVG код малюнка (пріоритетніше за картинку)")
+
     correct_short_answer = models.CharField(max_length=50, blank=True, null=True,
                                             verbose_name="Відповідь (тільки для 19-22 завдань)")
 
