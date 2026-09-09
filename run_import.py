@@ -2,7 +2,7 @@ import os
 import django
 
 # Налаштування оточення Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'do_kvadratu_platform.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'do_kvadratu.settings')
 django.setup()
 
 from materials.models import StudyMaterial, Question, AnswerOption, MatchItem, DiagnosticTopic
