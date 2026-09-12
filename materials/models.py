@@ -235,3 +235,23 @@ class PracticeAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
+
+
+class TutorStudentRequest(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Очікує підтвердження'),
+        ('approved', 'Підтверджено'),
+        ('rejected', 'Відхилено'),
+    )
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_request')
+    real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
+
+    class Meta:
+        verbose_name = "Заявка на статус учня"
+        verbose_name_plural = "Заявки на статус учня"
+
+    def __str__(self):
+        return f"{self.real_name} ({self.user.email}) - {self.get_status_display()}"

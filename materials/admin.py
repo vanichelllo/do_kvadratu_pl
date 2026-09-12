@@ -6,8 +6,44 @@ from django.contrib import messages
 from import_export import resources
 from import_export.admin import ExportActionMixin
 
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, \
-    AnswerOption, MatchItem
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest
+from django.contrib import messages
+
+
+@admin.action(description="✅ Підтвердити статус та видати курс НМТ")
+def approve_student_requests(modeladmin, request, queryset):
+    # Шукаємо всі матеріали, що належать до категорії НМТ
+    nmt_materials = StudyMaterial.objects.filter(category__name__icontains='Підготовка до НМТ', is_published=True)
+
+    if not nmt_materials.exists():
+        messages.warning(request, "Не знайдено матеріалів у категорії 'Підготовка до НМТ'. Доступ не видано.")
+        return
+
+    count = 0
+    for student_request in queryset.filter(status='pending'):
+        student_request.status = 'approved'
+        student_request.save()
+
+        # Видаємо всі НМТ матеріали учню
+        for material in nmt_materials:
+            student_request.user.purchased_materials.add(material)
+
+        count += 1
+
+    messages.success(request, f"Успішно підтверджено заявок: {count}. Учням відкрито доступ до НМТ-матеріалів.")
+
+
+@admin.action(description="❌ Відхилити заявки")
+def reject_student_requests(modeladmin, request, queryset):
+    queryset.update(status='rejected')
+
+
+@admin.register(TutorStudentRequest)
+class TutorStudentRequestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'real_name', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('user__email', 'real_name')
+    actions = [approve_student_requests, reject_student_requests]
 
 # 1. Реєструємо прості таблиці
 admin.site.register(Category)

@@ -29,7 +29,8 @@ from materials.views import (
     OfferView,
     PrivacyView,
     booking_view,
-    practice_session_view  # <--- ДОДАНО СЮДИ
+    practice_session_view,
+    request_tutor_student_status# <--- ДОДАНО СЮДИ
 )
 
 urlpatterns = [
@@ -88,6 +89,7 @@ urlpatterns = [
 
     # Календар запису
     path('booking/', booking_view, name='booking'),
+    path('request-student/', request_tutor_student_status, name='request_student_status'),
 ]
 
 if settings.DEBUG:

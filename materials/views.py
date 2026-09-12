@@ -391,6 +391,10 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
         context['purchased_materials'] = purchased_list
         context['form'] = UserProfileForm(instance=self.request.user)
+
+        # ДОДАЙ ЦЕЙ РЯДОК:
+        context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -780,3 +784,33 @@ def mono_webhook(request):
             return HttpResponse("Error", status=400)
 
     return HttpResponse("Method not allowed", status=405)
+
+
+@login_required
+def request_tutor_student_status(request):
+    if request.method == 'POST':
+        student_name = request.POST.get('real_name', '').strip()
+
+        if not student_name:
+            messages.error(request, "Будь ласка, вкажіть ваше прізвище та ім'я.")
+            return redirect('cabinet')
+
+        student_req, created = TutorStudentRequest.objects.get_or_create(
+            user=request.user,
+            defaults={'real_name': student_name}
+        )
+
+        if created:
+            messages.success(request, "Заявку успішно надіслано! Очікуйте на підтвердження.")
+            msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{student_name}</b>\nEmail: {request.user.email}\n\nЧекає на твоє підтвердження в адмінці."
+            send_telegram_notification(msg)
+
+        elif student_req.status == 'pending':
+            student_req.real_name = student_name
+            student_req.save()
+            messages.info(request, "Вашу заявку оновлено. Вона вже розглядається.")
+
+        elif student_req.status == 'approved':
+            messages.info(request, "Ви вже є підтвердженим учнем.")
+
+    return redirect('cabinet')

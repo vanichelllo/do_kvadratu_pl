@@ -267,6 +267,32 @@
                 </button>
             </form>
         </div>
+        <div class="student-status-card" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+            {% if not tutor_request %}
+                <!-- Заявки ще немає -->
+                <h3 style="margin-top: 0;">Навчаєтесь у мене особисто?</h3>
+                <p style="color: #666; font-size: 14px;">Введіть своє прізвище та ім'я, щоб отримати безкоштовний доступ до матеріалів НМТ.</p>
+
+                <form method="POST" action="{% url 'request_student_status' %}" style="display: flex; flex-direction: column; gap: 10px;">
+                    {% csrf_token %}
+                    <input type="text" name="real_name" placeholder="Наприклад: Шевченко Тарас" required style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px;">
+                    <button type="submit" class="btn-primary" style="background-color: var(--brand-blue); width: 100%;">
+                        🙋‍♂️ Надіслати заявку
+                    </button>
+                </form>
+
+            {% elif tutor_request.status == 'pending' %}
+                <!-- Очікує підтвердження -->
+                <h3 style="margin-top: 0;">⏳ Заявка на розгляді</h3>
+                <p style="color: #666; font-size: 14px;">Я перевірю вашу заявку (<b>{{ tutor_request.real_name }}</b>) найближчим часом.</p>
+                <button class="btn-secondary" disabled style="width: 100%; opacity: 0.7;">Очікує підтвердження</button>
+
+            {% elif tutor_request.status == 'approved' %}
+                <!-- Підтверджено -->
+                <h3 style="margin-top: 0; color: #2ecc71;">✅ Статус учня підтверджено</h3>
+                <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Вам відкрито доступ до матеріалів НМТ.</p>
+            {% endif %}
+        </div>
 
         <!-- БЛОК: НАЛАШТУВАННЯ -->
         <div class="profile-section">
