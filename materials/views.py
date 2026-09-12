@@ -297,6 +297,12 @@ def remove_from_cart(request, item_id):
 class HomeView(TemplateView):
     template_name = 'materials/home.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Витягуємо тільки схвалені загальні відгуки (де material пустий)
+        context['general_reviews'] = Review.objects.filter(material__isnull=True, is_approved=True)
+        return context
+
 
 class AboutView(TemplateView):
     template_name = 'materials/about.html'
