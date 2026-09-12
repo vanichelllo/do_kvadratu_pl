@@ -20,7 +20,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from users.forms import UserProfileForm
-from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, MatchItem, PracticeAttempt, TutorStudentRequest
+from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
+    MatchItem, PracticeAttempt, TutorStudentRequest
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -244,6 +245,8 @@ def practice_session_view(request, material_id):
     }
 
     return render(request, 'materials/practice_session.html', context)
+
+
 # ==========================================
 
 
@@ -391,7 +394,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context['purchased_materials'] = purchased_list
         context['form'] = UserProfileForm(instance=self.request.user)
 
-        # ДОДАЙ ЦЕЙ РЯДОК:
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
 
         return context
@@ -501,6 +503,8 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
+
+
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
@@ -789,23 +793,28 @@ def mono_webhook(request):
 def request_tutor_student_status(request):
     if request.method == 'POST':
         student_name = request.POST.get('real_name', '').strip()
+        course_type = request.POST.get('course', 'nmt')  # Зчитуємо обраний курс
 
-        if not student_name:
-            messages.error(request, "Будь ласка, вкажіть ваше прізвище та ім'я.")
+        if not student_name or not course_type:
+            messages.error(request, "Будь ласка, заповніть усі поля форми.")
             return redirect('cabinet')
 
         student_req, created = TutorStudentRequest.objects.get_or_create(
             user=request.user,
-            defaults={'real_name': student_name}
+            defaults={'real_name': student_name, 'course': course_type}
         )
 
         if created:
+            # Отримуємо людську назву курсу для Telegram
+            course_display = dict(TutorStudentRequest.COURSE_CHOICES).get(course_type, course_type)
+
             messages.success(request, "Заявку успішно надіслано! Очікуйте на підтвердження.")
-            msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{student_name}</b>\nEmail: {request.user.email}\n\nЧекає на твоє підтвердження в адмінці."
+            msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{student_name}</b>\nКлас/Курс: <b>{course_display}</b>\nEmail: {request.user.email}\n\nЧекає на твоє підтвердження в адмінці."
             send_telegram_notification(msg)
 
         elif student_req.status == 'pending':
             student_req.real_name = student_name
+            student_req.course = course_type
             student_req.save()
             messages.info(request, "Вашу заявку оновлено. Вона вже розглядається.")
 

@@ -164,18 +164,15 @@ class Question(models.Model):
         ('SHORT', 'Коротка відповідь (2 бали)'),
     )
 
-    # Додано: Рівні складності
     DIFFICULTY_CHOICES = (
         (1, 'Базовий (Легкий)'),
         (2, 'Стандартний (Середній)'),
         (3, 'Профільний (Складний)'),
     )
 
-    # Змінено: topic тепер може бути порожнім, бо завдання може належати тільки до практики
     topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='questions', null=True,
                               blank=True, verbose_name="Тема (для діагностики)")
 
-    # НОВІ ПОЛЯ: Мульти-теги та складність
     materials = models.ManyToManyField('StudyMaterial', blank=True, related_name='practice_questions',
                                        verbose_name="Теги (До яких уроків належить)")
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=2, verbose_name="Складність")
@@ -185,7 +182,6 @@ class Question(models.Model):
     image = models.ImageField(upload_to='diagnostic_questions/', blank=True, null=True,
                               verbose_name="Картинка (якщо є)")
 
-    # === НОВЕ ПОЛЕ ДЛЯ SVG ===
     svg_code = models.TextField(blank=True, null=True, verbose_name="SVG код малюнка (пріоритетніше за картинку)")
 
     correct_short_answer = models.CharField(max_length=50, blank=True, null=True,
@@ -214,9 +210,6 @@ class MatchItem(models.Model):
         return f"{self.text} -> {self.correct_option.text}"
 
 
-# ==========================================
-# НОВА МОДЕЛЬ: ІСТОРІЯ ПРОХОДЖЕННЯ ПРАКТИКИ
-# ==========================================
 class PracticeAttempt(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_attempts')
     material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='attempts',
@@ -244,8 +237,24 @@ class TutorStudentRequest(models.Model):
         ('rejected', 'Відхилено'),
     )
 
+    # ДОДАНО: Варіанти напрямків/класів
+    COURSE_CHOICES = (
+        ('nmt', 'Підготовка до НМТ'),
+        ('grade_5', 'Математика (5 клас)'),
+        ('grade_6', 'Математика (6 клас)'),
+        ('grade_7', 'Математика (7 клас)'),
+        ('grade_8', 'Математика (8 клас)'),
+        ('grade_9', 'Математика (9 клас)'),
+        ('grade_10', 'Математика (10 клас)'),
+        ('other', 'Закінчив/Закінчила школу'),
+    )
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_request')
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
+
+    # ДОДАНО: Поле для напрямку
+    course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
 
@@ -254,4 +263,4 @@ class TutorStudentRequest(models.Model):
         verbose_name_plural = "Заявки на статус учня"
 
     def __str__(self):
-        return f"{self.real_name} ({self.user.email}) - {self.get_status_display()}"
+        return f"{self.real_name} ({self.get_course_display()}) - {self.get_status_display()}"

@@ -2,35 +2,32 @@ from django.contrib import admin
 from django.core.management import call_command
 from django.contrib import messages
 
-# ДОДАНО: Імпорти для вивантаження бази в Excel
+# Імпорти для вивантаження бази в Excel
 from import_export import resources
 from import_export.admin import ExportActionMixin
 
 from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest
-from django.contrib import messages
 
 
-@admin.action(description="✅ Підтвердити статус та видати курс НМТ")
+@admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):
-    # Шукаємо всі матеріали, що належать до категорії НМТ
+    # Шукаємо всі матеріали НМТ
     nmt_materials = StudyMaterial.objects.filter(category__name__icontains='Підготовка до НМТ', is_published=True)
-
-    if not nmt_materials.exists():
-        messages.warning(request, "Не знайдено матеріалів у категорії 'Підготовка до НМТ'. Доступ не видано.")
-        return
 
     count = 0
     for student_request in queryset.filter(status='pending'):
+        # 1. Підтверджуємо заявку для всіх
         student_request.status = 'approved'
         student_request.save()
 
-        # Видаємо всі НМТ матеріали учню
-        for material in nmt_materials:
-            student_request.user.purchased_materials.add(material)
+        # 2. Якщо це учень НМТ — автоматично видаємо всі матеріали НМТ
+        if student_request.course == 'nmt':
+            for material in nmt_materials:
+                student_request.user.purchased_materials.add(material)
 
         count += 1
 
-    messages.success(request, f"Успішно підтверджено заявок: {count}. Учням відкрито доступ до НМТ-матеріалів.")
+    messages.success(request, f"Успішно підтверджено заявок: {count}.")
 
 
 @admin.action(description="❌ Відхилити заявки")
@@ -58,8 +55,8 @@ def revoke_student_access(modeladmin, request, queryset):
 
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
-    list_display = ('user', 'real_name', 'status', 'created_at')
-    list_filter = ('status', 'created_at')
+    list_display = ('user', 'real_name', 'course', 'status', 'created_at') # Додано 'course'
+    list_filter = ('course', 'status', 'created_at') # Додано фільтр за 'course'
     search_fields = ('user__email', 'real_name')
     actions = [approve_student_requests, reject_student_requests, revoke_student_access]
 
@@ -148,25 +145,19 @@ class OrderItemInline(admin.TabularInline):
     extra = 0
 
 
-# === НОВЕ: Логіка експорту Замовлень в Excel ===
+# === Логіка експорту Замовлень в Excel ===
 class OrderResource(resources.ModelResource):
     class Meta:
         model = Order
-        # Вказуємо, які поля підуть у файл Excel (включно з джерелом)
         fields = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
         export_order = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
 
 
-# ОНОВЛЕНО: Додано ExportActionMixin та поле 'source'
 @admin.register(Order)
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
-    resource_class = OrderResource  # Підключаємо вивантаження
+    resource_class = OrderResource
 
-    # Виводимо 'source' у таблицю для зручного перегляду
     list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at']
-
-    # Додаємо 'source' у фільтри (можна відфільтрувати тільки Сайт або тільки Бот)
     list_filter = ['status', 'source', 'created_at']
-
     search_fields = ['user__email', 'mono_invoice_id']
     inlines = [OrderItemInline]
