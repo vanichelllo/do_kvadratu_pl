@@ -6,7 +6,7 @@ from django.contrib import messages
 from import_export import resources
 from import_export.admin import ExportActionMixin
 
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review
 
 
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
@@ -161,3 +161,22 @@ class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     list_filter = ['status', 'source', 'created_at']
     search_fields = ['user__email', 'mono_invoice_id']
     inlines = [OrderItemInline]
+# ==========================================
+# ВІДГУКИ
+# ==========================================
+@admin.action(description="✅ Схвалити вибрані відгуки (показувати на сайті)")
+def approve_reviews(modeladmin, request, queryset):
+    queryset.update(is_approved=True)
+    messages.success(request, "Вибрані відгуки успішно схвалено та опубліковано!")
+
+@admin.action(description="❌ Приховати вибрані відгуки")
+def hide_reviews(modeladmin, request, queryset):
+    queryset.update(is_approved=False)
+    messages.warning(request, "Вибрані відгуки приховано із сайту.")
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('user', 'rating', 'material', 'is_approved', 'created_at')
+    list_filter = ('is_approved', 'rating', 'created_at')
+    search_fields = ('user__email', 'text')
+    actions = [approve_reviews, hide_reviews]

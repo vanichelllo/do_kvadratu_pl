@@ -211,6 +211,63 @@
                 УВІЙТИ ДЛЯ ПОКУПКИ
             </a>
         {% endif %}
+
+        <!-- ========================================== -->
+        <!-- БЛОК ВІДГУКІВ ПРО МАТЕРІАЛ -->
+        <!-- ========================================== -->
+        <div style="margin-top: 50px; border-top: 2px dashed #ccc; padding-top: 30px;">
+
+            <!-- Форма залишення відгуку -->
+            <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.5rem; text-transform: uppercase;">💬 Залишити відгук про матеріал</h3>
+            {% if user.is_authenticated %}
+                <form action="{% url 'submit_review' %}" method="POST" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                    {% csrf_token %}
+                    <!-- Приховане поле, що прив'язує відгук саме до цього конспекту -->
+                    <input type="hidden" name="material_id" value="{{ material.id }}">
+
+                    <select name="rating" required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; font-weight: 700; background: white;">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5) - Чудово!</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5) - Добре</option>
+                        <option value="3">⭐⭐⭐ (3/5) - Нормально</option>
+                        <option value="2">⭐⭐ (2/5) - Погано</option>
+                        <option value="1">⭐ (1/5) - Жахливо</option>
+                    </select>
+
+                    <textarea name="text" rows="3" placeholder="Напишіть ваші враження від цього матеріалу..." required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
+
+                    <button type="submit" style="background-color: #000; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase;">
+                        Надіслати відгук
+                    </button>
+                </form>
+            {% else %}
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ccc; margin-top: 15px;">
+                    <a href="{% url 'login' %}?next={{ request.path }}" style="color: var(--brand-blue); font-weight: bold; text-decoration: none;">Увійдіть</a>, щоб залишити відгук.
+                </div>
+            {% endif %}
+
+            <!-- Список вже залишених (схвалених) відгуків -->
+            <div style="margin-top: 40px;">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    {% for review in material.reviews.all %}
+                        {% if review.is_approved %}
+                            <div style="background: #f8f9fa; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-yellow);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="font-weight: 900; color: var(--brand-blue);">
+                                        {% if review.user.first_name %}{{ review.user.first_name }}{% else %}Учень{% endif %}
+                                    </span>
+                                    <span style="font-size: 1.1rem; letter-spacing: 2px;">
+                                        {% if review.rating == 5 %}⭐⭐⭐⭐⭐{% elif review.rating == 4 %}⭐⭐⭐⭐{% elif review.rating == 3 %}⭐⭐⭐{% elif review.rating == 2 %}⭐⭐{% else %}⭐{% endif %}
+                                    </span>
+                                </div>
+                                <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #333;">{{ review.text }}</p>
+                                <span style="font-size: 0.75rem; color: #999; margin-top: 10px; display: block;">{{ review.created_at|date:"d.m.Y" }}</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
 {% endblock %}

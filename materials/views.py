@@ -21,7 +21,7 @@ from django.conf import settings
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt, TutorStudentRequest
+    MatchItem, PracticeAttempt, TutorStudentRequest, Review
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -820,5 +820,50 @@ def request_tutor_student_status(request):
 
         elif student_req.status == 'approved':
             messages.info(request, "Ви вже є підтвердженим учнем.")
+
+    return redirect('cabinet')
+
+
+# ==========================================
+# ВІДГУКИ
+# ==========================================
+@login_required
+def submit_review(request):
+    if request.method == 'POST':
+        rating = request.POST.get('rating', 5)
+        text = request.POST.get('text', '').strip()
+        material_id = request.POST.get('material_id')  # Якщо є — це відгук до уроку, якщо немає — загальний
+
+        if not text:
+            messages.error(request, "Будь ласка, напишіть текст відгуку.")
+            return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
+
+        try:
+            rating = int(rating)
+        except ValueError:
+            rating = 5
+
+        review = Review(
+            user=request.user,
+            rating=rating,
+            text=text
+        )
+
+        material_title = "Загальний відгук (про заняття)"
+        if material_id:
+            material = get_object_or_404(StudyMaterial, id=material_id)
+            review.material = material
+            material_title = f"Матеріал: {material.title}"
+
+        review.save()
+
+        # Відправляємо сповіщення в Telegram
+        msg = f"⭐️ <b>Новий відгук!</b>\n\nВід: {request.user.email}\nОцінка: {'⭐' * rating}\nЩодо: {material_title}\n\n<i>«{text}»</i>\n\nПеревір та схвали його в адмінці."
+        send_telegram_notification(msg)
+
+        messages.success(request, "Дякуємо за ваш відгук! Він з'явиться на сайті після перевірки модератором.")
+
+        # Повертаємо користувача на ту ж сторінку, з якої він відправив форму
+        return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
 
     return redirect('cabinet')

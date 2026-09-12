@@ -308,6 +308,28 @@
                 <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Твій напрямок: <b>{{ tutor_request.get_course_display }}</b>. Твої матеріали доступні в бібліотеці.</p>
             {% endif %}
         </div>
+        <!-- БЛОК: ЗАЛИШИТИ ВІДГУК -->
+        <div class="topup-section" style="margin-bottom: 25px;">
+            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; text-transform: uppercase;">💬 Залишити відгук</h2>
+            <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0;">Поділіться враженнями про заняття або платформу</p>
+
+            <form action="{% url 'submit_review' %}" method="POST" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                {% csrf_token %}
+                <select name="rating" required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; font-weight: 700; background: white;">
+                    <option value="5">⭐⭐⭐⭐⭐ (5/5) - Чудово!</option>
+                    <option value="4">⭐⭐⭐⭐ (4/5) - Добре</option>
+                    <option value="3">⭐⭐⭐ (3/5) - Нормально</option>
+                    <option value="2">⭐⭐ (2/5) - Погано</option>
+                    <option value="1">⭐ (1/5) - Жахливо</option>
+                </select>
+
+                <textarea name="text" rows="3" placeholder="Напишіть ваш відгук тут..." required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
+
+                <button type="submit" class="btn-topup" style="width: 100%; text-align: center;">
+                    Надіслати відгук
+                </button>
+            </form>
+        </div>
 
         <!-- БЛОК: НАЛАШТУВАННЯ -->
         <div class="profile-section">

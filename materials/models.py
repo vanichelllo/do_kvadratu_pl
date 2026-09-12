@@ -264,3 +264,36 @@ class TutorStudentRequest(models.Model):
 
     def __str__(self):
         return f"{self.real_name} ({self.get_course_display()}) - {self.get_status_display()}"
+
+
+# ==========================================
+# НОВА МОДЕЛЬ: ВІДГУКИ (REVIEWS)
+# ==========================================
+class Review(models.Model):
+    RATING_CHOICES = (
+        (5, '⭐⭐⭐⭐⭐ (5/5)'),
+        (4, '⭐⭐⭐⭐ (4/5)'),
+        (3, '⭐⭐⭐ (3/5)'),
+        (2, '⭐⭐ (2/5)'),
+        (1, '⭐ (1/5)'),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews',
+                             verbose_name="Автор відгуку")
+    # Якщо material пустий — це відгук про тебе як викладача або платформу загалом.
+    material = models.ForeignKey(StudyMaterial, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True,
+                                 verbose_name="Матеріал (пусто = загальний відгук)")
+
+    rating = models.IntegerField(choices=RATING_CHOICES, default=5, verbose_name="Оцінка")
+    text = models.TextField(verbose_name="Текст відгуку")
+    is_approved = models.BooleanField(default=False, verbose_name="Схвалено (показувати на сайті)")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата створення")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Відгук"
+        verbose_name_plural = "Відгуки"
+
+    def __str__(self):
+        target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"
+        return f"{self.user.email} - {self.rating} зірок - {target}"
