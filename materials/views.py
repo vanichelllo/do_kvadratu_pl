@@ -145,7 +145,6 @@ def practice_session_view(request, material_id):
         total_score = 0
         max_score = 0
 
-        # Отримуємо рядок з ID питань і перетворюємо у список
         question_ids_str = request.POST.get('question_ids', '')
         if question_ids_str:
             q_id_list = [int(x) for x in question_ids_str.split(',')]
@@ -182,7 +181,6 @@ def practice_session_view(request, material_id):
                     if user_clean == correct_clean:
                         total_score += 2
 
-        # Зберігаємо результат у базу
         PracticeAttempt.objects.create(
             user=request.user,
             material=material,
@@ -194,26 +192,47 @@ def practice_session_view(request, material_id):
         return redirect('cabinet')
 
     # ГЕНЕРАЦІЯ НОВОГО ВАРІАНТА (Режим GET)
-    pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items')
 
-    choice_pool = list(pool.filter(question_type='CHOICE'))
-    match_pool = list(pool.filter(question_type='MATCH'))
-    short_pool = list(pool.filter(question_type='SHORT'))
+    # 1. Витягуємо номер поточної теми
+    match_current = re.match(r'^(\d+)', material.title)
+    current_topic_num = int(match_current.group(1)) if match_current else 0
+
+    # 2. Беремо всі питання, прив'язані до цієї теми (додано prefetch для 'materials' щоб не було зайвих запитів у БД)
+    raw_pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items', 'materials')
+
+    safe_pool = []
+
+    # 3. Фільтруємо "майбутні" теми
+    for q in raw_pool:
+        is_safe = True
+        for mat in q.materials.all():
+            match_mat = re.match(r'^(\d+)', mat.title)
+            mat_num = int(match_mat.group(1)) if match_mat else 0
+
+            # Якщо завдання містить тег з більшим номером — відхиляємо його
+            if mat_num > current_topic_num:
+                is_safe = False
+                break
+
+        if is_safe:
+            safe_pool.append(q)
+
+    # 4. Розподіляємо відфільтровані питання за типами
+    choice_pool = [q for q in safe_pool if q.question_type == 'CHOICE']
+    match_pool = [q for q in safe_pool if q.question_type == 'MATCH']
+    short_pool = [q for q in safe_pool if q.question_type == 'SHORT']
 
     q_choice = random.sample(choice_pool, min(10, len(choice_pool)))
     q_match = random.sample(match_pool, min(2, len(match_pool)))
     q_short = random.sample(short_pool, min(1, len(short_pool)))
 
-    # Перемішуємо тільки тестові питання
     random.shuffle(q_choice)
-
     selected_questions = q_choice + q_match + q_short
 
     if len(selected_questions) == 0:
         messages.info(request, "Для цієї теми ще не додано практичних завдань.")
         return redirect('cabinet')
 
-    # Збираємо ID для прихованого поля форми
     question_ids_str = ','.join(str(q.id) for q in selected_questions)
 
     context = {
@@ -226,8 +245,6 @@ def practice_session_view(request, material_id):
     }
 
     return render(request, 'materials/practice_session.html', context)
-
-
 # ==========================================
 
 
@@ -391,6 +408,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
 # ==========================================
 @login_required(login_url='/login/')
+@login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
@@ -401,15 +419,23 @@ def download_material_view(request, material_id):
     if getattr(material, 'html_content', None):
         html_code = material.html_content
 
-        # МАГІЯ: Динамічно генеруємо кнопку "Практика НМТ"
-        practice_btn = f'''
-            <a href="/practice/{material.id}/" class="btn-primary" style="background-color: var(--brand-yellow); color: #fff; text-decoration: none; margin-right: 15px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
+        # МАГІЯ: Динамічно генеруємо кнопки
+        buttons_html = f'''
+            <a href="/practice/{material.id}/" class="btn-primary" style="background-color: var(--brand-yellow); color: #fff; text-decoration: none; margin-right: 10px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
                 🎯 Практика НМТ
             </a>
         '''
 
-        # Вставляємо кнопку ПЕРЕД блоком <div class="nav-controls">
-        html_code = html_code.replace('<div class="nav-controls">', f'{practice_btn}<div class="nav-controls">')
+        # Додаємо кнопку PDF тільки якщо до матеріалу дійсно прикріплено файл
+        if material.file:
+            buttons_html += f'''
+            <a href="{material.file.url}" target="_blank" class="btn-primary" style="background-color: var(--brand-blue); color: #fff; text-decoration: none; margin-right: 15px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
+                📥 Завантажити PDF
+            </a>
+            '''
+
+        # Вставляємо кнопки ПЕРЕД блоком <div class="nav-controls">
+        html_code = html_code.replace('<div class="nav-controls">', f'{buttons_html}<div class="nav-controls">')
 
         return HttpResponse(html_code)
 
@@ -439,7 +465,6 @@ def download_material_view(request, material_id):
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
-
 
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
