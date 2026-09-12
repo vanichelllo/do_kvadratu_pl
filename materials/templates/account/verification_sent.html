@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Перевірте пошту | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .auth-window {
+        background-color: #ffffff;
+        border: 3px solid var(--brand-blue);
+        border-radius: 16px;
+        box-shadow: 12px 12px 0px var(--brand-yellow);
+        overflow: hidden;
+        max-width: 550px;
+        margin: 60px auto;
+    }
+    .mac-header-dark {
+        background-color: var(--brand-blue);
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mac-dot { width: 14px; height: 14px; border-radius: 50%; }
+    .auth-body { padding: 40px; text-align: center; }
+    
+    .auth-body h1 {
+        color: var(--brand-blue);
+        font-size: 2rem;
+        font-weight: 900;
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+    .auth-body p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="auth-window">
+    <div class="mac-header-dark">
+        <div class="mac-dot" style="background-color: #ff5f56;"></div>
+        <div class="mac-dot" style="background-color: #ffbd2e;"></div>
+        <div class="mac-dot" style="background-color: #27c93f;"></div>
+    </div>
+    
+    <div class="auth-body">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📩</div>
+        <h1>Перевірте вашу пошту!</h1>
+        <p>Ми щойно надіслали лист для підтвердження на вказану вами адресу.</p>
+        <p>Будь ласка, <b>перейдіть за посиланням у листі</b>, щоб активувати свій обліковий запис. Якщо ви не бачите листа, обов'язково перевірте папку <b>"Спам"</b> або "Реклама".</p>
+        
+        <a href="{% url 'home' %}" style="display: inline-block; background-color: var(--brand-yellow); color: var(--brand-blue); font-weight: 900; padding: 12px 25px; border-radius: 8px; text-decoration: none; border: 2px solid var(--brand-blue); margin-top: 15px;">
+            Повернутися на головну
+        </a>
+    </div>
+</div>
+{% endblock %}

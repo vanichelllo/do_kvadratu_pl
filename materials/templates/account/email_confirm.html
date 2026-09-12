@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account %}
+
+{% block title %}Підтвердження Email | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .auth-window {
+        background-color: #ffffff;
+        border: 3px solid var(--brand-blue);
+        border-radius: 16px;
+        box-shadow: 12px 12px 0px var(--brand-yellow);
+        overflow: hidden;
+        max-width: 550px;
+        margin: 60px auto;
+    }
+    .mac-header-dark {
+        background-color: var(--brand-blue);
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .mac-dot { width: 14px; height: 14px; border-radius: 50%; }
+    .auth-body { padding: 40px; text-align: center; }
+    
+    .auth-body h1 {
+        color: var(--brand-blue);
+        font-size: 2rem;
+        font-weight: 900;
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+    .auth-body p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+    }
+    .btn-submit {
+        width: 100%;
+        background-color: var(--brand-blue);
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 900;
+        padding: 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        text-transform: uppercase;
+        margin-top: 10px;
+        box-shadow: 6px 6px 0px var(--brand-yellow);
+        transition: 0.2s;
+    }
+    .btn-submit:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0px var(--brand-yellow);
+    }
+</style>
+
+<div class="auth-window">
+    <div class="mac-header-dark">
+        <div class="mac-dot" style="background-color: #ff5f56;"></div>
+        <div class="mac-dot" style="background-color: #ffbd2e;"></div>
+        <div class="mac-dot" style="background-color: #27c93f;"></div>
+    </div>
+    
+    <div class="auth-body">
+        {% if confirmation %}
+            <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
+            <h1>Підтвердження Email</h1>
+            <p>Будь ласка, підтвердіть прив'язку електронної адреси <b>{{ confirmation.email_address.email }}</b> до вашого акаунта.</p>
+            
+            <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-submit">Підтвердити</button>
+            </form>
+        {% else %}
+            <div style="font-size: 4rem; margin-bottom: 20px;">❌</div>
+            <h1>Помилка</h1>
+            <p>Це посилання для підтвердження недійсне, або його термін дії вже минув.</p>
+            <a href="{% url 'account_login' %}" style="display: inline-block; background-color: var(--brand-blue); color: white; font-weight: 900; padding: 12px 25px; border-radius: 8px; text-decoration: none; margin-top: 15px;">
+                Перейти до входу
+            </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
