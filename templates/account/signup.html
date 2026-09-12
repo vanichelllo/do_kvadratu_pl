@@ -13,6 +13,8 @@
     .auth-form input[type="email"], .auth-form input[type="text"], .auth-form input[type="password"] { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); margin-bottom: 15px; }
     .auth-form input:focus { outline: none; border-color: var(--brand-yellow); background-color: #ffffff; }
 
+    .auth-form ul.errorlist { color: #dc3545; font-size: 0.85rem; font-weight: 700; padding-left: 20px; margin-top: -10px; margin-bottom: 15px; }
+
     .btn-submit { width: 100%; background-color: var(--brand-blue); color: #ffffff; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 5px 5px 0px var(--brand-yellow); transition: all 0.2s; text-transform: uppercase; margin-top: 10px; }
     .btn-submit:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0px var(--brand-yellow); }
 
@@ -23,8 +25,6 @@
 
     .btn-google { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; background-color: #ffffff; color: var(--brand-blue); padding: 12px; border: 2px solid var(--brand-blue); border-radius: 8px; font-weight: 900; text-decoration: none; box-shadow: 4px 4px 0px var(--brand-blue); transition: all 0.2s; box-sizing: border-box; }
     .btn-google:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--brand-blue); background-color: #f8f9fa; }
-
-    .error-text { color: #dc3545; font-size: 0.85rem; font-weight: 600; margin-top: -10px; margin-bottom: 15px; display: block; }
 </style>
 
 <div class="auth-window">
@@ -37,36 +37,33 @@
     <div class="auth-body">
         <h2 class="auth-title">СТВОРЕННЯ АКАУНТУ</h2>
 
-        <form method="POST" class="auth-form">
+        <form method="POST" action="{% url 'account_signup' %}" class="auth-form">
             {% csrf_token %}
 
             {% for field in form %}
-                {% if field.name != 'terms_agreement' %}
-                    <label class="main-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <span class="error-text">{{ field.errors.0 }}</span>
-                    {% endif %}
+                <label class="main-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {{ field.errors }}
                 {% endif %}
             {% endfor %}
 
-            <!-- Блок для чекбокса Оферти -->
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <!-- Блок для чекбокса Оферти (HTML-версія) -->
             <div style="margin-top: 5px; margin-bottom: 20px; padding: 12px; background: rgba(52, 78, 134, 0.05); border-radius: 8px; border-left: 4px solid var(--brand-yellow);">
                 <div style="display: flex; align-items: flex-start; gap: 10px;">
                     <div style="padding-top: 3px;">
-                        {{ form.terms_agreement }}
+                        <input type="checkbox" id="terms_agreement" required style="cursor: pointer;">
                     </div>
-                    <label for="{{ form.terms_agreement.id_for_label }}" style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark); line-height: 1.4; margin: 0; cursor: pointer; text-transform: none;">
+                    <label for="terms_agreement" style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark); line-height: 1.4; margin: 0; cursor: pointer; text-transform: none;">
                         Я погоджуюсь з умовами
                         <a href="{% url 'offer' %}" target="_blank" style="color: var(--brand-blue); text-decoration: underline;">Договору оферти</a> та
                         <a href="{% url 'privacy' %}" target="_blank" style="color: var(--brand-blue); text-decoration: underline;">Політикою конфіденційності</a>
                     </label>
                 </div>
-                {% if form.terms_agreement.errors %}
-                    <div class="error-text" style="margin-top: 5px; margin-left: 25px; margin-bottom: 0;">
-                        {{ form.terms_agreement.errors.0 }}
-                    </div>
-                {% endif %}
             </div>
 
             <button type="submit" class="btn-submit">ЗАРЕЄСТРУВАТИСЯ</button>
@@ -89,7 +86,7 @@
         </form>
 
         <p style="text-align: center; margin-top: 25px; font-weight: 600; font-size: 0.9rem;">
-            Вже маєте акаунт? <a href="{% url 'login' %}" style="color: var(--brand-blue); text-decoration: underline;">Увійти</a>
+            Вже маєте акаунт? <a href="{% url 'account_login' %}" style="color: var(--brand-blue); text-decoration: underline;">Увійти</a>
         </p>
     </div>
 </div>

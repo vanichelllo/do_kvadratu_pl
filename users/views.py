@@ -20,7 +20,7 @@ def register_view(request):
     else:
         form = StudentRegistrationForm()
 
-    return render(request, 'users/register.html', {'form': form})
+    return render(request, 'users/signup.html', {'form': form})
 
 @login_required
 def pay_with_mono(request):
