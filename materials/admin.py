@@ -38,12 +38,30 @@ def reject_student_requests(modeladmin, request, queryset):
     queryset.update(status='rejected')
 
 
+@admin.action(description="🗑 Забрати доступ (Видалити з учнів)")
+def revoke_student_access(modeladmin, request, queryset):
+    # Знаходимо всі НМТ-матеріали
+    nmt_materials = StudyMaterial.objects.filter(category__name__icontains='Підготовка до НМТ')
+
+    count = 0
+    for student_request in queryset:
+        # 1. Забираємо в учня доступ до всіх матеріалів НМТ
+        for material in nmt_materials:
+            student_request.user.purchased_materials.remove(material)
+
+        # 2. Видаляємо саму заявку з бази
+        student_request.delete()
+        count += 1
+
+    messages.success(request, f"Успішно видалено {count} учнів. Доступ до матеріалів закрито.")
+
+
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
     list_display = ('user', 'real_name', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('user__email', 'real_name')
-    actions = [approve_student_requests, reject_student_requests]
+    actions = [approve_student_requests, reject_student_requests, revoke_student_access]
 
 # 1. Реєструємо прості таблиці
 admin.site.register(Category)

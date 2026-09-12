@@ -20,8 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from users.forms import UserProfileForm
-from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt
+from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, MatchItem, PracticeAttempt, TutorStudentRequest
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
