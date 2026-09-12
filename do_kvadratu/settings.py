@@ -62,7 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # ДОДАНО: Обробка статики для бойового сервера
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Обробка статики для бойового сервера
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -144,7 +144,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
-# ДОДАНО: Папка, куди зберуться всі стилі після команди collectstatic
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
@@ -152,13 +151,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'users.CustomUser'
-
-# Куди перенаправляти після виходу
 LOGOUT_REDIRECT_URL = '/materials/'
 
 
 # ==========================================
-# НАЛАШТУВАННЯ ALLAUTH (ВХІД ЧЕРЕЗ GOOGLE)
+# 1. БЕЗПЕКА РЕЄСТРАЦІЇ ТА АВТОРИЗАЦІЇ (ALLAUTH)
 # ==========================================
 SITE_ID = 1
 
@@ -167,10 +164,15 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_USERNAME_REQUIRED = False # Відключаємо логін по юзернейму, залишаємо тільки email
+
+# НАЙГОЛОВНІШЕ: Обов'язкове підтвердження пошти
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True # Автоматично логінить після кліку на посилання в листі
+
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 LOGIN_REDIRECT_URL = '/cabinet/'
@@ -190,15 +192,16 @@ SOCIALACCOUNT_PROVIDERS = {
 MONOBANK_TOKEN = os.getenv('MONOBANK_TOKEN')
 
 # ==========================================
-# НАЛАШТУВАННЯ ПОШТИ (SMTP GMAIL)
+# 2. НАЛАШТУВАННЯ ПОШТИ (SMTP GMAIL)
 # ==========================================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Змінено console на smtp, щоб листи реально відправлялись
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
+EMAIL_USE_TLS = True  # Для порту 587 має бути TLS=True
+EMAIL_USE_SSL = False # А SSL=False
 
-# Беремо пошту і пароль з файлу .env
+# Беремо пошту і пароль з файлу .env (на Render ці змінні вже є)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
@@ -211,12 +214,6 @@ DEFAULT_FROM_EMAIL = f"ДО КВАДРАТУ <{EMAIL_HOST_USER}>"
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_ADMIN_ID = os.getenv('TELEGRAM_ADMIN_ID')
 
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
-}
 
 # ==========================================
 # НАЛАШТУВАННЯ CLOUDINARY (ДЛЯ НОВИХ ВЕРСІЙ DJANGO)
