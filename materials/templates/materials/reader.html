@@ -1,9 +1,12 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Блокуємо зум, щоб інтерфейс відчувався як мобільний додаток -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ material.title }} | Інтерактивний конспект</title>
+
     <style>
         body, html {
             margin: 0;
@@ -13,66 +16,85 @@
             display: flex;
             flex-direction: column;
             font-family: sans-serif;
-            overflow: hidden; /* Забороняємо прокрутку основної сторінки, крутитися буде лише презентація */
+            overflow: hidden; /* Забороняємо прокрутку сторінки, крутитись має тільки сама презентація */
         }
 
-        /* Верхня панель (Header) */
+        /* КОМПАКТНА ШАПКА ДЛЯ ТЕЛЕФОНІВ ТА ПК */
         .reader-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 0 15px;
+            height: 60px;
             background-color: #1a252f;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             z-index: 10;
         }
 
-        .btn-back, .btn-download {
-            padding: 10px 15px;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: background-color 0.2s;
-            white-space: nowrap;
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn-back {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
             background-color: #344e86;
             color: white;
-            border: 1px solid #344e86;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: 0.2s;
         }
-
-        .btn-back:hover {
-            background-color: #2a3f6e;
-        }
-
-        .btn-download {
-            background-color: #ffcc00;
-            color: #344e86;
-        }
-
-        .btn-download:hover {
-            background-color: #e6b800;
-        }
+        .btn-back:hover { background-color: #2a3f6e; }
 
         .header-title {
             color: white;
             font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-            flex-grow: 1;
-            margin: 0 15px;
+            font-size: 15px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 300px;
         }
 
-        /* Контейнер для презентації */
+        .action-btn {
+            padding: 8px 12px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-practice {
+            background-color: #ff9f43;
+            color: #fff;
+            border: 2px solid #e67e22;
+        }
+        .btn-practice:hover { background-color: #e67e22; }
+
+        .btn-download {
+            background-color: #344e86;
+            color: white;
+            border: 2px solid #2a3f6e;
+        }
+        .btn-download:hover { background-color: #2a3f6e; }
+
+        /* КОНТЕЙНЕР ПРЕЗЕНТАЦІЇ */
         .iframe-container {
             flex-grow: 1;
             width: 100%;
+            height: calc(100vh - 60px);
             background-color: #ffffff;
+            position: relative;
         }
 
         iframe {
@@ -82,10 +104,48 @@
             display: block;
         }
 
-        /* Мобільна адаптація */
+        /* ПЛАВАЮЧА ПАНЕЛЬ УПРАВЛІННЯ (Вниз екрану) */
+        .mobile-controls {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 37, 47, 0.95);
+            padding: 8px 25px;
+            border-radius: 40px;
+            display: flex;
+            gap: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            border: 2px solid #ff9f43;
+            align-items: center;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            padding: 5px;
+        }
+
+        .control-btn:active {
+            transform: scale(0.8);
+        }
+
+        /* Адаптація під телефони */
         @media (max-width: 600px) {
-            .header-title { display: none; } /* На телефонах ховаємо назву, щоб влізли обидві кнопки */
-            .reader-header { padding: 15px 10px; }
+            .header-title { display: none; } /* Ховаємо назву, щоб влізли кнопки */
+            .action-btn span { display: none; } /* Ховаємо текст кнопок, лишаємо емодзі/іконки */
+            .action-btn { font-size: 1.2rem; padding: 6px 10px; }
+            .btn-practice::after { content: "🎯"; }
+            .btn-download::after { content: "📥"; }
         }
 
         @media print {
@@ -93,24 +153,38 @@
         }
     </style>
 </head>
-<!-- Заборона правої кнопки миші -->
 <body oncontextmenu="return false;">
 
-    <div class="reader-header">
-        <a href="{% url 'cabinet' %}" class="btn-back">⬅ В кабінет</a>
-        <div class="header-title">{{ material.title }}</div>
+    <!-- Компактна шапка -->
+    <div class="reader-header" id="reader-header">
+        <div class="header-left">
+            <a href="{% url 'cabinet' %}" class="btn-back" title="В кабінет">⬅</a>
+            <div class="header-title">{{ material.title }}</div>
+        </div>
+        <div class="header-right">
+            <!-- Кнопка Практики -->
+            <a href="{% url 'practice_session' material.id %}" class="action-btn btn-practice"><span>🎯 Практика НМТ</span></a>
 
-        <!-- Кнопка завантаження PDF -->
-        {% if material.file %}
-            <a href="{{ material.file.url }}" target="_blank" download class="btn-download">📥 Завантажити PDF</a>
-        {% endif %}
+            <!-- Кнопка завантаження PDF -->
+            {% if material.file %}
+                <a href="{{ material.file.url }}" target="_blank" download class="action-btn btn-download"><span>📥 PDF</span></a>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="iframe-container">
-        <!-- Вікно для ізольованого відображення HTML-коду -->
-        <iframe id="presentation-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    <!-- Область презентації -->
+    <div class="iframe-container" id="presentation-container">
+        <iframe id="presentation-frame" sandbox="allow-scripts allow-same-origin" allowfullscreen></iframe>
     </div>
-<!-- Безпечне передавання HTML-коду у JavaScript -->
+
+    <!-- Плаваюча панель (Стрілки + Фулскрін) -->
+    <div class="mobile-controls" id="mobile-controls">
+        <button class="control-btn" onclick="navigateSlide('prev')" title="Назад">◀</button>
+        <button class="control-btn" onclick="toggleFullScreen()" title="Повний екран" style="color: #ff9f43; font-size: 1.8rem; padding: 0 10px;">⛶</button>
+        <button class="control-btn" onclick="navigateSlide('next')" title="Вперед">▶</button>
+    </div>
+
+    <!-- Безпечне передавання HTML-коду у JavaScript -->
     {{ material.html_content|default_if_none:""|json_script:"html-data" }}
 
     <script>
@@ -127,14 +201,11 @@
 
         // 2. Якщо код є - відмальовуємо його
         if (htmlContent && htmlContent.trim() !== "") {
-
-            // МАГІЯ: Ховаємо логотип і кнопку теми, робимо панель прозорою і "плаваючою"
+            // Вшиваємо стилі прямо в код презентації
             const customStyles = `
                 <style>
-                    /* Ховаємо текст і зміну теми */
+                    /* Ховаємо текст і зміну теми всередині HTML */
                     .brand-logo-container, #btn-theme { display: none !important; }
-
-                    /* Перетворюємо шапку на прозорий контейнер лише для зеленої кнопки */
                     .navbar {
                         position: absolute !important;
                         top: 15px !important;
@@ -146,25 +217,64 @@
                         padding: 0 !important;
                         z-index: 1000 !important;
                     }
-
-                    /* Розширюємо слайд на звільнене місце */
-                    .presentation-viewport { height: calc(100vh - 61px) !important; }
+                    /* Робимо так, щоб презентація тягнулась на всю висоту */
+                    .presentation-viewport { height: 100vh !important; max-height: 100vh !important; }
+                    body { margin: 0; padding: 0; overflow: hidden; }
                 </style>
             </head>`;
 
-            // Вшиваємо наші стилі прямо в код презентації
             htmlContent = htmlContent.replace('</head>', customStyles);
-
-            // Відмальовуємо оновлений код
             iframe.srcdoc = htmlContent;
-
         } else {
-            // Якщо пусто - показуємо повідомлення-заглушку
             iframe.srcdoc = `
                 <div style="display: flex; justify-content: center; align-items: center; height: 100%; font-family: sans-serif; color: #666; background-color: #f9f9f9; text-align: center; padding: 20px;">
                     <h2>Інтерактивна презентація ще не додана.<br>Будь ласка, скористайтеся завантаженням PDF.</h2>
                 </div>
             `;
+        }
+
+        // --- 3. ЛОГІКА ПОВНОЕКРАННОГО РЕЖИМУ ---
+        function toggleFullScreen() {
+            let elem = document.documentElement;
+
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) { elem.requestFullscreen(); }
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+
+                // Ховаємо верхню шапку, розтягуємо контейнер
+                document.getElementById('reader-header').style.display = 'none';
+                document.getElementById('presentation-container').style.height = '100vh';
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+
+                // Повертаємо шапку назад
+                document.getElementById('reader-header').style.display = 'flex';
+                document.getElementById('presentation-container').style.height = 'calc(100vh - 60px)';
+            }
+        }
+
+        // --- 4. ЛОГІКА КНОПОК ВПЕРЕД / НАЗАД (СИМУЛЯЦІЯ КЛАВІАТУРИ) ---
+        function navigateSlide(direction) {
+            if (!iframe || !iframe.contentWindow) return;
+
+            try {
+                const key = direction === 'next' ? 'ArrowRight' : 'ArrowLeft';
+                const keyCode = direction === 'next' ? 39 : 37;
+
+                const event = new KeyboardEvent('keydown', {
+                    key: key,
+                    code: key,
+                    keyCode: keyCode,
+                    which: keyCode,
+                    bubbles: true
+                });
+
+                iframe.contentWindow.document.dispatchEvent(event);
+            } catch (e) {
+                console.warn("Помилка навігації:", e);
+            }
         }
     </script>
 </body>
