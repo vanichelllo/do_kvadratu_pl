@@ -419,97 +419,33 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
 # ==========================================
 @login_required(login_url='/login/')
+@login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
     if material not in request.user.purchased_materials.all():
         raise Http404("У вас немає доступу до цього матеріалу.")
 
-    # ПЕРЕВІРКА НА ІНТЕРАКТИВНУ ПРЕЗЕНТАЦІЮ
-    if getattr(material, 'html_content', None):
-        html_code = material.html_content
+    pdf_base64 = None
 
-        # 1. ДОДАЄМО КНОПКИ
-        buttons_html = f'''
-            <a href="/practice/{material.id}/" class="btn-primary" style="background-color: var(--brand-yellow); color: #fff; text-decoration: none; margin-right: 10px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
-                🎯 Практика НМТ
-            </a>
-        '''
-        if material.file:
-            buttons_html += f'''
-            <a href="{material.file.url}" target="_blank" class="btn-primary" style="background-color: var(--brand-blue); color: #fff; text-decoration: none; margin-right: 15px; border-radius: 6px; padding: 7px 15px; font-weight: bold;">
-                📥 Завантажити PDF
-            </a>
-            '''
-        html_code = html_code.replace('<div class="nav-controls">', f'{buttons_html}<div class="nav-controls">')
+    # Якщо є PDF-файл - завантажуємо його для бекапу (щоб працювала кнопка "Завантажити PDF")
+    if material.file:
+        try:
+            file_url = material.file.url
+            if file_url.startswith('http://'):
+                file_url = file_url.replace('http://', 'https://')
+            response = requests.get(file_url, timeout=10)
+            if response.status_code == 200:
+                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
+        except Exception as e:
+            print(f"Помилка завантаження файлу з хмари: {e}")
 
-        # 2. ГЛОБАЛЬНЕ ОНОВЛЕННЯ ЛОГОТИПУ ТА CSS
-        logo_css = """
-        <style>
-            .logo-bg { fill: var(--brand-blue); rx: 40px; transition: var(--transition); }
-            .logo-divider { stroke: var(--card-bg); transition: var(--transition); }
-            .logo-symbol { stroke: #ffffff; transition: var(--transition); }
-            .logo-symbol-fill { fill: #ffffff; transition: var(--transition); }
-
-            [data-theme="dark"] .logo-bg { fill: #ffffff; rx: 14px; }
-            [data-theme="dark"] .logo-divider { stroke: var(--brand-blue); }
-            [data-theme="dark"] .logo-symbol { stroke: var(--brand-blue); }
-            [data-theme="dark"] .logo-symbol-fill { fill: var(--brand-blue); }
-        </style>
-        """
-        # Вшиваємо стилі перед закриваючим тегом head
-        html_code = html_code.replace('</head>', f'{logo_css}</head>')
-
-        new_svg = """
-        <svg id="app-logo" class="logo-svg" viewBox="0 0 280 280">
-            <rect width="280" height="280" class="logo-bg" />
-            <line x1="140" y1="0" x2="140" y2="280" class="logo-divider" stroke-width="16"/>
-            <line x1="0" y1="140" x2="280" y2="140" class="logo-divider" stroke-width="16"/>
-            <g class="logo-symbol" stroke-width="18" stroke-linecap="round">
-                <line x1="46" y1="70" x2="94" y2="70"/>
-                <line x1="70" y1="46" x2="70" y2="94"/>
-                <line x1="186" y1="70" x2="234" y2="70"/>
-                <line x1="52" y1="192" x2="88" y2="228"/>
-                <line x1="88" y1="192" x2="52" y2="228"/>
-            </g>
-            <g class="logo-symbol-fill">
-                <circle cx="210" cy="189" r="10"/>
-                <circle cx="210" cy="231" r="10"/>
-            </g>
-        </svg>
-        """
-        # Шукаємо старий SVG (незалежно від його вмісту) і замінюємо на новий
-        html_code = re.sub(r'<svg id="app-logo".*?</svg>', new_svg, html_code, flags=re.DOTALL)
-
-        return HttpResponse(html_code)
-
-    # ЯКЩО HTML НЕМАЄ - ПРАЦЮЄМО З PDF
-    if not material.file:
-        raise Http404("Файл ще не завантажено на сервер.")
-
-    try:
-        file_url = material.file.url
-        if file_url.startswith('http://'):
-            file_url = file_url.replace('http://', 'https://')
-
-        response = requests.get(file_url, timeout=10)
-
-        if response.status_code == 200:
-            file_bytes = response.content
-        else:
-            raise Exception(f"Cloudinary повернув статус: {response.status_code}")
-
-    except Exception as e:
-        raise Http404(f"Помилка завантаження файлу з хмари. Деталі: {e}")
-
-    pdf_base64 = base64.b64encode(file_bytes).decode('utf-8')
-
+    # ЗАВЖДИ рендеримо наш шаблон reader.html (він сам розбереться: показати HTML чи PDF)
     context = {
         'material': material,
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
-
 
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
