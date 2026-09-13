@@ -204,8 +204,8 @@
             // Вшиваємо стилі прямо в код презентації
             const customStyles = `
                 <style>
-                    /* Ховаємо текст і зміну теми всередині HTML */
-                    .brand-logo-container, #btn-theme { display: none !important; }
+                    /* Ховаємо текст, зміну теми ТА ЗЕЛЕНУ КНОПКУ ФУЛСКРІНУ всередині HTML */
+                    .brand-logo-container, #btn-theme, #btn-fullscreen, .btn-fullscreen, .fullscreen-btn { display: none !important; }
                     .navbar {
                         position: absolute !important;
                         top: 15px !important;
@@ -216,6 +216,18 @@
                         height: auto !important;
                         padding: 0 !important;
                         z-index: 1000 !important;
+                    }
+                    /* ДОДАЄМО ПУСТИЙ ПРОСТІР ЗНИЗУ (БУФЕРНА ЗОНА ДЛЯ ПАНЕЛІ) */
+                    .presentation-viewport {
+                        height: 100vh !important;
+                        max-height: 100vh !important;
+                        padding-bottom: 100px !important;
+                        box-sizing: border-box !important;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        padding-bottom: 100px !important;
                     }
                     /* Робимо так, щоб презентація тягнулась на всю висоту */
                     .presentation-viewport { height: 100vh !important; max-height: 100vh !important; }
