@@ -631,55 +631,103 @@ def pay_with_mono(request):
 
 @login_required
 def topup_balance_view(request):
+    # ПЕРЕВІРКА ВІДПОВІДЕЙ ТА ЗБЕРЕЖЕННЯ (Режим POST)
     if request.method == 'POST':
-        amount_str = request.POST.get('amount')
-        try:
-            amount = float(amount_str)
-            if amount < 1:
-                messages.error(request, "Мінімальна сума поповнення — 1 грн.")
-                return redirect('cabinet')
-        except (ValueError, TypeError):
-            messages.error(request, "Будь ласка, введіть коректну суму.")
-            return redirect('cabinet')
+        total_score = 0
+        max_score = 0
+        results_data = []  # Збираємо деталі для сторінки результатів
 
-        with transaction.atomic():
-            order = Order.objects.create(
-                user=request.user,
-                total_amount=amount,
-                status='pending'
-            )
+        question_ids_str = request.POST.get('question_ids', '')
+        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
 
-        amount_kopecks = int(amount * 100)
+        # Зберігаємо порядок завдань, у якому вони були на екрані
+        from django.db.models import Case, When
+        preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
+        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
+            preserved_order)
 
-        headers = {
-            'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
-            'Content-Type': 'application/json'
+        for q in questions:
+            q_result = {
+                'question': q,
+                'type': q.question_type,
+                'is_correct': False,
+                'user_answer': None,
+                'correct_answer': None,
+                'points_earned': 0,
+                'max_points': 0
+            }
+
+            if q.question_type == 'CHOICE':
+                q_result['max_points'] = 1
+                q_result['correct_answer'] = q.options.filter(is_correct=True).first()
+                user_ans = request.POST.get(f'q_{q.id}')
+
+                if user_ans:
+                    try:
+                        opt = AnswerOption.objects.get(id=int(user_ans))
+                        q_result['user_answer'] = opt
+                        if opt.is_correct:
+                            total_score += 1
+                            q_result['points_earned'] = 1
+                            q_result['is_correct'] = True
+                    except AnswerOption.DoesNotExist:
+                        pass
+
+            elif q.question_type == 'MATCH':
+                q_result['max_points'] = 3
+                q_result['matches'] = []
+                match_points = 0
+
+                for item in q.match_items.all():
+                    user_match = request.POST.get(f'match_{item.id}')
+                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
+
+                    is_match_correct = user_match and int(user_match) == item.correct_option.id
+                    if is_match_correct:
+                        match_points += 1
+                        total_score += 1
+
+                    q_result['matches'].append({
+                        'item': item,
+                        'user_option': user_opt,
+                        'correct_option': item.correct_option,
+                        'is_correct': is_match_correct
+                    })
+
+                q_result['points_earned'] = match_points
+                q_result['is_correct'] = (match_points == 3)
+
+            elif q.question_type == 'SHORT':
+                q_result['max_points'] = 2
+                q_result['correct_answer'] = q.correct_short_answer
+                user_ans = request.POST.get(f'q_{q.id}')
+                q_result['user_answer'] = user_ans
+
+                if user_ans:
+                    user_clean = str(user_ans).strip().replace(',', '.')
+                    correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
+                    if user_clean == correct_clean:
+                        total_score += 2
+                        q_result['points_earned'] = 2
+                        q_result['is_correct'] = True
+
+            results_data.append(q_result)
+
+        # Записуємо спробу в базу
+        PracticeAttempt.objects.create(
+            user=request.user,
+            material=material,
+            score=total_score,
+            max_score=max_score
+        )
+
+        context = {
+            'material': material,
+            'total_score': total_score,
+            'max_score': max_score,
+            'results_data': results_data,
         }
-
-        payload = {
-            "amount": amount_kopecks,
-            "ccy": 980,
-            "reference": str(order.id),
-            "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
-            "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
-        }
-
-        try:
-            response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload,
-                                     headers=headers)
-            data = response.json()
-
-            if 'pageUrl' in data:
-                order.mono_invoice_id = data['invoiceId']
-                order.save()
-                return redirect(data['pageUrl'])
-            else:
-                messages.error(request, "Помилка платіжної системи. Спробуйте пізніше.")
-                return redirect('cabinet')
-        except Exception:
-            messages.error(request, "Помилка з'єднання з Monobank.")
-            return redirect('cabinet')
-
+        return render(request, 'materials/practice_results.html', context)
 
 @csrf_exempt
 def mono_webhook(request):

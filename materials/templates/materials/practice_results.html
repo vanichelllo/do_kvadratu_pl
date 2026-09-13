@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Результати | {{ material.title }}{% endblock %}
+
+{% block content %}
+<script>
+    window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+        svg: { fontCache: 'global' }
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<style>
+    .results-container { max-width: 800px; margin: 40px auto; padding: 0 15px; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .score-board { background: var(--brand-blue, #344e86); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px; box-shadow: 8px 8px 0px var(--brand-yellow, #ffbd2e); }
+    .score-board h1 { margin: 0 0 10px 0; font-size: 2rem; }
+    .score-board .points { font-size: 3rem; font-weight: 900; color: var(--brand-yellow, #ffbd2e); }
+    
+    .result-card { background: white; border: 2px solid #e1e1e1; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+    .result-card.correct { border-color: #27ae60; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.1); }
+    .result-card.wrong { border-color: #e74c3c; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.1); }
+    
+    .q-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f4f6fa; padding-bottom: 10px; margin-bottom: 15px; }
+    .q-status { font-weight: bold; padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
+    .status-correct { background: #e8f8f5; color: #27ae60; }
+    .status-wrong { background: #fdf2e9; color: #e74c3c; }
+    .status-partial { background: #fef9e7; color: #f39c12; }
+    
+    .opt-row { padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e1e1e1; background: #f9f9f9; }
+    .opt-correct { background: #e8f8f5; border-color: #27ae60; font-weight: bold; }
+    .opt-wrong-user { background: #fdf2e9; border-color: #e74c3c; text-decoration: line-through; }
+    
+    .match-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .match-table th, .match-table td { padding: 10px; border: 1px solid #e1e1e1; text-align: center; }
+    .match-table th { background: #f4f6fa; }
+    .match-table td:first-child { text-align: left; font-weight: bold; }
+    
+    .btn-cabinet { display: block; width: 100%; background: var(--brand-blue, #344e86); color: white; text-align: center; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; text-decoration: none; margin-top: 30px; transition: 0.2s; }
+    .btn-cabinet:hover { background: #2a3f6e; }
+    .q-media { text-align: center; margin-bottom: 15px; }
+    .q-media img { max-width: 100%; border-radius: 8px; }
+</style>
+
+<div class="results-container">
+    <div class="score-board">
+        <h1>Результати тестування</h1>
+        <p>Тема: {{ material.title }}</p>
+        <div class="points">{{ total_score }} / {{ max_score }}</div>
+        <p>балів набрано</p>
+    </div>
+
+    <h2>Аналіз відповідей:</h2>
+
+    {% for res in results_data %}
+        <div class="result-card {% if res.points_earned == res.max_points %}correct{% elif res.points_earned > 0 %}partial{% else %}wrong{% endif %}">
+            
+            <div class="q-header">
+                <span style="font-weight: bold; color: #7f8c8d;">Завдання {{ forloop.counter }}</span>
+                <span class="q-status {% if res.points_earned == res.max_points %}status-correct{% elif res.points_earned > 0 %}status-partial{% else %}status-wrong{% endif %}">
+                    Отримано: {{ res.points_earned }} / {{ res.max_points }} б.
+                </span>
+            </div>
+
+            <div style="font-size: 1.1rem; margin-bottom: 15px;">{{ res.question.text|safe }}</div>
+            
+            {% if res.question.svg_code %}
+                <div class="q-media">{{ res.question.svg_code|safe }}</div>
+            {% elif res.question.image %}
+                <div class="q-media"><img src="{{ res.question.image.url }}" alt="Media"></div>
+            {% endif %}
+
+            <!-- ВІДМАЛЬОВКА ТЕСТУ (CHOICE) -->
+            {% if res.type == 'CHOICE' %}
+                {% for opt in res.question.options.all %}
+                    <div class="opt-row 
+                        {% if opt == res.correct_answer %}opt-correct{% endif %}
+                        {% if opt == res.user_answer and not opt.is_correct %}opt-wrong-user{% endif %}">
+                        {{ opt.text|safe }}
+                        {% if opt == res.correct_answer %} ✅ (Правильна відповідь){% endif %}
+                        {% if opt == res.user_answer and not opt.is_correct %} ❌ (Ваш вибір){% endif %}
+                    </div>
+                {% endfor %}
+                {% if not res.user_answer %}<p style="color: #e74c3c; font-weight: bold;">Ви не надали відповідь.</p>{% endif %}
+
+            <!-- ВІДМАЛЬОВКА ВІДПОВІДНОСТІ (MATCH) -->
+            {% elif res.type == 'MATCH' %}
+                <table class="match-table">
+                    <tr><th>Умова</th><th>Ваша відповідь</th><th>Правильно</th></tr>
+                    {% for m_res in res.matches %}
+                        <tr>
+                            <td>{{ m_res.item.text|safe }}</td>
+                            <td style="color: {% if m_res.is_correct %}#27ae60{% else %}#e74c3c{% endif %}; font-weight: bold;">
+                                {{ m_res.user_option.text|default:"Не обрано"|safe }}
+                            </td>
+                            <td style="color: #27ae60; font-weight: bold;">{{ m_res.correct_option.text|safe }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+
+            <!-- ВІДМАЛЬОВКА КОРОТКОЇ ВІДПОВІДІ (SHORT) -->
+            {% elif res.type == 'SHORT' %}
+                <div style="margin-top: 15px; padding: 15px; border-radius: 8px; background: #f4f6fa;">
+                    <p>Ваша відповідь: 
+                        <strong style="color: {% if res.is_correct %}#27ae60{% else %}#e74c3c{% endif %}; font-size: 1.2rem;">
+                            {{ res.user_answer|default:"Немає" }}
+                        </strong>
+                    </p>
+                    {% if not res.is_correct %}
+                        <p>Правильна відповідь: <strong style="color: #27ae60; font-size: 1.2rem;">{{ res.correct_answer }}</strong></p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+    {% endfor %}
+
+    <a href="{% url 'cabinet' %}" class="btn-cabinet">Повернутися в кабінет</a>
+</div>
+{% endblock %}
