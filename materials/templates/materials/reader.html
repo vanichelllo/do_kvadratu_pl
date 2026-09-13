@@ -154,6 +154,52 @@
     </style>
 </head>
 <body oncontextmenu="return false;">
+<!-- Мобільна підказка -->
+    <div id="mobile-hint" class="mobile-hint">
+        💡 <b>Порада:</b> переверніть телефон горизонтально та увімкніть повноекранний режим (⛶) для найкращого відображення.
+    </div>
+
+    <style>
+        .mobile-hint {
+            position: fixed;
+            top: -100px; /* Сховано за екраном початково */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(52, 78, 134, 0.95); /* Фірмовий синій */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            width: 85%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 9999;
+            border: 2px solid #ffbd2e; /* Фірмовий жовтий */
+            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: none; /* Ховаємо за замовчуванням */
+        }
+
+        /* Показуємо тільки на мобільних екранах */
+        @media (max-width: 768px) {
+            .mobile-hint { display: block; }
+        }
+    </style>
+
+    <script>
+        // Показуємо підказку через 1 секунду після завантаження і ховаємо через 6 секунд
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                const hint = document.getElementById('mobile-hint');
+                if (hint) {
+                    hint.style.top = '75px'; // Виїжджає під шапкою
+
+                    setTimeout(function() {
+                        hint.style.top = '-100px'; // Ховається назад
+                    }, 6000); // Час показу (6 секунд)
+                }
+            }, 1000); // Затримка перед появою
+        });
+    </script>
 
     <!-- Компактна шапка -->
     <div class="reader-header" id="reader-header">
