@@ -5,10 +5,12 @@ from django.contrib import messages
 # Імпорти для вивантаження бази в Excel
 from import_export import resources
 from import_export.admin import ExportActionMixin
+from django import forms
+from django.contrib.auth import get_user_model
 
 from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation
 
-
+User = get_user_model()
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):
     # Шукаємо всі матеріали НМТ
@@ -180,10 +182,28 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ('is_approved', 'rating', 'created_at')
     search_fields = ('user__email', 'text')
     actions = [approve_reviews, hide_reviews]
+
+
+# Кастомне поле форми для зміни формату відображення імені в списку
+class ApprovedStudentChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        # Перевіряємо, чи є в користувача заявка (має бути, бо ми їх відфільтруємо)
+        if hasattr(obj, 'tutor_request') and obj.tutor_request:
+            return f"{obj.tutor_request.real_name} ({obj.email})"
+        return obj.email
+
+
 @admin.register(StudentPresentation)
 class StudentPresentationAdmin(admin.ModelAdmin):
     list_display = ('title', 'student', 'created_at')
-    search_fields = ('title', 'student__email', 'student__username')
+    search_fields = ('title', 'student__email', 'student__tutor_request__real_name')
     list_filter = ('created_at',)
-    # Рядок autocomplete_fields видалено.
-    # Замість нього Django автоматично зробить зручний випадаючий список з усіма учнями.
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "student":
+            # 1. Фільтруємо: залишаємо лише тих, у кого заявка має статус 'approved'
+            kwargs["queryset"] = User.objects.filter(tutor_request__status='approved')
+            # 2. Застосовуємо наш кастомний клас для відображення "Прізвище Ім'я (email)"
+            kwargs["form_class"] = ApprovedStudentChoiceField
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
