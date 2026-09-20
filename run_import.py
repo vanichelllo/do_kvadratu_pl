@@ -8,7 +8,7 @@ django.setup()
 from materials.models import StudyMaterial, Question, AnswerOption, MatchItem, DiagnosticTopic
 
 # ІМПОРТ ДАНИХ З ФАЙЛУ-СХОВИЩА (Для нових тем просто змінюй назву файлу)
-from import_files.bank_01 import TOPIC_NAME, TASKS
+from import_files.bank_46 import TOPIC_NAME, TASKS
 
 
 def run():
