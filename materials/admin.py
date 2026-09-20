@@ -6,7 +6,7 @@ from django.contrib import messages
 from import_export import resources
 from import_export.admin import ExportActionMixin
 
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation
 
 
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
@@ -180,3 +180,10 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ('is_approved', 'rating', 'created_at')
     search_fields = ('user__email', 'text')
     actions = [approve_reviews, hide_reviews]
+@admin.register(StudentPresentation)
+class StudentPresentationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'student', 'created_at')
+    search_fields = ('title', 'student__email', 'student__username')
+    list_filter = ('created_at',)
+    # Рядок autocomplete_fields видалено.
+    # Замість нього Django автоматично зробить зручний випадаючий список з усіма учнями.

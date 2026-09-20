@@ -297,3 +297,16 @@ class Review(models.Model):
     def __str__(self):
         target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"
         return f"{self.user.email} - {self.rating} зірок - {target}"
+class StudentPresentation(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_presentations', verbose_name="Учень")
+    title = models.CharField(max_length=100, verbose_name="Дата/Назва уроку (напр. 20.09.2026)")
+    html_content = models.TextField(verbose_name="HTML Презентація")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Створено")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Індивідуальний урок"
+        verbose_name_plural = "Індивідуальні уроки"
+
+    def __str__(self):
+        return f"{self.title} — {self.student.email}"

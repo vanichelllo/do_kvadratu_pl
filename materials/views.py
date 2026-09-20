@@ -21,7 +21,7 @@ from django.conf import settings
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt, TutorStudentRequest, Review
+    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -413,6 +413,15 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # ... твій існуючий код ...
+
+        # ДОДАЙ ЦЕЙ РЯДОК:
+        context['personal_presentations'] = self.request.user.personal_presentations.all()
+
+        return context
 
 
 # ==========================================
@@ -857,3 +866,21 @@ def submit_review(request):
         return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
 
     return redirect('cabinet')
+
+
+@login_required(login_url='/login/')
+def view_student_presentation(request, presentation_id):
+    # Шукаємо презентацію
+    presentation = get_object_or_404(StudentPresentation, id=presentation_id)
+
+    # Захист: дивитися може тільки власник (або адмін)
+    if presentation.student != request.user and not request.user.is_staff:
+        raise Http404("У вас немає доступу до цієї презентації.")
+
+    # Використовуємо існуючий reader.html!
+    # Ми передаємо presentation під ключем 'material', бо reader.html очікує material.title та material.html_content
+    context = {
+        'material': presentation,
+        'is_personal': True # Спеціальний прапорець, щоб приховати кнопки "Практика" і "PDF"
+    }
+    return render(request, 'materials/reader.html', context)

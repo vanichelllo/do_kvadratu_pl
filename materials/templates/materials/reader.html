@@ -208,12 +208,14 @@
             <div class="header-title">{{ material.title }}</div>
         </div>
         <div class="header-right">
-            <!-- Кнопка Практики -->
-            <a href="{% url 'practice_session' material.id %}" class="action-btn btn-practice"><span>🎯 Практика НМТ</span></a>
+            {% if not is_personal %}
+                <!-- Кнопка Практики -->
+                <a href="{% url 'practice_session' material.id %}" class="action-btn btn-practice"><span>🎯 Практика НМТ</span></a>
 
-            <!-- Кнопка завантаження PDF -->
-            {% if material.file %}
-                <a href="{{ material.file.url }}" target="_blank" download class="action-btn btn-download"><span>📥 PDF</span></a>
+                <!-- Кнопка завантаження PDF -->
+                {% if material.file %}
+                    <a href="{{ material.file.url }}" target="_blank" download class="action-btn btn-download"><span>📥 PDF</span></a>
+                {% endif %}
             {% endif %}
         </div>
     </div>

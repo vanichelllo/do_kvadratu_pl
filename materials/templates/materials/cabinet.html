@@ -211,9 +211,38 @@
 </div>
 
 <div class="cabinet-grid">
-    <!-- ЛІВА КОЛОНКА: БІБЛІОТЕКА -->
+    <!-- ЛІВА КОЛОНКА -->
     <div>
-        <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">📚 Моя бібліотека</h2>
+        <!-- НОВИЙ БЛОК: ІНДИВІДУАЛЬНІ УРОКИ -->
+        {% if personal_presentations %}
+            <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">📅 Мої уроки</h2>
+
+            <div class="library-grid" style="margin-bottom: 40px;">
+                {% for pres in personal_presentations %}
+                <div class="mac-card">
+                    <div class="mac-header-sm">
+                        <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
+                        <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
+                        <div class="mac-dot-sm" style="background-color: #27c93f;"></div>
+                    </div>
+                    <div class="card-body">
+                        <span style="display: inline-block; background: #eef3f9; color: var(--brand-blue); font-size: 0.7rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--brand-blue);">ПЕРСОНАЛЬНИЙ УРОК</span>
+
+                        <h3 style="font-size: 1.2rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 15px; line-height: 1.3;">
+                            {{ pres.title }}
+                        </h3>
+
+                        <a href="{% url 'view_student_presentation' pres.id %}" target="_blank" class="btn-read-online" style="background-color: var(--brand-green); border-color: var(--brand-green); color: white;">
+                            ▶ Відкрити презентацію
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- СТАРИЙ БЛОК: БІБЛІОТЕКА -->
+        <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">📚 Бібліотека конспектів</h2>
 
         {% if purchased_materials %}
             <div class="library-grid">

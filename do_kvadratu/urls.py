@@ -32,7 +32,8 @@ from materials.views import (
     booking_view,
     practice_session_view,
     request_tutor_student_status,
-    submit_review
+    submit_review,
+    view_student_presentation
 )
 
 urlpatterns = [
@@ -87,6 +88,7 @@ urlpatterns = [
     path('booking/', booking_view, name='booking'),
     path('request-student/', request_tutor_student_status, name='request_student_status'),
     path('submit-review/', submit_review, name='submit_review'),
+    path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),
 ]
 
 if settings.DEBUG:
