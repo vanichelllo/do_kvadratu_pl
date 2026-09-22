@@ -386,6 +386,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # 1. Дістаємо звичайні конспекти (StudyMaterial)
         purchased_qs = self.request.user.purchased_materials.all()
         purchased_list = list(purchased_qs)
 
@@ -396,11 +397,14 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             return 99999
 
         purchased_list.sort(key=get_number)
-
         context['purchased_materials'] = purchased_list
-        context['form'] = UserProfileForm(instance=self.request.user)
 
+        # 2. Інші дані кабінету
+        context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
+
+        # 3. Дістаємо індивідуальні уроки (StudentPresentation)
+        context['personal_presentations'] = self.request.user.personal_presentations.all()
 
         return context
 
@@ -413,17 +417,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # ... твій існуючий код ...
-
-        # ДОДАЙ ЦЕЙ РЯДОК:
-        context['personal_presentations'] = self.request.user.personal_presentations.all()
-
-        return context
-
-
 # ==========================================
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
 # ==========================================
@@ -831,10 +824,11 @@ def submit_review(request):
     if request.method == 'POST':
         rating = request.POST.get('rating', 5)
         text = request.POST.get('text', '').strip()
-        material_id = request.POST.get('material_id')  # Якщо є — це відгук до уроку, якщо немає — загальний
+        reviewer_name = request.POST.get('reviewer_name', '').strip() # Зчитуємо ім'я з форми
+        material_id = request.POST.get('material_id')
 
-        if not text:
-            messages.error(request, "Будь ласка, напишіть текст відгуку.")
+        if not text or not reviewer_name:
+            messages.error(request, "Будь ласка, введіть своє ім'я та текст відгуку.")
             return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
 
         try:
@@ -844,6 +838,7 @@ def submit_review(request):
 
         review = Review(
             user=request.user,
+            reviewer_name=reviewer_name, # Зберігаємо введене ім'я
             rating=rating,
             text=text
         )
@@ -856,17 +851,14 @@ def submit_review(request):
 
         review.save()
 
-        # Відправляємо сповіщення в Telegram
-        msg = f"⭐️ <b>Новий відгук!</b>\n\nВід: {request.user.email}\nОцінка: {'⭐' * rating}\nЩодо: {material_title}\n\n<i>«{text}»</i>\n\nПеревір та схвали його в адмінці."
+        # Сповіщення в Telegram тепер міститиме введене ім'я
+        msg = f"⭐️ <b>Новий відгук!</b>\n\nВід: {reviewer_name} ({request.user.email})\nОцінка: {'⭐' * rating}\nЩодо: {material_title}\n\n<i>«{text}»</i>\n\nПеревір та схвали його в адмінці."
         send_telegram_notification(msg)
 
         messages.success(request, "Дякуємо за ваш відгук! Він з'явиться на сайті після перевірки модератором.")
-
-        # Повертаємо користувача на ту ж сторінку, з якої він відправив форму
         return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
 
     return redirect('cabinet')
-
 
 @login_required(login_url='/login/')
 def view_student_presentation(request, presentation_id):

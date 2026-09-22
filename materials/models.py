@@ -279,8 +279,10 @@ class Review(models.Model):
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews',
-                             verbose_name="Автор відгуку")
-    # Якщо material пустий — це відгук про тебе як викладача або платформу загалом.
+                             verbose_name="Акаунт користувача")
+    # НОВЕ ПОЛЕ: Ім'я, яке введе сама людина
+    reviewer_name = models.CharField(max_length=100, default="Анонім", verbose_name="Ім'я для відображення на сайті")
+
     material = models.ForeignKey(StudyMaterial, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True,
                                  verbose_name="Матеріал (пусто = загальний відгук)")
 
@@ -296,7 +298,7 @@ class Review(models.Model):
 
     def __str__(self):
         target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"
-        return f"{self.user.email} - {self.rating} зірок - {target}"
+        return f"{self.reviewer_name} - {self.rating} зірок - {target}"
 class StudentPresentation(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_presentations', verbose_name="Учень")
     title = models.CharField(max_length=100, verbose_name="Дата/Назва уроку (напр. 20.09.2026)")
