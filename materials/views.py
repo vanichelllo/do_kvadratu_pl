@@ -386,7 +386,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Дістаємо звичайні конспекти (StudyMaterial)
+        # 1. Завантаження конспектів (StudyMaterial)
         purchased_qs = self.request.user.purchased_materials.all()
         purchased_list = list(purchased_qs)
 
@@ -403,7 +403,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
 
-        # 3. Дістаємо індивідуальні уроки (StudentPresentation)
+        # 3. Індивідуальні презентації
         context['personal_presentations'] = self.request.user.personal_presentations.all()
 
         return context
@@ -417,10 +417,11 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)
+
+
 # ==========================================
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
 # ==========================================
-@login_required(login_url='/login/')
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
@@ -430,7 +431,6 @@ def download_material_view(request, material_id):
 
     pdf_base64 = None
 
-    # Якщо є PDF-файл - завантажуємо його для бекапу (щоб працювала кнопка "Завантажити PDF")
     if material.file:
         try:
             file_url = material.file.url
@@ -442,12 +442,12 @@ def download_material_view(request, material_id):
         except Exception as e:
             print(f"Помилка завантаження файлу з хмари: {e}")
 
-    # ЗАВЖДИ рендеримо наш шаблон reader.html (він сам розбереться: показати HTML чи PDF)
     context = {
         'material': material,
         'pdf_base64': pdf_base64
     }
     return render(request, 'materials/reader.html', context)
+
 
 @login_required(login_url='/login/')
 def buy_material_view(request, material_id):
@@ -633,103 +633,57 @@ def pay_with_mono(request):
 
 @login_required
 def topup_balance_view(request):
-    # ПЕРЕВІРКА ВІДПОВІДЕЙ ТА ЗБЕРЕЖЕННЯ (Режим POST)
     if request.method == 'POST':
-        total_score = 0
-        max_score = 0
-        results_data = []  # Збираємо деталі для сторінки результатів
+        amount = request.POST.get('amount')
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            messages.error(request, "Введіть коректну суму.")
+            return redirect('cabinet')
 
-        question_ids_str = request.POST.get('question_ids', '')
-        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
+        amount_kopecks = int(amount * 100)
 
-        # Зберігаємо порядок завдань, у якому вони були на екрані
-        from django.db.models import Case, When
-        preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
-            preserved_order)
-
-        for q in questions:
-            q_result = {
-                'question': q,
-                'type': q.question_type,
-                'is_correct': False,
-                'user_answer': None,
-                'correct_answer': None,
-                'points_earned': 0,
-                'max_points': 0
-            }
-
-            if q.question_type == 'CHOICE':
-                q_result['max_points'] = 1
-                q_result['correct_answer'] = q.options.filter(is_correct=True).first()
-                user_ans = request.POST.get(f'q_{q.id}')
-
-                if user_ans:
-                    try:
-                        opt = AnswerOption.objects.get(id=int(user_ans))
-                        q_result['user_answer'] = opt
-                        if opt.is_correct:
-                            total_score += 1
-                            q_result['points_earned'] = 1
-                            q_result['is_correct'] = True
-                    except AnswerOption.DoesNotExist:
-                        pass
-
-            elif q.question_type == 'MATCH':
-                q_result['max_points'] = 3
-                q_result['matches'] = []
-                match_points = 0
-
-                for item in q.match_items.all():
-                    user_match = request.POST.get(f'match_{item.id}')
-                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
-
-                    is_match_correct = user_match and int(user_match) == item.correct_option.id
-                    if is_match_correct:
-                        match_points += 1
-                        total_score += 1
-
-                    q_result['matches'].append({
-                        'item': item,
-                        'user_option': user_opt,
-                        'correct_option': item.correct_option,
-                        'is_correct': is_match_correct
-                    })
-
-                q_result['points_earned'] = match_points
-                q_result['is_correct'] = (match_points == 3)
-
-            elif q.question_type == 'SHORT':
-                q_result['max_points'] = 2
-                q_result['correct_answer'] = q.correct_short_answer
-                user_ans = request.POST.get(f'q_{q.id}')
-                q_result['user_answer'] = user_ans
-
-                if user_ans:
-                    user_clean = str(user_ans).strip().replace(',', '.')
-                    correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
-                    if user_clean == correct_clean:
-                        total_score += 2
-                        q_result['points_earned'] = 2
-                        q_result['is_correct'] = True
-
-            results_data.append(q_result)
-
-        # Записуємо спробу в базу
-        PracticeAttempt.objects.create(
+        # Створюємо технічне замовлення для поповнення
+        order = Order.objects.create(
             user=request.user,
-            material=material,
-            score=total_score,
-            max_score=max_score
+            total_amount=amount,
+            status='pending',
+            source='web'
         )
 
-        context = {
-            'material': material,
-            'total_score': total_score,
-            'max_score': max_score,
-            'results_data': results_data,
+        headers = {
+            'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
+            'Content-Type': 'application/json'
         }
-        return render(request, 'materials/practice_results.html', context)
+
+        payload = {
+            "amount": amount_kopecks,
+            "ccy": 980,
+            "reference": str(order.id),
+            "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
+            "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
+        }
+
+        try:
+            response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload,
+                                     headers=headers)
+            data = response.json()
+
+            if 'pageUrl' in data:
+                order.mono_invoice_id = data['invoiceId']
+                order.save()
+                return redirect(data['pageUrl'])
+            else:
+                messages.error(request, "Помилка платіжної системи.")
+                return redirect('cabinet')
+        except Exception:
+            messages.error(request, "Помилка з'єднання з Monobank.")
+            return redirect('cabinet')
+
+    return redirect('cabinet')
+
 
 @csrf_exempt
 def mono_webhook(request):
@@ -824,7 +778,7 @@ def submit_review(request):
     if request.method == 'POST':
         rating = request.POST.get('rating', 5)
         text = request.POST.get('text', '').strip()
-        reviewer_name = request.POST.get('reviewer_name', '').strip() # Зчитуємо ім'я з форми
+        reviewer_name = request.POST.get('reviewer_name', '').strip()  # Зчитуємо ім'я з форми
         material_id = request.POST.get('material_id')
 
         if not text or not reviewer_name:
@@ -838,7 +792,7 @@ def submit_review(request):
 
         review = Review(
             user=request.user,
-            reviewer_name=reviewer_name, # Зберігаємо введене ім'я
+            reviewer_name=reviewer_name,  # Зберігаємо введене ім'я
             rating=rating,
             text=text
         )
@@ -860,6 +814,7 @@ def submit_review(request):
 
     return redirect('cabinet')
 
+
 @login_required(login_url='/login/')
 def view_student_presentation(request, presentation_id):
     # Шукаємо презентацію
@@ -873,6 +828,6 @@ def view_student_presentation(request, presentation_id):
     # Ми передаємо presentation під ключем 'material', бо reader.html очікує material.title та material.html_content
     context = {
         'material': presentation,
-        'is_personal': True # Спеціальний прапорець, щоб приховати кнопки "Практика" і "PDF"
+        'is_personal': True  # Спеціальний прапорець, щоб приховати кнопки "Практика" і "PDF"
     }
     return render(request, 'materials/reader.html', context)
