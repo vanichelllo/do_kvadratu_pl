@@ -90,7 +90,7 @@ urlpatterns = [
     path('request-student/', request_tutor_student_status, name='request_student_status'),
     path('submit-review/', submit_review, name='submit_review'),
     path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),
-    path('attempt/<int:attempt_id>/', views.view_attempt_details, name='view_attempt_details'),
+    path('attempt/<int:attempt_id>/', view_attempt_details, name='view_attempt_details'),
 ]
 
 if settings.DEBUG:
