@@ -248,7 +248,7 @@
                     </thead>
                     <tbody>
                         {% for attempt in students_attempts %}
-                        <tr>
+                        <tr onclick="window.location='{% url 'view_attempt_details' attempt.id %}';" style="cursor: pointer;" title="Натисніть, щоб переглянути помилки">
                             <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.y H:i" }}</td>
                             <td style="font-weight: bold;">{{ attempt.user.tutor_request.real_name|default:attempt.user.email }}</td>
                             <td>{{ attempt.material.title }}</td>
@@ -282,7 +282,7 @@
                     </thead>
                     <tbody>
                         {% for attempt in my_attempts %}
-                        <tr>
+                        <tr onclick="window.location='{% url 'view_attempt_details' attempt.id %}';" style="cursor: pointer;" title="Натисніть, щоб переглянути помилки">
                             <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}</td>
                             <td style="font-weight: bold; color: var(--brand-blue);">{{ attempt.material.title }}</td>
                             <td>

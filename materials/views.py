@@ -139,16 +139,19 @@ def diagnostic_test_view(request):
 def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
-    # ПЕРЕВІРКА ВІДПОВІДЕЙ ТА ЗБЕРЕЖЕННЯ (Режим POST)
     if request.method == 'POST':
         total_score = 0
         max_score = 0
-        results_data = []  # Збираємо деталі для сторінки результатів
+        results_data = []
+
+        # Словник для збереження історії відповідей у БД
+        saved_answers = {'q_choice': {}, 'q_match': {}, 'q_short': {}}
 
         question_ids_str = request.POST.get('question_ids', '')
+        saved_answers['question_ids'] = question_ids_str
+
         q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
 
-        # Зберігаємо порядок завдань, у якому вони були на екрані
         from django.db.models import Case, When
         if q_id_list:
             preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
@@ -159,19 +162,16 @@ def practice_session_view(request, material_id):
 
         for q in questions:
             q_result = {
-                'question': q,
-                'type': q.question_type,
-                'is_correct': False,
-                'user_answer': None,
-                'correct_answer': None,
-                'points_earned': 0,
-                'max_points': 0
+                'question': q, 'type': q.question_type, 'is_correct': False,
+                'user_answer': None, 'correct_answer': None, 'points_earned': 0, 'max_points': 0
             }
 
             if q.question_type == 'CHOICE':
                 q_result['max_points'] = 1
                 q_result['correct_answer'] = q.options.filter(is_correct=True).first()
                 user_ans = request.POST.get(f'q_{q.id}')
+
+                saved_answers['q_choice'][str(q.id)] = user_ans  # Зберігаємо для історії
 
                 if user_ans:
                     try:
@@ -189,21 +189,21 @@ def practice_session_view(request, material_id):
                 q_result['max_points'] = 3
                 q_result['matches'] = []
                 match_points = 0
+                saved_answers['q_match'][str(q.id)] = {}
 
                 for item in q.match_items.all():
                     user_match = request.POST.get(f'match_{item.id}')
-                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
+                    saved_answers['q_match'][str(q.id)][str(item.id)] = user_match  # Зберігаємо для історії
 
+                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
                     is_match_correct = user_match and int(user_match) == item.correct_option.id
                     if is_match_correct:
                         match_points += 1
                         total_score += 1
 
                     q_result['matches'].append({
-                        'item': item,
-                        'user_option': user_opt,
-                        'correct_option': item.correct_option,
-                        'is_correct': is_match_correct
+                        'item': item, 'user_option': user_opt,
+                        'correct_option': item.correct_option, 'is_correct': is_match_correct
                     })
 
                 q_result['points_earned'] = match_points
@@ -214,6 +214,8 @@ def practice_session_view(request, material_id):
                 q_result['max_points'] = 2
                 q_result['correct_answer'] = q.correct_short_answer
                 user_ans = request.POST.get(f'q_{q.id}')
+
+                saved_answers['q_short'][str(q.id)] = user_ans  # Зберігаємо для історії
                 q_result['user_answer'] = user_ans
 
                 if user_ans:
@@ -227,12 +229,13 @@ def practice_session_view(request, material_id):
 
             results_data.append(q_result)
 
-        # Записуємо спробу в базу
+        # Записуємо спробу в базу разом із JSON-історією
         PracticeAttempt.objects.create(
             user=request.user,
             material=material,
             score=total_score,
-            max_score=max_score
+            max_score=max_score,
+            answers_json=saved_answers
         )
 
         context = {
@@ -243,10 +246,9 @@ def practice_session_view(request, material_id):
         }
         return render(request, 'materials/practice_results.html', context)
 
-    # ГЕНЕРАЦІЯ НОВОГО ВАРІАНТА (Режим GET)
+    # Режим GET залишається без змін
     match_current = re.match(r'^(\d+)', material.title)
     current_topic_num = int(match_current.group(1)) if match_current else 0
-
     raw_pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items', 'materials')
 
     safe_pool = []
@@ -255,7 +257,6 @@ def practice_session_view(request, material_id):
         for mat in q.materials.all():
             match_mat = re.match(r'^(\d+)', mat.title)
             mat_num = int(match_mat.group(1)) if match_mat else 0
-
             if mat_num > current_topic_num:
                 is_safe = False
                 break
@@ -270,26 +271,19 @@ def practice_session_view(request, material_id):
     q_match = random.sample(match_pool, min(2, len(match_pool)))
     q_short = random.sample(short_pool, min(1, len(short_pool)))
 
-    random.shuffle(q_choice)
     selected_questions = q_choice + q_match + q_short
+    random.shuffle(selected_questions)
 
     if len(selected_questions) == 0:
         messages.info(request, "Для цієї теми ще не додано практичних завдань.")
         return redirect('cabinet')
 
     question_ids_str = ','.join(str(q.id) for q in selected_questions)
-
     context = {
-        'material': material,
-        'q_choice': q_choice,
-        'q_match': q_match,
-        'q_short': q_short,
-        'question_ids_str': question_ids_str,
-        'total_selected': len(selected_questions)
+        'material': material, 'q_choice': q_choice, 'q_match': q_match,
+        'q_short': q_short, 'question_ids_str': question_ids_str, 'total_selected': len(selected_questions)
     }
-
     return render(request, 'materials/practice_session.html', context)
-
 
 # ==========================================
 
@@ -874,3 +868,86 @@ def view_student_presentation(request, presentation_id):
         'is_personal': True
     }
     return render(request, 'materials/reader.html', context)
+@login_required
+def view_attempt_details(request, attempt_id):
+    attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
+
+    # Перевірка: дивитися може учень свої тести, або вчитель - усі
+    if attempt.user != request.user and not request.user.is_superuser and getattr(request.user, 'role', '') != 'teacher':
+        raise Http404("У вас немає доступу до цієї статистики.")
+
+    saved_answers = attempt.answers_json
+    if not saved_answers:
+        messages.info(request, "Цей тест був пройдений до оновлення системи. Деталі не збережено.")
+        return redirect('cabinet')
+
+    question_ids_str = saved_answers.get('question_ids', '')
+    q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
+
+    from django.db.models import Case, When
+    if q_id_list:
+        preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
+        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(preserved_order)
+    else:
+        questions = []
+
+    results_data = []
+    for q in questions:
+        q_result = {
+            'question': q, 'type': q.question_type, 'is_correct': False,
+            'user_answer': None, 'correct_answer': None, 'points_earned': 0, 'max_points': 0
+        }
+
+        if q.question_type == 'CHOICE':
+            q_result['max_points'] = 1
+            q_result['correct_answer'] = q.options.filter(is_correct=True).first()
+            user_ans = saved_answers.get('q_choice', {}).get(str(q.id))
+            if user_ans:
+                try:
+                    opt = AnswerOption.objects.get(id=int(user_ans))
+                    q_result['user_answer'] = opt
+                    if opt.is_correct:
+                        q_result['points_earned'] = 1
+                        q_result['is_correct'] = True
+                except AnswerOption.DoesNotExist:
+                    pass
+
+        elif q.question_type == 'MATCH':
+            q_result['max_points'] = 3
+            q_result['matches'] = []
+            match_points = 0
+            for item in q.match_items.all():
+                user_match = saved_answers.get('q_match', {}).get(str(q.id), {}).get(str(item.id))
+                user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
+                is_match_correct = user_match and int(user_match) == item.correct_option.id
+                if is_match_correct:
+                    match_points += 1
+                q_result['matches'].append({
+                    'item': item, 'user_option': user_opt,
+                    'correct_option': item.correct_option, 'is_correct': is_match_correct
+                })
+            q_result['points_earned'] = match_points
+            q_result['is_correct'] = (match_points == 3)
+
+        elif q.question_type == 'SHORT':
+            q_result['max_points'] = 2
+            q_result['correct_answer'] = q.correct_short_answer
+            user_ans = saved_answers.get('q_short', {}).get(str(q.id))
+            q_result['user_answer'] = user_ans
+            if user_ans:
+                user_clean = str(user_ans).strip().replace(',', '.')
+                correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
+                if user_clean == correct_clean:
+                    q_result['points_earned'] = 2
+                    q_result['is_correct'] = True
+
+        results_data.append(q_result)
+
+    context = {
+        'material': attempt.material,
+        'total_score': attempt.score,
+        'max_score': attempt.max_score,
+        'results_data': results_data,
+    }
+    # Використовуємо той самий шаблон результатів!
+    return render(request, 'materials/practice_results.html', context)

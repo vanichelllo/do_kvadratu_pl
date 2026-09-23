@@ -210,26 +210,6 @@ class MatchItem(models.Model):
         return f"{self.text} -> {self.correct_option.text}"
 
 
-class PracticeAttempt(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_attempts')
-    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='attempts',
-                                 verbose_name="Тема (Урок)")
-    score = models.PositiveIntegerField(verbose_name="Набрано балів")
-    max_score = models.PositiveIntegerField(default=18, verbose_name="Максимум балів")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата проходження")
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = "Спроба проходження"
-        verbose_name_plural = "Спроби проходження"
-
-    def get_percent(self):
-        return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
-
-    def __str__(self):
-        return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
-
-
 class TutorStudentRequest(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Очікує підтвердження'),
@@ -266,9 +246,6 @@ class TutorStudentRequest(models.Model):
         return f"{self.real_name} ({self.get_course_display()}) - {self.get_status_display()}"
 
 
-# ==========================================
-# НОВА МОДЕЛЬ: ВІДГУКИ (REVIEWS)
-# ==========================================
 class Review(models.Model):
     RATING_CHOICES = (
         (5, '⭐⭐⭐⭐⭐ (5/5)'),
@@ -299,6 +276,32 @@ class Review(models.Model):
     def __str__(self):
         target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"
         return f"{self.reviewer_name} - {self.rating} зірок - {target}"
+
+
+# ==========================================
+# НОВА МОДЕЛЬ: ВІДГУКИ (REVIEWS)
+# ==========================================
+class PracticeAttempt(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_attempts')
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='attempts',
+                                 verbose_name="Тема (Урок)")
+    score = models.PositiveIntegerField(verbose_name="Набрано балів")
+    max_score = models.PositiveIntegerField(default=18, verbose_name="Максимум балів")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата проходження")
+
+    # НОВЕ ПОЛЕ: Зберігає всі обрані учнем варіанти
+    answers_json = models.JSONField(null=True, blank=True, verbose_name="Збережені відповіді")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Спроба проходження"
+        verbose_name_plural = "Спроби проходження"
+
+    def get_percent(self):
+        return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
+
+    def __str__(self):
+        return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
 class StudentPresentation(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_presentations', verbose_name="Учень")
     title = models.CharField(max_length=100, verbose_name="Дата/Назва уроку (напр. 20.09.2026)")
