@@ -97,7 +97,6 @@ def diagnostic_test_view(request):
         # === МАГІЯ РЕКОМЕНДАЦІЙ ===
         recommended_materials = set()
         for topic in weak_topics:
-            # Шукаємо конспекти, у назві яких міститься ім'я слабкої теми
             mats = StudyMaterial.objects.filter(
                 title__icontains=topic.name,
                 is_published=True
@@ -134,7 +133,7 @@ def diagnostic_test_view(request):
 
 
 # ==========================================
-# НОВИЙ ВУЗОЛ: ПРАКТИКА НМТ ПІСЛЯ УРОКУ
+# ПРАКТИКА НМТ ПІСЛЯ УРОКУ
 # ==========================================
 @login_required
 def practice_session_view(request, material_id):
@@ -144,43 +143,91 @@ def practice_session_view(request, material_id):
     if request.method == 'POST':
         total_score = 0
         max_score = 0
+        results_data = []  # Збираємо деталі для сторінки результатів
 
         question_ids_str = request.POST.get('question_ids', '')
-        if question_ids_str:
-            q_id_list = [int(x) for x in question_ids_str.split(',')]
-        else:
-            q_id_list = []
+        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
 
-        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items')
+        # Зберігаємо порядок завдань, у якому вони були на екрані
+        from django.db.models import Case, When
+        if q_id_list:
+            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
+            questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
+                preserved_order)
+        else:
+            questions = []
 
         for q in questions:
+            q_result = {
+                'question': q,
+                'type': q.question_type,
+                'is_correct': False,
+                'user_answer': None,
+                'correct_answer': None,
+                'points_earned': 0,
+                'max_points': 0
+            }
+
             if q.question_type == 'CHOICE':
-                max_score += 1
+                q_result['max_points'] = 1
+                q_result['correct_answer'] = q.options.filter(is_correct=True).first()
                 user_ans = request.POST.get(f'q_{q.id}')
+
                 if user_ans:
                     try:
                         opt = AnswerOption.objects.get(id=int(user_ans))
+                        q_result['user_answer'] = opt
                         if opt.is_correct:
                             total_score += 1
+                            q_result['points_earned'] = 1
+                            q_result['is_correct'] = True
                     except AnswerOption.DoesNotExist:
                         pass
+                max_score += 1
 
             elif q.question_type == 'MATCH':
-                max_score += 3
+                q_result['max_points'] = 3
+                q_result['matches'] = []
+                match_points = 0
+
                 for item in q.match_items.all():
                     user_match = request.POST.get(f'match_{item.id}')
-                    if user_match and int(user_match) == item.correct_option.id:
+                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
+
+                    is_match_correct = user_match and int(user_match) == item.correct_option.id
+                    if is_match_correct:
+                        match_points += 1
                         total_score += 1
 
+                    q_result['matches'].append({
+                        'item': item,
+                        'user_option': user_opt,
+                        'correct_option': item.correct_option,
+                        'is_correct': is_match_correct
+                    })
+
+                q_result['points_earned'] = match_points
+                q_result['is_correct'] = (match_points == 3)
+                max_score += 3
+
             elif q.question_type == 'SHORT':
-                max_score += 2
+                q_result['max_points'] = 2
+                q_result['correct_answer'] = q.correct_short_answer
                 user_ans = request.POST.get(f'q_{q.id}')
+                q_result['user_answer'] = user_ans
+
                 if user_ans:
                     user_clean = str(user_ans).strip().replace(',', '.')
                     correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
                     if user_clean == correct_clean:
                         total_score += 2
+                        q_result['points_earned'] = 2
+                        q_result['is_correct'] = True
+                max_score += 2
 
+            results_data.append(q_result)
+
+        # Записуємо спробу в базу
         PracticeAttempt.objects.create(
             user=request.user,
             material=material,
@@ -188,36 +235,33 @@ def practice_session_view(request, material_id):
             max_score=max_score
         )
 
-        messages.success(request, f"🎯 Практику завершено! Ваш результат: {total_score} з {max_score} балів.")
-        return redirect('cabinet')
+        context = {
+            'material': material,
+            'total_score': total_score,
+            'max_score': max_score,
+            'results_data': results_data,
+        }
+        return render(request, 'materials/practice_results.html', context)
 
     # ГЕНЕРАЦІЯ НОВОГО ВАРІАНТА (Режим GET)
-
-    # 1. Витягуємо номер поточної теми
     match_current = re.match(r'^(\d+)', material.title)
     current_topic_num = int(match_current.group(1)) if match_current else 0
 
-    # 2. Беремо всі питання, прив'язані до цієї теми (додано prefetch для 'materials' щоб не було зайвих запитів у БД)
     raw_pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items', 'materials')
 
     safe_pool = []
-
-    # 3. Фільтруємо "майбутні" теми
     for q in raw_pool:
         is_safe = True
         for mat in q.materials.all():
             match_mat = re.match(r'^(\d+)', mat.title)
             mat_num = int(match_mat.group(1)) if match_mat else 0
 
-            # Якщо завдання містить тег з більшим номером — відхиляємо його
             if mat_num > current_topic_num:
                 is_safe = False
                 break
-
         if is_safe:
             safe_pool.append(q)
 
-    # 4. Розподіляємо відфільтровані питання за типами
     choice_pool = [q for q in safe_pool if q.question_type == 'CHOICE']
     match_pool = [q for q in safe_pool if q.question_type == 'MATCH']
     short_pool = [q for q in safe_pool if q.question_type == 'SHORT']
@@ -248,7 +292,6 @@ def practice_session_view(request, material_id):
 
 
 # ==========================================
-
 
 @login_required
 def cart_detail(request):
@@ -299,7 +342,6 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Витягуємо тільки схвалені загальні відгуки (де material пустий)
         context['general_reviews'] = Review.objects.filter(material__isnull=True, is_approved=True)
         return context
 
@@ -386,7 +428,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Завантаження конспектів (StudyMaterial)
         purchased_qs = self.request.user.purchased_materials.all()
         purchased_list = list(purchased_qs)
 
@@ -397,13 +438,10 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             return 99999
 
         purchased_list.sort(key=get_number)
-        context['purchased_materials'] = purchased_list
 
-        # 2. Інші дані кабінету
+        context['purchased_materials'] = purchased_list
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
-
-        # 3. Індивідуальні презентації
         context['personal_presentations'] = self.request.user.personal_presentations.all()
 
         return context
@@ -480,7 +518,6 @@ def buy_material_view(request, material_id):
 @api_view(['GET'])
 def api_materials_list(request):
     materials = StudyMaterial.objects.filter(is_published=True).select_related('category')
-
     materials_list = list(materials)
 
     def get_number(material):
@@ -488,7 +525,6 @@ def api_materials_list(request):
         return int(match.group(1)) if match else 99999
 
     materials_list.sort(key=get_number)
-
     serializer = StudyMaterialSerializer(materials_list, many=True)
     return Response({
         'status': 'success',
@@ -510,7 +546,6 @@ def api_bot_user_library(request, telegram_id):
         return int(match.group(1)) if match else 99999
 
     purchased.sort(key=get_number)
-
     serializer = PurchasedMaterialSerializer(purchased, many=True)
 
     return Response({
@@ -739,7 +774,7 @@ def mono_webhook(request):
 def request_tutor_student_status(request):
     if request.method == 'POST':
         student_name = request.POST.get('real_name', '').strip()
-        course_type = request.POST.get('course', 'nmt')  # Зчитуємо обраний курс
+        course_type = request.POST.get('course', 'nmt')
 
         if not student_name or not course_type:
             messages.error(request, "Будь ласка, заповніть усі поля форми.")
@@ -751,9 +786,7 @@ def request_tutor_student_status(request):
         )
 
         if created:
-            # Отримуємо людську назву курсу для Telegram
             course_display = dict(TutorStudentRequest.COURSE_CHOICES).get(course_type, course_type)
-
             messages.success(request, "Заявку успішно надіслано! Очікуйте на підтвердження.")
             msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{student_name}</b>\nКлас/Курс: <b>{course_display}</b>\nEmail: {request.user.email}\n\nЧекає на твоє підтвердження в адмінці."
             send_telegram_notification(msg)
@@ -778,7 +811,7 @@ def submit_review(request):
     if request.method == 'POST':
         rating = request.POST.get('rating', 5)
         text = request.POST.get('text', '').strip()
-        reviewer_name = request.POST.get('reviewer_name', '').strip()  # Зчитуємо ім'я з форми
+        reviewer_name = request.POST.get('reviewer_name', '').strip()
         material_id = request.POST.get('material_id')
 
         if not text or not reviewer_name:
@@ -792,7 +825,7 @@ def submit_review(request):
 
         review = Review(
             user=request.user,
-            reviewer_name=reviewer_name,  # Зберігаємо введене ім'я
+            reviewer_name=reviewer_name,
             rating=rating,
             text=text
         )
@@ -805,7 +838,6 @@ def submit_review(request):
 
         review.save()
 
-        # Сповіщення в Telegram тепер міститиме введене ім'я
         msg = f"⭐️ <b>Новий відгук!</b>\n\nВід: {reviewer_name} ({request.user.email})\nОцінка: {'⭐' * rating}\nЩодо: {material_title}\n\n<i>«{text}»</i>\n\nПеревір та схвали його в адмінці."
         send_telegram_notification(msg)
 
@@ -817,17 +849,13 @@ def submit_review(request):
 
 @login_required(login_url='/login/')
 def view_student_presentation(request, presentation_id):
-    # Шукаємо презентацію
     presentation = get_object_or_404(StudentPresentation, id=presentation_id)
 
-    # Захист: дивитися може тільки власник (або адмін)
     if presentation.student != request.user and not request.user.is_staff:
         raise Http404("У вас немає доступу до цієї презентації.")
 
-    # Використовуємо існуючий reader.html!
-    # Ми передаємо presentation під ключем 'material', бо reader.html очікує material.title та material.html_content
     context = {
         'material': presentation,
-        'is_personal': True  # Спеціальний прапорець, щоб приховати кнопки "Практика" і "PDF"
+        'is_personal': True
     }
     return render(request, 'materials/reader.html', context)
