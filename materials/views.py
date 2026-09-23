@@ -428,6 +428,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # 1. Завантаження конспектів (StudyMaterial)
         purchased_qs = self.request.user.purchased_materials.all()
         purchased_list = list(purchased_qs)
 
@@ -438,11 +439,26 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             return 99999
 
         purchased_list.sort(key=get_number)
-
         context['purchased_materials'] = purchased_list
+
+        # 2. Інші дані кабінету
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
+
+        # 3. Індивідуальні презентації
         context['personal_presentations'] = self.request.user.personal_presentations.all()
+
+        # 4. Власна статистика учня (останні 15 спроб)
+        context['my_attempts'] = PracticeAttempt.objects.filter(
+            user=self.request.user
+        ).select_related('material').order_by('-created_at')[:15]
+
+        # 5. ПАНЕЛЬ ВЧИТЕЛЯ (Показується тільки тобі)
+        if self.request.user.is_superuser or getattr(self.request.user, 'role', '') == 'teacher':
+            # Дістаємо результати тестів усіх учнів зі статусом 'approved'
+            context['students_attempts'] = PracticeAttempt.objects.filter(
+                user__tutor_request__status='approved'
+            ).select_related('user', 'user__tutor_request', 'material').order_by('-created_at')[:50]
 
         return context
 
@@ -455,7 +471,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)
-
 
 # ==========================================
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
