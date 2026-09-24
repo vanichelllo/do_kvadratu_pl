@@ -21,7 +21,7 @@ from django.conf import settings
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation
+    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
