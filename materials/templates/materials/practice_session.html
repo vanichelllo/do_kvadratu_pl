@@ -10,7 +10,8 @@
             svg: { fontCache: 'global' }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+    <!-- Оновлено CDN для швидкості -->
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
     <style>
         :root {
             --brand-blue: #344e86;
@@ -20,6 +21,7 @@
             --border-color: #dce3ec;
             --text-dark: #2c3e50;
             --font-main: 'Segoe UI', system-ui, sans-serif;
+            --brand-yellow: #ffbd2e; /* Додано для кнопок */
         }
         body { font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); margin: 0; padding: 0; }
         * { box-sizing: border-box; }
@@ -35,11 +37,13 @@
         .badge { background: rgba(39, 174, 96, 0.1); color: var(--brand-green); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;}
 
         .question-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);}
-        .q-number { font-weight: 900; color: var(--brand-blue); font-size: 1.1rem; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; margin-bottom: 15px;}
+        .q-number-container { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; margin-bottom: 15px; }
+        .q-number { font-weight: 900; color: var(--brand-blue); font-size: 1.1rem; }
+        .btn-error { background: none; border: none; color: #e74c3c; font-weight: 800; cursor: pointer; text-decoration: underline; font-size: 0.9rem; padding: 0; }
         .q-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 15px;}
         .q-image { max-width: 100%; border-radius: 8px; margin-bottom: 15px; }
 
-        /* Додано стилі для контейнера SVG */
+        /* Контейнер SVG */
         .q-svg-container { width: 100%; display: flex; justify-content: center; margin-bottom: 15px; background: var(--bg-light); border-radius: 8px; padding: 10px;}
         .q-svg-container svg { max-width: 100%; height: auto; }
 
@@ -85,10 +89,12 @@
             <!-- 1. ЗАВДАННЯ З ВИБОРОМ ОДНІЄЇ ВІДПОВІДІ (1-10) -->
             {% for q in q_choice %}
             <div class="question-card">
-                <div class="q-number">Завдання {{ forloop.counter }} з {{ total_selected }}</div>
+                <div class="q-number-container">
+                    <div class="q-number">Завдання {{ forloop.counter }} з {{ total_selected }}</div>
+                    <button type="button" class="btn-error" onclick="openErrorModal({{ q.id }})">⚠️ Помилка?</button>
+                </div>
                 <div class="q-text">{{ q.text|safe }}</div>
 
-                <!-- Оновлена логіка: спочатку перевіряємо SVG, потім картинку -->
                 {% if q.svg_code %}
                     <div class="q-svg-container">
                         {{ q.svg_code|safe }}
@@ -111,10 +117,12 @@
             <!-- 2. ЗАВДАННЯ НА ВІДПОВІДНІСТЬ (11-12) -->
             {% for q in q_match %}
             <div class="question-card">
-                <div class="q-number">Завдання {{ q_choice|length|add:forloop.counter }} з {{ total_selected }}</div>
+                <div class="q-number-container">
+                    <div class="q-number">Завдання {{ q_choice|length|add:forloop.counter }} з {{ total_selected }}</div>
+                    <button type="button" class="btn-error" onclick="openErrorModal({{ q.id }})">⚠️ Помилка?</button>
+                </div>
                 <div class="q-text">{{ q.text|safe }}</div>
 
-                <!-- Оновлена логіка -->
                 {% if q.svg_code %}
                     <div class="q-svg-container">
                         {{ q.svg_code|safe }}
@@ -158,10 +166,12 @@
             <!-- 3. ЗАВДАННЯ З КОРОТКОЮ ВІДПОВІДДЮ (13) -->
             {% for q in q_short %}
             <div class="question-card">
-                <div class="q-number">Завдання {{ total_selected }} з {{ total_selected }}</div>
+                <div class="q-number-container">
+                    <div class="q-number">Завдання {{ total_selected }} з {{ total_selected }}</div>
+                    <button type="button" class="btn-error" onclick="openErrorModal({{ q.id }})">⚠️ Помилка?</button>
+                </div>
                 <div class="q-text">{{ q.text|safe }}</div>
 
-                <!-- Оновлена логіка -->
                 {% if q.svg_code %}
                     <div class="q-svg-container">
                         {{ q.svg_code|safe }}
@@ -180,5 +190,68 @@
             <button type="submit" class="btn-submit">✅ Завершити тестування</button>
         </form>
     </div>
+
+    <!-- Спливаюче вікно скарги -->
+    <div id="errorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; color: var(--brand-blue);">Повідомити про помилку</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Опишіть, що саме не так із цим завданням (неправильна умова, немає правильного варіанта, не вантажиться картинка тощо).</p>
+
+            <textarea id="errorMessage" rows="4" style="width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 8px; margin-bottom: 20px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; resize: vertical;"></textarea>
+            <input type="hidden" id="errorQuestionId">
+
+            <div style="display: flex; gap: 15px;">
+                <button type="button" onclick="submitError()" style="background: var(--brand-blue); color: var(--brand-yellow); border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; flex: 1;">Надіслати</button>
+                <button type="button" onclick="closeErrorModal()" style="background: #e1e1e1; color: #333; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openErrorModal(qId) {
+            document.getElementById('errorQuestionId').value = qId;
+            document.getElementById('errorModal').style.display = 'flex';
+            document.getElementById('errorMessage').value = '';
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').style.display = 'none';
+        }
+
+        function submitError() {
+            const qId = document.getElementById('errorQuestionId').value;
+            const msg = document.getElementById('errorMessage').value;
+
+            if(!msg.trim()) {
+                alert("Будь ласка, опишіть проблему.");
+                return;
+            }
+
+            // Зчитуємо CSRF токен з основної форми
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch("{% url 'report_question_error' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({question_id: qId, message: msg})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert("Дякуємо! Повідомлення надіслано. Ми виправимо це найближчим часом.");
+                    closeErrorModal();
+                } else {
+                    alert("Виникла помилка. Спробуйте пізніше.");
+                }
+            })
+            .catch(error => {
+                console.error("Помилка:", error);
+                alert("Помилка зв'язку із сервером.");
+            });
+        }
+    </script>
 </body>
 </html>

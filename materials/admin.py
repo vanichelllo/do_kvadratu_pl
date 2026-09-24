@@ -8,7 +8,7 @@ from import_export.admin import ExportActionMixin
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError
 
 User = get_user_model()
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
@@ -207,3 +207,10 @@ class StudentPresentationAdmin(admin.ModelAdmin):
             kwargs["form_class"] = ApprovedStudentChoiceField
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(QuestionError)
+class QuestionErrorAdmin(admin.ModelAdmin):
+    list_display = ('question', 'user', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('message', 'question__text')

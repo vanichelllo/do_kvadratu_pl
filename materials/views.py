@@ -990,3 +990,37 @@ def view_attempt_details(request, attempt_id):
     }
     # Використовуємо той самий шаблон результатів!
     return render(request, 'materials/practice_results.html', context)
+
+
+
+
+@login_required
+def report_question_error(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            question_id = data.get('question_id')
+            message = data.get('message')
+
+            question = get_object_or_404(Question, id=question_id)
+
+            # Зберігаємо в базу
+            QuestionError.objects.create(
+                question=question,
+                user=request.user,
+                message=message
+            )
+
+            # Відправляємо в Telegram
+            msg = f"🚨 <b>СКАРГА НА ЗАВДАННЯ!</b>\n\n"
+            msg += f"<b>ID Завдання:</b> {question.id}\n"
+            msg += f"<b>Учень:</b> {request.user.email}\n\n"
+            msg += f"<b>Що не так:</b> <i>{message}</i>\n\n"
+            msg += f"Зайди в адмінку (розділ 'Скарги на завдання'), щоб виправити."
+
+            send_telegram_notification(msg)
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'invalid method'}, status=405)

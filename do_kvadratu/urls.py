@@ -35,6 +35,7 @@ from materials.views import (
     submit_review,
     view_student_presentation,
     view_attempt_details,
+    report_question_error
 )
 
 urlpatterns = [
@@ -91,6 +92,7 @@ urlpatterns = [
     path('submit-review/', submit_review, name='submit_review'),
     path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),
     path('attempt/<int:attempt_id>/', view_attempt_details, name='view_attempt_details'),
+    path('api/report-error/', report_question_error, name='report_question_error'),
 ]
 
 if settings.DEBUG:

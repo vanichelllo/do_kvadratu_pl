@@ -315,3 +315,22 @@ class StudentPresentation(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.student.email}"
+class QuestionError(models.Model):
+    STATUS_CHOICES = (
+        ('new', 'Нова'),
+        ('fixed', 'Виправлено'),
+        ('rejected', 'Відхилено (Не помилка)'),
+    )
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='error_reports', verbose_name="Завдання")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Користувач")
+    message = models.TextField(verbose_name="Опис помилки")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата повідомлення")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Скарга на завдання"
+        verbose_name_plural = "Скарги на завдання"
+
+    def __str__(self):
+        return f"Помилка в завданні #{self.question.id} - {self.get_status_display()}"

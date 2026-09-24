@@ -18,10 +18,15 @@
         {% for question in questions %}
         <div style="background: #ffffff; border: 2px dashed var(--brand-blue); padding: 30px; margin-bottom: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
 
-            <!-- Вивід тексту питання (MathJax обробить формули) -->
-            <div style="font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 15px; line-height: 1.6;">
-                <span style="display: inline-block; background: var(--brand-blue); color: white; padding: 5px 12px; border-radius: 8px; margin-right: 10px;">{{ forloop.counter }}</span>
-                {{ question.text|safe }}
+            <!-- Вивід тексту питання з кнопкою "Помилка?" -->
+            <div style="font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 15px; line-height: 1.6; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <span style="display: inline-block; background: var(--brand-blue); color: white; padding: 5px 12px; border-radius: 8px; margin-right: 10px;">{{ forloop.counter }}</span>
+                    {{ question.text|safe }}
+                </div>
+                <button type="button" onclick="openErrorModal({{ question.id }})" style="background: none; border: none; color: #e74c3c; font-weight: 800; cursor: pointer; text-decoration: underline; white-space: nowrap; font-size: 0.9rem; padding-left: 15px;">
+                    ⚠️ Помилка?
+                </button>
             </div>
 
             <!-- Вивід малюнка (якщо є) -->
@@ -138,4 +143,59 @@
 </script>
 <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
 
+<!-- Спливаюче вікно скарги -->
+<div id="errorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <h3 style="margin-top: 0; color: var(--brand-blue);">Повідомити про помилку</h3>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Опишіть, що саме не так із цим завданням (неправильна умова, немає правильного варіанта, не вантажиться картинка тощо).</p>
+
+        <textarea id="errorMessage" rows="4" style="width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 8px; margin-bottom: 20px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; resize: vertical;"></textarea>
+        <input type="hidden" id="errorQuestionId">
+
+        <div style="display: flex; gap: 15px;">
+            <button type="button" onclick="submitError()" style="background: var(--brand-blue); color: var(--brand-yellow); border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; flex: 1;">Надіслати</button>
+            <button type="button" onclick="closeErrorModal()" style="background: #e1e1e1; color: #333; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">Скасувати</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openErrorModal(qId) {
+        document.getElementById('errorQuestionId').value = qId;
+        document.getElementById('errorModal').style.display = 'flex';
+        document.getElementById('errorMessage').value = '';
+    }
+
+    function closeErrorModal() {
+        document.getElementById('errorModal').style.display = 'none';
+    }
+
+    function submitError() {
+        const qId = document.getElementById('errorQuestionId').value;
+        const msg = document.getElementById('errorMessage').value;
+
+        if(!msg.trim()) {
+            alert("Будь ласка, опишіть проблему.");
+            return;
+        }
+
+        fetch("{% url 'report_question_error' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({question_id: qId, message: msg})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                alert("Дякуємо! Повідомлення надіслано. Ми виправимо це найближчим часом.");
+                closeErrorModal();
+            } else {
+                alert("Виникла помилка. Спробуйте пізніше.");
+            }
+        });
+    }
+</script>
 {% endblock %}
