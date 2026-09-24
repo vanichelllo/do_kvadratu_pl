@@ -10,8 +10,12 @@
     .auth-title { text-align: center; font-size: 2rem; margin-top: 0; margin-bottom: 30px; color: var(--brand-blue); font-weight: 900; }
     .auth-form p { text-align: left; margin-bottom: 15px; }
     .auth-form label { font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 5px; font-size: 0.85rem; text-transform: uppercase; }
-    .auth-form input { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); }
-    .auth-form input:focus { outline: none; border-color: var(--brand-yellow); background-color: #ffffff; }
+
+    /* Змінено стилі інпутів, щоб чекбокс не розтягувався на 100% */
+    .auth-form input:not([type="checkbox"]) { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); }
+    .auth-form input:not([type="checkbox"]):focus { outline: none; border-color: var(--brand-yellow); background-color: #ffffff; }
+    .auth-form input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand-blue); margin: 0; }
+
     .btn-submit { width: 100%; background-color: var(--brand-blue); color: #ffffff; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 5px 5px 0px var(--brand-yellow); transition: all 0.2s; text-transform: uppercase; margin-top: 10px; display: inline-block; text-align: center; text-decoration: none; box-sizing: border-box; }
     .btn-submit:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0px var(--brand-yellow); }
     .divider { text-align: center; margin: 25px 0; font-weight: 900; color: rgba(52, 78, 134, 0.5); position: relative; }
@@ -53,11 +57,44 @@
 
             <form method="POST" class="auth-form">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn-submit">УВІЙТИ В КАБІНЕТ</button>
+
+                <!-- Вивід загальних помилок -->
+                {% if form.non_field_errors %}
+                    <div style="color: #e74c3c; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; text-align: center;">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+
+                <!-- Поле Email -->
+                <p>
+                    <label for="{{ form.login.id_for_label }}">Email:</label>
+                    {{ form.login }}
+                    {% if form.login.errors %}
+                        <span style="color: #e74c3c; font-size: 0.8rem; font-weight: bold;">{{ form.login.errors.0 }}</span>
+                    {% endif %}
+                </p>
+
+                <!-- Поле Пароль -->
+                <p>
+                    <label for="{{ form.password.id_for_label }}">Пароль:</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <span style="color: #e74c3c; font-size: 0.8rem; font-weight: bold;">{{ form.password.errors.0 }}</span>
+                    {% endif %}
+                </p>
+
+                <!-- Поле Запам'ятати мене -->
+                {% if form.remember %}
+                <p style="display: flex; align-items: center; gap: 10px; margin-top: 15px; margin-bottom: 5px;">
+                    {{ form.remember }}
+                    <label for="{{ form.remember.id_for_label }}" style="margin: 0; text-transform: none; font-size: 0.9rem; color: var(--text-dark);">Запам'ятати мене</label>
+                </p>
+                {% endif %}
+
+                <button type="submit" class="btn-submit">УВІЙТИ</button>
             </form>
 
-            <!-- НОВИЙ БЛОК: Посилання на відновлення пароля -->
+            <!-- ПРАВИЛЬНЕ ПОСИЛАННЯ НА ВІДНОВЛЕННЯ ПАРОЛЯ -->
             <div style="margin-top: 15px; text-align: center;">
                 <a href="{% url 'reset_password' %}" style="color: var(--brand-blue); font-weight: 800; font-size: 0.9rem; text-decoration: underline;">
                     Забули пароль?
