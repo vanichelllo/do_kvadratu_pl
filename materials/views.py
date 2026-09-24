@@ -31,107 +31,146 @@ User = get_user_model()
 
 
 def diagnostic_test_view(request):
-    questions = Question.objects.all().prefetch_related('options', 'match_items')
-
+    # ==========================================
+    # 1. ПЕРЕВІРКА ВІДПОВІДЕЙ (РЕЖИМ POST)
+    # ==========================================
     if request.method == 'POST':
+        question_ids_str = request.POST.get('question_ids', '')
+        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
+
+        # Витягуємо тільки ті запитання, які випали в тесті, зберігаючи порядок
+        from django.db.models import Case, When
+        if q_id_list:
+            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
+            questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
+                preserved_order)
+        else:
+            questions = []
+
         topics_stats = {}
         for topic in DiagnosticTopic.objects.all():
-            topics_stats[topic.name] = {
-                'topic': topic,
-                'correct': 0,
-                'total': 0
-            }
+            topics_stats[topic.name] = {'topic': topic, 'correct': 0, 'total': 0}
 
         total_score = 0
         max_score = 0
 
         for question in questions:
-            topic_name = question.topic.name
+            topic_name = question.topic.name if question.topic else None
 
             if question.question_type == 'CHOICE':
-                topics_stats[topic_name]['total'] += 1
+                if topic_name: topics_stats[topic_name]['total'] += 1
                 max_score += 1
-
                 user_answer = request.POST.get(f'question_{question.id}')
                 if user_answer:
                     try:
                         selected_option = AnswerOption.objects.get(id=int(user_answer))
                         if selected_option.is_correct:
                             total_score += 1
-                            topics_stats[topic_name]['correct'] += 1
+                            if topic_name: topics_stats[topic_name]['correct'] += 1
                     except AnswerOption.DoesNotExist:
                         pass
 
             elif question.question_type == 'MATCH':
-                topics_stats[topic_name]['total'] += 3
+                if topic_name: topics_stats[topic_name]['total'] += 3
                 max_score += 3
-
                 match_correct_count = 0
                 for item in question.match_items.all():
                     user_match_answer = request.POST.get(f'match_{item.id}')
                     if user_match_answer and int(user_match_answer) == item.correct_option.id:
                         match_correct_count += 1
-
                 total_score += match_correct_count
-                topics_stats[topic_name]['correct'] += match_correct_count
+                if topic_name: topics_stats[topic_name]['correct'] += match_correct_count
 
             elif question.question_type == 'SHORT':
-                topics_stats[topic_name]['total'] += 2
+                if topic_name: topics_stats[topic_name]['total'] += 2
                 max_score += 2
-
                 user_answer = request.POST.get(f'question_{question.id}')
                 if user_answer:
                     user_clean = str(user_answer).strip().replace(',', '.')
                     correct_clean = str(question.correct_short_answer).strip().replace(',', '.')
                     if user_clean == correct_clean:
                         total_score += 2
-                        topics_stats[topic_name]['correct'] += 2
+                        if topic_name: topics_stats[topic_name]['correct'] += 2
 
-        weak_topics = []
-        for stat in topics_stats.values():
-            if stat['total'] > 0:
-                percent = (stat['correct'] / stat['total']) * 100
-                if percent < 50:
-                    weak_topics.append(stat['topic'])
+        weak_topics = [stat['topic'] for stat in topics_stats.values() if
+                       stat['total'] > 0 and (stat['correct'] / stat['total']) * 100 < 50]
 
-        # === МАГІЯ РЕКОМЕНДАЦІЙ ===
         recommended_materials = set()
         for topic in weak_topics:
-            mats = StudyMaterial.objects.filter(
-                title__icontains=topic.name,
-                is_published=True
-            )
-            for mat in mats:
+            for mat in StudyMaterial.objects.filter(title__icontains=topic.name, is_published=True):
                 recommended_materials.add(mat)
-        # ==========================
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
-        # === СОРТУВАННЯ ЗА НОМЕРОМ ===
         def extract_number(text):
             match = re.match(r'^(\d+)', text)
-            if match:
-                return int(match.group(1))
-            return 99999
+            return int(match.group(1)) if match else 99999
 
         weak_topics.sort(key=lambda t: extract_number(t.name))
-        recommendations_list = list(recommended_materials)
-        recommendations_list.sort(key=lambda m: extract_number(m.title))
+        recommendations_list = sorted(list(recommended_materials), key=lambda m: extract_number(m.title))
         sorted_stats = sorted(topics_stats.values(), key=lambda s: extract_number(s['topic'].name))
 
-        context = {
+        return render(request, 'materials/diagnostic_results.html', {
             'total_score': total_score,
             'max_score': max_score,
             'percent_total': percent_total,
             'weak_topics': weak_topics,
             'topics_stats': sorted_stats,
             'recommendations': recommendations_list,
-        }
-        return render(request, 'materials/diagnostic_results.html', context)
+        })
 
-    return render(request, 'materials/diagnostic_test.html', {'questions': questions})
+    # ==========================================
+    # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
+    # ==========================================
+    all_qs = Question.objects.select_related('topic').prefetch_related('options', 'match_items')
 
+    alg_choice, geo_choice = [], []
+    alg_match, geo_match = [], []
+    alg_short, geo_short = [], []
 
+    # Сортуємо всі завдання по кошиках
+    for q in all_qs:
+        topic_num = 999
+        if q.topic and q.topic.name:
+            match = re.match(r'^(\d+)', q.topic.name)
+            if match:
+                topic_num = int(match.group(1))
+
+        # Логіка: <= 29 — Алгебра, інакше — Геометрія
+        is_algebra = (topic_num <= 29)
+
+        if q.question_type == 'CHOICE':
+            alg_choice.append(q) if is_algebra else geo_choice.append(q)
+        elif q.question_type == 'MATCH':
+            alg_match.append(q) if is_algebra else geo_match.append(q)
+        elif q.question_type == 'SHORT':
+            alg_short.append(q) if is_algebra else geo_short.append(q)
+
+    # Вибираємо випадкові завдання за пропорціями НМТ
+    # Тести (10 алгебра, 5 геометрія)
+    sel_choice = random.sample(alg_choice, min(10, len(alg_choice))) + random.sample(geo_choice,
+                                                                                     min(5, len(geo_choice)))
+    # Відповідності (2 алгебра, 1 геометрія)
+    sel_match = random.sample(alg_match, min(2, len(alg_match))) + random.sample(geo_match, min(1, len(geo_match)))
+    # Коротка відповідь (2 алгебра, 2 геометрія)
+    sel_short = random.sample(alg_short, min(2, len(alg_short))) + random.sample(geo_short, min(2, len(geo_short)))
+
+    # Перемішуємо завдання всередині своїх блоків
+    random.shuffle(sel_choice)
+    random.shuffle(sel_match)
+    random.shuffle(sel_short)
+
+    # Збираємо фінальний варіант: спочатку вибір, потім відповідність, потім коротка відповідь (як на НМТ)
+    final_questions = sel_choice + sel_match + sel_short
+
+    # Створюємо строку з ID вибраних завдань, щоб перевірити саме їх, коли учень натисне "Завершити"
+    question_ids_str = ','.join(str(q.id) for q in final_questions)
+
+    return render(request, 'materials/diagnostic_test.html', {
+        'questions': final_questions,
+        'question_ids_str': question_ids_str,
+        'total_selected': len(final_questions)
+    })
 # ==========================================
 # ПРАКТИКА НМТ ПІСЛЯ УРОКУ
 # ==========================================
