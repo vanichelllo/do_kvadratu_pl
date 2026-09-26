@@ -56,7 +56,7 @@ urlpatterns = [
     path('register/', allauth_views.signup, name='register'),
     path('login/', allauth_views.login, name='login'),
     path('logout/', allauth_views.logout, name='logout'),
-    path('accounts/', include('allauth.urls')), # Залишаємо для внутрішньої логіки Google та Allauth
+    path('accounts/', include('allauth.urls')),  # Залишаємо для внутрішньої логіки Google та Allauth
 
     path('api/materials/', api_materials_list),
     path('cabinet/', CabinetView.as_view(), name='cabinet'),
@@ -73,10 +73,17 @@ urlpatterns = [
     path('cabinet/topup/', topup_balance_view, name='topup_balance'),
 
     # Відновлення пароля
-    path('reset_password/', auth_views.PasswordResetView.as_view(template_name="users/password_reset.html"), name="reset_password"),
-    path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(template_name="users/password_reset_sent.html"), name="password_reset_done"),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name="users/password_reset_form.html"), name="password_reset_confirm"),
-    path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(template_name="users/password_reset_complete.html"), name="password_reset_complete"),
+    path('reset_password/', auth_views.PasswordResetView.as_view(template_name="users/password_reset.html"),
+         name="reset_password"),
+    path('reset_password_sent/',
+         auth_views.PasswordResetDoneView.as_view(template_name="users/password_reset_sent.html"),
+         name="password_reset_done"),
+    path('reset/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(template_name="users/password_reset_form.html"),
+         name="password_reset_confirm"),
+    path('reset_password_complete/',
+         auth_views.PasswordResetCompleteView.as_view(template_name="users/password_reset_complete.html"),
+         name="password_reset_complete"),
 
     # Діагностичний тест
     path('diagnostic/', diagnostic_test_view, name='diagnostic_test'),
@@ -93,6 +100,9 @@ urlpatterns = [
     path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),
     path('attempt/<int:attempt_id>/', view_attempt_details, name='view_attempt_details'),
     path('api/report-error/', report_question_error, name='report_question_error'),
+
+    # ФАЙЛ ДЛЯ ПОШУКОВИХ БОТІВ GOOGLE
+    path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 ]
 
 if settings.DEBUG:
