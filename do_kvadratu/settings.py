@@ -21,11 +21,25 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-unsafe-secret-key')
 # Якщо в .env написано True - буде True, інакше - False
 DEBUG = True
 
-# ДОЗВОЛЯЄМО ХОСТИ З .ENV
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+# ДОЗВОЛЯЄМО НАШІ ДОМЕНИ ТА ЛОКАЛЬНІ ХОСТИ
+ALLOWED_HOSTS = [
+    'dokvadratu.com.ua',
+    'www.dokvadratu.com.ua',
+    'dokvadratu.onrender.com',
+    'localhost',
+    '127.0.0.1'
+]
+
+# Якщо в тебе в Render Environment Variables прописані додаткові хости,
+# вони теж підтягнуться (щоб нічого не зламати з твого попереднього налаштування)
+env_hosts = os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS.extend([host for host in env_hosts if host and host != '*'])
 
 # ДОЗВОЛЯЄМО NGROK ТА РЕАЛЬНІ ДОМЕНИ ВІДПРАВЛЯТИ POST-ЗАПИТИ (ДЛЯ КОШИКА ТА ОПЛАТ)
 CSRF_TRUSTED_ORIGINS = [
+    'https://dokvadratu.com.ua',
+    'https://www.dokvadratu.com.ua',
+    'https://dokvadratu.onrender.com',
     'https://*.ngrok-free.app',
     'https://*.ngrok-free.dev',
     'https://*.ngrok.app',

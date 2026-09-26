@@ -693,10 +693,9 @@ def pay_with_mono(request):
         "amount": amount_kopecks,
         "ccy": 980,
         "reference": str(order.id),
-        "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
-        "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
+        "redirectUrl": "https://dokvadratu.com.ua/cabinet/",
+        "webHookUrl": "https://dokvadratu.com.ua/mono/webhook/",
     }
-
     try:
         response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload, headers=headers)
         data = response.json()
@@ -745,10 +744,9 @@ def topup_balance_view(request):
             "amount": amount_kopecks,
             "ccy": 980,
             "reference": str(order.id),
-            "redirectUrl": "https://dokvadratu.onrender.com/cabinet/",
-            "webHookUrl": "https://dokvadratu.onrender.com/mono/webhook/",
+            "redirectUrl": "https://dokvadratu.com.ua/cabinet/",
+            "webHookUrl": "https://dokvadratu.com.ua/mono/webhook/",
         }
-
         try:
             response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload,
                                      headers=headers)
