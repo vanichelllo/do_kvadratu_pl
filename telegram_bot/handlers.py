@@ -125,7 +125,7 @@ def get_recommendations_for_topics(wrong_topics):
 def get_main_menu_keyboard():
     builder = InlineKeyboardBuilder()
     # Інтеграція платформи прямо в Telegram
-    builder.button(text="🌐 Мій кабінет (Платформа)", web_app=WebAppInfo(url="https://dokvadratu.onrender.com/cabinet/"))
+    builder.button(text="🌐 Мій кабінет (Платформа)", web_app=WebAppInfo(url="https://dokvadratu.com.ua/cabinet/"))
     builder.button(text="🎓 Підготовка до НМТ", callback_data="menu_nmt_main")
     builder.button(text="🎒 Заняття (5-10 класи)", callback_data="menu_5_10")
     builder.button(text="🎯 Інші навчальні потреби", callback_data="menu_other")
@@ -139,7 +139,7 @@ def get_nmt_menu_keyboard():
     builder = InlineKeyboardBuilder()
     builder.button(text="🎯 Перевір свій рівень (Тест)", callback_data="start_quiz")
     # Магазин тепер відкривається через WebApp
-    builder.button(text="🛍️ Магазин конспектів", web_app=WebAppInfo(url="https://dokvadratu.onrender.com/materials/"))
+    builder.button(text="🛍️ Магазин конспектів", web_app=WebAppInfo(url="https://dokvadratu.com.ua/materials/"))
     builder.button(text="🎁 Вся база для НМТ (1 файлом)", callback_data="download_all_free")
     builder.button(text="← До головного меню", callback_data="back_main")
     builder.adjust(1)
@@ -291,7 +291,7 @@ async def finish_quiz(message: types.Message, state: FSMContext):
 
     builder = InlineKeyboardBuilder()
     builder.button(text="📚 Знайти ці теми на платформі",
-                   web_app=WebAppInfo(url="https://dokvadratu.onrender.com/materials/"))
+                   web_app=WebAppInfo(url="https://dokvadratu.com.ua/materials/"))
     builder.button(text="← До меню НМТ", callback_data="menu_nmt_main")
     builder.adjust(1)
 
