@@ -36,7 +36,8 @@ from materials.views import (
     view_student_presentation,
     view_attempt_details,
     report_question_error,
-    parent_dashboard_view
+    parent_dashboard_view,
+    add_quick_report
 )
 
 urlpatterns = [
@@ -109,6 +110,7 @@ urlpatterns = [
 
     # Дашборд для батьків
     path('parents/<uuid:parent_token>/', parent_dashboard_view, name='parent_dashboard'),
+    path('cabinet/add-report/', add_quick_report, name='add_quick_report'),
 ]
 
 if settings.DEBUG:

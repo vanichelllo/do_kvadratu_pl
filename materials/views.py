@@ -492,6 +492,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
             ).select_related('user', 'user__tutor_request', 'material').order_by('-created_at')[:50]
+            context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
 
         return context
 
@@ -1042,3 +1043,22 @@ def parent_dashboard_view(request, parent_token):
         context['is_nmt'] = False
 
     return render(request, 'materials/parent_dashboard.html', context)
+
+
+@login_required
+def add_quick_report(request):
+    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+        student_id = request.POST.get('student_id')
+        student = get_object_or_404(TutorStudentRequest, id=student_id)
+
+        StudentReport.objects.create(
+            student=student,
+            topic=request.POST.get('topic'),
+            nush_modeling=request.POST.get('nush_modeling', 10),
+            nush_solving=request.POST.get('nush_solving', 10),
+            nush_analysis=request.POST.get('nush_analysis', 10),
+            homework_status=request.POST.get('homework_status', 'not_assigned'),
+            teacher_comment=request.POST.get('teacher_comment', '')
+        )
+        messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
+    return redirect('cabinet')

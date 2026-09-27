@@ -265,7 +265,50 @@
                 </table>
             </div>
         {% endif %}
-
+<!-- УПРАВЛІННЯ УЧНЯМИ ТА ЗВІТИ (ДЛЯ ВЧИТЕЛЯ) -->
+        {% if my_students %}
+            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                📝 Мої учні (Звіти)
+            </h2>
+            <div class="stats-table-wrapper" style="border-color: var(--brand-yellow); box-shadow: 4px 4px 0px var(--brand-blue); margin-bottom: 40px; overflow: visible;">
+                <table class="stats-table">
+                    <thead style="background: var(--brand-yellow); color: var(--brand-blue);">
+                        <tr>
+                            <th>Учень</th>
+                            <th>Лінк для батьків</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in my_students %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--brand-blue); font-size: 1rem;">{{ st.real_name }}</strong><br>
+                                <span style="font-size: 0.8rem; color: #666; font-weight: bold;">{{ st.get_course_display }}</span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="link-{{ st.id }}" value="https://dokvadratu.com.ua/parents/{{ st.parent_token }}/" readonly style="font-size: 0.75rem; padding: 6px; border: 2px solid #ccc; border-radius: 6px; width: 130px; background: #f8f9fa; font-weight: bold; color: #555;">
+                                    <button type="button" onclick="copyLink('{{ st.id }}')" style="background: white; border: 2px solid #ccc; border-radius: 6px; cursor: pointer; font-size: 0.9rem; padding: 4px 8px; transition: 0.2s;" onmouseover="this.style.borderColor='var(--brand-blue)'" onmouseout="this.style.borderColor='#ccc'" title="Скопіювати">
+                                        📋
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                {% if st.course != 'nmt' %}
+                                <button type="button" onclick="openReportForm('{{ st.id }}', '{{ st.real_name }}')" style="background: var(--brand-blue); color: var(--brand-yellow); border: 2px solid var(--brand-blue); border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='var(--brand-yellow)'; this.style.color='var(--brand-blue)';" onmouseout="this.style.background='var(--brand-blue)'; this.style.color='var(--brand-yellow)';">
+                                    + Звіт
+                                </button>
+                                {% else %}
+                                <span style="font-size: 0.75rem; color: #999; font-weight: 900;">АВТО (НМТ)</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
         <!-- 2. ОСОБИСТИЙ ПРОГРЕС УЧНЯ -->
         {% if my_attempts %}
             <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem;">
@@ -487,6 +530,86 @@
             content.style.display = "none";
             icon.classList.remove("open");
         }
+    }
+</script>
+<!-- МОДАЛЬНЕ ВІКНО СТВОРЕННЯ ЗВІТУ -->
+<div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; border: 4px solid var(--brand-blue); box-shadow: 8px 8px 0px var(--brand-yellow); position: relative;">
+
+        <button type="button" onclick="closeReportForm()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #999; font-weight: bold;">&times;</button>
+
+        <h3 style="margin-top: 0; color: var(--brand-blue); font-weight: 900; text-transform: uppercase; font-size: 1.4rem;">
+            Новий звіт
+        </h3>
+        <p style="color: #666; margin-bottom: 20px; font-weight: bold;" id="modalStudentName"></p>
+
+        <form action="{% url 'add_quick_report' %}" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" id="modalStudentId">
+
+            <div>
+                <label style="font-weight: 900; font-size: 0.9rem; color: var(--brand-blue);">Тема уроку</label>
+                <input type="text" name="topic" placeholder="Напр. Системи рівнянь" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-weight: 900; font-size: 0.8rem; color: var(--brand-blue);">Моделювання</label>
+                    <input type="number" name="nush_modeling" min="1" max="12" value="10" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: 900; font-size: 0.8rem; color: var(--brand-blue);">Розв'язування</label>
+                    <input type="number" name="nush_solving" min="1" max="12" value="10" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: 900; font-size: 0.8rem; color: var(--brand-blue);">Аналіз</label>
+                    <input type="number" name="nush_analysis" min="1" max="12" value="10" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div>
+                <label style="font-weight: 900; font-size: 0.9rem; color: var(--brand-blue);">Статус домашнього завдання</label>
+                <select name="homework_status" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; background: white; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                    <option value="not_assigned">⚪ Не задано</option>
+                    <option value="not_submitted">🔴 Не здано</option>
+                    <option value="partial">🟡 Частково / з помилками</option>
+                    <option value="completed" selected>🟢 Виконано повністю</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-weight: 900; font-size: 0.9rem; color: var(--brand-blue);">Коментар (необов'язково)</label>
+                <textarea name="teacher_comment" rows="2" placeholder="Пару слів про успіхи..." style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; box-sizing: border-box;"></textarea>
+            </div>
+
+            <button type="submit" style="background: var(--brand-blue); color: var(--brand-yellow); border: 2px solid var(--brand-blue); border-radius: 8px; font-weight: 900; font-size: 1.1rem; padding: 12px; cursor: pointer; text-transform: uppercase; transition: 0.2s; margin-top: 5px;" onmouseover="this.style.background='var(--brand-yellow)'; this.style.color='var(--brand-blue)';" onmouseout="this.style.background='var(--brand-blue)'; this.style.color='var(--brand-yellow)';">
+                Зберегти звіт
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function copyLink(studentId) {
+        const input = document.getElementById("link-" + studentId);
+        input.select();
+        document.execCommand('copy');
+
+        // Візуальний фідбек (кнопка клікне і покаже галочку)
+        const btn = input.nextElementSibling;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅";
+        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+    }
+
+    function openReportForm(studentId, studentName) {
+        document.getElementById('modalStudentId').value = studentId;
+        document.getElementById('modalStudentName').innerText = "Учень: " + studentName;
+        document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportForm() {
+        document.getElementById('reportModal').style.display = 'none';
     }
 </script>
 {% endblock %}
