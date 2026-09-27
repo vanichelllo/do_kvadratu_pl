@@ -21,7 +21,7 @@ from django.conf import settings
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError
+    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -1022,3 +1022,23 @@ def report_question_error(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'invalid method'}, status=405)
+def parent_dashboard_view(request, parent_token):
+    # Шукаємо заявку учня за унікальним токеном
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+
+    context = {
+        'student': student_request,
+    }
+
+    # Якщо це підготовка до НМТ -> дістаємо результати тестів
+    if student_request.course == 'nmt':
+        attempts = PracticeAttempt.objects.filter(user=student_request.user).order_by('-created_at')
+        context['attempts'] = attempts
+        context['is_nmt'] = True
+    else:
+        # Для шкільної програми НУШ -> дістаємо ваші ручні звіти
+        reports = StudentReport.objects.filter(student=student_request).order_by('-date')
+        context['reports'] = reports
+        context['is_nmt'] = False
+
+    return render(request, 'materials/parent_dashboard.html', context)

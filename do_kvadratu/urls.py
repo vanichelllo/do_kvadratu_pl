@@ -35,7 +35,8 @@ from materials.views import (
     submit_review,
     view_student_presentation,
     view_attempt_details,
-    report_question_error
+    report_question_error,
+    parent_dashboard_view
 )
 
 urlpatterns = [
@@ -103,6 +104,11 @@ urlpatterns = [
 
     # ФАЙЛ ДЛЯ ПОШУКОВИХ БОТІВ GOOGLE
     path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
+    # Діагностичний тест
+    path('diagnostic/', diagnostic_test_view, name='diagnostic_test'),
+
+    # Дашборд для батьків
+    path('parents/<uuid:parent_token>/', parent_dashboard_view, name='parent_dashboard'),
 ]
 
 if settings.DEBUG:

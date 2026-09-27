@@ -8,8 +8,7 @@ from import_export.admin import ExportActionMixin
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError
-
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 User = get_user_model()
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):
@@ -57,10 +56,20 @@ def revoke_student_access(modeladmin, request, queryset):
 
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
-    list_display = ('user', 'real_name', 'course', 'status', 'created_at') # Додано 'course'
-    list_filter = ('course', 'status', 'created_at') # Додано фільтр за 'course'
+    list_display = ('user', 'real_name', 'course', 'status', 'created_at', 'parent_token')
+    list_filter = ('course', 'status', 'created_at')
     search_fields = ('user__email', 'real_name')
+    readonly_fields = ('parent_token',) # Забороняємо редагувати токен руками
     actions = [approve_student_requests, reject_student_requests, revoke_student_access]
+
+# ==========================================
+# НУШ ЗВІТИ ДЛЯ БАТЬКІВ
+# ==========================================
+@admin.register(StudentReport)
+class StudentReportAdmin(admin.ModelAdmin):
+    list_display = ('student', 'date', 'topic', 'homework_status')
+    list_filter = ('date', 'homework_status', 'student__course')
+    search_fields = ('student__real_name', 'topic', 'teacher_comment')
 
 # 1. Реєструємо прості таблиці
 admin.site.register(Category)

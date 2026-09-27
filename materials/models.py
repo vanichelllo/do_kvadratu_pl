@@ -4,6 +4,8 @@ from django.db import models
 from django.conf import settings
 from django.core.files.base import ContentFile
 from pypdf import PdfWriter
+import uuid
+from django.utils import timezone
 
 # ОНОВЛЕНО: Імпорт сховища Cloudinary
 from cloudinary_storage.storage import RawMediaCloudinaryStorage
@@ -216,8 +218,6 @@ class TutorStudentRequest(models.Model):
         ('approved', 'Підтверджено'),
         ('rejected', 'Відхилено'),
     )
-
-    # ДОДАНО: Варіанти напрямків/класів
     COURSE_CHOICES = (
         ('nmt', 'Підготовка до НМТ'),
         ('grade_5', 'Математика (5 клас)'),
@@ -231,13 +231,14 @@ class TutorStudentRequest(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_request')
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
-
-    # ДОДАНО: Поле для напрямку
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
-
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
 
+    # ==========================================
+    # ДОДАНО: СЕКРЕТНИЙ ТОКЕН ДЛЯ БАТЬКІВ
+    # ==========================================
+    parent_token = models.UUIDField(default=uuid.uuid4, editable=False, null=True, verbose_name="Токен для батьків")
     class Meta:
         verbose_name = "Заявка на статус учня"
         verbose_name_plural = "Заявки на статус учня"
@@ -334,3 +335,33 @@ class QuestionError(models.Model):
 
     def __str__(self):
         return f"Помилка в завданні #{self.question.id} - {self.get_status_display()}"
+# ==========================================
+# НОВА МОДЕЛЬ: ЗВІТИ ДЛЯ ШКОЛЯРІВ (НУШ)
+# ==========================================
+class StudentReport(models.Model):
+    HW_CHOICES = (
+        ('not_assigned', '⚪ Не задано'),
+        ('not_submitted', '🔴 Не здано'),
+        ('partial', '🟡 Виконано частково / з помилками'),
+        ('completed', '🟢 Виконано повністю'),
+    )
+
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='reports', verbose_name="Учень")
+    date = models.DateField(default=timezone.now, verbose_name="Дата заняття")
+    topic = models.CharField(max_length=200, verbose_name="Тема уроку")
+
+    # Оцінки за критеріями НУШ (від 1 до 12)
+    nush_modeling = models.PositiveIntegerField(default=0, verbose_name="Моделювання (1-12)")
+    nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")
+    nush_analysis = models.PositiveIntegerField(default=0, verbose_name="Аналіз результатів (1-12)")
+
+    homework_status = models.CharField(max_length=20, choices=HW_CHOICES, default='not_assigned', verbose_name="Домашнє завдання")
+    teacher_comment = models.TextField(blank=True, verbose_name="Коментар викладача")
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Звіт"
+        verbose_name_plural = "Звіти"
+
+    def __str__(self):
+        return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.topic})"
