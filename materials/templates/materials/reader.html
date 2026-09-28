@@ -152,6 +152,22 @@
             body { display: none !important; }
         }
     </style>
+
+    <!-- Налаштування MathJax для розпізнавання одинарних доларів ($) -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <!-- Підключення самої бібліотеки -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 </head>
 <body oncontextmenu="return false;">
 <!-- Мобільна підказка -->
@@ -251,6 +267,19 @@
         if (htmlContent && htmlContent.trim() !== "") {
             // Вшиваємо стилі прямо в код презентації
             const customStyles = `
+                <!-- ДОДАНО ДЛЯ MATHJAX У ФРЕЙМІ -->
+                <script>
+                  MathJax = {
+                    tex: {
+                      inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+                      displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+                    },
+                    svg: {
+                      fontCache: 'global'
+                    }
+                  };
+                <\/script>
+                <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>
                 <style>
                     /* Ховаємо текст, зміну теми ТА ЗЕЛЕНУ КНОПКУ ФУЛСКРІНУ всередині HTML */
                     .brand-logo-container, #btn-theme, #btn-fullscreen, .btn-fullscreen, .fullscreen-btn { display: none !important; }
