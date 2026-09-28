@@ -38,6 +38,15 @@ def diagnostic_test_view(request):
         question_ids_str = request.POST.get('question_ids', '')
         q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
 
+        # === НОВЕ: Словник для збереження історії відповідей у БД ===
+        saved_answers = {
+            'q_choice': {},
+            'q_match': {},
+            'q_short': {},
+            'question_ids': question_ids_str,
+            'note': 'Вхідна діагностика НМТ'
+        }
+
         # Витягуємо тільки ті запитання, які випали в тесті, зберігаючи порядок
         from django.db.models import Case, When
         if q_id_list:
@@ -61,6 +70,10 @@ def diagnostic_test_view(request):
                 if topic_name: topics_stats[topic_name]['total'] += 1
                 max_score += 1
                 user_answer = request.POST.get(f'question_{question.id}')
+
+                # Зберігаємо відповідь для історії
+                saved_answers['q_choice'][str(question.id)] = user_answer
+
                 if user_answer:
                     try:
                         selected_option = AnswerOption.objects.get(id=int(user_answer))
@@ -74,8 +87,15 @@ def diagnostic_test_view(request):
                 if topic_name: topics_stats[topic_name]['total'] += 3
                 max_score += 3
                 match_correct_count = 0
+
+                saved_answers['q_match'][str(question.id)] = {}
+
                 for item in question.match_items.all():
                     user_match_answer = request.POST.get(f'match_{item.id}')
+
+                    # Зберігаємо відповідь для історії
+                    saved_answers['q_match'][str(question.id)][str(item.id)] = user_match_answer
+
                     if user_match_answer and int(user_match_answer) == item.correct_option.id:
                         match_correct_count += 1
                 total_score += match_correct_count
@@ -85,12 +105,38 @@ def diagnostic_test_view(request):
                 if topic_name: topics_stats[topic_name]['total'] += 2
                 max_score += 2
                 user_answer = request.POST.get(f'question_{question.id}')
+
+                # Зберігаємо відповідь для історії
+                saved_answers['q_short'][str(question.id)] = user_answer
+
                 if user_answer:
                     user_clean = str(user_answer).strip().replace(',', '.')
                     correct_clean = str(question.correct_short_answer).strip().replace(',', '.')
                     if user_clean == correct_clean:
                         total_score += 2
                         if topic_name: topics_stats[topic_name]['correct'] += 2
+
+        # === НОВЕ: ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ В БАЗУ ===
+        # Зберігаємо тільки якщо тест пройшов зареєстрований користувач
+        if request.user.is_authenticated:
+            # Створюємо технічний запис "уроку" для діагностики, якщо його ще немає
+            diag_material, created = StudyMaterial.objects.get_or_create(
+                title="Вхідне діагностичне тестування НМТ",
+                defaults={
+                    'price': 0,
+                    'is_published': False,  # Не показуватиметься в магазині
+                    'is_free': True
+                }
+            )
+            # Записуємо фінальний результат
+            PracticeAttempt.objects.create(
+                user=request.user,
+                material=diag_material,
+                score=total_score,
+                max_score=max_score,
+                answers_json=saved_answers
+            )
+        # ==========================================
 
         weak_topics = [stat['topic'] for stat in topics_stats.values() if
                        stat['total'] > 0 and (stat['correct'] / stat['total']) * 100 < 50]
@@ -119,6 +165,9 @@ def diagnostic_test_view(request):
             'recommendations': recommendations_list,
         })
 
+    # ==========================================
+    # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
+    # [Твій старий код залишається без змін...]
     # ==========================================
     # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
     # ==========================================
