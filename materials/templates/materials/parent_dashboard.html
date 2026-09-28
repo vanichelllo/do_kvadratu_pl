@@ -159,7 +159,42 @@
     <div class="text-center mt-4 mb-3 text-muted small">
         <p>Платформа підготовки з математики <strong>«До Квадрату»</strong></p>
     </div>
+<!-- БЛОК ВІДГУКУ -->
+    <div class="card shadow-sm border-0 mb-5" style="border-radius: 16px; background-color: #f8f9fa;">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-2" style="color: var(--brand-blue);">💬 Залишити відгук</h5>
+            <p class="text-muted small mb-4">Поділіться своїми враженнями від навчання. Ваш відгук допоможе іншим батькам зробити правильний вибір.</p>
 
+            <form action="{% url 'submit_parent_review' student.parent_token %}" method="POST">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Ваше ім'я (для відображення на сайті)</label>
+                    <input type="text" name="reviewer_name" class="form-control" placeholder="Наприклад: Олена, мама Тараса" required style="border-radius: 8px; border: 2px solid #e9ecef;">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Оцінка</label>
+                    <select name="rating" class="form-select" required style="border-radius: 8px; border: 2px solid #e9ecef;">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5) - Чудово!</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5) - Добре</option>
+                        <option value="3">⭐⭐⭐ (3/5) - Нормально</option>
+                        <option value="2">⭐⭐ (2/5) - Погано</option>
+                        <option value="1">⭐ (1/5) - Жахливо</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Текст відгуку</label>
+                    <textarea name="text" class="form-control" rows="4" placeholder="Напишіть кілька слів про результати та враження..." required style="border-radius: 8px; border: 2px solid #e9ecef; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" class="btn w-100 text-white" style="background-color: var(--brand-blue); border-radius: 8px; padding: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Надіслати відгук
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 </body>

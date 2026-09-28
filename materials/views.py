@@ -1162,3 +1162,43 @@ def add_nmt_score(request):
         )
         messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
     return redirect('cabinet')
+
+
+def submit_parent_review(request, parent_token):
+    if request.method == 'POST':
+        # Знаходимо учня за батьківським токеном
+        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+
+        rating = request.POST.get('rating', 5)
+        text = request.POST.get('text', '').strip()
+        reviewer_name = request.POST.get('reviewer_name', '').strip()
+
+        if not text or not reviewer_name:
+            messages.error(request, "Будь ласка, введіть своє ім'я та текст відгуку.")
+            return redirect('parent_dashboard', parent_token=parent_token)
+
+        try:
+            rating = int(rating)
+        except ValueError:
+            rating = 5
+
+        # Створюємо відгук і прив'язуємо його до профілю учня
+        Review.objects.create(
+            user=student_req.user,
+            reviewer_name=reviewer_name,
+            rating=rating,
+            text=text
+        )
+
+        # Відправляємо тобі сповіщення у Telegram із подвійним ім'ям (ім'я на сайті + чиї це батьки)
+        msg = f"⭐️ <b>Новий відгук від батьків!</b>\n\n"
+        msg += f"Від: <b>{reviewer_name}</b> <i>(Батьки учня: {student_req.real_name})</i>\n"
+        msg += f"Оцінка: {'⭐' * rating}\n\n"
+        msg += f"<i>«{text}»</i>\n\n"
+        msg += f"Зайди в адмінку, щоб схвалити публікацію на головній сторінці."
+
+        send_telegram_notification(msg)
+
+        messages.success(request, "Щиро дякуємо за ваш відгук! Ваша думка дуже важлива для нас.")
+
+    return redirect('parent_dashboard', parent_token=parent_token)
