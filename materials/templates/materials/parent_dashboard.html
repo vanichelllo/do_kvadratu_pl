@@ -51,7 +51,26 @@
         <h2 class="fw-bold mb-2">{{ student.real_name }}</h2>
         <span class="badge bg-light text-primary px-3 py-2 rounded-pill">{{ student.get_course_display }}</span>
     </div>
+<!-- БЛОК: ІНДИВІДУАЛЬНІ УРОКИ (ПРЕЗЕНТАЦІЇ) -->
+    {% if presentations %}
+        <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Матеріали уроків</h6>
 
+        {% for pres in presentations %}
+        <div class="card report-card mb-3" style="border-left: 4px solid #27c93f;">
+            <div class="report-card-body d-flex justify-content-between align-items-center p-3">
+                <div>
+                    <h6 class="fw-bold mb-1 text-dark" style="font-size: 1.05rem;">{{ pres.title }}</h6>
+                    <small class="text-muted">{{ pres.created_at|date:"d.m.Y" }}</small>
+                </div>
+                <a href="{% url 'parent_view_presentation' student.parent_token pres.id %}" target="_blank" class="btn btn-sm text-white rounded-pill px-3" style="background-color: #27c93f; font-weight: bold; white-space: nowrap;">
+                    Відкрити
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+
+        <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
+    {% endif %}
     <!-- БЛОК 1: ДЛЯ УЧНІВ НМТ (АВТОМАТИЧНІ ТЕСТИ) -->
     {% if is_nmt %}
         {% if attempts %}

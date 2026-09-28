@@ -1036,8 +1036,12 @@ def parent_dashboard_view(request, parent_token):
     # Шукаємо заявку учня за унікальним токеном
     student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
 
+    # === ДОДАНО: Дістаємо всі індивідуальні презентації цього учня ===
+    presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
+
     context = {
         'student': student_request,
+        'presentations': presentations,  # Передаємо в шаблон
     }
 
     # Якщо це підготовка до НМТ -> дістаємо результати тестів
@@ -1053,6 +1057,21 @@ def parent_dashboard_view(request, parent_token):
 
     return render(request, 'materials/parent_dashboard.html', context)
 
+
+# === НОВА ФУНКЦІЯ ДЛЯ БАТЬКІВ ===
+def parent_view_presentation(request, parent_token, presentation_id):
+    # Перевіряємо токен батьків
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+
+    # Дістаємо презентацію, яка належить саме цьому учню
+    presentation = get_object_or_404(StudentPresentation, id=presentation_id, student=student_request.user)
+
+    context = {
+        'material': presentation,
+        'is_personal': True
+    }
+    # Використовуємо існуючий шаблон для відображення презентацій
+    return render(request, 'materials/reader.html', context)
 
 @login_required
 def add_quick_report(request):

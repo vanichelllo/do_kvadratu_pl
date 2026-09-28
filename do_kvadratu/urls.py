@@ -38,7 +38,8 @@ from materials.views import (
     report_question_error,
     parent_dashboard_view,
     add_quick_report,
-    add_nmt_score
+    add_nmt_score,
+    parent_view_presentation
 )
 
 urlpatterns = [
@@ -113,6 +114,7 @@ urlpatterns = [
     path('parents/<uuid:parent_token>/', parent_dashboard_view, name='parent_dashboard'),
     path('cabinet/add-report/', add_quick_report, name='add_quick_report'),
     path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
+    path('parents/<uuid:parent_token>/lesson/<int:presentation_id>/', parent_view_presentation, name='parent_view_presentation'),
 ]
 
 if settings.DEBUG:
