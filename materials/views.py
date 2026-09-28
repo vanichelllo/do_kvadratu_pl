@@ -171,6 +171,8 @@ def diagnostic_test_view(request):
         'question_ids_str': question_ids_str,
         'total_selected': len(final_questions)
     })
+
+
 # ==========================================
 # ПРАКТИКА НМТ ПІСЛЯ УРОКУ
 # ==========================================
@@ -323,6 +325,7 @@ def practice_session_view(request, material_id):
         'q_short': q_short, 'question_ids_str': question_ids_str, 'total_selected': len(selected_questions)
     }
     return render(request, 'materials/practice_session.html', context)
+
 
 # ==========================================
 
@@ -493,6 +496,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 user__tutor_request__status='approved'
             ).select_related('user', 'user__tutor_request', 'material').order_by('-created_at')[:50]
             context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
+            context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
 
         return context
 
@@ -505,6 +509,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return self.render_to_response(context)
+
 
 # ==========================================
 # Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
@@ -906,12 +911,15 @@ def view_student_presentation(request, presentation_id):
         'is_personal': True
     }
     return render(request, 'materials/reader.html', context)
+
+
 @login_required
 def view_attempt_details(request, attempt_id):
     attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
 
     # Перевірка: дивитися може учень свої тести, або вчитель - усі
-    if attempt.user != request.user and not request.user.is_superuser and getattr(request.user, 'role', '') != 'teacher':
+    if attempt.user != request.user and not request.user.is_superuser and getattr(request.user, 'role',
+                                                                                  '') != 'teacher':
         raise Http404("У вас немає доступу до цієї статистики.")
 
     saved_answers = attempt.answers_json
@@ -925,7 +933,8 @@ def view_attempt_details(request, attempt_id):
     from django.db.models import Case, When
     if q_id_list:
         preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(preserved_order)
+        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
+            preserved_order)
     else:
         questions = []
 
@@ -991,8 +1000,6 @@ def view_attempt_details(request, attempt_id):
     return render(request, 'materials/practice_results.html', context)
 
 
-
-
 @login_required
 def report_question_error(request):
     if request.method == 'POST':
@@ -1023,6 +1030,8 @@ def report_question_error(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'invalid method'}, status=405)
+
+
 def parent_dashboard_view(request, parent_token):
     # Шукаємо заявку учня за унікальним токеном
     student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
@@ -1061,4 +1070,27 @@ def add_quick_report(request):
             teacher_comment=request.POST.get('teacher_comment', '')
         )
         messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
+    return redirect('cabinet')
+
+
+@login_required
+def add_nmt_score(request):
+    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+        student_id = request.POST.get('student_id')
+        material_id = request.POST.get('material_id')
+        score = request.POST.get('score', 0)
+        max_score = request.POST.get('max_score', 18)
+
+        student_req = get_object_or_404(TutorStudentRequest, id=student_id)
+        material = get_object_or_404(StudyMaterial, id=material_id)
+
+        # Створюємо спробу з позначкою в JSON
+        PracticeAttempt.objects.create(
+            user=student_req.user,
+            material=material,
+            score=score,
+            max_score=max_score,
+            answers_json={'note': 'Спільна робота на уроці (демонстрація екрана)'}
+        )
+        messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
     return redirect('cabinet')

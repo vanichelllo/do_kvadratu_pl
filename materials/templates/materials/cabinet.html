@@ -265,7 +265,8 @@
                 </table>
             </div>
         {% endif %}
-<!-- УПРАВЛІННЯ УЧНЯМИ ТА ЗВІТИ (ДЛЯ ВЧИТЕЛЯ) -->
+
+        <!-- УПРАВЛІННЯ УЧНЯМИ ТА ЗВІТИ (ДЛЯ ВЧИТЕЛЯ) -->
         {% if my_students %}
             <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
                 📝 Мої учні (Звіти)
@@ -300,7 +301,9 @@
                                     + Звіт
                                 </button>
                                 {% else %}
-                                <span style="font-size: 0.75rem; color: #999; font-weight: 900;">АВТО (НМТ)</span>
+                                <button type="button" onclick="openNmtForm('{{ st.id }}', '{{ st.real_name }}')" style="background: #27c93f; color: white; border: 2px solid #27c93f; border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='white'; this.style.color='#27c93f';" onmouseout="this.style.background='#27c93f'; this.style.color='white';">
+                                    + Бал (На уроці)
+                                </button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -309,6 +312,7 @@
                 </table>
             </div>
         {% endif %}
+
         <!-- 2. ОСОБИСТИЙ ПРОГРЕС УЧНЯ -->
         {% if my_attempts %}
             <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem;">
@@ -517,22 +521,7 @@
     </div>
 </div>
 
-<script>
-    // Скрипт для відкриття/закриття бібліотеки конспектів
-    function toggleLibrary() {
-        const content = document.getElementById("library-content");
-        const icon = document.getElementById("lib-icon");
-
-        if (content.style.display === "none") {
-            content.style.display = "block";
-            icon.classList.add("open");
-        } else {
-            content.style.display = "none";
-            icon.classList.remove("open");
-        }
-    }
-</script>
-<!-- МОДАЛЬНЕ ВІКНО СТВОРЕННЯ ЗВІТУ -->
+<!-- МОДАЛЬНЕ ВІКНО СТВОРЕННЯ ЗВІТУ (НУШ) -->
 <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
     <div style="background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; border: 4px solid var(--brand-blue); box-shadow: 8px 8px 0px var(--brand-yellow); position: relative;">
 
@@ -589,7 +578,65 @@
     </div>
 </div>
 
+<!-- МОДАЛЬНЕ ВІКНО СТВОРЕННЯ БАЛУ (НМТ) -->
+<div id="nmtModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 450px; border: 4px solid #27c93f; box-shadow: 8px 8px 0px #27c93f; position: relative;">
+
+        <button type="button" onclick="closeNmtForm()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #999; font-weight: bold;">&times;</button>
+
+        <h3 style="margin-top: 0; color: #27c93f; font-weight: 900; text-transform: uppercase; font-size: 1.4rem;">
+            Результат з уроку (НМТ)
+        </h3>
+        <p style="color: #666; margin-bottom: 20px; font-weight: bold;" id="nmtModalStudentName"></p>
+
+        <form action="{% url 'add_nmt_score' %}" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" id="nmtModalStudentId">
+
+            <div>
+                <label style="font-weight: 900; font-size: 0.9rem; color: #27c93f;">Тема уроку (Конспект)</label>
+                <select name="material_id" required style="width: 100%; padding: 10px; border: 2px solid #27c93f; border-radius: 8px; background: white; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                    <option value="" disabled selected>-- Оберіть тему --</option>
+                    {% for mat in nmt_materials %}
+                        <option value="{{ mat.id }}">{{ mat.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-weight: 900; font-size: 0.8rem; color: #27c93f;">Набрано балів</label>
+                    <input type="number" name="score" min="0" required style="width: 100%; padding: 10px; border: 2px solid #27c93f; border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-weight: 900; font-size: 0.8rem; color: #27c93f;">Макс. бал</label>
+                    <input type="number" name="max_score" min="1" value="18" required style="width: 100%; padding: 10px; border: 2px solid #27c93f; border-radius: 8px; font-family: inherit; font-weight: bold; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <button type="submit" style="background: #27c93f; color: white; border: 2px solid #27c93f; border-radius: 8px; font-weight: 900; font-size: 1.1rem; padding: 12px; cursor: pointer; text-transform: uppercase; transition: 0.2s; margin-top: 5px;">
+                Зберегти результат
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
+    // Скрипт для відкриття/закриття бібліотеки конспектів
+    function toggleLibrary() {
+        const content = document.getElementById("library-content");
+        const icon = document.getElementById("lib-icon");
+
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            icon.classList.add("open");
+        } else {
+            content.style.display = "none";
+            icon.classList.remove("open");
+        }
+    }
+
+    // Скрипт для копіювання лінка
     function copyLink(studentId) {
         const input = document.getElementById("link-" + studentId);
         input.select();
@@ -602,6 +649,7 @@
         setTimeout(() => { btn.innerHTML = originalText; }, 2000);
     }
 
+    // Модалка створення звіту (НУШ)
     function openReportForm(studentId, studentName) {
         document.getElementById('modalStudentId').value = studentId;
         document.getElementById('modalStudentName').innerText = "Учень: " + studentName;
@@ -610,6 +658,17 @@
 
     function closeReportForm() {
         document.getElementById('reportModal').style.display = 'none';
+    }
+
+    // Модалка створення балу (НМТ)
+    function openNmtForm(studentId, studentName) {
+        document.getElementById('nmtModalStudentId').value = studentId;
+        document.getElementById('nmtModalStudentName').innerText = "Учень: " + studentName;
+        document.getElementById('nmtModal').style.display = 'flex';
+    }
+
+    function closeNmtForm() {
+        document.getElementById('nmtModal').style.display = 'none';
     }
 </script>
 {% endblock %}

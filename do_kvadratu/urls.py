@@ -37,7 +37,8 @@ from materials.views import (
     view_attempt_details,
     report_question_error,
     parent_dashboard_view,
-    add_quick_report
+    add_quick_report,
+    add_nmt_score
 )
 
 urlpatterns = [
@@ -111,6 +112,7 @@ urlpatterns = [
     # Дашборд для батьків
     path('parents/<uuid:parent_token>/', parent_dashboard_view, name='parent_dashboard'),
     path('cabinet/add-report/', add_quick_report, name='add_quick_report'),
+    path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
 ]
 
 if settings.DEBUG:
