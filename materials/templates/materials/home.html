@@ -322,53 +322,53 @@
     </div>
 </div>
 
-<!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ ТА БОТ -->
+<!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ ТА ДАШБОРД БАТЬКІВ -->
 <div class="banners-grid">
-    <!-- Банер 1: Набір НМТ -->
-    <div class="promo-banner promo-nmt">
-        <div class="promo-tag" style="background: #ff4757;">Серпень / Вересень</div>
-        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Запис на заняття</h3>
-        <p style="color: var(--text-dark); font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
-            Відкрито набір на комплексну підготовку. Робота в міні-групах <span style="color: #ff4757; font-weight: 900;">(лише 4 учні)</span> або індивідуально. Запишіться на перше діагностичне заняття.
+    <!-- СВЯТКОВИЙ БАНЕР -->
+    <div class="promo-banner promo-nmt" style="background: linear-gradient(135deg, #fff3f3, #ffebeb); border-color: #ff4757;">
+        <div class="promo-tag" style="background: #ff4757;">З 02.10 по 11.10</div>
+        <h3 style="color: #c0392b; font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0;">🎉 Акція до Дня Вчителя!</h3>
+        <p style="color: var(--text-dark); font-size: 1.05rem; line-height: 1.5; margin-bottom: 20px; font-weight: 600;">
+            Використай промокод <span style="background: var(--brand-yellow); color: var(--brand-blue); padding: 2px 8px; border-radius: 4px; font-weight: 900;">ВЧИТЕЛЬ</span> та отримай <strong>-40%</strong> на всі конспекти на вітрині, або <strong>-20%</strong> на заняття до кінця року!
         </p>
-        <a href="{% url 'booking' %}" class="promo-btn promo-btn-nmt">
-            Забронювати місце 📅
-        </a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'booking' %}" class="promo-btn promo-btn-nmt" style="padding: 10px 15px; font-size: 0.9rem;">Записатись на урок</a>
+            <a href="{% url 'materials_list' %}" class="promo-btn" style="background: var(--brand-blue); color: white; border: 2px solid var(--brand-blue); padding: 10px 15px; font-size: 0.9rem; box-shadow: 4px 4px 0px var(--brand-blue);">На вітрину ➔</a>
+        </div>
     </div>
 
-    <!-- Банер 2: Telegram Бот -->
-    <div class="promo-banner promo-bot">
-        <div class="promo-tag" style="background: #0088cc;">Зручний доступ</div>
-        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 15px 0;">Telegram-бот</h3>
-        <p style="color: var(--text-dark); font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
-            Кишеньковий помічник <span style="color: #0088cc; font-weight: 900;">@do_kvadratu_bot</span>.
-            Твій особистий кабінет, усі придбані конспекти та швидкий зв'язок прямо у твоєму улюбленому месенджері.
+    <!-- Банер 2: Батьківський контроль -->
+    <div class="promo-banner promo-bot" style="background-color: #f0f9ff; border-color: #0088cc;">
+        <div class="promo-tag" style="background: #0088cc;">Спокій та контроль</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0;">👨‍👩‍👧 Дашборд для батьків</h3>
+        <p style="color: var(--text-dark); font-size: 1.05rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600;">
+            Ви завжди знаєте, за що платите. Отримуйте миттєві звіти після кожного уроку: статус домашки, успішність, оцінки за тести та коментарі викладача у власному онлайн-кабінеті.
         </p>
-        <a href="https://t.me/do_kvadratu_bot" target="_blank" class="promo-btn promo-btn-bot">
-            Перейти в бот ➔
+        <a href="https://t.me/do_kvadratu_bot" target="_blank" class="promo-btn promo-btn-bot" style="align-self: flex-start; padding: 10px 15px; font-size: 0.9rem;">
+            Telegram-бот ➔
         </a>
     </div>
 </div>
 
-<!-- FEATURES -->
-<h2 style="text-align: center; color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 40px; font-weight: 900;">Чому саме цей формат?</h2>
+<!-- НОВИЙ БЛОК ПЕРЕВАГ: ПРО ПЛАТФОРМУ -->
+<h2 style="text-align: center; color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 40px; font-weight: 900;">Власна освітня ІТ-платформа</h2>
 <div class="features-grid">
     <div class="feature-card feature-card-test">
-        <div class="feature-icon">📊</div>
-        <h3 style="color: #ff4757; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Розумна Діагностика</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Безкоштовний тест НМТ. Система аналізує "сліпі зони" та рекомендує конспекти саме для ваших слабких тем.</p>
+        <div class="feature-icon">🚀</div>
+        <h3 style="color: #ff4757; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Інтерактивні уроки</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Ніяких нудних PDF та паперових підручників. Ми працюємо на власній платформі з анімаціями, рухомими графіками та вбудованими міні-тестами.</p>
     </div>
 
     <div class="feature-card">
-        <div class="feature-icon">📐</div>
-        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Бездоганний дизайн</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Усі конспекти та буклети мають ідеальну верстку. Графіки, фігури та складні формули виглядають естетично.</p>
+        <div class="feature-icon">🧠</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Розумні тренажери</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Симулятор НМТ, аналізатори формул та генератори текстових задач, які допомагають зрозуміти математику на практиці, а не просто завчити.</p>
     </div>
 
     <div class="feature-card">
-        <div class="feature-icon">🎁</div>
-        <h3 style="color: #27c93f; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Вільний доступ</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Завантажте наші безкоштовні матеріали на вітрині, щоб особисто оцінити якість та зручність формату.</p>
+        <div class="feature-icon">📱</div>
+        <h3 style="color: #27c93f; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Кишеньковий помічник</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Бот <span style="font-weight:bold;">@do_kvadratu_bot</span> забезпечує миттєвий доступ до всіх придбаних конспектів, розкладу та домашок прямо у месенджері.</p>
     </div>
 </div>
 
@@ -391,7 +391,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-dark); line-height: 1.8; font-size: 1.1rem;">
                     <li style="display: flex; gap: 10px; margin-bottom: 15px;">
                         <span style="color: #27c93f; font-weight: 900;">✔</span>
-                        <span><b>7 років</b> досвіду у сфері освіти та приватного репетиторства.</span>
+                        <span><b>7+ років</b> успішного досвіду у сфері освіти та репетиторства.</span>
                     </li>
                     <li style="display: flex; gap: 10px; margin-bottom: 15px;">
                         <span style="color: #27c93f; font-weight: 900;">✔</span>
@@ -407,9 +407,7 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- ОНОВЛЕНО: БЛОК ВІДГУКІВ -->
-<!-- ========================================== -->
+<!-- БЛОК ВІДГУКІВ -->
 {% if general_reviews %}
 <h2 style="text-align: center; color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 40px; font-weight: 900; text-transform: uppercase;">Що кажуть про проєкт</h2>
 <div class="reviews-grid">
