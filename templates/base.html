@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}do_kvadratu{% endblock %}</title>
+
+    <!-- === SEO БЛОК ТА ЗАГОЛОВОК (АКЦЕНТ НА НМТ 2027) === -->
+    <title>{% block title %}ДО КВАДРАТУ | Підготовка до НМТ 2027 з математики{% endblock %}</title>
+
+    {% block seo %}
+    <meta name="description" content="ДО КВАДРАТУ — сучасна освітня ІТ-платформа для підготовки до НМТ 2027 з математики. Авторські конспекти, розумні тренажери та зрозуміле пояснення від репетитора з 7-річним досвідом.">
+    <meta name="keywords" content="підготовка до НМТ 2027, математика НМТ 2027, курси НМТ математика, репетитор з математики, конспекти НМТ математика, тести НМТ">
+    <meta name="author" content="Іван Склянчук">
+
+    <!-- Open Graph (для красивих прев'ю у Telegram, Facebook, Viber) -->
+    <meta property="og:title" content="ДО КВАДРАТУ | Підготовка до НМТ 2027 з математики">
+    <meta property="og:description" content="Сучасна освітня платформа для підготовки до НМТ 2027 з математики. Жодної води — лише чітка структура та практика.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <!-- Бажано створити красиву картинку (1200x630px) і закинути в static/images/ під назвою social_banner.jpg -->
+    <meta property="og:image" content="https://dokvadratu.com.ua/static/images/social_banner.jpg">
+    <meta property="og:site_name" content="ДО КВАДРАТУ">
+    {% endblock %}
+    <!-- =================================================== -->
 
     <!-- Підключаємо фірмовий шрифт Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -306,11 +324,10 @@
         {% endblock %}
     </main>
 
-    <!-- ПІДВАЛ (ОНОВЛЕНО ДЛЯ МОНОБАНКУ) -->
+    <!-- ПІДВАЛ -->
     <footer class="site-footer">
         <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 10px;">© 2026 ДО КВАДРАТУ. Всі права захищено.</div>
 
-        <!-- НОВИЙ БЛОК З КОНТАКТАМИ ДЛЯ МОНОБАНКУ -->
         <div style="font-size: 0.9rem; margin-bottom: 15px; color: #e5e7eb; line-height: 1.5;">
             ФОП Склянчук Іван Вікторович<br>
             Тел: +380974022042 | Email: dokvadratu@gmail.com
