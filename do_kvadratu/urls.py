@@ -117,6 +117,7 @@ urlpatterns = [
     path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
     path('parents/<uuid:parent_token>/lesson/<int:presentation_id>/', parent_view_presentation, name='parent_view_presentation'),
     path('parents/<uuid:parent_token>/review/', submit_parent_review, name='submit_parent_review'),
+    path('sitemap.xml', TemplateView.as_view(template_name="sitemap.xml", content_type="application/xml")),
 ]
 
 if settings.DEBUG:
