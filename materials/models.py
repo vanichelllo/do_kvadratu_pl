@@ -1,3 +1,4 @@
+import datetime
 import os
 import io
 from django.db import models
@@ -98,14 +99,30 @@ class StudyMaterial(models.Model):
 
 class Cart(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
+    promo_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Промокод")
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def get_total_price(self):
+    def get_original_price(self):
+        """Рахує суму без знижки"""
         return sum(item.material.price for item in self.items.all())
+
+    def get_total_price(self):
+        """Рахує фінальну суму зі знижкою 40% для промокоду ВЧИТЕЛЬ"""
+        base_price = self.get_original_price()
+        if self.promo_code and self.promo_code.upper() == 'ВЧИТЕЛЬ':
+            now = timezone.now().date()
+            start_date = datetime.date(2026, 10, 1) # Поставив з сьогоднішнього дня для тестів
+            end_date = datetime.date(2026, 10, 11)
+            if start_date <= now <= end_date:
+                return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
+        return base_price
+
+    def get_discount_amount(self):
+        """Повертає, скільки гривень зекономив учень"""
+        return self.get_original_price() - self.get_total_price()
 
     def __str__(self):
         return f"Кошик користувача {self.user.email}"
-
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')

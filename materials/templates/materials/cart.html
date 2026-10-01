@@ -64,7 +64,7 @@
     .btn-remove:hover { opacity: 0.8; }
 
     .cart-total {
-        margin-top: 30px;
+        margin-top: 20px;
         padding: 25px;
         background: var(--brand-yellow);
         border: 3px solid var(--brand-blue);
@@ -153,15 +153,39 @@
                 </div>
             {% endfor %}
 
+            <!-- ПРОМОКОД -->
+            <div style="background: #f8f9fa; border: 2px dashed var(--brand-blue); border-radius: 12px; padding: 20px; margin-top: 30px;">
+                <h3 style="margin-top: 0; color: var(--brand-blue); font-size: 1.1rem;">🎁 Маєте промокод?</h3>
+                <form method="POST" action="{% url 'cart_detail' %}" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    {% csrf_token %}
+                    {% if cart.get_discount_amount > 0 %}
+                        <div style="flex: 1; min-width: 200px; padding: 10px 15px; background: #eafaf1; border: 2px solid #27c93f; border-radius: 8px; color: #27c93f; font-weight: 800; display: flex; align-items: center;">
+                            ✅ АКТИВОВАНО: {{ cart.promo_code }} (-40%)
+                        </div>
+                        <input type="hidden" name="action" value="remove_promo">
+                        <button type="submit" style="background: #ff5f56; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Скасувати</button>
+                    {% else %}
+                        <input type="hidden" name="action" value="apply_promo">
+                        <input type="text" name="promo_code" placeholder="Введіть промокод" required style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid var(--brand-blue); border-radius: 8px; font-size: 1rem; font-weight: 800; outline: none; text-transform: uppercase;">
+                        <button type="submit" style="background: var(--brand-blue); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Застосувати</button>
+                    {% endif %}
+                </form>
+            </div>
+
             <!-- Підсумок -->
             <div class="cart-total">
                 <span style="font-size: 1.2rem; font-weight: 800; color: var(--brand-blue); text-transform: uppercase;">До сплати:</span>
-                <span style="font-size: 2.5rem; font-weight: 900; color: var(--brand-blue); display: block;">{{ cart.get_total_price }} ₴</span>
+                {% if cart.get_discount_amount > 0 %}
+                    <span style="font-size: 1.3rem; color: #ff5f56; text-decoration: line-through; display: block; margin-bottom: -5px; font-weight: 800;">{{ cart.get_original_price }} ₴</span>
+                    <span style="font-size: 3rem; font-weight: 900; color: #27c93f; display: block;">{{ cart.get_total_price }} ₴</span>
+                    <div style="color: var(--brand-blue); font-weight: 800; font-size: 1rem; margin-top: 5px;">Ваша економія: <span style="background: white; padding: 2px 8px; border-radius: 4px; color: #27c93f;">{{ cart.get_discount_amount }} ₴</span> 🔥</div>
+                {% else %}
+                    <span style="font-size: 3rem; font-weight: 900; color: var(--brand-blue); display: block;">{{ cart.get_total_price }} ₴</span>
+                {% endif %}
             </div>
 
             <h3 style="text-align: center; margin-top: 40px; color: var(--text-dark);">💳 Оберіть спосіб оплати:</h3>
 
-            <!-- НОВИЙ БЛОК: Обов'язкова галочка (Чекбокс) -->
             <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 2px dashed var(--brand-blue); border-radius: 12px; text-align: center;">
                 <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-dark);">
                     <input type="checkbox" id="agree-checkbox" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--brand-blue);">
@@ -174,17 +198,12 @@
             </div>
 
             <div class="payment-options">
-                <!-- Кнопка Монобанк (додано onclick) -->
                 <a href="{% url 'pay_with_mono' %}" class="btn-pay-mono" onclick="return checkAgreement(event);">
-                    <span style="font-size: 1.5rem;">🐈</span>
-                    Оплатити картою
+                    <span style="font-size: 1.5rem;">🐈</span> Оплатити картою
                     <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
                 </a>
-
-                <!-- Кнопка Баланс (додано onclick) -->
                 <a href="{% url 'pay_from_balance' %}" class="btn-pay-balance" onclick="return checkAgreement(event);">
-                    <span style="font-size: 1.5rem;">💵</span>
-                    Списати з балансу
+                    <span style="font-size: 1.5rem;">💵</span> Списати з балансу
                     <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0.00" }} ₴</span>
                 </a>
             </div>
@@ -201,12 +220,10 @@
     </div>
 </div>
 
-<!-- СКРИПТ ПЕРЕВІРКИ ГАЛОЧКИ -->
 <script>
     function checkAgreement(event) {
         const checkbox = document.getElementById('agree-checkbox');
         if (!checkbox.checked) {
-            // Зупиняємо перехід за посиланням
             event.preventDefault();
             alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності.");
             return false;

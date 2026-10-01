@@ -139,7 +139,12 @@
         </div>
 
         <!-- ДИНАМІЧНИЙ БЛОК: ПАКЕТ АБО СТАНДАРТНА ЦІНА -->
-        {% if material.is_bundle and material.included_materials.all %}
+        <!-- Виправлення: перевіряємо, чи матеріал не є безкоштовним, перш ніж виводити ціну та знижки -->
+        {% if material.is_free or material.price == 0 %}
+             <div class="detail-price" style="background-image: none; background-color: rgba(39, 201, 63, 0.1); border-color: #27c93f;">
+                <span style="color: #27c93f; font-size: 2.5rem;">БЕЗКОШТОВНО</span>
+             </div>
+        {% elif material.is_bundle and material.included_materials.all %}
             <!-- Блок "Що входить у пакет" -->
             <div style="margin-top: 30px; margin-bottom: 30px; background: #ffffff; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 25px; box-shadow: 6px 6px 0px var(--brand-yellow);">
                 <h3 style="color: var(--brand-blue); margin-top: 0; margin-bottom: 20px; font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">
@@ -181,11 +186,7 @@
         {% else %}
             <!-- Стандартний блок з ціною (для звичайних конспектів) -->
             <div class="detail-price">
-                {% if material.is_free %}
-                    <span style="color: #27c93f;">БЕЗКОШТОВНО</span>
-                {% else %}
-                    {{ material.price }} <span style="font-size: 1.5rem;">UAH</span>
-                {% endif %}
+                {{ material.price }} <span style="font-size: 1.5rem;">UAH</span>
             </div>
         {% endif %}
 
@@ -202,7 +203,7 @@
             {% else %}
                 <!-- Якщо ще не купив -->
                 <a href="{% url 'add_to_cart' material.id %}" class="btn-buy" style="display: block; text-align: center;">
-                    {% if material.is_free %}ОТРИМАТИ БЕЗКОШТОВНО{% else %}🛒 ДОДАТИ В КОШИК{% endif %}
+                    {% if material.is_free or material.price == 0 %}ОТРИМАТИ БЕЗКОШТОВНО{% else %}🛒 ДОДАТИ В КОШИК{% endif %}
                 </a>
             {% endif %}
         {% else %}

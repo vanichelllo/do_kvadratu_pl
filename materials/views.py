@@ -381,8 +381,36 @@ def practice_session_view(request, material_id):
 @login_required
 def cart_detail(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
-    return render(request, 'materials/cart.html', {'cart': cart})
 
+    # Обробка застосування/скасування промокоду
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'apply_promo':
+            promo = request.POST.get('promo_code', '').strip().upper()
+            if promo == 'ВЧИТЕЛЬ':
+                now = timezone.now().date()
+                start_date = datetime.date(2026, 10, 1)
+                end_date = datetime.date(2026, 10, 11)
+
+                if start_date <= now <= end_date:
+                    cart.promo_code = promo
+                    cart.save()
+                    messages.success(request, "🎉 Промокод ВЧИТЕЛЬ успішно застосовано! Ваша знижка 40%.")
+                elif now < start_date:
+                    messages.error(request, "⏳ Цей промокод почне діяти з 2 жовтня!")
+                else:
+                    messages.error(request, "❌ Термін дії цього промокоду минув.")
+            else:
+                messages.error(request, "❌ Невірний промокод.")
+
+        elif action == 'remove_promo':
+            cart.promo_code = None
+            cart.save()
+            messages.info(request, "Промокод скасовано.")
+
+        return redirect('cart_detail')
+
+    return render(request, 'materials/cart.html', {'cart': cart})
 
 @login_required
 def add_to_cart(request, material_id):
