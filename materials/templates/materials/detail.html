@@ -200,6 +200,10 @@
                 <a href="{% url 'cabinet' %}" class="btn-buy" style="margin-top: 15px; background-color: var(--brand-yellow); color: var(--brand-blue);">
                     ВІДКРИТИ В КАБІНЕТІ
                 </a>
+            {% elif not material.is_published %}
+                <div style="text-align: center; background-color: #f8f9fa; color: #6c757d; font-weight: 800; padding: 15px; border-radius: 8px; border: 2px dashed #ccc;">
+                    Матеріал не опубліковано на вітрині
+                </div>
             {% else %}
                 <!-- Якщо ще не купив -->
                 <form method="POST" action="{% url 'add_to_cart' material.id %}" style="margin: 0;">

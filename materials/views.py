@@ -10,8 +10,10 @@ import requests
 import json
 import time
 import random  # ДОДАНО ДЛЯ ГЕНЕРАЦІЇ ПРАКТИКИ
+from functools import wraps
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.http import HttpResponse, JsonResponse, FileResponse, Http404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -19,12 +21,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, Q, When
+from django.db.models import Case, F, When
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import F
 
 from users.forms import UserProfileForm
 from .forms import StudentReportForm
@@ -45,12 +45,33 @@ def is_teacher(user):
     return user.is_authenticated and (user.is_superuser or user.is_staff)
 
 
+MAX_DB_INT = 2 ** 63 - 1
+
+
 def to_int(value):
-    """int із даних форми; None для порожніх або зіпсованих значень замість помилки 500."""
+    """int із даних форми; None для порожніх, зіпсованих або завеликих значень замість помилки 500."""
     try:
-        return int(value)
+        number = int(value)
     except (TypeError, ValueError):
         return None
+    return number if -MAX_DB_INT <= number <= MAX_DB_INT else None
+
+
+def post_required(redirect_to):
+    """Дія лише через POST (захист від CSRF через посилання). GET — напр. повтор після входу
+    за ?next= — нічого не робить і повертає на зрозумілу сторінку замість порожньої 405."""
+    def decorator(view):
+        @wraps(view)
+        def wrapper(request, *args, **kwargs):
+            if request.method != 'POST':
+                return redirect(redirect_to(**kwargs) if callable(redirect_to) else redirect_to)
+            return view(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def material_page(material_id, **kwargs):
+    return reverse('material_detail', args=[material_id])
 
 
 def parse_id_list(ids_str):
@@ -78,11 +99,13 @@ def user_owns_material(user, material):
     коли куплено всі матеріали, що в нього входять."""
     if not user.is_authenticated:
         return False
+    if user.purchased_materials.filter(id=material.id).exists():
+        return True  # зокрема пакет, виданий напряму через адмінку
     if material.is_bundle:
         included_ids = list(material.included_materials.values_list('id', flat=True))
         return bool(included_ids) and \
             user.purchased_materials.filter(id__in=included_ids).count() == len(included_ids)
-    return user.purchased_materials.filter(id=material.id).exists()
+    return False
 
 
 def safe_back_url(request, fallback='cabinet'):
@@ -284,10 +307,10 @@ def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
     if not (material.is_free or is_teacher(request.user) or user_owns_material(request.user, material)):
+        if not material.is_published:
+            raise Http404("Матеріал не знайдено.")
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
-        if material.is_published:
-            return redirect('material_detail', pk=material.id)
-        return redirect('cabinet')
+        return redirect('material_detail', pk=material.id)
 
     if request.method == 'POST':
         total_score = 0
@@ -300,7 +323,11 @@ def practice_session_view(request, material_id):
         question_ids_str = request.POST.get('question_ids', '')
         saved_answers['question_ids'] = question_ids_str
 
+        # Лише завдання цього уроку: id приходять з форми, тож без фільтра можна
+        # було б підставити завдання з іншого (некупленого) уроку й побачити відповіді
         questions = questions_in_order(parse_id_list(question_ids_str))
+        if questions:
+            questions = questions.filter(materials=material).distinct()
 
         for q in questions:
             q_result = {
@@ -461,7 +488,7 @@ def cart_detail(request):
     return render(request, 'materials/cart.html', {'cart': cart})
 
 @login_required
-@require_POST
+@post_required(material_page)
 def add_to_cart(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
 
@@ -491,7 +518,7 @@ def add_to_cart(request, material_id):
 
 
 @login_required
-@require_POST
+@post_required('cart_detail')
 def remove_from_cart(request, item_id):
     cart = get_object_or_404(Cart, user=request.user)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
@@ -573,15 +600,13 @@ class MaterialDetailView(DetailView):
     template_name = 'materials/detail.html'
     context_object_name = 'material'
 
-    def get_queryset(self):
+    def get_object(self, queryset=None):
         # Неопубліковані матеріали бачать лише персонал і ті, хто їх уже має
+        material = super().get_object(queryset)
         user = self.request.user
-        if is_teacher(user):
-            return StudyMaterial.objects.all()
-        visible = Q(is_published=True)
-        if user.is_authenticated:
-            visible |= Q(id__in=user.purchased_materials.values('id'))
-        return StudyMaterial.objects.filter(visible)
+        if not (material.is_published or is_teacher(user) or user_owns_material(user, material)):
+            raise Http404("Матеріал не знайдено.")
+        return material
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -666,7 +691,7 @@ def download_material_view(request, material_id):
 
 
 @login_required(login_url='/login/')
-@require_POST
+@post_required(material_page)
 def buy_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
     my_user = request.user
@@ -741,7 +766,7 @@ def api_bot_user_library(request, telegram_id):
 
 
 @login_required
-@require_POST
+@post_required('cart_detail')
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
 
@@ -811,7 +836,7 @@ def send_telegram_notification(message):
 
 
 @login_required
-@require_POST
+@post_required('cart_detail')
 def pay_with_mono(request):
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
@@ -1008,10 +1033,10 @@ def mono_webhook(request):
                     order.user.purchased_materials.add(material)
 
             CartItem.objects.filter(cart__user=order.user, material__in=materials).delete()
-            msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
+            msg = f"🛒 Нова покупка!\nУчень: {html.escape(order.user.email)}\nОплачено: {order.total_amount} ₴"
         else:
             User.objects.filter(pk=order.user_id).update(balance=F('balance') + int(order.total_amount))
-            msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
+            msg = f"💰 Нове поповнення!\nУчень: {html.escape(order.user.email)}\nСума: {order.total_amount} ₴"
 
     send_telegram_notification(msg)
     return HttpResponse("OK", status=200)
@@ -1059,7 +1084,7 @@ def parse_rating(value):
 
 
 @login_required
-@require_POST
+@post_required('cabinet')
 def submit_review(request):
     rating = parse_rating(request.POST.get('rating', 5))
     text = request.POST.get('text', '').strip()
@@ -1265,7 +1290,7 @@ def parent_view_presentation(request, parent_token, presentation_id):
     return render(request, 'materials/reader.html', context)
 
 @login_required
-@require_POST
+@post_required('cabinet')
 def add_quick_report(request):
     if not is_teacher(request.user):
         return redirect('cabinet')
@@ -1284,7 +1309,7 @@ def add_quick_report(request):
 
 
 @login_required
-@require_POST
+@post_required('cabinet')
 def add_nmt_score(request):
     if not is_teacher(request.user):
         return redirect('cabinet')

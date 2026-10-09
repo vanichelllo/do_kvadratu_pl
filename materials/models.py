@@ -292,12 +292,16 @@ class Review(models.Model):
         verbose_name = "Відгук"
         verbose_name_plural = "Відгуки"
 
+    # Поле reviewer_name з'явилось 22.09.2026; старші відгуки отримали «Анонім» за замовчуванням
+    REVIEWER_NAME_ADDED_AT = datetime.datetime(2026, 9, 22, 16, 40, tzinfo=datetime.timezone.utc)
+
     @property
     def display_name(self):
-        """Ім'я, яке автор вписав сам; для старих відгуків (до появи поля) — ім'я з профілю."""
-        if self.reviewer_name and self.reviewer_name != "Анонім":
-            return self.reviewer_name
-        return self.user.first_name or "Учень"
+        """Ім'я, яке автор вписав сам. Лише для старих відгуків (до появи поля) — ім'я з профілю,
+        щоб не розкривати справжнє ім'я того, хто свідомо підписався «Анонім»."""
+        if self.reviewer_name == "Анонім" and self.created_at and self.created_at < self.REVIEWER_NAME_ADDED_AT:
+            return self.user.first_name or "Учень"
+        return self.reviewer_name or "Учень"
 
     def __str__(self):
         target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"

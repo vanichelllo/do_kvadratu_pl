@@ -1,4 +1,5 @@
 import base64
+import datetime
 import hashlib
 import json
 from unittest import mock
@@ -156,7 +157,7 @@ class PayFromBalanceTests(BaseTestCase):
         CartItem.objects.create(cart=cart, material=material)
         self.client.force_login(user)
 
-        self.assertEqual(self.client.get('/cart/pay/balance/').status_code, 405)  # GET не платить
+        self.assertRedirects(self.client.get('/cart/pay/balance/'), '/cart/')  # GET не платить
         self.client.post('/cart/pay/balance/')
         self.client.post('/cart/pay/balance/')  # повторний клік нічого не списує
 
@@ -223,7 +224,8 @@ class ReviewTests(BaseTestCase):
     @mock.patch('materials.views.send_telegram_notification')
     def test_home_shows_reviewer_name_not_profile_name(self, notify):
         Review.objects.create(user=self.user, reviewer_name='Мама Тараса', text='Дякуємо', is_approved=True)
-        Review.objects.create(user=self.user, text='Старий відгук', is_approved=True)  # reviewer_name = «Анонім»
+        old = Review.objects.create(user=self.user, text='Старий відгук', is_approved=True)  # reviewer_name = «Анонім»
+        Review.objects.filter(id=old.id).update(created_at=datetime.datetime(2026, 9, 1, tzinfo=datetime.timezone.utc))
         page = self.client.get('/')
         self.assertContains(page, 'Мама Тараса')
         self.assertContains(page, 'Профіль')  # старий відгук показує ім'я з профілю, як і раніше
@@ -276,12 +278,15 @@ class PurchaseAccessTests(BaseTestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, 850)
 
-    def test_state_changing_endpoints_reject_get(self):
+    def test_state_changing_endpoints_ignore_get(self):
         cart = Cart.objects.create(user=self.user)
         item = CartItem.objects.create(cart=cart, material=self.lesson1)
-        for url in (f'/cart/add/{self.lesson2.id}/', f'/cart/remove/{item.id}/', '/cart/pay/balance/',
-                    '/cart/pay/mono/', f'/buy/{self.lesson2.id}/'):
-            self.assertEqual(self.client.get(url).status_code, 405, url)
+        expected = {f'/cart/add/{self.lesson2.id}/': f'/material/{self.lesson2.id}/',
+                    f'/cart/remove/{item.id}/': '/cart/', '/cart/pay/balance/': '/cart/', '/cart/pay/mono/': '/cart/',
+                    f'/buy/{self.lesson2.id}/': f'/material/{self.lesson2.id}/'}
+        for url, target in expected.items():
+            self.assertRedirects(self.client.get(url), target, fetch_redirect_response=False, msg_prefix=url)
+        self.assertFalse(CartItem.objects.filter(material=self.lesson2).exists())
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, 1000)
         self.assertTrue(CartItem.objects.filter(id=item.id).exists())
@@ -300,6 +305,42 @@ class PurchaseAccessTests(BaseTestCase):
 
         self.user.purchased_materials.add(hidden)
         self.assertEqual(self.client.get(f'/material/{hidden.id}/').status_code, 200)
+
+    def test_owner_of_unpublished_bundle_sees_it(self):
+        self.user.purchased_materials.add(self.lesson1, self.lesson2)
+        StudyMaterial.objects.filter(id=self.bundle.id).update(is_published=False)
+        self.assertContains(self.client.get(f'/material/{self.bundle.id}/'), 'ВИ ВЖЕ ПРИДБАЛИ')
+
+    def test_staff_preview_of_unpublished_has_no_buy_button(self):
+        hidden = StudyMaterial.objects.create(title='Чернетка', price=100, is_published=False)
+        self.user.is_staff = True
+        self.user.save()
+        page = self.client.get(f'/material/{hidden.id}/')
+        self.assertContains(page, 'не опубліковано')
+        self.assertNotContains(page, 'ДОДАТИ В КОШИК')
+
+    def test_bundle_granted_directly_counts_as_owned(self):
+        self.user.purchased_materials.add(self.bundle)
+        self.assertContains(self.client.get(f'/material/{self.bundle.id}/'), 'ВИ ВЖЕ ПРИДБАЛИ')
+        self.client.post(f'/cart/add/{self.bundle.id}/')
+        self.assertFalse(CartItem.objects.filter(material=self.bundle).exists())
+
+    def test_practice_of_unpublished_material_is_404_without_title_leak(self):
+        hidden = StudyMaterial.objects.create(title='Секретна тема', price=100, is_published=False)
+        response = self.client.get(f'/practice/{hidden.id}/', follow=True)
+        self.assertEqual(response.status_code, 404)
+        self.assertNotContains(response, 'Секретна тема', status_code=404)
+
+    def test_practice_post_ignores_questions_from_other_lessons(self):
+        own = Question.objects.create(text='own', question_type='SHORT', correct_short_answer='1')
+        own.materials.add(self.lesson1)
+        foreign = Question.objects.create(text='foreign', question_type='SHORT', correct_short_answer='SECRET-42')
+        foreign.materials.add(self.lesson2)
+        self.user.purchased_materials.add(self.lesson1)
+
+        response = self.client.post(f'/practice/{self.lesson1.id}/', {'question_ids': f'{own.id},{foreign.id}'})
+        self.assertNotContains(response, 'SECRET-42')
+        self.assertEqual(response.context['max_score'], 2)
 
     def test_practice_requires_purchase(self):
         question = Question.objects.create(text='2+2', question_type='SHORT', correct_short_answer='4')
@@ -345,7 +386,7 @@ class AnswerCheckingTests(BaseTestCase):
 
     def test_garbage_input_does_not_crash(self):
         response = self.client.post('/diagnostic/', {
-            'question_ids': f'abc,{self.q1.id},,{self.match.id}',
+            'question_ids': f'abc,{self.q1.id},,{self.match.id},99999999999999999999999',
             f'question_{self.q1.id}': 'xyz',
             f'match_{self.match_item.id}': 'not-a-number',
         })
@@ -414,3 +455,14 @@ class TopupTests(BaseTestCase):
         self.assertEqual(response.url, 'https://pay.mbnk.biz/x')
         self.assertEqual(mono_post.call_args.kwargs['json']['amount'], 25000)
         self.assertIn('timeout', mono_post.call_args.kwargs)
+
+
+class ReviewDisplayNameTests(BaseTestCase):
+    def test_anonymous_choice_is_respected_for_new_reviews(self):
+        user = self.make_user('anon@example.com', first_name='Тарас')
+        review = Review.objects.create(user=user, reviewer_name='Анонім', text='t', is_approved=True)
+        self.assertEqual(review.display_name, 'Анонім')
+
+        Review.objects.filter(id=review.id).update(created_at=datetime.datetime(2026, 9, 1, tzinfo=datetime.timezone.utc))
+        review.refresh_from_db()
+        self.assertEqual(review.display_name, 'Тарас')  # старий відгук до появи поля

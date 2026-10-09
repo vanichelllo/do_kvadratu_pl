@@ -76,6 +76,20 @@ class BotHandlerTests(SimpleTestCase):
         self.assertTrue(any('текстом' in getattr(m, 'text', '') for m in self.sent))
         self.assertEqual(self.run_async(self.state().get_state()), QuizFSM.answering_short.state)
 
+    def test_sticker_on_button_question_asks_for_button(self):
+        self.run_async(self.state().set_state(QuizFSM.answering_choice))
+        self.feed(self.message_update(sticker={'file_id': 'x', 'file_unique_id': 'y', 'type': 'regular',
+                                               'width': 1, 'height': 1, 'is_animated': False, 'is_video': False}))
+        self.feed(self.message_update(text='8'))
+        replies = [m.text for m in self.sent if hasattr(m, 'text')]
+        self.assertEqual(len(replies), 2)
+        self.assertTrue(all('кнопкою' in r for r in replies))
+
+    def test_service_message_ignored(self):
+        self.run_async(self.state().set_state(QuizFSM.answering_short))
+        self.feed(self.message_update(new_chat_title='x'))
+        self.assertEqual(self.sent, [])
+
     def test_support_question_escapes_html_for_admin(self):
         self.run_async(self.state().set_state(SupportFSM.waiting_for_question))
         self.feed(self.message_update(text='Чому 2 < 3 & <b>?'))
@@ -93,3 +107,18 @@ class ShortAnswerNormalizeTests(SimpleTestCase):
         self.assertEqual(normalize_short_answer(' 2,5 '), normalize_short_answer('2.5'))
         self.assertEqual(normalize_short_answer('10 200'), normalize_short_answer('10200'))
         self.assertEqual(normalize_short_answer('Б А В'), normalize_short_answer('бав'))
+
+    def test_separators_and_trailing_dot_accepted(self):
+        for typed in ('Б, А, В', 'Б,А,В', 'б.а.в', 'б-а-в', 'бав.'):
+            self.assertEqual(normalize_short_answer(typed), normalize_short_answer('бав'), typed)
+        self.assertEqual(normalize_short_answer('14.'), normalize_short_answer('14'))
+
+    def test_wrong_numbers_still_rejected(self):
+        self.assertNotEqual(normalize_short_answer('1,4'), normalize_short_answer('14'))
+        self.assertNotEqual(normalize_short_answer('2.40'), normalize_short_answer('240'))
+
+    def test_all_quiz_answers_match_themselves_typed_with_commas(self):
+        for q in DIAGNOSTIC_QUESTIONS:
+            if q['type'] != 'choice' and not str(q['ans']).isdigit():
+                typed = ', '.join(str(q['ans']).upper())
+                self.assertEqual(normalize_short_answer(typed), normalize_short_answer(q['ans']), typed)

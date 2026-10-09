@@ -1,5 +1,6 @@
 import html
 import io
+import re
 import aiohttp
 from pypdf import PdfReader, PdfWriter
 
@@ -255,7 +256,11 @@ async def process_quiz_choice(callback: types.CallbackQuery, state: FSMContext):
 
 
 def normalize_short_answer(text):
-    return str(text).lower().replace(" ", "").replace(",", ".").strip()
+    s = str(text).lower().replace(" ", "").replace(",", ".").strip().rstrip(".")
+    if not re.search(r"\d", s):
+        # Відповіді-відповідності («бав»): учні часто пишуть «Б, А, В» або «б.а.в»
+        s = re.sub(r"[.;:\-/]", "", s)
+    return s
 
 
 @router.message(QuizFSM.answering_short, F.text)
@@ -502,6 +507,13 @@ async def enroll_phone(message: types.Message, state: FSMContext):
         parse_mode="HTML", reply_markup=builder.as_markup())
 
 
+# ─── ТЕКСТ ЗАМІСТЬ КНОПКИ ────────────────────────────────────
+@router.message(QuizFSM.answering_choice, F.text & ~F.text.startswith('/'))
+@router.message(EnrollFSM.role, F.text & ~F.text.startswith('/'))
+async def text_instead_of_button(message: types.Message):
+    await message.answer("Будь ласка, оберіть варіант кнопкою вище 👆")
+
+
 # ─── ПЕРЕХОПЛЮВАЧ УСІХ ПОВІДОМЛЕНЬ ──────────────────────────
 @router.message(F.text & ~F.text.startswith('/'))
 async def catch_all_text(message: types.Message, state: FSMContext):
@@ -528,9 +540,20 @@ async def catch_all_text(message: types.Message, state: FSMContext):
         )
 
 
-# ─── НЕ-ТЕКСТ ПІД ЧАС КВІЗУ / АНКЕТИ ─────────────────────────
+# ─── НЕ ТА ВІДПОВІДЬ ПІД ЧАС КВІЗУ / АНКЕТИ ──────────────────
+BUTTON_STATES = {QuizFSM.answering_choice.state, EnrollFSM.role.state}
+USER_CONTENT_TYPES = {"sticker", "photo", "video", "voice", "audio", "document", "animation", "video_note",
+                      "contact", "location", "venue", "poll", "dice"}
+
+
 @router.message(~F.text)
 async def non_text_in_dialog(message: types.Message, state: FSMContext):
-    # Стікер чи фото замість відповіді раніше валили обробник (message.text = None)
-    if await state.get_state() is not None:
+    # Стікер чи фото замість відповіді раніше валили обробник (message.text = None).
+    # Службові повідомлення (напр. закріплення) ігноруємо.
+    current_state = await state.get_state()
+    if current_state is None or message.content_type not in USER_CONTENT_TYPES:
+        return
+    if current_state in BUTTON_STATES:
+        await message.answer("Будь ласка, оберіть варіант кнопкою вище 👆")
+    else:
         await message.answer("Будь ласка, надішліть відповідь текстом 🙂")
