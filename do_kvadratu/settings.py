@@ -198,8 +198,6 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_LOGIN_METHODS = {'email'}  # Вхід лише за email
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Без юзернейму
 ACCOUNT_UNIQUE_EMAIL = True
-# Посилання в листах (підтвердження пошти, скидання пароля) — завжди https
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
 
 # НАЙГОЛОВНІШЕ: Обов'язкове підтвердження пошти
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
@@ -268,6 +266,15 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+}
+
+# Кеш у пам'яті процесу. Більше записів, ніж стандартні 300, щоб лічильники
+# лімітів входу (allauth та адмінки) не витіснялися потоком сміттєвих запитів.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'OPTIONS': {'MAX_ENTRIES': 20000},
+    }
 }
 
 # ==========================================

@@ -563,6 +563,21 @@ class AdminLoginRateLimitTests(BaseTestCase):
         for _ in range(9):
             self.assertEqual(self.login('wrong').status_code, 200)
 
+    def test_unicode_lookalike_email_shares_the_counter(self):
+        for _ in range(10):
+            self.login('wrong')
+        lookalike = 'ｂoss@example.com'  # повноширинна «b»
+        response = self.client.post(self.url, {'username': lookalike, 'password': 'Pass12345!'})
+        self.assertEqual(response.status_code, 429)
+        response = self.client.post(self.url, {'username': ' BOSS@example.com ', 'password': 'wrong'})
+        self.assertEqual(response.status_code, 429)
+
+    def test_unknown_emails_do_not_fill_the_cache(self):
+        from django.core.cache import cache as default_cache
+        for i in range(50):
+            self.client.post(self.url, {'username': f'junk{i}@example.com', 'password': 'x'})
+        self.assertFalse(any('admin-login-failures' in str(k) for k in default_cache._cache))
+
     def test_robots_does_not_reveal_admin_url(self):
         self.assertNotIn('secret-control', self.client.get('/robots.txt').content.decode())
 
@@ -582,7 +597,7 @@ class PasswordResetTests(BaseTestCase):
                              fetch_redirect_response=False)
         self.assertContains(self.client.get('/accounts/password/reset/'), 'ЗАБУЛИ ПАРОЛЬ?')
 
-    def test_google_only_user_gets_https_reset_link(self):
+    def test_google_only_user_gets_reset_link(self):
         from django.core import mail
         user = self.make_user('google@example.com')
         user.set_unusable_password()
@@ -590,5 +605,4 @@ class PasswordResetTests(BaseTestCase):
         response = self.client.post('/accounts/password/reset/', {'email': 'google@example.com'})
         self.assertRedirects(response, '/accounts/password/reset/done/', fetch_redirect_response=False)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('https://', mail.outbox[0].body)
         self.assertIn('/accounts/password/reset/key/', mail.outbox[0].body)

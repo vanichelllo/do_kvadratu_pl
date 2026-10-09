@@ -114,7 +114,7 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     list_filter = ('is_published', 'category')
     search_fields = ('title',)
     # Дію «Імпортувати з Excel» прибрано: вона ставила всім конспектам ціну 25 грн
-    # і публікувала приховані. Нові матеріали завантажуються через run_import.py.
+    # і публікувала приховані. Нові матеріали додаються тут вручну (кнопка «Додати»).
 
 
 admin.site.register(StudyMaterial, StudyMaterialAdmin)
