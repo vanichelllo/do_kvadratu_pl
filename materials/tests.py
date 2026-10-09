@@ -606,3 +606,62 @@ class PasswordResetTests(BaseTestCase):
         self.assertRedirects(response, '/accounts/password/reset/done/', fetch_redirect_response=False)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('/accounts/password/reset/key/', mail.outbox[0].body)
+
+
+class ImportMaterialsCommandTests(BaseTestCase):
+    """Команду запускає Render при кожному деплої (Build Command: ./build.sh && python manage.py import_materials)."""
+
+    def setUp(self):
+        import os
+        import tempfile
+        from openpyxl import Workbook
+        from pypdf import PdfWriter
+
+        self.tmp = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.tmp, 'import_files'))
+        wb = Workbook()
+        ws = wb.active
+        ws.append(['Назва матеріалу', 'Ціна', 'Файл', 'Безкоштовно (1/0)', 'Пакет (1/0)'])
+        ws.append(['1. Числові множини', 0, '1. Числові множини.pdf', 1, 0])
+        ws.append(['2. Нова тема', 19, '2. Нова тема.pdf', 0, 0])
+        ws.append(['Вся алгебра для НМТ', 399, 'Bundle_01.pdf', 0, 1])
+        wb.save(os.path.join(self.tmp, 'matrix.xlsx'))
+        writer = PdfWriter()
+        writer.add_blank_page(width=100, height=100)
+        with open(os.path.join(self.tmp, 'import_files', '2. Нова тема.pdf'), 'wb') as f:
+            writer.write(f)
+
+        self.old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, self.old_cwd)
+
+        from django.core.files.storage import InMemoryStorage
+        patcher = mock.patch.object(StudyMaterial._meta.get_field('file'), 'storage', InMemoryStorage())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def run_command(self):
+        from django.core.management import call_command
+        from io import StringIO
+        out = StringIO()
+        call_command('import_materials', stdout=out)
+        return out.getvalue()
+
+    def test_existing_materials_are_not_touched(self):
+        existing = StudyMaterial.objects.create(title='1. Числові множини', price=99, is_published=False,
+                                                is_free=False)
+        self.run_command()
+        existing.refresh_from_db()
+        self.assertEqual((existing.price, existing.is_published, existing.is_free), (99, False, False))
+        self.assertFalse(existing.file)
+
+    def test_new_rows_are_created_once(self):
+        self.run_command()
+        self.run_command()
+        self.assertEqual(StudyMaterial.objects.count(), 3)
+        new = StudyMaterial.objects.get(title='2. Нова тема')
+        self.assertEqual((new.price, new.is_published, new.is_free), (25, True, False))
+        self.assertTrue(new.file)
+        bundle = StudyMaterial.objects.get(title='Вся алгебра для НМТ')
+        self.assertEqual((bundle.price, bundle.is_bundle), (399, True))
+        self.assertFalse(bundle.file)  # PDF немає — матеріал створено без файлу
