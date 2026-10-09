@@ -103,6 +103,11 @@ class Cart(models.Model):
     PROMO_END = datetime.date(2026, 10, 11)
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
+
+    @classmethod
+    def promo_is_active(cls):
+        return cls.PROMO_START <= timezone.localdate() <= cls.PROMO_END
+
     promo_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Промокод")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -114,7 +119,7 @@ class Cart(models.Model):
         """Рахує фінальну суму зі знижкою 40% для промокоду ВЧИТЕЛЬ"""
         base_price = self.get_original_price()
         if self.promo_code and self.promo_code.upper() == self.PROMO_CODE:
-            if self.PROMO_START <= timezone.localdate() <= self.PROMO_END:
+            if self.promo_is_active():
                 return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
         return base_price
 

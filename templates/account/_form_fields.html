@@ -1,0 +1,10 @@
+{% if form.non_field_errors %}
+    <p class="auth-error" style="text-align: center;">{{ form.non_field_errors.0 }}</p>
+{% endif %}
+{% for field in form %}
+    <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<span class="auth-error">{{ field.errors.0 }}</span>{% endif %}
+    </p>
+{% endfor %}

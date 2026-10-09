@@ -644,6 +644,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         # 2. Інші дані кабінету
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
+        context['course_choices'] = TutorStudentRequest.COURSE_CHOICES
 
         # 3. Індивідуальні презентації
         context['personal_presentations'] = self.request.user.personal_presentations.all()

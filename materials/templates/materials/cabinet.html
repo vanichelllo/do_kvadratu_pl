@@ -297,11 +297,11 @@
                             </td>
                             <td>
                                 {% if st.course != 'nmt' %}
-                                <button type="button" onclick="openReportForm('{{ st.id }}', '{{ st.real_name }}')" style="background: var(--brand-blue); color: var(--brand-yellow); border: 2px solid var(--brand-blue); border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='var(--brand-yellow)'; this.style.color='var(--brand-blue)';" onmouseout="this.style.background='var(--brand-blue)'; this.style.color='var(--brand-yellow)';">
+                                <button type="button" data-student-id="{{ st.id }}" data-student-name="{{ st.real_name }}" onclick="openReportForm(this.dataset.studentId, this.dataset.studentName)" style="background: var(--brand-blue); color: var(--brand-yellow); border: 2px solid var(--brand-blue); border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='var(--brand-yellow)'; this.style.color='var(--brand-blue)';" onmouseout="this.style.background='var(--brand-blue)'; this.style.color='var(--brand-yellow)';">
                                     + Звіт
                                 </button>
                                 {% else %}
-                                <button type="button" onclick="openNmtForm('{{ st.id }}', '{{ st.real_name }}')" style="background: #27c93f; color: white; border: 2px solid #27c93f; border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='white'; this.style.color='#27c93f';" onmouseout="this.style.background='#27c93f'; this.style.color='white';">
+                                <button type="button" data-student-id="{{ st.id }}" data-student-name="{{ st.real_name }}" onclick="openNmtForm(this.dataset.studentId, this.dataset.studentName)" style="background: #27c93f; color: white; border: 2px solid #27c93f; border-radius: 6px; padding: 6px 12px; font-weight: 900; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; transition: 0.2s;" onmouseover="this.style.background='white'; this.style.color='#27c93f';" onmouseout="this.style.background='#27c93f'; this.style.color='white';">
                                     + Бал (На уроці)
                                 </button>
                                 {% endif %}
@@ -445,14 +445,9 @@
 
                     <select name="course" required style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; background: white;">
                         <option value="" disabled selected>-- Оберіть свій напрямок --</option>
-                        <option value="nmt">Підготовка до НМТ</option>
-                        <option value="grade_7">Математика (5 клас)</option>
-                        <option value="grade_7">Математика (6 клас)</option>
-                        <option value="grade_7">Математика (7 клас)</option>
-                        <option value="grade_8">Математика (8 клас)</option>
-                        <option value="grade_9">Математика (9 клас)</option>
-                        <option value="grade_9">Математика (10 клас)</option>
-                        <option value="other">Закінчив/Закінчила школу</option>
+                        {% for value, label in course_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
                     </select>
 
                     <button type="submit" class="btn-primary" style="background-color: var(--brand-blue); width: 100%; border: none; padding: 12px; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">

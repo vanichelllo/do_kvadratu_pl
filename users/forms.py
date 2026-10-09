@@ -1,40 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.utils.safestring import mark_safe  # <-- ЗМІНИЛИ ІМПОРТ ТУТ
 from .models import CustomUser
-
-
-class StudentRegistrationForm(UserCreationForm):
-    # ДОДАЄМО ОБОВ'ЯЗКОВИЙ ЧЕКБОКС ЗГОДИ
-    terms_agreement = forms.BooleanField(
-        required=True,
-        label=mark_safe(  # <-- ЗМІНИЛИ ФУНКЦІЮ ТУТ
-            'Я погоджуюсь з умовами <a href="/offer/" target="_blank" style="color: #007bff; text-decoration: underline;">Договору оферти</a> та <a href="/privacy/" target="_blank" style="color: #007bff; text-decoration: underline;">Політикою конфіденційності</a>'
-        ),
-        error_messages={'required': 'Щоб зареєструватися, ви повинні погодитися з умовами оферти та політикою конфіденційності.'}
-    )
-
-    class Meta:
-        model = CustomUser
-        fields = ('email',)
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if CustomUser.objects.filter(email=email).exists():
-            raise forms.ValidationError("Користувач з таким email вже зареєстрований. Увійдіть у систему!")
-        return email
-
-    def save(self, commit=True):
-        # 1. Створюємо об'єкт користувача, але поки НЕ записуємо в базу (commit=False)
-        user = super().save(commit=False)
-
-        # 2. Копіюємо унікальний email у поле username
-        user.username = user.email
-
-        # 3. Тепер безпечно зберігаємо в базу даних
-        if commit:
-            user.save()
-        return user
 
 
 class UserProfileForm(forms.ModelForm):
