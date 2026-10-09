@@ -2,6 +2,7 @@ import os
 import io
 import base64
 import hashlib
+import hmac
 import ecdsa
 import re
 import requests
@@ -674,6 +675,12 @@ def api_materials_list(request):
 
 @api_view(['GET'])
 def api_bot_user_library(request, telegram_id):
+    # Віддає email і покупки учня, тому доступно лише боту із секретним токеном
+    expected_token = getattr(settings, 'BOT_API_TOKEN', '') or ''
+    provided_token = request.headers.get('X-Bot-Token', '')
+    if not expected_token or not hmac.compare_digest(provided_token, expected_token):
+        return Response({'status': 'error', 'message': 'Forbidden'}, status=403)
+
     user = User.objects.filter(telegram_id=telegram_id).first()
 
     if not user:

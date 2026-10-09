@@ -157,3 +157,20 @@ class ParentDashboardTests(BaseTestCase):
             response = self.client.get(f'/parents/{student_request.parent_token}/')
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, student_request.real_name)
+
+
+class BotApiTests(BaseTestCase):
+    def setUp(self):
+        self.make_user('kid@example.com', telegram_id='12345')
+
+    def test_library_api_closed_without_token(self):
+        response = self.client.get('/api/bot/library/12345/')
+        self.assertEqual(response.status_code, 403)
+        self.assertNotIn(b'kid@example.com', response.content)
+
+    @override_settings(BOT_API_TOKEN='bot-secret')
+    def test_library_api_requires_correct_token(self):
+        self.assertEqual(self.client.get('/api/bot/library/12345/', HTTP_X_BOT_TOKEN='wrong').status_code, 403)
+        response = self.client.get('/api/bot/library/12345/', HTTP_X_BOT_TOKEN='bot-secret')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['student_email'], 'kid@example.com')

@@ -231,6 +231,10 @@ DEFAULT_FROM_EMAIL = f"ДО КВАДРАТУ <{EMAIL_HOST_USER}>"
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_ADMIN_ID = os.getenv('TELEGRAM_ADMIN_ID')
+# Секрет, переданий у setWebhook(secret_token=...); вебхук без нього відхиляється
+TELEGRAM_WEBHOOK_SECRET = os.getenv('TELEGRAM_WEBHOOK_SECRET', '')
+# Токен для /api/bot/library/ (заголовок X-Bot-Token); не задано — API закрите
+BOT_API_TOKEN = os.getenv('BOT_API_TOKEN', '')
 
 
 # ==========================================
