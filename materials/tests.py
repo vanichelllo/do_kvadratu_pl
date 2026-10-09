@@ -886,3 +886,78 @@ class ReviewFollowUpMiscTests(BaseTestCase):
         self.make_user('forgot@example.com')
         response = self.client.post('/accounts/password/reset/', {'email': 'forgot@example.com'}, follow=True)
         self.assertContains(response, 'Не вдалося надіслати лист')
+
+
+class QueryCountTests(BaseTestCase):
+    """Сторінки не повинні робити окремий запит на кожен рядок і тягнути HTML-презентації даремно."""
+
+    def setUp(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        self.connection, self.capture = connection, CaptureQueriesContext
+        self.user = self.make_user('perf@example.com')
+        self.materials = [StudyMaterial.objects.create(title=f'{i}. Тема', price=25, is_published=True,
+                                                       html_content='<p>' + 'x' * 1000 + '</p>') for i in range(1, 11)]
+        self.client.force_login(self.user)
+
+    def queries(self, url, client=None):
+        with self.capture(self.connection) as ctx:
+            response = (client or self.client).get(url)
+        self.assertEqual(response.status_code, 200, url)
+        return ctx.captured_queries
+
+    def test_cart_queries_do_not_grow_with_items(self):
+        cart = Cart.objects.create(user=self.user, promo_code='ВЧИТЕЛЬ')
+        for material in self.materials[:2]:
+            CartItem.objects.create(cart=cart, material=material)
+        few = len(self.queries('/cart/'))
+        for material in self.materials[2:]:
+            CartItem.objects.create(cart=cart, material=material)
+        self.assertEqual(len(self.queries('/cart/')), few)
+
+    def test_list_pages_do_not_load_presentations(self):
+        self.user.purchased_materials.add(*self.materials)
+        for url in ('/materials/', '/cabinet/', '/cart/'):
+            for query in self.queries(url):
+                self.assertNotIn('html_content', query['sql'], f"{url}: {query['sql'][:300]}")
+
+    def test_reader_still_shows_presentation(self):
+        self.user.purchased_materials.add(self.materials[0])
+        self.assertContains(self.client.get(f'/download/{self.materials[0].id}/'), 'x' * 1000)
+
+    def test_parent_dashboard_queries_do_not_grow_with_attempts(self):
+        student = TutorStudentRequest.objects.create(user=self.user, real_name='Учень', course='nmt', status='approved')
+        PracticeAttempt.objects.create(user=self.user, material=self.materials[0], score=5)
+        few = len(self.queries(f'/parents/{student.parent_token}/', Client()))
+        for material in self.materials[1:]:
+            PracticeAttempt.objects.create(user=self.user, material=material, score=5)
+        self.assertEqual(len(self.queries(f'/parents/{student.parent_token}/', Client())), few)
+
+    def test_admin_match_question_lists_only_its_options(self):
+        staff = self.make_user('admin@example.com', is_staff=True, is_superuser=True)
+        other = Question.objects.create(text='other', question_type='CHOICE')
+        AnswerOption.objects.create(question=other, text='ЧУЖИЙ-ВАРІАНТ')
+        question = Question.objects.create(text='m', question_type='MATCH')
+        own = AnswerOption.objects.create(question=question, text='СВІЙ-ВАРІАНТ')
+        MatchItem.objects.create(question=question, text='1', correct_option=own)
+        admin_client = Client()
+        admin_client.force_login(staff)
+        page = admin_client.get(f'/do-kvadratu-secret-control/materials/question/{question.id}/change/')
+        self.assertContains(page, 'СВІЙ-ВАРІАНТ')
+        self.assertNotContains(page, 'ЧУЖИЙ-ВАРІАНТ')
+
+    def test_diagnostic_picks_22_without_loading_whole_bank(self):
+        from .models import DiagnosticTopic
+        algebra, geometry = DiagnosticTopic.objects.create(name='1. Числа'), DiagnosticTopic.objects.create(name='30. Трикутники')
+        for i in range(20):
+            for topic in (algebra, geometry):
+                for q_type in ('CHOICE', 'MATCH', 'SHORT'):
+                    q = Question.objects.create(text=f'{q_type}{i}', question_type=q_type, topic=topic,
+                                                correct_short_answer='1')
+                    AnswerOption.objects.create(question=q, text='a', is_correct=True)
+        response = Client().get('/diagnostic/')
+        self.assertEqual(len(response.context['questions']), 15 + 3 + 4)
+        queries = self.queries('/diagnostic/', Client())
+        option_queries = [q for q in queries if 'FROM "materials_answeroption"' in q['sql']]
+        self.assertLessEqual(len(option_queries), 2)  # варіанти + правильні відповіді відповідностей
+        self.assertLessEqual(len(queries), 8)
