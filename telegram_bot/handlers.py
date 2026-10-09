@@ -9,7 +9,7 @@ from pypdf import PdfReader, PdfWriter
 from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, BufferedInputFile, WebAppInfo
+from aiogram.types import InlineKeyboardButton, BufferedInputFile, WebAppInfo
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 

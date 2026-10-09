@@ -97,13 +97,29 @@ class MatchItemInline(admin.TabularInline):
     model = MatchItem
     extra = 3
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'correct_option':
+            # Лише варіанти цього завдання. Раніше кожен список містив усі ~6600 варіантів
+            # з усіх завдань: сторінка важила кілька МБ і відкривалась секундами.
+            # Для нового завдання варіантів ще немає — відповідність задається після збереження.
+            question_id = getattr(request, '_admin_question_id', None)
+            kwargs['queryset'] = (AnswerOption.objects.filter(question_id=question_id) if question_id
+                                  else AnswerOption.objects.none())
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('text', 'topic', 'question_type')
+    list_select_related = ('topic',)
     list_filter = ('topic', 'question_type')
     search_fields = ('text',)
     inlines = [MatchItemInline, AnswerOptionInline]
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        # id завдання — на запиті (не на спільному об'єкті адмінки: його ділять потоки сервера)
+        request._admin_question_id = object_id
+        return super().change_view(request, object_id, form_url, extra_context)
 
 
 # ==========================================
@@ -111,6 +127,7 @@ class QuestionAdmin(admin.ModelAdmin):
 # ==========================================
 class StudyMaterialAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'price', 'is_published')
+    list_select_related = ('category',)
     list_filter = ('is_published', 'category')
     search_fields = ('title',)
     # Дію «Імпортувати з Excel» прибрано: вона ставила всім конспектам ціну 25 грн

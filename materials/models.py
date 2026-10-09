@@ -27,7 +27,17 @@ class Tag(models.Model):
         return self.name
 
 
+class WithoutHtmlManager(models.Manager):
+    """HTML-презентація (до кількох МБ) потрібна лише в читалці. Скрізь інде вона не
+    завантажується з бази; при зверненні до material.html_content Django догрузить її окремо."""
+
+    def get_queryset(self):
+        return super().get_queryset().defer('html_content')
+
+
 class StudyMaterial(models.Model):
+    objects = WithoutHtmlManager()
+
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
     price = models.PositiveIntegerField(default=0, verbose_name="Ціна (UAH)")
 
@@ -87,7 +97,7 @@ class StudyMaterial(models.Model):
                 merger.close()
 
                 self.file.save(self.file.name, ContentFile(buffer.getvalue()), save=False)
-            except Exception as e:
+            except Exception:
                 logging.getLogger(__name__).exception("Помилка об'єднання PDF з intro.pdf")
 
         super().save(*args, **kwargs)
@@ -112,9 +122,15 @@ class Cart(models.Model):
     promo_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Промокод")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def cached_items(self):
+        """Позиції кошика з матеріалами одним запитом (ціни на сторінці рахуються кілька разів)."""
+        if getattr(self, '_items_cache', None) is None:
+            self._items_cache = list(self.items.select_related('material').defer('material__html_content'))
+        return self._items_cache
+
     def get_original_price(self):
         """Рахує суму без знижки"""
-        return sum(item.material.price for item in self.items.all())
+        return sum(item.material.price for item in self.cached_items())
 
     def get_total_price(self):
         """Рахує фінальну суму зі знижкою 40% для промокоду ВЧИТЕЛЬ"""
@@ -340,6 +356,8 @@ class PracticeAttempt(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
 class StudentPresentation(models.Model):
+    objects = WithoutHtmlManager()
+
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_presentations', verbose_name="Учень")
     title = models.CharField(max_length=100, verbose_name="Дата/Назва уроку (напр. 20.09.2026)")
     html_content = models.TextField(verbose_name="HTML Презентація")

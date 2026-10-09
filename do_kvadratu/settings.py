@@ -274,6 +274,9 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+if sys.argv[1:2] == ['test']:
+    # Тестам не потрібен collectstatic (у т.ч. на GitHub Actions)
+    STORAGES['staticfiles'] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 
 # Кеш у пам'яті процесу. Більше записів, ніж стандартні 300, щоб лічильники
 # лімітів входу (allauth та адмінки) не витіснялися потоком сміттєвих запитів.

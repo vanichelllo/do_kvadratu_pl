@@ -1,5 +1,4 @@
 import hmac
-import json
 import logging
 import asyncio
 from django.http import JsonResponse

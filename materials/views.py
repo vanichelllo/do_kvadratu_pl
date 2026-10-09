@@ -1,5 +1,3 @@
-import os
-import io
 import base64
 import hashlib
 import hmac
@@ -9,13 +7,12 @@ import re
 import requests
 import json
 import logging
-import time
 import random  # ДОДАНО ДЛЯ ГЕНЕРАЦІЇ ПРАКТИКИ
 from functools import wraps
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.http import HttpResponse, JsonResponse, FileResponse, Http404
+from django.http import HttpResponse, JsonResponse, Http404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -29,13 +26,12 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from .forms import StudentReportForm
-from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
-    MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
+from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, DiagnosticTopic, \
+    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import StudyMaterialSerializer, PurchasedMaterialSerializer
-import datetime
 from django.utils import timezone
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -85,7 +81,8 @@ def questions_in_order(q_id_list):
     if not q_id_list:
         return []
     preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-    return Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(preserved_order)
+    return (Question.objects.filter(id__in=q_id_list)
+            .prefetch_related('options', 'match_items__correct_option').order_by(preserved_order))
 
 
 def find_option(question, option_id):
@@ -262,46 +259,36 @@ def diagnostic_test_view(request):
     # ==========================================
     # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
     # ==========================================
-    all_qs = Question.objects.select_related('topic').prefetch_related('options', 'match_items')
-
-    alg_choice, geo_choice = [], []
-    alg_match, geo_match = [], []
-    alg_short, geo_short = [], []
-
-    # Сортуємо всі завдання по кошиках
-    for q in all_qs:
+    # Спершу лише id, тип і тема (без варіантів відповідей): раніше в пам'ять тягнувся
+    # весь банк (~1500 завдань з усіма варіантами), щоб показати 22
+    buckets = {}
+    for q_id, q_type, topic_name in Question.objects.values_list('id', 'question_type', 'topic__name'):
         topic_num = 999
-        if q.topic and q.topic.name:
-            match = re.match(r'^(\d+)', q.topic.name)
+        if topic_name:
+            match = re.match(r'^(\d+)', topic_name)
             if match:
                 topic_num = int(match.group(1))
-
         # Логіка: <= 29 — Алгебра, інакше — Геометрія
-        is_algebra = (topic_num <= 29)
+        buckets.setdefault((q_type, topic_num <= 29), []).append(q_id)
 
-        if q.question_type == 'CHOICE':
-            alg_choice.append(q) if is_algebra else geo_choice.append(q)
-        elif q.question_type == 'MATCH':
-            alg_match.append(q) if is_algebra else geo_match.append(q)
-        elif q.question_type == 'SHORT':
-            alg_short.append(q) if is_algebra else geo_short.append(q)
+    def pick(q_type, is_algebra, count):
+        ids = buckets.get((q_type, is_algebra), [])
+        return random.sample(ids, min(count, len(ids)))
 
-    # Вибираємо випадкові завдання за пропорціями НМТ
-    # Тести (10 алгебра, 5 геометрія)
-    sel_choice = random.sample(alg_choice, min(10, len(alg_choice))) + random.sample(geo_choice,
-                                                                                     min(5, len(geo_choice)))
-    # Відповідності (2 алгебра, 1 геометрія)
-    sel_match = random.sample(alg_match, min(2, len(alg_match))) + random.sample(geo_match, min(1, len(geo_match)))
-    # Коротка відповідь (2 алгебра, 2 геометрія)
-    sel_short = random.sample(alg_short, min(2, len(alg_short))) + random.sample(geo_short, min(2, len(geo_short)))
+    # Вибираємо випадкові завдання за пропорціями НМТ:
+    # тести (10 алгебра, 5 геометрія), відповідності (2 + 1), коротка відповідь (2 + 2)
+    sel_choice = pick('CHOICE', True, 10) + pick('CHOICE', False, 5)
+    sel_match = pick('MATCH', True, 2) + pick('MATCH', False, 1)
+    sel_short = pick('SHORT', True, 2) + pick('SHORT', False, 2)
 
     # Перемішуємо завдання всередині своїх блоків
     random.shuffle(sel_choice)
     random.shuffle(sel_match)
     random.shuffle(sel_short)
 
-    # Збираємо фінальний варіант: спочатку вибір, потім відповідність, потім коротка відповідь (як на НМТ)
-    final_questions = sel_choice + sel_match + sel_short
+    # Фінальний варіант: спочатку вибір, потім відповідність, потім коротка відповідь (як на НМТ);
+    # повністю (з варіантами) завантажуємо лише ці 22 завдання
+    final_questions = list(questions_in_order(sel_choice + sel_match + sel_short))
 
     # Створюємо строку з ID вибраних завдань, щоб перевірити саме їх, коли учень натисне "Завершити"
     question_ids_str = ','.join(str(q.id) for q in final_questions)
@@ -351,7 +338,7 @@ def practice_session_view(request, material_id):
 
             if q.question_type == 'CHOICE':
                 q_result['max_points'] = 1
-                q_result['correct_answer'] = q.options.filter(is_correct=True).first()
+                q_result['correct_answer'] = next((opt for opt in q.options.all() if opt.is_correct), None)
                 user_ans = request.POST.get(f'q_{q.id}')
 
                 saved_answers['q_choice'][str(q.id)] = user_ans  # Зберігаємо для історії
@@ -499,7 +486,7 @@ def cart_detail(request):
 
         return redirect('cart_detail')
 
-    return render(request, 'materials/cart.html', {'cart': cart})
+    return render(request, 'materials/cart.html', {'cart': cart, 'cart_items': cart.cached_items()})
 
 @login_required
 @post_required(material_page)
@@ -666,14 +653,15 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         # 4. Власна статистика учня (останні 15 спроб)
         context['my_attempts'] = PracticeAttempt.objects.filter(
             user=self.request.user
-        ).select_related('material').order_by('-created_at')[:15]
+        ).select_related('material').defer('material__html_content').order_by('-created_at')[:15]
 
         # 5. ПАНЕЛЬ ВЧИТЕЛЯ (Показується тільки тобі)
         if is_teacher(self.request.user):
             # Дістаємо результати тестів усіх учнів зі статусом 'approved'
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
-            ).select_related('user', 'user__tutor_request', 'material').order_by('-created_at')[:50]
+            ).select_related('user', 'user__tutor_request', 'material').defer(
+                'material__html_content').order_by('-created_at')[:50]
             context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
             context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
 
@@ -760,7 +748,7 @@ def pay_from_balance(request):
         # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
         # не затерли баланс одне одного
         user = User.objects.select_for_update().get(pk=request.user.pk)
-        cart_items = list(cart.items.select_related('material'))
+        cart_items = list(cart.items.select_related('material').defer('material__html_content'))
 
         if not cart_items:
             messages.error(request, "Ваш кошик порожній.")
@@ -922,7 +910,7 @@ def apply_mono_status(invoice_id, status):
             order.paid_at = timezone.now()
             order.save(update_fields=['status', 'paid_at'])
 
-            order_items = list(order.items.select_related('material'))
+            order_items = list(order.items.select_related('material').defer('material__html_content'))
             if order_items:
                 materials = [item.material for item in order_items if item.material]
                 for material in materials:
@@ -1184,7 +1172,7 @@ def view_attempt_details(request, attempt_id):
 
         if q.question_type == 'CHOICE':
             q_result['max_points'] = 1
-            q_result['correct_answer'] = q.options.filter(is_correct=True).first()
+            q_result['correct_answer'] = next((opt for opt in q.options.all() if opt.is_correct), None)
             user_ans = saved_answers.get('q_choice', {}).get(str(q.id))
             opt = find_option(q, user_ans)
             if opt:
@@ -1292,7 +1280,8 @@ def parent_dashboard_view(request, parent_token):
 
     # Якщо це підготовка до НМТ -> дістаємо результати тестів
     if student_request.course == 'nmt':
-        attempts = PracticeAttempt.objects.filter(user=student_request.user).order_by('-created_at')
+        attempts = (PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
+                    .defer('material__html_content').order_by('-created_at'))
         context['attempts'] = attempts
         context['is_nmt'] = True
     else:

@@ -139,9 +139,9 @@
     <div class="cart-body">
         <h1 style="margin-top: 0; font-size: 2.2rem; margin-bottom: 30px;">🛒 ВАШ КОШИК</h1>
 
-        {% if cart.items.all %}
+        {% if cart_items %}
             <!-- Список товарів -->
-            {% for item in cart.items.all %}
+            {% for item in cart_items %}
                 <div class="cart-item">
                     <div>
                         <h3 class="item-title">{{ item.material.title }}</h3>
