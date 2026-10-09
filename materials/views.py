@@ -31,6 +31,12 @@ from django.utils import timezone
 User = get_user_model()
 
 
+def is_teacher(user):
+    """Доступ до панелі вчителя. Поле role учень обирає сам у профілі,
+    тому права даємо лише персоналу (is_staff / is_superuser, ставиться в адмінці)."""
+    return user.is_authenticated and (user.is_superuser or user.is_staff)
+
+
 def diagnostic_test_view(request):
     # ==========================================
     # 1. ПЕРЕВІРКА ВІДПОВІДЕЙ (РЕЖИМ POST)
@@ -568,7 +574,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         ).select_related('material').order_by('-created_at')[:15]
 
         # 5. ПАНЕЛЬ ВЧИТЕЛЯ (Показується тільки тобі)
-        if self.request.user.is_superuser or getattr(self.request.user, 'role', '') == 'teacher':
+        if is_teacher(self.request.user):
             # Дістаємо результати тестів усіх учнів зі статусом 'approved'
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
@@ -996,8 +1002,7 @@ def view_attempt_details(request, attempt_id):
     attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
 
     # Перевірка: дивитися може учень свої тести, або вчитель - усі
-    if attempt.user != request.user and not request.user.is_superuser and getattr(request.user, 'role',
-                                                                                  '') != 'teacher':
+    if attempt.user != request.user and not is_teacher(request.user):
         raise Http404("У вас немає доступу до цієї статистики.")
 
     saved_answers = attempt.answers_json
@@ -1153,7 +1158,7 @@ def parent_view_presentation(request, parent_token, presentation_id):
 
 @login_required
 def add_quick_report(request):
-    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+    if request.method == 'POST' and is_teacher(request.user):
         student_id = request.POST.get('student_id')
         student = get_object_or_404(TutorStudentRequest, id=student_id)
 
@@ -1172,7 +1177,7 @@ def add_quick_report(request):
 
 @login_required
 def add_nmt_score(request):
-    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+    if request.method == 'POST' and is_teacher(request.user):
         student_id = request.POST.get('student_id')
         material_id = request.POST.get('material_id')
         score = request.POST.get('score', 0)
