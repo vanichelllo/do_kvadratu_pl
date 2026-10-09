@@ -1,4 +1,6 @@
+import html
 import io
+import re
 import aiohttp
 from pypdf import PdfReader, PdfWriter
 
@@ -214,7 +216,7 @@ async def send_quiz_question(message: types.Message, q_index: int, state: FSMCon
     builder = InlineKeyboardBuilder()
     if q_data["type"] == "choice":
         for i, option in enumerate(q_data["opts"]):
-            builder.button(text=option, callback_data=f"qans_{i}")
+            builder.button(text=option, callback_data=f"qans_{q_index}_{i}")
         builder.adjust(2)
         builder.row(InlineKeyboardButton(text="❌ Зупинити тест", callback_data="menu_nmt_main"))
         await state.set_state(QuizFSM.answering_choice)
@@ -233,8 +235,16 @@ async def process_quiz_choice(callback: types.CallbackQuery, state: FSMContext):
     q_index = data.get("current_q", 0)
     score = data.get("score", 0)
     wrong_topics = data.get("wrong_topics", [])
+    parts = callback.data.split("_")
+    # Кнопка від попереднього питання (подвійний тап) — ігноруємо
+    if len(parts) == 3 and parts[1] != str(q_index):
+        await callback.answer()
+        return
+    if q_index >= len(DIAGNOSTIC_QUESTIONS) or DIAGNOSTIC_QUESTIONS[q_index]["type"] != "choice":
+        await callback.answer()
+        return
     q_data = DIAGNOSTIC_QUESTIONS[q_index]
-    selected_index = int(callback.data.split("_")[1])
+    selected_index = int(parts[-1])
     correct_index = q_data["ans"]
     if selected_index == correct_index:
         score += 1
@@ -245,16 +255,25 @@ async def process_quiz_choice(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(QuizFSM.answering_short)
+def normalize_short_answer(text):
+    s = str(text).lower().replace(" ", "").replace(",", ".").strip().rstrip(".")
+    if not re.search(r"\d", s):
+        # Відповіді-відповідності («бав»): учні часто пишуть «Б, А, В» або «б.а.в»
+        s = re.sub(r"[.;:\-/]", "", s)
+    return s
+
+
+@router.message(QuizFSM.answering_short, F.text)
 async def process_quiz_short(message: types.Message, state: FSMContext):
     data = await state.get_data()
     q_index = data.get("current_q", 0)
     score = data.get("score", 0)
     wrong_topics = data.get("wrong_topics", [])
+    if q_index >= len(DIAGNOSTIC_QUESTIONS):
+        await state.clear()
+        return
     q_data = DIAGNOSTIC_QUESTIONS[q_index]
-    user_answer = message.text.lower().replace(" ", "").replace(",", "").replace(".", "").strip()
-    correct_answer = str(q_data["ans"]).lower().replace(" ", "")
-    if user_answer == correct_answer:
+    if normalize_short_answer(message.text) == normalize_short_answer(q_data["ans"]):
         score += 1
     else:
         wrong_topics.append(q_data["t"])
@@ -347,16 +366,16 @@ async def ask_help_callback(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(SupportFSM.waiting_for_question)
+@router.message(SupportFSM.waiting_for_question, F.text)
 async def handle_support_question(message: types.Message, state: FSMContext):
     try:
         admin_id = int(settings.TELEGRAM_ADMIN_ID)
         await message.bot.send_message(
             admin_id,
             f"⚠️ <b>Питання від учня (Підтримка)</b>\n"
-            f"Від: {message.from_user.full_name}\n"
+            f"Від: {html.escape(message.from_user.full_name)}\n"
             f"ID: <code>{message.from_user.id}</code>\n\n"
-            f"<b>Текст:</b> {message.text}",
+            f"<b>Текст:</b> {html.escape(message.text)}",
             parse_mode="HTML"
         )
     except Exception:
@@ -429,7 +448,7 @@ async def enroll_role(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.message(EnrollFSM.name)
+@router.message(EnrollFSM.name, F.text)
 async def enroll_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
     await state.set_state(EnrollFSM.grade)
@@ -440,7 +459,7 @@ async def enroll_name(message: types.Message, state: FSMContext):
     await message.answer(text, reply_markup=builder.as_markup())
 
 
-@router.message(EnrollFSM.grade)
+@router.message(EnrollFSM.grade, F.text)
 async def enroll_grade(message: types.Message, state: FSMContext):
     await state.update_data(grade=message.text)
     await state.set_state(EnrollFSM.goal)
@@ -450,7 +469,7 @@ async def enroll_grade(message: types.Message, state: FSMContext):
     await message.answer(text, parse_mode="HTML", reply_markup=builder.as_markup())
 
 
-@router.message(EnrollFSM.goal)
+@router.message(EnrollFSM.goal, F.text)
 async def enroll_goal(message: types.Message, state: FSMContext):
     await state.update_data(goal=message.text)
     await state.set_state(EnrollFSM.phone)
@@ -461,7 +480,7 @@ async def enroll_goal(message: types.Message, state: FSMContext):
         parse_mode="HTML", reply_markup=builder.as_markup())
 
 
-@router.message(EnrollFSM.phone)
+@router.message(EnrollFSM.phone, F.text)
 async def enroll_phone(message: types.Message, state: FSMContext):
     data = await state.get_data()
     phone = message.text
@@ -469,10 +488,10 @@ async def enroll_phone(message: types.Message, state: FSMContext):
         "🔥 <b>Нова заявка на заняття!</b>\n\n"
         f"<b>Хто залишив:</b> {data.get('role')}\n"
         f"<b>Категорія:</b> {data.get('subject')}\n"
-        f"<b>Ім'я:</b> {data.get('name')}\n"
-        f"<b>Клас:</b> {data.get('grade')}\n"
-        f"<b>Мета:</b> {data.get('goal')}\n"
-        f"<b>Контакт:</b> {phone}\n\n"
+        f"<b>Ім'я:</b> {html.escape(str(data.get('name')))}\n"
+        f"<b>Клас:</b> {html.escape(str(data.get('grade')))}\n"
+        f"<b>Мета:</b> {html.escape(str(data.get('goal')))}\n"
+        f"<b>Контакт:</b> {html.escape(phone)}\n\n"
         f"<b>Telegram ID:</b> <code>{message.from_user.id}</code>\n"
     )
     try:
@@ -488,6 +507,13 @@ async def enroll_phone(message: types.Message, state: FSMContext):
         parse_mode="HTML", reply_markup=builder.as_markup())
 
 
+# ─── ТЕКСТ ЗАМІСТЬ КНОПКИ ────────────────────────────────────
+@router.message(QuizFSM.answering_choice, F.text & ~F.text.startswith('/'))
+@router.message(EnrollFSM.role, F.text & ~F.text.startswith('/'))
+async def text_instead_of_button(message: types.Message):
+    await message.answer("Будь ласка, оберіть варіант кнопкою вище 👆")
+
+
 # ─── ПЕРЕХОПЛЮВАЧ УСІХ ПОВІДОМЛЕНЬ ──────────────────────────
 @router.message(F.text & ~F.text.startswith('/'))
 async def catch_all_text(message: types.Message, state: FSMContext):
@@ -498,9 +524,9 @@ async def catch_all_text(message: types.Message, state: FSMContext):
             await message.bot.send_message(
                 admin_id,
                 f"💬 <b>Повідомлення від учня</b>\n"
-                f"Від: {message.from_user.full_name}\n"
+                f"Від: {html.escape(message.from_user.full_name)}\n"
                 f"ID: <code>{message.from_user.id}</code>\n\n"
-                f"<b>Текст:</b> {message.text}\n\n"
+                f"<b>Текст:</b> {html.escape(message.text)}\n\n"
                 f"<i>Щоб відповісти, просто напишіть йому в особисті повідомлення за ID.</i>",
                 parse_mode="HTML"
             )
@@ -512,3 +538,22 @@ async def catch_all_text(message: types.Message, state: FSMContext):
             "Передав твоє повідомлення! Відповім тобі найближчим часом 😉",
             reply_markup=builder.as_markup()
         )
+
+
+# ─── НЕ ТА ВІДПОВІДЬ ПІД ЧАС КВІЗУ / АНКЕТИ ──────────────────
+BUTTON_STATES = {QuizFSM.answering_choice.state, EnrollFSM.role.state}
+USER_CONTENT_TYPES = {"sticker", "photo", "video", "voice", "audio", "document", "animation", "video_note",
+                      "contact", "location", "venue", "poll", "dice"}
+
+
+@router.message(~F.text)
+async def non_text_in_dialog(message: types.Message, state: FSMContext):
+    # Стікер чи фото замість відповіді раніше валили обробник (message.text = None).
+    # Службові повідомлення (напр. закріплення) ігноруємо.
+    current_state = await state.get_state()
+    if current_state is None or message.content_type not in USER_CONTENT_TYPES:
+        return
+    if current_state in BUTTON_STATES:
+        await message.answer("Будь ласка, оберіть варіант кнопкою вище 👆")
+    else:
+        await message.answer("Будь ласка, надішліть відповідь текстом 🙂")

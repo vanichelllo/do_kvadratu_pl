@@ -415,7 +415,7 @@
     <div class="review-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <span style="font-weight: 900; color: var(--brand-blue); font-size: 1.1rem;">
-                {% if review.user.first_name %}{{ review.user.first_name }}{% else %}Учень{% endif %}
+                {{ review.display_name }}
             </span>
             <span style="font-size: 1.2rem; letter-spacing: 2px;">
                 {% if review.rating == 5 %}⭐⭐⭐⭐⭐{% elif review.rating == 4 %}⭐⭐⭐⭐{% elif review.rating == 3 %}⭐⭐⭐{% elif review.rating == 2 %}⭐⭐{% else %}⭐{% endif %}

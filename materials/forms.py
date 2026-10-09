@@ -13,3 +13,11 @@ class StudentReportForm(forms.ModelForm):
             'homework_status': forms.Select(attrs={'class': 'form-control'}),
             'teacher_comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Пару слів про успіхи...'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field in ('nush_modeling', 'nush_solving', 'nush_analysis'):
+            value = cleaned_data.get(field)
+            if value is not None and not 1 <= value <= 12:
+                self.add_error(field, "Оцінка має бути від 1 до 12.")
+        return cleaned_data
