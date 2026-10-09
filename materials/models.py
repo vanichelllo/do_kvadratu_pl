@@ -1,6 +1,7 @@
 import datetime
 import os
 import io
+import logging
 from django.db import models
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -87,7 +88,7 @@ class StudyMaterial(models.Model):
 
                 self.file.save(self.file.name, ContentFile(buffer.getvalue()), save=False)
             except Exception as e:
-                print(f"Помилка об'єднання PDF: {e}")
+                logging.getLogger(__name__).exception("Помилка об'єднання PDF з intro.pdf")
 
         super().save(*args, **kwargs)
 
@@ -147,6 +148,7 @@ class Order(models.Model):
         ('pending', 'Очікує оплати'),
         ('paid', 'Успішно оплачено'),
         ('cancelled', 'Скасовано'),
+        ('refunded', 'Повернено (Monobank)'),
     )
     SOURCE_CHOICES = (
         ('web', 'Сайт'),

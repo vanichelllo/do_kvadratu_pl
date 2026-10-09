@@ -3,6 +3,5 @@ Disallow: /cabinet/
 Disallow: /cart/
 Disallow: /mono/
 Disallow: /accounts/
-Disallow: /buy/
 Disallow: /api/
 Allow: /

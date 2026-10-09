@@ -151,10 +151,21 @@ class OrderResource(resources.ModelResource):
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = OrderResource
 
-    list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at']
+    list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
     list_filter = ['status', 'source', 'created_at']
     search_fields = ['user__email', 'mono_invoice_id']
     inlines = [OrderItemInline]
+    actions = ['check_monobank_status']
+
+    @admin.action(description="🔄 Перевірити статус у Monobank (для «Очікує оплати» і «Скасовано»)")
+    def check_monobank_status(self, request, queryset):
+        from .views import check_mono_invoice
+        checked = 0
+        for order in (queryset.filter(status__in=['pending', 'cancelled'])
+                      .exclude(mono_invoice_id__isnull=True).exclude(mono_invoice_id='')):
+            check_mono_invoice(order)
+            checked += 1
+        self.message_user(request, f"Перевірено замовлень: {checked}. Статуси оновлено відповідно до Monobank.")
 # ==========================================
 # ВІДГУКИ
 # ==========================================

@@ -17,7 +17,6 @@ admin.site.login = rate_limited_admin_login(admin.site.login)
 from materials.views import (
     MaterialListView,
     MaterialDetailView,
-    buy_material_view,
     api_materials_list,
     CabinetView,
     download_material_view,
@@ -30,6 +29,7 @@ from materials.views import (
     pay_from_balance,
     pay_with_mono,
     mono_webhook,
+    payment_result,
     topup_balance_view,
     diagnostic_test_view,
     OfferView,
@@ -54,7 +54,6 @@ urlpatterns = [
 
     path('', HomeView.as_view(), name='home'),
     path('materials/', MaterialListView.as_view(), name='materials_list'),
-    path('buy/<int:material_id>/', buy_material_view, name='buy_action'),
 
     path('cart/', cart_detail, name='cart_detail'),
     path('cart/add/<int:material_id>/', add_to_cart, name='add_to_cart'),
@@ -80,6 +79,7 @@ urlpatterns = [
     path('cart/pay/balance/', pay_from_balance, name='pay_from_balance'),
     path('cart/pay/mono/', pay_with_mono, name='pay_with_mono'),
     path('mono/webhook/', mono_webhook, name='mono_webhook'),
+    path('payment/result/<int:order_id>/', payment_result, name='payment_result'),
     path('cabinet/topup/', topup_balance_view, name='topup_balance'),
 
     # Відновлення пароля — через allauth (/accounts/password/reset/): з лімітами

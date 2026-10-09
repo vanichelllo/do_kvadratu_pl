@@ -23,6 +23,11 @@ TEST_STORAGES = {
 
 @override_settings(STORAGES=TEST_STORAGES, TELEGRAM_BOT_TOKEN='', TELEGRAM_ADMIN_ID='')
 class BaseTestCase(TestCase):
+    def run(self, result=None):
+        # Лічильники лімітів живуть у кеші процесу — не переносимо їх між тестами
+        cache.clear()
+        return super().run(result)
+
     def make_user(self, email, **extra):
         return User.objects.create_user(username=email, email=email, password='Pass12345!', **extra)
 
@@ -64,7 +69,7 @@ class TeacherAccessTests(BaseTestCase):
         self.assertIn(str(self.victim_request.parent_token), response.content.decode())
 
 
-class MonoWebhookTests(BaseTestCase):
+class MonoWebhookBase(BaseTestCase):
     def setUp(self):
         cache.clear()
         self.signing_key = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
@@ -87,6 +92,8 @@ class MonoWebhookTests(BaseTestCase):
             headers['HTTP_X_SIGN'] = base64.b64encode(signature).decode()
         return self.client.post('/mono/webhook/', body, content_type='application/json', **headers)
 
+
+class MonoWebhookTests(MonoWebhookBase):
     def test_unsigned_webhook_is_rejected(self):
         response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'}, sign=False)
         self.assertEqual(response.status_code, 403)
@@ -272,18 +279,14 @@ class PurchaseAccessTests(BaseTestCase):
         self.client.post(f'/cart/add/{self.bundle.id}/')
         self.assertTrue(CartItem.objects.filter(material=self.bundle).exists())
 
-    def test_legacy_buy_endpoint_does_not_charge_bundle_twice(self):
-        self.client.post(f'/buy/{self.bundle.id}/')
-        self.client.post(f'/buy/{self.bundle.id}/')
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.balance, 850)
+    def test_legacy_buy_endpoint_removed(self):
+        self.assertEqual(self.client.post(f'/buy/{self.bundle.id}/').status_code, 404)
 
     def test_state_changing_endpoints_ignore_get(self):
         cart = Cart.objects.create(user=self.user)
         item = CartItem.objects.create(cart=cart, material=self.lesson1)
         expected = {f'/cart/add/{self.lesson2.id}/': f'/material/{self.lesson2.id}/',
-                    f'/cart/remove/{item.id}/': '/cart/', '/cart/pay/balance/': '/cart/', '/cart/pay/mono/': '/cart/',
-                    f'/buy/{self.lesson2.id}/': f'/material/{self.lesson2.id}/'}
+                    f'/cart/remove/{item.id}/': '/cart/', '/cart/pay/balance/': '/cart/', '/cart/pay/mono/': '/cart/'}
         for url, target in expected.items():
             self.assertRedirects(self.client.get(url), target, fetch_redirect_response=False, msg_prefix=url)
         self.assertFalse(CartItem.objects.filter(material=self.lesson2).exists())
@@ -665,3 +668,221 @@ class ImportMaterialsCommandTests(BaseTestCase):
         bundle = StudyMaterial.objects.get(title='Вся алгебра для НМТ')
         self.assertEqual((bundle.price, bundle.is_bundle), (399, True))
         self.assertFalse(bundle.file)  # PDF немає — матеріал створено без файлу
+
+
+
+class ErrorAlertTests(BaseTestCase):
+    def emit_error(self, path='/broken/'):
+        import logging
+        import sys
+        from django.test import RequestFactory
+        try:
+            raise ValueError('щось зламалось <b>')
+        except ValueError:
+            logging.getLogger('django.request').error('Internal Server Error: %s', path, exc_info=sys.exc_info(),
+                                                      extra={'status_code': 500, 'request': RequestFactory().get(path)})
+
+    @override_settings(TELEGRAM_BOT_TOKEN='123:abc', TELEGRAM_ADMIN_ID='42')
+    @mock.patch('do_kvadratu.logging_handlers.requests.post')
+    def test_500_alert_sent_once_per_cooldown(self, post):
+        self.emit_error()
+        self.emit_error()
+        self.assertEqual(post.call_count, 1)
+        text = post.call_args.kwargs['json']['text']
+        self.assertIn('/broken/', text)
+        self.assertIn('ValueError', text)
+        self.assertIn('&lt;b&gt;', text)
+        self.emit_error('/other/')
+        self.assertEqual(post.call_count, 2)
+
+    @mock.patch('do_kvadratu.logging_handlers.requests.post', side_effect=ConnectionError('down'))
+    @override_settings(TELEGRAM_BOT_TOKEN='123:abc', TELEGRAM_ADMIN_ID='42')
+    def test_alert_failure_does_not_break_request(self, post):
+        self.emit_error()  # не повинно кинути виняток
+
+
+class MonoStatusTests(MonoWebhookBase):
+    """Відмови, прострочення, повернення і сторінка результату оплати."""
+
+    def test_failure_and_expired_cancel_pending_order(self):
+        for status, invoice in (('failure', 'inv-f'), ('expired', 'inv-e')):
+            order = Order.objects.create(user=self.user, total_amount=100, mono_invoice_id=invoice)
+            self.post_webhook({'invoiceId': invoice, 'status': status})
+            order.refresh_from_db()
+            self.assertEqual(order.status, 'cancelled')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 0)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_reversal_after_payment_marks_refunded_and_alerts(self, notify):
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'reversed'})
+        self.topup.refresh_from_db()
+        self.assertEqual(self.topup.status, 'refunded')
+        self.assertIn('Повернення коштів', notify.call_args[0][0])
+
+    def test_success_arriving_after_reversal_is_ignored(self):
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'reversed'})
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 0)
+
+    def test_processing_status_changes_nothing(self):
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'processing'})
+        self.topup.refresh_from_db()
+        self.assertEqual(self.topup.status, 'pending')
+
+    def test_result_page_checks_status_when_webhook_lost(self):
+        status_response = mock.Mock()
+        status_response.json.return_value = {'status': 'success'}
+        self.client.force_login(self.user)
+        with mock.patch('materials.views.requests.get', return_value=status_response) as get:
+            response = self.client.get(f'/payment/result/{self.topup.id}/')
+        self.assertContains(response, 'Оплата пройшла успішно')
+        self.assertEqual(get.call_args.kwargs['params'], {'invoiceId': 'inv-topup'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 500)
+
+    def test_result_page_pending_and_failed(self):
+        self.client.force_login(self.user)
+        with mock.patch('materials.views.requests.get', side_effect=ConnectionError('down')):
+            self.assertContains(self.client.get(f'/payment/result/{self.topup.id}/'), 'Чекаємо підтвердження')
+        Order.objects.filter(id=self.topup.id).update(status='cancelled')
+        self.assertContains(self.client.get(f'/payment/result/{self.topup.id}/'), 'Оплата не пройшла')
+
+    def test_result_page_hidden_from_other_users(self):
+        self.client.force_login(self.make_user('stranger@example.com'))
+        self.assertEqual(self.client.get(f'/payment/result/{self.topup.id}/').status_code, 404)
+
+    @mock.patch('materials.views.requests.post')
+    def test_invoice_redirects_back_to_result_page(self, mono_post):
+        mono_post.return_value.json.return_value = {'pageUrl': 'https://pay.mbnk.biz/x', 'invoiceId': 'inv-new'}
+        self.client.force_login(self.user)
+        self.client.post('/cabinet/topup/', {'amount': '100'})
+        order = Order.objects.get(mono_invoice_id='inv-new')
+        self.assertEqual(mono_post.call_args.kwargs['json']['redirectUrl'],
+                         f'https://dokvadratu.com.ua/payment/result/{order.id}/')
+
+    def test_admin_action_checks_pending_orders(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        status_response = mock.Mock()
+        status_response.json.return_value = {'status': 'expired'}
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss3@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[Order]
+        with mock.patch('materials.views.requests.get', return_value=status_response), \
+                mock.patch.object(model_admin, 'message_user'):
+            model_admin.check_monobank_status(request, Order.objects.all())
+        self.topup.refresh_from_db()
+        self.assertEqual(self.topup.status, 'cancelled')
+
+
+class SignupWithoutEmailTests(BaseTestCase):
+    @override_settings(EMAIL_BACKEND='materials.tests.BrokenEmailBackend')
+    def test_signup_survives_smtp_failure(self):
+        response = self.client.post('/register/', {
+            'email': 'newkid@example.com', 'password1': 'Strong-Pass-2026!', 'password2': 'Strong-Pass-2026!'})
+        self.assertNotEqual(response.status_code, 500)
+        self.assertTrue(User.objects.filter(email='newkid@example.com').exists())
+
+
+class BrokenEmailBackend:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def send_messages(self, messages):
+        raise OSError('Gmail daily limit exceeded')
+
+
+class SpamLimitTests(BaseTestCase):
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_review_limit(self, notify):
+        self.client.force_login(self.make_user('spammer@example.com'))
+        for i in range(7):
+            self.client.post('/submit-review/', {'rating': 5, 'text': f'т{i}', 'reviewer_name': 'n'})
+        self.assertEqual(Review.objects.count(), 5)
+        self.assertEqual(notify.call_count, 5)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_question_error_limit(self, notify):
+        self.client.force_login(self.make_user('spammer2@example.com'))
+        question = Question.objects.create(text='q', question_type='SHORT', correct_short_answer='1')
+        codes = [self.client.post('/api/report-error/', json.dumps({'question_id': question.id, 'message': 'x'}),
+                                  content_type='application/json').status_code for _ in range(21)]
+        self.assertEqual(codes[:20], [200] * 20)
+        self.assertEqual(codes[20], 429)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_parent_review_limit(self, notify):
+        student = TutorStudentRequest.objects.create(user=self.make_user('kid9@example.com'), real_name='Учень',
+                                                     course='nmt', status='approved')
+        for _ in range(5):
+            self.client.post(f'/parents/{student.parent_token}/review/',
+                             {'rating': 5, 'text': 'Дякуємо', 'reviewer_name': 'Мама'})
+        self.assertEqual(Review.objects.count(), 3)
+
+
+
+class ReviewFollowUpTests(MonoWebhookBase):
+    def test_cancelled_order_rechecked_on_result_page(self):
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'failure'})
+        status_response = mock.Mock()
+        status_response.json.return_value = {'status': 'success'}  # повторна спроба вдалась, вебхук загубився
+        self.client.force_login(self.user)
+        with mock.patch('materials.views.requests.get', return_value=status_response):
+            self.assertContains(self.client.get(f'/payment/result/{self.topup.id}/'), 'Оплата пройшла успішно')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 500)
+
+    def test_failed_page_does_not_claim_money_was_not_taken(self):
+        self.post_webhook({'invoiceId': 'inv-topup', 'status': 'expired'})
+        status_response = mock.Mock()
+        status_response.json.return_value = {'status': 'expired'}
+        self.client.force_login(self.user)
+        with mock.patch('materials.views.requests.get', return_value=status_response):
+            response = self.client.get(f'/payment/result/{self.topup.id}/')
+        self.assertContains(response, 'Оплата не пройшла')
+        self.assertNotContains(response, 'Гроші не списано')
+        self.assertContains(response, 'Якщо гроші все ж списано')
+
+    def test_admin_action_rechecks_cancelled(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        Order.objects.filter(id=self.topup.id).update(status='cancelled')
+        status_response = mock.Mock()
+        status_response.json.return_value = {'status': 'success'}
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss4@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[Order]
+        with mock.patch('materials.views.requests.get', return_value=status_response), \
+                mock.patch.object(model_admin, 'message_user'):
+            model_admin.check_monobank_status(request, Order.objects.all())
+        self.topup.refresh_from_db()
+        self.assertEqual(self.topup.status, 'paid')
+
+
+class ReviewFollowUpMiscTests(BaseTestCase):
+    @override_settings(TELEGRAM_BOT_TOKEN='123:abc', TELEGRAM_ADMIN_ID='42')
+    @mock.patch('do_kvadratu.logging_handlers.requests.post')
+    def test_same_bug_on_many_urls_alerts_once(self, post):
+        StudyMaterial.objects.create(title='1. Тема', is_published=True)
+        StudyMaterial.objects.create(title='2. Тема', is_published=True)
+        client = Client(raise_request_exception=False)
+        with mock.patch('materials.views.MaterialDetailView.get_context_data', side_effect=KeyError('boom')):
+            for material in StudyMaterial.objects.all():
+                self.assertEqual(client.get(f'/material/{material.id}/').status_code, 500)
+        self.assertEqual(post.call_count, 1)
+
+    def test_malformed_error_report_is_400_without_alert(self):
+        self.client.force_login(self.make_user('r@example.com'))
+        with self.assertNoLogs('materials', level='ERROR'):
+            for body in ('not json', '[1, 2]', '"str"'):
+                response = self.client.post('/api/report-error/', body, content_type='application/json')
+                self.assertEqual(response.status_code, 400, body)
+
+    @override_settings(EMAIL_BACKEND='materials.tests.BrokenEmailBackend')
+    def test_password_reset_warns_when_mail_fails(self):
+        self.make_user('forgot@example.com')
+        response = self.client.post('/accounts/password/reset/', {'email': 'forgot@example.com'}, follow=True)
+        self.assertContains(response, 'Не вдалося надіслати лист')
