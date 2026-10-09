@@ -248,6 +248,9 @@ DEFAULT_FROM_EMAIL = f"ДО КВАДРАТУ <{EMAIL_HOST_USER}>"
 # ==========================================
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_ADMIN_ID = os.getenv('TELEGRAM_ADMIN_ID')
+if sys.argv[1:2] == ['test']:
+    # Тести ніколи не надсилають справжніх повідомлень, навіть з локальним .env
+    TELEGRAM_BOT_TOKEN = TELEGRAM_ADMIN_ID = ''
 # Секрет, переданий у setWebhook(secret_token=...); вебхук без нього відхиляється
 TELEGRAM_WEBHOOK_SECRET = os.getenv('TELEGRAM_WEBHOOK_SECRET', '')
 # Токен для /api/bot/library/ (заголовок X-Bot-Token); не задано — API закрите
@@ -309,6 +312,7 @@ LOGGING = {
     'root': {'handlers': ['console'], 'level': 'WARNING'},
     'loggers': {
         'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'django.server': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},  # runserver
         'django.request': {'handlers': ['console', 'telegram'], 'level': 'ERROR', 'propagate': False},
         'materials': {'handlers': ['console', 'telegram'], 'level': 'INFO', 'propagate': False},
         'telegram_bot': {'handlers': ['console', 'telegram'], 'level': 'INFO', 'propagate': False},

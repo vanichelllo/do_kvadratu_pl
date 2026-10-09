@@ -974,7 +974,9 @@ def check_mono_invoice(order):
 @login_required
 def payment_result(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    if order.status == 'pending':
+    # «Скасовані» теж перепитуємо: після невдалої спроби покупець може повторити оплату
+    # на тій самій сторінці Monobank, а вебхук про успіх — загубитись
+    if order.status in ('pending', 'cancelled'):
         order = check_mono_invoice(order)
     return render(request, 'materials/payment_result.html', {
         'order': order,
@@ -1237,6 +1239,11 @@ def report_question_error(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+        except ValueError:
+            data = None
+        if not isinstance(data, dict):
+            return JsonResponse({'status': 'error', 'message': 'Некоректні дані'}, status=400)
+        try:
             question_id = to_int(data.get('question_id'))
             message = str(data.get('message') or '').strip()[:2000]
             if not message:

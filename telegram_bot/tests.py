@@ -135,8 +135,14 @@ class BotHandlerTests(TransactionTestCase):
 
         stitched = []
 
+        statuses = iter([503, 200, 200])  # перша спроба — збій Cloudinary
+
         class FakeResp:
-            status = 200
+            def __init__(self_inner):
+                self_inner.status = next(statuses)
+            def raise_for_status(self_inner):
+                if self_inner.status != 200:
+                    raise RuntimeError(f'HTTP {self_inner.status}')
             async def read(self_inner):
                 from pypdf import PdfWriter
                 import io
@@ -164,10 +170,13 @@ class BotHandlerTests(TransactionTestCase):
 
         with mock.patch('telegram_bot.handlers.get_free_materials_urls', fake_urls), \
                 mock.patch('telegram_bot.handlers.aiohttp.ClientSession', FakeSession):
-            self.run_async(send_all_free_materials(callback))
-            self.run_async(send_all_free_materials(callback))
+            self.run_async(send_all_free_materials(callback))  # збій: нічого не надіслано й не закешовано
+            self.assertEqual(message.answer_document.call_count, 0)
+            self.run_async(send_all_free_materials(callback))  # склеєно і закешовано
+            self.run_async(send_all_free_materials(callback))  # готовий файл за file_id
 
-        self.assertEqual(len(stitched), 1)  # другий раз — готовий файл за file_id
+        self.assertEqual(len(stitched), 1)
+        self.assertEqual(message.answer_document.call_count, 2)
         self.assertEqual(message.answer_document.call_args.kwargs['document'], 'FILE-ID-1')
 
     def tearDown(self):

@@ -378,13 +378,15 @@ async def send_all_free_materials(callback: types.CallbackQuery):
                 if url.startswith("http://"):
                     url = url.replace("http://", "https://")
                 async with session.get(url) as resp:
-                    if resp.status == 200:
-                        pdf_bytes = await resp.read()
-                        reader = PdfReader(io.BytesIO(pdf_bytes))
-                        for page_index, page in enumerate(reader.pages):
-                            if file_index > 0 and page_index == 0:
-                                continue
-                            writer.add_page(page)
+                    # Неповну збірку не надсилаємо і не кешуємо: інакше один збій Cloudinary
+                    # «заморозив» би зіпсований файл для всіх наступних користувачів
+                    resp.raise_for_status()
+                    pdf_bytes = await resp.read()
+                    reader = PdfReader(io.BytesIO(pdf_bytes))
+                    for page_index, page in enumerate(reader.pages):
+                        if file_index > 0 and page_index == 0:
+                            continue
+                        writer.add_page(page)
         output_buffer = io.BytesIO()
         writer.write(output_buffer)
         output_buffer.seek(0)
