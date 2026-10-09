@@ -18,6 +18,8 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import F
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
@@ -696,45 +698,51 @@ def api_bot_user_library(request, telegram_id):
 @login_required
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
-    total_price = cart.get_total_price()
 
-    if not cart.items.exists():
-        messages.error(request, "Ваш кошик порожній.")
-        return redirect('materials_list')
+    with transaction.atomic():
+        # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
+        # не затерли баланс одне одного
+        user = User.objects.select_for_update().get(pk=request.user.pk)
+        cart_items = list(cart.items.select_related('material'))
 
-    if request.user.balance >= total_price:
-        with transaction.atomic():
-            request.user.balance -= total_price
-            request.user.save()
+        if not cart_items:
+            messages.error(request, "Ваш кошик порожній.")
+            return redirect('materials_list')
 
-            order = Order.objects.create(
-                user=request.user,
-                total_amount=total_price,
-                status='paid',
-                mono_invoice_id='balance_payment'
+        total_price = cart.get_total_price()
+        if user.balance < total_price:
+            messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
+            return redirect('cart_detail')
+
+        user.balance -= total_price
+        user.save(update_fields=['balance'])
+
+        order = Order.objects.create(
+            user=user,
+            total_amount=total_price,
+            status='paid',
+            paid_at=timezone.now(),
+            mono_invoice_id='balance_payment'
+        )
+
+        for item in cart_items:
+            if item.material.is_bundle:
+                for sub_material in item.material.included_materials.all():
+                    user.purchased_materials.add(sub_material)
+            else:
+                user.purchased_materials.add(item.material)
+
+            OrderItem.objects.create(
+                order=order,
+                material=item.material,
+                price=item.material.price
             )
 
-            for item in cart.items.all():
-                if item.material.is_bundle:
-                    for sub_material in item.material.included_materials.all():
-                        request.user.purchased_materials.add(sub_material)
-                else:
-                    request.user.purchased_materials.add(item.material)
+        cart.items.all().delete()
 
-                OrderItem.objects.create(
-                    order=order,
-                    material=item.material,
-                    price=item.material.price
-                )
-
-            cart.items.all().delete()
-
-        messages.success(request,
-                         f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
-        return redirect('cabinet')
-    else:
-        messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
-        return redirect('cart_detail')
+    messages.success(request,
+                     f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
+    return redirect('cabinet')
 
 
 def send_telegram_notification(message):
@@ -856,54 +864,101 @@ def topup_balance_view(request):
     return redirect('cabinet')
 
 
+MONO_PUBKEY_URL = "https://api.monobank.ua/api/merchant/pubkey"
+MONO_PUBKEY_CACHE_KEY = 'monobank_pubkey'
+
+
+class MonoPubKeyUnavailable(Exception):
+    pass
+
+
+def get_mono_pubkey(force_refresh=False):
+    """Публічний ключ Monobank для перевірки підпису вебхуків (base64 від PEM)."""
+    key = None if force_refresh else cache.get(MONO_PUBKEY_CACHE_KEY)
+    if not key:
+        try:
+            response = requests.get(MONO_PUBKEY_URL, headers={'X-Token': getattr(settings, 'MONOBANK_TOKEN', '') or ''},
+                                    timeout=10)
+            response.raise_for_status()
+            key = response.json()['key']
+        except Exception as e:
+            raise MonoPubKeyUnavailable(str(e))
+        cache.set(MONO_PUBKEY_CACHE_KEY, key, 60 * 60 * 24)
+    return key
+
+
+def verify_mono_signature(body, x_sign):
+    """Перевіряє заголовок X-Sign (ECDSA, SHA-256) вебхука Monobank."""
+    if not x_sign:
+        return False
+    try:
+        signature = base64.b64decode(x_sign)
+    except Exception:
+        return False
+
+    # Друга спроба зі свіжим ключем — на випадок, якщо Monobank змінив ключ
+    for force_refresh in (False, True):
+        pub_key_pem = base64.b64decode(get_mono_pubkey(force_refresh=force_refresh)).decode()
+        verifying_key = ecdsa.VerifyingKey.from_pem(pub_key_pem)
+        try:
+            if verifying_key.verify(signature, body, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256):
+                return True
+        except ecdsa.BadSignatureError:
+            continue
+    return False
+
+
 @csrf_exempt
 def mono_webhook(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            invoice_id = data.get('invoiceId')
-            status = data.get('status')
+    if request.method != 'POST':
+        return HttpResponse("Method not allowed", status=405)
 
-            if status == 'success' and invoice_id:
-                try:
-                    order = Order.objects.get(mono_invoice_id=invoice_id)
+    try:
+        if not verify_mono_signature(request.body, request.headers.get('X-Sign', '')):
+            return HttpResponse("Invalid signature", status=403)
+    except MonoPubKeyUnavailable as e:
+        # 5xx, щоб Monobank повторив запит пізніше
+        print(f"Webhook: не вдалося отримати ключ Monobank: {e}")
+        return HttpResponse("Temporary error", status=503)
 
-                    if order.status != 'paid':
-                        with transaction.atomic():
-                            order.status = 'paid'
-                            order.save()
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return HttpResponse("Error", status=400)
 
-                            order_items = OrderItem.objects.filter(order=order)
+    invoice_id = data.get('invoiceId')
+    if data.get('status') != 'success' or not invoice_id:
+        return HttpResponse("OK", status=200)
 
-                            if order_items.exists():
-                                for item in order_items:
-                                    if item.material.is_bundle:
-                                        for sub_material in item.material.included_materials.all():
-                                            order.user.purchased_materials.add(sub_material)
-                                    else:
-                                        order.user.purchased_materials.add(item.material)
-
-                                CartItem.objects.filter(cart__user=order.user).delete()
-
-                                msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
-                                send_telegram_notification(msg)
-
-                            else:
-                                order.user.balance += float(order.total_amount)
-                                order.user.save()
-
-                                msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
-                                send_telegram_notification(msg)
-
-                except Order.DoesNotExist:
-                    pass
-
+    msg = None
+    with transaction.atomic():
+        # select_for_update: Monobank може надіслати один вебхук кілька разів одночасно
+        order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
+        if order is None or order.status == 'paid':
             return HttpResponse("OK", status=200)
-        except Exception as e:
-            print(f"Webhook Error: {e}")
-            return HttpResponse("Error", status=400)
 
-    return HttpResponse("Method not allowed", status=405)
+        order.status = 'paid'
+        order.paid_at = timezone.now()
+        order.save(update_fields=['status', 'paid_at'])
+
+        order_items = list(order.items.select_related('material'))
+        if order_items:
+            materials = [item.material for item in order_items if item.material]
+            for material in materials:
+                if material.is_bundle:
+                    for sub_material in material.included_materials.all():
+                        order.user.purchased_materials.add(sub_material)
+                else:
+                    order.user.purchased_materials.add(material)
+
+            CartItem.objects.filter(cart__user=order.user, material__in=materials).delete()
+            msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
+        else:
+            User.objects.filter(pk=order.user_id).update(balance=F('balance') + int(order.total_amount))
+            msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
+
+    send_telegram_notification(msg)
+    return HttpResponse("OK", status=200)
 
 
 @login_required

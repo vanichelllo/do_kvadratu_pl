@@ -1,9 +1,14 @@
+import base64
+import hashlib
+import json
 from unittest import mock
 
+import ecdsa
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 
-from .models import PracticeAttempt, StudyMaterial, TutorStudentRequest
+from .models import Cart, CartItem, Order, OrderItem, PracticeAttempt, StudyMaterial, TutorStudentRequest
 
 User = get_user_model()
 
@@ -55,3 +60,86 @@ class TeacherAccessTests(BaseTestCase):
         self.user.save()
         response = self.client.get('/cabinet/')
         self.assertIn(str(self.victim_request.parent_token), response.content.decode())
+
+
+class MonoWebhookTests(BaseTestCase):
+    def setUp(self):
+        cache.clear()
+        self.signing_key = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
+        pem = self.signing_key.get_verifying_key().to_pem()
+        pubkey_response = mock.Mock(status_code=200)
+        pubkey_response.json.return_value = {'key': base64.b64encode(pem).decode()}
+        patcher = mock.patch('materials.views.requests.get', return_value=pubkey_response)
+        self.pubkey_get = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.user = self.make_user('payer@example.com')
+        self.topup = Order.objects.create(user=self.user, total_amount=500, mono_invoice_id='inv-topup')
+
+    def post_webhook(self, payload, sign=True, signing_key=None):
+        body = json.dumps(payload).encode()
+        headers = {}
+        if sign:
+            key = signing_key or self.signing_key
+            signature = key.sign(body, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
+            headers['HTTP_X_SIGN'] = base64.b64encode(signature).decode()
+        return self.client.post('/mono/webhook/', body, content_type='application/json', **headers)
+
+    def test_unsigned_webhook_is_rejected(self):
+        response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'}, sign=False)
+        self.assertEqual(response.status_code, 403)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 0)
+
+    def test_webhook_signed_by_other_key_is_rejected(self):
+        fake_key = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
+        response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'}, signing_key=fake_key)
+        self.assertEqual(response.status_code, 403)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 0)
+
+    def test_signed_topup_credits_balance_once(self):
+        for _ in range(2):
+            response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})
+            self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 500)
+        self.topup.refresh_from_db()
+        self.assertEqual(self.topup.status, 'paid')
+        self.assertIsNotNone(self.topup.paid_at)
+
+    def test_signed_purchase_grants_materials(self):
+        material = StudyMaterial.objects.create(title='5. Тема', price=200)
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=cart, material=material)
+        order = Order.objects.create(user=self.user, total_amount=200, mono_invoice_id='inv-buy')
+        OrderItem.objects.create(order=order, material=material, price=200)
+
+        response = self.post_webhook({'invoiceId': 'inv-buy', 'status': 'success'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(material, self.user.purchased_materials.all())
+        self.assertFalse(cart.items.exists())
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 0)
+
+    def test_pubkey_unavailable_returns_503(self):
+        self.pubkey_get.side_effect = ConnectionError('down')
+        response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})
+        self.assertEqual(response.status_code, 503)
+
+
+class PayFromBalanceTests(BaseTestCase):
+    def test_pay_from_balance_deducts_and_grants(self):
+        user = self.make_user('buyer@example.com', balance=300)
+        material = StudyMaterial.objects.create(title='3. Тема', price=200)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(cart=cart, material=material)
+        self.client.force_login(user)
+
+        self.client.get('/cart/pay/balance/')
+        self.client.get('/cart/pay/balance/')  # повторний клік нічого не списує
+
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 100)
+        self.assertIn(material, user.purchased_materials.all())
+        self.assertEqual(Order.objects.filter(user=user, status='paid').count(), 1)
