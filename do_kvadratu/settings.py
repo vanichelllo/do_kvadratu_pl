@@ -19,7 +19,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-unsafe-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Якщо в .env написано True - буде True, інакше - False
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+# На бойовому сервері (HTTPS) cookie сесії та CSRF передаються лише через HTTPS
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # ДОЗВОЛЯЄМО НАШІ ДОМЕНИ ТА ЛОКАЛЬНІ ХОСТИ
 ALLOWED_HOSTS = [
