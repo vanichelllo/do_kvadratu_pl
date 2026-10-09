@@ -98,6 +98,10 @@ class StudyMaterial(models.Model):
 
 
 class Cart(models.Model):
+    PROMO_CODE = 'ВЧИТЕЛЬ'
+    PROMO_START = datetime.date(2026, 10, 2)
+    PROMO_END = datetime.date(2026, 10, 11)
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
     promo_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Промокод")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -109,11 +113,8 @@ class Cart(models.Model):
     def get_total_price(self):
         """Рахує фінальну суму зі знижкою 40% для промокоду ВЧИТЕЛЬ"""
         base_price = self.get_original_price()
-        if self.promo_code and self.promo_code.upper() == 'ВЧИТЕЛЬ':
-            now = timezone.now().date()
-            start_date = datetime.date(2026, 10, 1) # Поставив з сьогоднішнього дня для тестів
-            end_date = datetime.date(2026, 10, 11)
-            if start_date <= now <= end_date:
+        if self.promo_code and self.promo_code.upper() == self.PROMO_CODE:
+            if self.PROMO_START <= timezone.localdate() <= self.PROMO_END:
                 return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
         return base_price
 
@@ -290,6 +291,13 @@ class Review(models.Model):
         ordering = ['-created_at']
         verbose_name = "Відгук"
         verbose_name_plural = "Відгуки"
+
+    @property
+    def display_name(self):
+        """Ім'я, яке автор вписав сам; для старих відгуків (до появи поля) — ім'я з профілю."""
+        if self.reviewer_name and self.reviewer_name != "Анонім":
+            return self.reviewer_name
+        return self.user.first_name or "Учень"
 
     def __str__(self):
         target = f"Конспект: {self.material.title}" if self.material else "Загальний відгук"

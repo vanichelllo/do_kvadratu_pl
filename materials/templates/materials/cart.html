@@ -62,6 +62,9 @@
         transition: opacity 0.2s;
     }
     .btn-remove:hover { opacity: 0.8; }
+    button.btn-remove, button.btn-pay-mono, button.btn-pay-balance { cursor: pointer; font-family: inherit; }
+    button.btn-pay-mono, button.btn-pay-balance { width: 100%; height: 100%; }
+    .payment-options form { margin: 0; }
 
     .cart-total {
         margin-top: 20px;
@@ -148,7 +151,10 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <span class="item-price">{{ item.material.price }} ₴</span>
-                        <a href="{% url 'remove_from_cart' item.id %}" class="btn-remove">✖ Видалити</a>
+                        <form method="POST" action="{% url 'remove_from_cart' item.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-remove">✖ Видалити</button>
+                        </form>
                     </div>
                 </div>
             {% endfor %}
@@ -198,14 +204,20 @@
             </div>
 
             <div class="payment-options">
-                <a href="{% url 'pay_with_mono' %}" class="btn-pay-mono" onclick="return checkAgreement(event);">
-                    <span style="font-size: 1.5rem;">🐈</span> Оплатити картою
-                    <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
-                </a>
-                <a href="{% url 'pay_from_balance' %}" class="btn-pay-balance" onclick="return checkAgreement(event);">
-                    <span style="font-size: 1.5rem;">💵</span> Списати з балансу
-                    <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0.00" }} ₴</span>
-                </a>
+                <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event);">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-pay-mono">
+                        <span style="font-size: 1.5rem;">🐈</span> Оплатити картою
+                        <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
+                    </button>
+                </form>
+                <form method="POST" action="{% url 'pay_from_balance' %}" onsubmit="return checkAgreement(event);">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-pay-balance">
+                        <span style="font-size: 1.5rem;">💵</span> Списати з балансу
+                        <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0" }} ₴</span>
+                    </button>
+                </form>
             </div>
 
         {% else %}

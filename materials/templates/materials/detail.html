@@ -193,7 +193,7 @@
         <!-- РОЗУМНА ЛОГІКА КНОПКИ КУПИТИ -->
         {% if user.is_authenticated %}
             <!-- Якщо користувач вже купив цей конспект -->
-            {% if material in user.purchased_materials.all %}
+            {% if is_owned %}
                 <div style="text-align: center; background-color: #27c93f; color: white; font-weight: 800; padding: 15px; border-radius: 8px; border: 2px solid var(--brand-blue);">
                     ✅ ВИ ВЖЕ ПРИДБАЛИ ЦЕЙ МАТЕРІАЛ
                 </div>
@@ -202,9 +202,12 @@
                 </a>
             {% else %}
                 <!-- Якщо ще не купив -->
-                <a href="{% url 'add_to_cart' material.id %}" class="btn-buy" style="display: block; text-align: center;">
-                    {% if material.is_free or material.price == 0 %}ОТРИМАТИ БЕЗКОШТОВНО{% else %}🛒 ДОДАТИ В КОШИК{% endif %}
-                </a>
+                <form method="POST" action="{% url 'add_to_cart' material.id %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-buy" style="border: none; cursor: pointer; font-family: inherit;">
+                        {% if material.is_free or material.price == 0 %}ОТРИМАТИ БЕЗКОШТОВНО{% else %}🛒 ДОДАТИ В КОШИК{% endif %}
+                    </button>
+                </form>
             {% endif %}
         {% else %}
             <!-- Якщо гість (не зареєстрований) -->
@@ -225,6 +228,8 @@
                     {% csrf_token %}
                     <!-- Приховане поле, що прив'язує відгук саме до цього конспекту -->
                     <input type="hidden" name="material_id" value="{{ material.id }}">
+
+                    <input type="text" name="reviewer_name" maxlength="100" placeholder="Ваше ім'я (буде видно на сайті)" required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-size: 14px; box-sizing: border-box;">
 
                     <select name="rating" required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; font-weight: 700; background: white;">
                         <option value="5">⭐⭐⭐⭐⭐ (5/5) - Чудово!</option>
@@ -249,12 +254,11 @@
             <!-- Список вже залишених (схвалених) відгуків -->
             <div style="margin-top: 40px;">
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    {% for review in material.reviews.all %}
-                        {% if review.is_approved %}
+                    {% for review in approved_reviews %}
                             <div style="background: #f8f9fa; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-yellow);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <span style="font-weight: 900; color: var(--brand-blue);">
-                                        {% if review.user.first_name %}{{ review.user.first_name }}{% else %}Учень{% endif %}
+                                        {{ review.display_name }}
                                     </span>
                                     <span style="font-size: 1.1rem; letter-spacing: 2px;">
                                         {% if review.rating == 5 %}⭐⭐⭐⭐⭐{% elif review.rating == 4 %}⭐⭐⭐⭐{% elif review.rating == 3 %}⭐⭐⭐{% elif review.rating == 2 %}⭐⭐{% else %}⭐{% endif %}
@@ -263,7 +267,6 @@
                                 <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #333;">{{ review.text }}</p>
                                 <span style="font-size: 0.75rem; color: #999; margin-top: 10px; display: block;">{{ review.created_at|date:"d.m.Y" }}</span>
                             </div>
-                        {% endif %}
                     {% endfor %}
                 </div>
             </div>

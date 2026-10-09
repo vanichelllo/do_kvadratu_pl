@@ -3,6 +3,7 @@ import io
 import base64
 import hashlib
 import hmac
+import html
 import ecdsa
 import re
 import requests
@@ -18,11 +19,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.db.models import Case, Q, When
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import F
 
 from users.forms import UserProfileForm
+from .forms import StudentReportForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
     MatchItem, PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 
@@ -40,13 +45,62 @@ def is_teacher(user):
     return user.is_authenticated and (user.is_superuser or user.is_staff)
 
 
+def to_int(value):
+    """int із даних форми; None для порожніх або зіпсованих значень замість помилки 500."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_id_list(ids_str):
+    """'1,2,3' -> [1, 2, 3]; некоректні шматки ігноруються."""
+    return [i for i in (to_int(x) for x in (ids_str or '').split(',')) if i is not None]
+
+
+def questions_in_order(q_id_list):
+    if not q_id_list:
+        return []
+    preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
+    return Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(preserved_order)
+
+
+def find_option(question, option_id):
+    """Варіант відповіді лише з цього завдання, щоб не можна було підставити id правильного варіанта з іншого."""
+    option_id = to_int(option_id)
+    if option_id is None:
+        return None
+    return next((opt for opt in question.options.all() if opt.id == option_id), None)
+
+
+def user_owns_material(user, material):
+    """Пакет у покупки не додається — лише його вміст, тому пакет вважається купленим,
+    коли куплено всі матеріали, що в нього входять."""
+    if not user.is_authenticated:
+        return False
+    if material.is_bundle:
+        included_ids = list(material.included_materials.values_list('id', flat=True))
+        return bool(included_ids) and \
+            user.purchased_materials.filter(id__in=included_ids).count() == len(included_ids)
+    return user.purchased_materials.filter(id=material.id).exists()
+
+
+def safe_back_url(request, fallback='cabinet'):
+    """Повернення на попередню сторінку лише в межах нашого сайту."""
+    referer = request.META.get('HTTP_REFERER', '')
+    if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={request.get_host()},
+                                                   require_https=request.is_secure()):
+        return referer
+    return fallback
+
+
 def diagnostic_test_view(request):
     # ==========================================
     # 1. ПЕРЕВІРКА ВІДПОВІДЕЙ (РЕЖИМ POST)
     # ==========================================
     if request.method == 'POST':
         question_ids_str = request.POST.get('question_ids', '')
-        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
+        q_id_list = parse_id_list(question_ids_str)
 
         # === НОВЕ: Словник для збереження історії відповідей у БД ===
         saved_answers = {
@@ -58,13 +112,7 @@ def diagnostic_test_view(request):
         }
 
         # Витягуємо тільки ті запитання, які випали в тесті, зберігаючи порядок
-        from django.db.models import Case, When
-        if q_id_list:
-            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-            questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
-                preserved_order)
-        else:
-            questions = []
+        questions = questions_in_order(q_id_list)
 
         topics_stats = {}
         for topic in DiagnosticTopic.objects.all():
@@ -84,14 +132,10 @@ def diagnostic_test_view(request):
                 # Зберігаємо відповідь для історії
                 saved_answers['q_choice'][str(question.id)] = user_answer
 
-                if user_answer:
-                    try:
-                        selected_option = AnswerOption.objects.get(id=int(user_answer))
-                        if selected_option.is_correct:
-                            total_score += 1
-                            if topic_name: topics_stats[topic_name]['correct'] += 1
-                    except AnswerOption.DoesNotExist:
-                        pass
+                selected_option = find_option(question, user_answer)
+                if selected_option and selected_option.is_correct:
+                    total_score += 1
+                    if topic_name: topics_stats[topic_name]['correct'] += 1
 
             elif question.question_type == 'MATCH':
                 if topic_name: topics_stats[topic_name]['total'] += 3
@@ -106,7 +150,7 @@ def diagnostic_test_view(request):
                     # Зберігаємо відповідь для історії
                     saved_answers['q_match'][str(question.id)][str(item.id)] = user_match_answer
 
-                    if user_match_answer and int(user_match_answer) == item.correct_option.id:
+                    if to_int(user_match_answer) == item.correct_option_id:
                         match_correct_count += 1
                 total_score += match_correct_count
                 if topic_name: topics_stats[topic_name]['correct'] += match_correct_count
@@ -239,6 +283,12 @@ def diagnostic_test_view(request):
 def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
+    if not (material.is_free or is_teacher(request.user) or user_owns_material(request.user, material)):
+        messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
+        if material.is_published:
+            return redirect('material_detail', pk=material.id)
+        return redirect('cabinet')
+
     if request.method == 'POST':
         total_score = 0
         max_score = 0
@@ -250,15 +300,7 @@ def practice_session_view(request, material_id):
         question_ids_str = request.POST.get('question_ids', '')
         saved_answers['question_ids'] = question_ids_str
 
-        q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
-
-        from django.db.models import Case, When
-        if q_id_list:
-            preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-            questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
-                preserved_order)
-        else:
-            questions = []
+        questions = questions_in_order(parse_id_list(question_ids_str))
 
         for q in questions:
             q_result = {
@@ -273,16 +315,13 @@ def practice_session_view(request, material_id):
 
                 saved_answers['q_choice'][str(q.id)] = user_ans  # Зберігаємо для історії
 
-                if user_ans:
-                    try:
-                        opt = AnswerOption.objects.get(id=int(user_ans))
-                        q_result['user_answer'] = opt
-                        if opt.is_correct:
-                            total_score += 1
-                            q_result['points_earned'] = 1
-                            q_result['is_correct'] = True
-                    except AnswerOption.DoesNotExist:
-                        pass
+                opt = find_option(q, user_ans)
+                if opt:
+                    q_result['user_answer'] = opt
+                    if opt.is_correct:
+                        total_score += 1
+                        q_result['points_earned'] = 1
+                        q_result['is_correct'] = True
                 max_score += 1
 
             elif q.question_type == 'MATCH':
@@ -295,8 +334,8 @@ def practice_session_view(request, material_id):
                     user_match = request.POST.get(f'match_{item.id}')
                     saved_answers['q_match'][str(q.id)][str(item.id)] = user_match  # Зберігаємо для історії
 
-                    user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
-                    is_match_correct = user_match and int(user_match) == item.correct_option.id
+                    user_opt = find_option(q, user_match)
+                    is_match_correct = user_opt is not None and user_opt.id == item.correct_option_id
                     if is_match_correct:
                         match_points += 1
                         total_score += 1
@@ -397,17 +436,16 @@ def cart_detail(request):
         action = request.POST.get('action')
         if action == 'apply_promo':
             promo = request.POST.get('promo_code', '').strip().upper()
-            if promo == 'ВЧИТЕЛЬ':
-                now = timezone.now().date()
-                start_date = datetime.date(2026, 10, 1)
-                end_date = datetime.date(2026, 10, 11)
+            if promo == Cart.PROMO_CODE:
+                now = timezone.localdate()
+                start_date, end_date = Cart.PROMO_START, Cart.PROMO_END
 
                 if start_date <= now <= end_date:
                     cart.promo_code = promo
                     cart.save()
                     messages.success(request, "🎉 Промокод ВЧИТЕЛЬ успішно застосовано! Ваша знижка 40%.")
                 elif now < start_date:
-                    messages.error(request, "⏳ Цей промокод почне діяти з 2 жовтня!")
+                    messages.error(request, f"⏳ Цей промокод почне діяти з {start_date:%d.%m}!")
                 else:
                     messages.error(request, "❌ Термін дії цього промокоду минув.")
             else:
@@ -423,10 +461,11 @@ def cart_detail(request):
     return render(request, 'materials/cart.html', {'cart': cart})
 
 @login_required
+@require_POST
 def add_to_cart(request, material_id):
-    material = get_object_or_404(StudyMaterial, id=material_id)
+    material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
 
-    if material in request.user.purchased_materials.all():
+    if user_owns_material(request.user, material):
         messages.warning(request, "Ви вже придбали цей матеріал!")
         return redirect('cabinet')
 
@@ -452,6 +491,7 @@ def add_to_cart(request, material_id):
 
 
 @login_required
+@require_POST
 def remove_from_cart(request, item_id):
     cart = get_object_or_404(Cart, user=request.user)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
@@ -533,9 +573,21 @@ class MaterialDetailView(DetailView):
     template_name = 'materials/detail.html'
     context_object_name = 'material'
 
+    def get_queryset(self):
+        # Неопубліковані матеріали бачать лише персонал і ті, хто їх уже має
+        user = self.request.user
+        if is_teacher(user):
+            return StudyMaterial.objects.all()
+        visible = Q(is_published=True)
+        if user.is_authenticated:
+            visible |= Q(id__in=user.purchased_materials.values('id'))
+        return StudyMaterial.objects.filter(visible)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         material = self.object
+        context['is_owned'] = user_owns_material(self.request.user, material)
+        context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
 
         if material.is_bundle:
             total_original_price = sum(item.price for item in material.included_materials.all())
@@ -605,35 +657,21 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
-    if material not in request.user.purchased_materials.all():
+    if not request.user.purchased_materials.filter(id=material.id).exists() and not is_teacher(request.user):
         raise Http404("У вас немає доступу до цього матеріалу.")
 
-    pdf_base64 = None
-
-    if material.file:
-        try:
-            file_url = material.file.url
-            if file_url.startswith('http://'):
-                file_url = file_url.replace('http://', 'https://')
-            response = requests.get(file_url, timeout=10)
-            if response.status_code == 200:
-                pdf_base64 = base64.b64encode(response.content).decode('utf-8')
-        except Exception as e:
-            print(f"Помилка завантаження файлу з хмари: {e}")
-
-    context = {
-        'material': material,
-        'pdf_base64': pdf_base64
-    }
-    return render(request, 'materials/reader.html', context)
+    # Раніше тут PDF щоразу завантажувався з Cloudinary (до 10 с) і кодувався в base64,
+    # хоча шаблон його не використовує
+    return render(request, 'materials/reader.html', {'material': material})
 
 
 @login_required(login_url='/login/')
+@require_POST
 def buy_material_view(request, material_id):
-    material = get_object_or_404(StudyMaterial, id=material_id)
+    material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
     my_user = request.user
 
-    if material in my_user.purchased_materials.all():
+    if user_owns_material(my_user, material):
         messages.info(request, f"Ви вже маєте конспект «{material.title}».")
         return redirect('cabinet')
 
@@ -703,6 +741,7 @@ def api_bot_user_library(request, telegram_id):
 
 
 @login_required
+@require_POST
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
 
@@ -764,12 +803,15 @@ def send_telegram_notification(message):
             'parse_mode': 'HTML'
         }
         try:
-            requests.post(url, json=payload, timeout=5)
+            response = requests.post(url, json=payload, timeout=5)
+            if not response.ok:
+                print(f"Telegram відхилив повідомлення: {response.status_code} {response.text[:300]}")
         except Exception as e:
             print(f"Помилка відправки в Telegram: {e}")
 
 
 @login_required
+@require_POST
 def pay_with_mono(request):
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
@@ -802,7 +844,8 @@ def pay_with_mono(request):
         "webHookUrl": "https://dokvadratu.com.ua/mono/webhook/",
     }
     try:
-        response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload, headers=headers)
+        response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload, headers=headers,
+                                 timeout=15)
         data = response.json()
 
         if 'pageUrl' in data:
@@ -821,16 +864,13 @@ def pay_with_mono(request):
 @login_required
 def topup_balance_view(request):
     if request.method == 'POST':
-        amount = request.POST.get('amount')
-        try:
-            amount = float(amount)
-            if amount <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
-            messages.error(request, "Введіть коректну суму.")
+        # Баланс зберігається в цілих гривнях, тому й поповнення — лише цілими гривнями
+        amount = to_int(request.POST.get('amount'))
+        if amount is None or not 1 <= amount <= 100000:
+            messages.error(request, "Введіть коректну суму (ціле число гривень від 1 до 100 000).")
             return redirect('cabinet')
 
-        amount_kopecks = int(amount * 100)
+        amount_kopecks = amount * 100
 
         # Створюємо технічне замовлення для поповнення
         order = Order.objects.create(
@@ -854,7 +894,7 @@ def topup_balance_view(request):
         }
         try:
             response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload,
-                                     headers=headers)
+                                     headers=headers, timeout=15)
             data = response.json()
 
             if 'pageUrl' in data:
@@ -980,10 +1020,10 @@ def mono_webhook(request):
 @login_required
 def request_tutor_student_status(request):
     if request.method == 'POST':
-        student_name = request.POST.get('real_name', '').strip()
+        student_name = request.POST.get('real_name', '').strip()[:100]
         course_type = request.POST.get('course', 'nmt')
 
-        if not student_name or not course_type:
+        if not student_name or course_type not in dict(TutorStudentRequest.COURSE_CHOICES):
             messages.error(request, "Будь ласка, заповніть усі поля форми.")
             return redirect('cabinet')
 
@@ -995,7 +1035,7 @@ def request_tutor_student_status(request):
         if created:
             course_display = dict(TutorStudentRequest.COURSE_CHOICES).get(course_type, course_type)
             messages.success(request, "Заявку успішно надіслано! Очікуйте на підтвердження.")
-            msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{student_name}</b>\nКлас/Курс: <b>{course_display}</b>\nEmail: {request.user.email}\n\nЧекає на твоє підтвердження в адмінці."
+            msg = f"🙋‍♂️ <b>Нова заявка на статус учня!</b>\n\nУчень: <b>{html.escape(student_name)}</b>\nКлас/Курс: <b>{course_display}</b>\nEmail: {html.escape(request.user.email)}\n\nЧекає на твоє підтвердження в адмінці."
             send_telegram_notification(msg)
 
         elif student_req.status == 'pending':
@@ -1013,45 +1053,49 @@ def request_tutor_student_status(request):
 # ==========================================
 # ВІДГУКИ
 # ==========================================
+def parse_rating(value):
+    rating = to_int(value)
+    return rating if rating in dict(Review.RATING_CHOICES) else None
+
+
 @login_required
+@require_POST
 def submit_review(request):
-    if request.method == 'POST':
-        rating = request.POST.get('rating', 5)
-        text = request.POST.get('text', '').strip()
-        reviewer_name = request.POST.get('reviewer_name', '').strip()
-        material_id = request.POST.get('material_id')
+    rating = parse_rating(request.POST.get('rating', 5))
+    text = request.POST.get('text', '').strip()
+    reviewer_name = request.POST.get('reviewer_name', '').strip()[:100]
+    material_id = request.POST.get('material_id')
+    back_url = safe_back_url(request)
 
-        if not text or not reviewer_name:
-            messages.error(request, "Будь ласка, введіть своє ім'я та текст відгуку.")
-            return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
+    if not text or not reviewer_name:
+        messages.error(request, "Будь ласка, введіть своє ім'я та текст відгуку.")
+        return redirect(back_url)
+    if rating is None:
+        messages.error(request, "Оберіть оцінку від 1 до 5.")
+        return redirect(back_url)
 
-        try:
-            rating = int(rating)
-        except ValueError:
-            rating = 5
+    review = Review(
+        user=request.user,
+        reviewer_name=reviewer_name,
+        rating=rating,
+        text=text
+    )
 
-        review = Review(
-            user=request.user,
-            reviewer_name=reviewer_name,
-            rating=rating,
-            text=text
-        )
+    material_title = "Загальний відгук (про заняття)"
+    if material_id:
+        material = get_object_or_404(StudyMaterial, id=to_int(material_id))
+        review.material = material
+        material_title = f"Матеріал: {material.title}"
 
-        material_title = "Загальний відгук (про заняття)"
-        if material_id:
-            material = get_object_or_404(StudyMaterial, id=material_id)
-            review.material = material
-            material_title = f"Матеріал: {material.title}"
+    review.save()
 
-        review.save()
+    msg = (f"⭐️ <b>Новий відгук!</b>\n\nВід: {html.escape(reviewer_name)} ({html.escape(request.user.email)})\n"
+           f"Оцінка: {'⭐' * rating}\nЩодо: {html.escape(material_title)}\n\n<i>«{html.escape(text)}»</i>\n\n"
+           f"Перевір та схвали його в адмінці.")
+    send_telegram_notification(msg)
 
-        msg = f"⭐️ <b>Новий відгук!</b>\n\nВід: {reviewer_name} ({request.user.email})\nОцінка: {'⭐' * rating}\nЩодо: {material_title}\n\n<i>«{text}»</i>\n\nПеревір та схвали його в адмінці."
-        send_telegram_notification(msg)
-
-        messages.success(request, "Дякуємо за ваш відгук! Він з'явиться на сайті після перевірки модератором.")
-        return redirect(request.META.get('HTTP_REFERER', 'cabinet'))
-
-    return redirect('cabinet')
+    messages.success(request, "Дякуємо за ваш відгук! Він з'явиться на сайті після перевірки модератором.")
+    return redirect(back_url)
 
 
 @login_required(login_url='/login/')
@@ -1081,16 +1125,7 @@ def view_attempt_details(request, attempt_id):
         messages.info(request, "Цей тест був пройдений до оновлення системи. Деталі не збережено.")
         return redirect('cabinet')
 
-    question_ids_str = saved_answers.get('question_ids', '')
-    q_id_list = [int(x) for x in question_ids_str.split(',')] if question_ids_str else []
-
-    from django.db.models import Case, When
-    if q_id_list:
-        preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-        questions = Question.objects.filter(id__in=q_id_list).prefetch_related('options', 'match_items').order_by(
-            preserved_order)
-    else:
-        questions = []
+    questions = questions_in_order(parse_id_list(saved_answers.get('question_ids', '')))
 
     results_data = []
     for q in questions:
@@ -1103,15 +1138,12 @@ def view_attempt_details(request, attempt_id):
             q_result['max_points'] = 1
             q_result['correct_answer'] = q.options.filter(is_correct=True).first()
             user_ans = saved_answers.get('q_choice', {}).get(str(q.id))
-            if user_ans:
-                try:
-                    opt = AnswerOption.objects.get(id=int(user_ans))
-                    q_result['user_answer'] = opt
-                    if opt.is_correct:
-                        q_result['points_earned'] = 1
-                        q_result['is_correct'] = True
-                except AnswerOption.DoesNotExist:
-                    pass
+            opt = find_option(q, user_ans)
+            if opt:
+                q_result['user_answer'] = opt
+                if opt.is_correct:
+                    q_result['points_earned'] = 1
+                    q_result['is_correct'] = True
 
         elif q.question_type == 'MATCH':
             q_result['max_points'] = 3
@@ -1119,8 +1151,8 @@ def view_attempt_details(request, attempt_id):
             match_points = 0
             for item in q.match_items.all():
                 user_match = saved_answers.get('q_match', {}).get(str(q.id), {}).get(str(item.id))
-                user_opt = AnswerOption.objects.filter(id=int(user_match)).first() if user_match else None
-                is_match_correct = user_match and int(user_match) == item.correct_option.id
+                user_opt = find_option(q, user_match)
+                is_match_correct = user_opt is not None and user_opt.id == item.correct_option_id
                 if is_match_correct:
                     match_points += 1
                 q_result['matches'].append({
@@ -1159,8 +1191,10 @@ def report_question_error(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            question_id = data.get('question_id')
-            message = data.get('message')
+            question_id = to_int(data.get('question_id'))
+            message = str(data.get('message') or '').strip()[:2000]
+            if not message:
+                return JsonResponse({'status': 'error', 'message': 'Опишіть помилку'}, status=400)
 
             question = get_object_or_404(Question, id=question_id)
 
@@ -1174,15 +1208,18 @@ def report_question_error(request):
             # Відправляємо в Telegram
             msg = f"🚨 <b>СКАРГА НА ЗАВДАННЯ!</b>\n\n"
             msg += f"<b>ID Завдання:</b> {question.id}\n"
-            msg += f"<b>Учень:</b> {request.user.email}\n\n"
-            msg += f"<b>Що не так:</b> <i>{message}</i>\n\n"
+            msg += f"<b>Учень:</b> {html.escape(request.user.email)}\n\n"
+            msg += f"<b>Що не так:</b> <i>{html.escape(message)}</i>\n\n"
             msg += f"Зайди в адмінку (розділ 'Скарги на завдання'), щоб виправити."
 
             send_telegram_notification(msg)
 
             return JsonResponse({'status': 'success'})
+        except Http404:
+            return JsonResponse({'status': 'error', 'message': 'Завдання не знайдено'}, status=404)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            print(f"Помилка збереження скарги: {e}")
+            return JsonResponse({'status': 'error', 'message': 'Не вдалося надіслати скаргу'}, status=400)
     return JsonResponse({'status': 'invalid method'}, status=405)
 
 
@@ -1228,44 +1265,48 @@ def parent_view_presentation(request, parent_token, presentation_id):
     return render(request, 'materials/reader.html', context)
 
 @login_required
+@require_POST
 def add_quick_report(request):
-    if request.method == 'POST' and is_teacher(request.user):
-        student_id = request.POST.get('student_id')
-        student = get_object_or_404(TutorStudentRequest, id=student_id)
+    if not is_teacher(request.user):
+        return redirect('cabinet')
 
-        StudentReport.objects.create(
-            student=student,
-            topic=request.POST.get('topic'),
-            nush_modeling=request.POST.get('nush_modeling', 10),
-            nush_solving=request.POST.get('nush_solving', 10),
-            nush_analysis=request.POST.get('nush_analysis', 10),
-            homework_status=request.POST.get('homework_status', 'not_assigned'),
-            teacher_comment=request.POST.get('teacher_comment', '')
-        )
+    student = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')))
+    form = StudentReportForm(request.POST)
+    if form.is_valid():
+        report = form.save(commit=False)
+        report.student = student
+        report.save()
         messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
+    else:
+        errors = '; '.join(err for field_errors in form.errors.values() for err in field_errors)
+        messages.error(request, f"Звіт не збережено: {errors}")
     return redirect('cabinet')
 
 
 @login_required
+@require_POST
 def add_nmt_score(request):
-    if request.method == 'POST' and is_teacher(request.user):
-        student_id = request.POST.get('student_id')
-        material_id = request.POST.get('material_id')
-        score = request.POST.get('score', 0)
-        max_score = request.POST.get('max_score', 18)
+    if not is_teacher(request.user):
+        return redirect('cabinet')
 
-        student_req = get_object_or_404(TutorStudentRequest, id=student_id)
-        material = get_object_or_404(StudyMaterial, id=material_id)
+    student_req = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')))
+    material = get_object_or_404(StudyMaterial, id=to_int(request.POST.get('material_id')))
+    score = to_int(request.POST.get('score'))
+    max_score = to_int(request.POST.get('max_score', 18))
 
-        # Створюємо спробу з позначкою в JSON
-        PracticeAttempt.objects.create(
-            user=student_req.user,
-            material=material,
-            score=score,
-            max_score=max_score,
-            answers_json={'note': 'Спільна робота на уроці (демонстрація екрана)'}
-        )
-        messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
+    if score is None or max_score is None or max_score <= 0 or not 0 <= score <= max_score:
+        messages.error(request, "Бал має бути числом від 0 до максимуму, а максимум — більшим за 0.")
+        return redirect('cabinet')
+
+    # Створюємо спробу з позначкою в JSON
+    PracticeAttempt.objects.create(
+        user=student_req.user,
+        material=material,
+        score=score,
+        max_score=max_score,
+        answers_json={'note': 'Спільна робота на уроці (демонстрація екрана)'}
+    )
+    messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
     return redirect('cabinet')
 
 
@@ -1274,18 +1315,13 @@ def submit_parent_review(request, parent_token):
         # Знаходимо учня за батьківським токеном
         student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
 
-        rating = request.POST.get('rating', 5)
+        rating = parse_rating(request.POST.get('rating', 5))
         text = request.POST.get('text', '').strip()
-        reviewer_name = request.POST.get('reviewer_name', '').strip()
+        reviewer_name = request.POST.get('reviewer_name', '').strip()[:100]
 
-        if not text or not reviewer_name:
-            messages.error(request, "Будь ласка, введіть своє ім'я та текст відгуку.")
+        if not text or not reviewer_name or rating is None:
+            messages.error(request, "Будь ласка, введіть своє ім'я, оцінку та текст відгуку.")
             return redirect('parent_dashboard', parent_token=parent_token)
-
-        try:
-            rating = int(rating)
-        except ValueError:
-            rating = 5
 
         # Створюємо відгук і прив'язуємо його до профілю учня
         Review.objects.create(
@@ -1297,9 +1333,9 @@ def submit_parent_review(request, parent_token):
 
         # Відправляємо тобі сповіщення у Telegram із подвійним ім'ям (ім'я на сайті + чиї це батьки)
         msg = f"⭐️ <b>Новий відгук від батьків!</b>\n\n"
-        msg += f"Від: <b>{reviewer_name}</b> <i>(Батьки учня: {student_req.real_name})</i>\n"
+        msg += f"Від: <b>{html.escape(reviewer_name)}</b> <i>(Батьки учня: {html.escape(student_req.real_name)})</i>\n"
         msg += f"Оцінка: {'⭐' * rating}\n\n"
-        msg += f"<i>«{text}»</i>\n\n"
+        msg += f"<i>«{html.escape(text)}»</i>\n\n"
         msg += f"Зайди в адмінку, щоб схвалити публікацію на головній сторінці."
 
         send_telegram_notification(msg)

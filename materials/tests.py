@@ -6,9 +6,10 @@ from unittest import mock
 import ecdsa
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 
-from .models import Cart, CartItem, Order, OrderItem, PracticeAttempt, StudyMaterial, TutorStudentRequest
+from .models import (AnswerOption, Cart, CartItem, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review,
+                     StudentReport, StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
 
@@ -155,8 +156,9 @@ class PayFromBalanceTests(BaseTestCase):
         CartItem.objects.create(cart=cart, material=material)
         self.client.force_login(user)
 
-        self.client.get('/cart/pay/balance/')
-        self.client.get('/cart/pay/balance/')  # повторний клік нічого не списує
+        self.assertEqual(self.client.get('/cart/pay/balance/').status_code, 405)  # GET не платить
+        self.client.post('/cart/pay/balance/')
+        self.client.post('/cart/pay/balance/')  # повторний клік нічого не списує
 
         user.refresh_from_db()
         self.assertEqual(user.balance, 100)
@@ -193,3 +195,222 @@ class BotApiTests(BaseTestCase):
         response = self.client.get('/api/bot/library/12345/', HTTP_X_BOT_TOKEN='bot-secret')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['student_email'], 'kid@example.com')
+
+
+
+class ReviewTests(BaseTestCase):
+    def setUp(self):
+        self.user = self.make_user('reader@example.com', first_name='Профіль')
+        self.material = StudyMaterial.objects.create(title='7. Квадратні рівняння', price=100, is_published=True)
+        self.client.force_login(self.user)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_material_page_review_form_submits(self, notify):
+        page = self.client.get(f'/material/{self.material.id}/')
+        self.assertContains(page, 'name="reviewer_name"')
+
+        self.client.post('/submit-review/', {'rating': 5, 'text': 'Корисно', 'reviewer_name': 'Оля',
+                                             'material_id': self.material.id})
+        review = Review.objects.get(material=self.material)
+        self.assertEqual(review.reviewer_name, 'Оля')
+
+        review.is_approved = True
+        review.save()
+        page = self.client.get(f'/material/{self.material.id}/')
+        self.assertContains(page, 'Оля')
+        self.assertNotContains(page, 'Профіль')
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_home_shows_reviewer_name_not_profile_name(self, notify):
+        Review.objects.create(user=self.user, reviewer_name='Мама Тараса', text='Дякуємо', is_approved=True)
+        Review.objects.create(user=self.user, text='Старий відгук', is_approved=True)  # reviewer_name = «Анонім»
+        page = self.client.get('/')
+        self.assertContains(page, 'Мама Тараса')
+        self.assertContains(page, 'Профіль')  # старий відгук показує ім'я з профілю, як і раніше
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_invalid_rating_rejected(self, notify):
+        for rating in (999, 0, 'abc'):
+            self.client.post('/submit-review/', {'rating': rating, 'text': 't', 'reviewer_name': 'n'})
+        self.assertFalse(Review.objects.exists())
+        notify.assert_not_called()
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_telegram_message_is_html_escaped(self, notify):
+        self.client.post('/submit-review/', {'rating': 4, 'text': 'x < y & <b>', 'reviewer_name': '<Оля>'})
+        message = notify.call_args[0][0]
+        self.assertIn('x &lt; y &amp; &lt;b&gt;', message)
+        self.assertIn('&lt;Оля&gt;', message)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_redirect_back_stays_on_site(self, notify):
+        response = self.client.post('/submit-review/', {'rating': 5, 'text': 't', 'reviewer_name': 'n'},
+                                    HTTP_REFERER='https://evil.example.com/')
+        self.assertEqual(response.url, '/cabinet/')
+
+
+class PurchaseAccessTests(BaseTestCase):
+    def setUp(self):
+        self.user = self.make_user('buyer2@example.com', balance=1000)
+        self.lesson1 = StudyMaterial.objects.create(title='1. Числа', price=100, is_published=True)
+        self.lesson2 = StudyMaterial.objects.create(title='2. Дроби', price=100, is_published=True)
+        self.bundle = StudyMaterial.objects.create(title='Пакет', price=150, is_bundle=True, is_published=True)
+        self.bundle.included_materials.add(self.lesson1, self.lesson2)
+        self.client.force_login(self.user)
+
+    def test_owned_bundle_cannot_be_added_again(self):
+        self.user.purchased_materials.add(self.lesson1, self.lesson2)
+        page = self.client.get(f'/material/{self.bundle.id}/')
+        self.assertContains(page, 'ВИ ВЖЕ ПРИДБАЛИ')
+        self.client.post(f'/cart/add/{self.bundle.id}/')
+        self.assertFalse(CartItem.objects.filter(material=self.bundle).exists())
+
+    def test_partially_owned_bundle_can_be_bought(self):
+        self.user.purchased_materials.add(self.lesson1)
+        self.client.post(f'/cart/add/{self.bundle.id}/')
+        self.assertTrue(CartItem.objects.filter(material=self.bundle).exists())
+
+    def test_legacy_buy_endpoint_does_not_charge_bundle_twice(self):
+        self.client.post(f'/buy/{self.bundle.id}/')
+        self.client.post(f'/buy/{self.bundle.id}/')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 850)
+
+    def test_state_changing_endpoints_reject_get(self):
+        cart = Cart.objects.create(user=self.user)
+        item = CartItem.objects.create(cart=cart, material=self.lesson1)
+        for url in (f'/cart/add/{self.lesson2.id}/', f'/cart/remove/{item.id}/', '/cart/pay/balance/',
+                    '/cart/pay/mono/', f'/buy/{self.lesson2.id}/'):
+            self.assertEqual(self.client.get(url).status_code, 405, url)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.balance, 1000)
+        self.assertTrue(CartItem.objects.filter(id=item.id).exists())
+
+    def test_foreign_site_post_without_csrf_token_is_rejected(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.user)
+        self.assertEqual(csrf_client.post(f'/cart/add/{self.lesson1.id}/').status_code, 403)
+
+    def test_unpublished_material_hidden_from_strangers(self):
+        hidden = StudyMaterial.objects.create(title='Чернетка', price=100, is_published=False)
+        self.assertEqual(Client().get(f'/material/{hidden.id}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/material/{hidden.id}/').status_code, 404)
+        self.client.post(f'/cart/add/{hidden.id}/')
+        self.assertFalse(CartItem.objects.filter(material=hidden).exists())
+
+        self.user.purchased_materials.add(hidden)
+        self.assertEqual(self.client.get(f'/material/{hidden.id}/').status_code, 200)
+
+    def test_practice_requires_purchase(self):
+        question = Question.objects.create(text='2+2', question_type='SHORT', correct_short_answer='4')
+        question.materials.add(self.lesson1)
+
+        response = self.client.get(f'/practice/{self.lesson1.id}/')
+        self.assertRedirects(response, f'/material/{self.lesson1.id}/', fetch_redirect_response=False)
+        self.client.post(f'/practice/{self.lesson1.id}/', {'question_ids': str(question.id), f'q_{question.id}': '4'})
+        self.assertFalse(PracticeAttempt.objects.exists())
+
+        self.user.purchased_materials.add(self.lesson1)
+        self.assertEqual(self.client.get(f'/practice/{self.lesson1.id}/').status_code, 200)
+
+    @mock.patch.object(StudyMaterial._meta.get_field('file').storage, 'url',
+                       return_value='https://res.cloudinary.com/demo/raw/upload/documents/lesson.pdf')
+    @mock.patch('materials.views.requests.get')
+    def test_reader_does_not_download_pdf(self, requests_get, storage_url):
+        StudyMaterial.objects.filter(id=self.lesson1.id).update(file='documents/lesson.pdf')
+        self.user.purchased_materials.add(self.lesson1)
+        response = self.client.get(f'/download/{self.lesson1.id}/')
+        self.assertEqual(response.status_code, 200)
+        requests_get.assert_not_called()
+        self.assertEqual(self.client.get(f'/download/{self.lesson2.id}/').status_code, 404)
+
+
+class AnswerCheckingTests(BaseTestCase):
+    def setUp(self):
+        self.user = self.make_user('pupil@example.com')
+        self.client.force_login(self.user)
+        self.q1 = Question.objects.create(text='q1', question_type='CHOICE')
+        self.q1_wrong = AnswerOption.objects.create(question=self.q1, text='A')
+        AnswerOption.objects.create(question=self.q1, text='B', is_correct=True)
+        self.q2 = Question.objects.create(text='q2', question_type='CHOICE')
+        self.q2_right = AnswerOption.objects.create(question=self.q2, text='C', is_correct=True)
+        self.match = Question.objects.create(text='m', question_type='MATCH')
+        opt = AnswerOption.objects.create(question=self.match, text='А')
+        self.match_item = MatchItem.objects.create(question=self.match, text='1', correct_option=opt)
+
+    def test_option_from_other_question_does_not_score(self):
+        response = self.client.post('/diagnostic/', {'question_ids': f'{self.q1.id}',
+                                                     f'question_{self.q1.id}': self.q2_right.id})
+        self.assertEqual(response.context['total_score'], 0)
+
+    def test_garbage_input_does_not_crash(self):
+        response = self.client.post('/diagnostic/', {
+            'question_ids': f'abc,{self.q1.id},,{self.match.id}',
+            f'question_{self.q1.id}': 'xyz',
+            f'match_{self.match_item.id}': 'not-a-number',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['max_score'], 4)
+
+    def test_correct_answers_still_score(self):
+        right = self.q1.options.get(is_correct=True)
+        response = self.client.post('/diagnostic/', {
+            'question_ids': f'{self.q1.id},{self.match.id}',
+            f'question_{self.q1.id}': right.id,
+            f'match_{self.match_item.id}': self.match_item.correct_option_id,
+        })
+        self.assertEqual(response.context['total_score'], 2)
+
+
+class TeacherFormsTests(BaseTestCase):
+    def setUp(self):
+        self.teacher = self.make_user('teacher@example.com', is_staff=True)
+        self.student = TutorStudentRequest.objects.create(user=self.make_user('kid2@example.com'),
+                                                          real_name='Учень', course='grade_7', status='approved')
+        self.material = StudyMaterial.objects.create(title='1. Тема')
+        self.client.force_login(self.teacher)
+
+    def report_data(self, **overrides):
+        data = {'student_id': self.student.id, 'topic': 'Дроби', 'nush_modeling': 10, 'nush_solving': 9,
+                'nush_analysis': 8, 'homework_status': 'completed', 'teacher_comment': ''}
+        data.update(overrides)
+        return data
+
+    def test_valid_report_saved(self):
+        self.client.post('/cabinet/add-report/', self.report_data())
+        self.assertEqual(StudentReport.objects.get().nush_solving, 9)
+
+    def test_bad_report_shows_error_instead_of_500(self):
+        for bad in ({'nush_modeling': ''}, {'nush_modeling': 13}, {'topic': ''}, {'homework_status': 'hack'}):
+            response = self.client.post('/cabinet/add-report/', self.report_data(**bad))
+            self.assertEqual(response.status_code, 302)
+        self.assertFalse(StudentReport.objects.exists())
+
+    def test_nmt_score_validated(self):
+        base = {'student_id': self.student.id, 'material_id': self.material.id}
+        for score, max_score in ((-1, 18), (20, 18), ('x', 18), (5, 0)):
+            response = self.client.post('/cabinet/add-nmt-score/', dict(base, score=score, max_score=max_score))
+            self.assertEqual(response.status_code, 302)
+        self.assertFalse(PracticeAttempt.objects.exists())
+        self.client.post('/cabinet/add-nmt-score/', dict(base, score=15, max_score=18))
+        self.assertEqual(PracticeAttempt.objects.get().score, 15)
+
+
+class TopupTests(BaseTestCase):
+    @mock.patch('materials.views.requests.post')
+    def test_bad_amounts_do_not_crash_or_create_orders(self, mono_post):
+        self.client.force_login(self.make_user('t@example.com'))
+        for amount in ('nan', 'inf', '-5', '0', '10.5', ''):
+            response = self.client.post('/cabinet/topup/', {'amount': amount})
+            self.assertEqual(response.status_code, 302, amount)
+        self.assertFalse(Order.objects.exists())
+        mono_post.assert_not_called()
+
+    @mock.patch('materials.views.requests.post')
+    def test_valid_amount_creates_invoice(self, mono_post):
+        mono_post.return_value.json.return_value = {'pageUrl': 'https://pay.mbnk.biz/x', 'invoiceId': 'inv1'}
+        self.client.force_login(self.make_user('t2@example.com'))
+        response = self.client.post('/cabinet/topup/', {'amount': '250'})
+        self.assertEqual(response.url, 'https://pay.mbnk.biz/x')
+        self.assertEqual(mono_post.call_args.kwargs['json']['amount'], 25000)
+        self.assertIn('timeout', mono_post.call_args.kwargs)
