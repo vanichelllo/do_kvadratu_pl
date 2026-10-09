@@ -122,6 +122,25 @@ class MonoWebhookTests(BaseTestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.balance, 0)
 
+    def test_garbage_signature_is_rejected(self):
+        body = json.dumps({'invoiceId': 'inv-topup', 'status': 'success'})
+        for garbage in ('not base64!', base64.b64encode(b'not a DER signature').decode()):
+            response = self.client.post('/mono/webhook/', body, content_type='application/json', HTTP_X_SIGN=garbage)
+            self.assertEqual(response.status_code, 403)
+
+    def test_bad_signatures_do_not_refetch_key_every_time(self):
+        fake_key = ecdsa.SigningKey.generate(curve=ecdsa.NIST256p)
+        for _ in range(5):
+            self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'}, signing_key=fake_key)
+        self.assertEqual(self.pubkey_get.call_count, 1)
+
+    def test_rotated_key_is_refetched(self):
+        cache.set('monobank_pubkey', base64.b64encode(
+            ecdsa.SigningKey.generate(curve=ecdsa.NIST256p).get_verifying_key().to_pem()).decode())
+        response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.pubkey_get.call_count, 1)
+
     def test_pubkey_unavailable_returns_503(self):
         self.pubkey_get.side_effect = ConnectionError('down')
         response = self.post_webhook({'invoiceId': 'inv-topup', 'status': 'success'})

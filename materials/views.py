@@ -873,6 +873,7 @@ def topup_balance_view(request):
 
 MONO_PUBKEY_URL = "https://api.monobank.ua/api/merchant/pubkey"
 MONO_PUBKEY_CACHE_KEY = 'monobank_pubkey'
+MONO_PUBKEY_REFRESHED_KEY = 'monobank_pubkey_refreshed'
 
 
 class MonoPubKeyUnavailable(Exception):
@@ -891,7 +892,17 @@ def get_mono_pubkey(force_refresh=False):
         except Exception as e:
             raise MonoPubKeyUnavailable(str(e))
         cache.set(MONO_PUBKEY_CACHE_KEY, key, 60 * 60 * 24)
+        cache.set(MONO_PUBKEY_REFRESHED_KEY, True, 60 * 10)
     return key
+
+
+def _signature_matches(pub_key_base64, signature, body):
+    try:
+        verifying_key = ecdsa.VerifyingKey.from_pem(base64.b64decode(pub_key_base64).decode())
+        return verifying_key.verify(signature, body, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256)
+    except Exception:
+        # BadSignatureError, зіпсований DER чи ключ — підпис недійсний
+        return False
 
 
 def verify_mono_signature(body, x_sign):
@@ -899,20 +910,18 @@ def verify_mono_signature(body, x_sign):
     if not x_sign:
         return False
     try:
-        signature = base64.b64decode(x_sign)
+        signature = base64.b64decode(x_sign, validate=True)
     except Exception:
         return False
 
-    # Друга спроба зі свіжим ключем — на випадок, якщо Monobank змінив ключ
-    for force_refresh in (False, True):
-        pub_key_pem = base64.b64decode(get_mono_pubkey(force_refresh=force_refresh)).decode()
-        verifying_key = ecdsa.VerifyingKey.from_pem(pub_key_pem)
-        try:
-            if verifying_key.verify(signature, body, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256):
-                return True
-        except ecdsa.BadSignatureError:
-            continue
-    return False
+    if _signature_matches(get_mono_pubkey(), signature, body):
+        return True
+
+    # Monobank міг змінити ключ: перезапитуємо, але не частіше разу на 10 хвилин,
+    # щоб підроблені запити не змушували нас постійно смикати API банку
+    if cache.get(MONO_PUBKEY_REFRESHED_KEY):
+        return False
+    return _signature_matches(get_mono_pubkey(force_refresh=True), signature, body)
 
 
 @csrf_exempt
