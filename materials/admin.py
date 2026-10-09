@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.core.management import call_command
 from django.contrib import messages
 
 # Імпорти для вивантаження бази в Excel
@@ -77,20 +76,13 @@ admin.site.register(Tag)
 
 
 # ==========================================
-# ДІАГНОСТИЧНИЙ ТЕСТ: ТЕМИ ТА ГЕНЕРАЦІЯ
+# ДІАГНОСТИЧНИЙ ТЕСТ: ТЕМИ
 # ==========================================
+# Дію «Згенерувати діагностичний тест» прибрано: команда populate_nmt видаляла
+# ВСІ завдання практики й скарги учнів. Діагностика й так бере завдання з усього банку.
 @admin.register(DiagnosticTopic)
 class DiagnosticTopicAdmin(admin.ModelAdmin):
     list_display = ('name',)
-    actions = ['populate_nmt_test']
-
-    @admin.action(description="🔥 Згенерувати діагностичний тест НМТ (22 питання)")
-    def populate_nmt_test(self, request, queryset):
-        try:
-            call_command('populate_nmt')
-            self.message_user(request, "Успіх! Тест на 22 питання успішно згенеровано.", messages.SUCCESS)
-        except Exception as e:
-            self.message_user(request, f"Помилка генерації: {str(e)}", level=messages.ERROR)
 
 
 # ==========================================
@@ -121,17 +113,8 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'price', 'is_published')
     list_filter = ('is_published', 'category')
     search_fields = ('title',)
-
-    actions = ['import_materials_from_excel']
-
-    @admin.action(description="🔥 Імпортувати матеріали з Excel (зшити та завантажити)")
-    def import_materials_from_excel(self, request, queryset):
-        try:
-            call_command('import_materials')
-            self.message_user(request, "Успіх! Всі матеріали імпортовано та відправлено на Cloudinary.",
-                              messages.SUCCESS)
-        except Exception as e:
-            self.message_user(request, f"Помилка імпорту: {str(e)}", level=messages.ERROR)
+    # Дію «Імпортувати з Excel» прибрано: вона ставила всім конспектам ціну 25 грн
+    # і публікувала приховані. Нові матеріали завантажуються через run_import.py.
 
 
 admin.site.register(StudyMaterial, StudyMaterialAdmin)

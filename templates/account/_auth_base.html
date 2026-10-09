@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% comment %}Спільне оформлення для сторінок відновлення пароля (у стилі сторінки входу).{% endcomment %}
+
+{% block content %}
+<style>
+    .auth-window { background-color: #ffffff; border: 3px solid var(--brand-blue); border-radius: 12px; box-shadow: 10px 10px 0px var(--brand-yellow); max-width: 420px; margin: 60px auto; overflow: hidden; }
+    .auth-bar { background-color: var(--brand-blue); padding: 12px 18px; display: flex; align-items: center; gap: 8px; }
+    .auth-bar span { width: 12px; height: 12px; border-radius: 50%; }
+    .auth-body { padding: 40px; }
+    .auth-title { text-align: center; font-size: 1.8rem; margin-top: 0; margin-bottom: 20px; color: var(--brand-blue); font-weight: 900; }
+    .auth-text { font-weight: 600; line-height: 1.5; color: var(--text-dark); }
+    .auth-form p { text-align: left; margin-bottom: 15px; }
+    .auth-form label { font-weight: 800; color: var(--brand-blue); display: block; margin-bottom: 5px; font-size: 0.85rem; text-transform: uppercase; }
+    .auth-form input { width: 100%; padding: 12px; border: 2px solid var(--brand-blue); border-radius: 6px; font-family: inherit; font-weight: 600; box-sizing: border-box; background-color: #f8f9fa; color: var(--text-dark); }
+    .auth-form input:focus { outline: none; border-color: var(--brand-yellow); background-color: #ffffff; }
+    .auth-error { color: #e74c3c; font-size: 0.85rem; font-weight: bold; }
+    .btn-submit { width: 100%; background-color: var(--brand-blue); color: #ffffff; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 5px 5px 0px var(--brand-yellow); transition: all 0.2s; text-transform: uppercase; margin-top: 10px; display: inline-block; text-align: center; text-decoration: none; box-sizing: border-box; }
+    .btn-submit:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0px var(--brand-yellow); }
+    .auth-link { display: block; margin-top: 20px; text-align: center; color: var(--brand-blue); font-weight: 800; font-size: 0.9rem; text-decoration: underline; }
+</style>
+
+<div class="auth-window">
+    <div class="auth-bar">
+        <span style="background-color: #ff5f56;"></span>
+        <span style="background-color: #ffbd2e;"></span>
+        <span style="background-color: #27c93f;"></span>
+    </div>
+    <div class="auth-body">
+        {% block auth_body %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

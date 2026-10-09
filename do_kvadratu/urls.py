@@ -1,4 +1,4 @@
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 from django.contrib.auth import views as auth_views
 from django.contrib import admin
 from django.urls import path, include
@@ -7,6 +7,11 @@ from django.conf.urls.static import static
 
 # ІМПОРТ ALLAUTH ДЛЯ БЕЗПЕЧНОЇ АВТОРИЗАЦІЇ
 from allauth.account import views as allauth_views
+
+from .admin_security import rate_limited_admin_login
+
+# Вхід в адмінку з лімітом невдалих спроб (захист від підбору пароля)
+admin.site.login = rate_limited_admin_login(admin.site.login)
 
 # ІМПОРТ З MATERIALS
 from materials.views import (
@@ -77,12 +82,10 @@ urlpatterns = [
     path('mono/webhook/', mono_webhook, name='mono_webhook'),
     path('cabinet/topup/', topup_balance_view, name='topup_balance'),
 
-    # Відновлення пароля
-    path('reset_password/', auth_views.PasswordResetView.as_view(template_name="users/password_reset.html"),
-         name="reset_password"),
-    path('reset_password_sent/',
-         auth_views.PasswordResetDoneView.as_view(template_name="users/password_reset_sent.html"),
-         name="password_reset_done"),
+    # Відновлення пароля — через allauth (/accounts/password/reset/): з лімітами
+    # і для акаунтів, створених через Google. Стара адреса лише перенаправляє.
+    path('reset_password/', RedirectView.as_view(pattern_name='account_reset_password'), name="reset_password"),
+    # Посилання з листів, надісланих ще старою формою (діють 3 дні); можна прибрати після 20.10.2026
     path('reset/<uidb64>/<token>/',
          auth_views.PasswordResetConfirmView.as_view(template_name="users/password_reset_form.html"),
          name="password_reset_confirm"),

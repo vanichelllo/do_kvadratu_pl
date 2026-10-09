@@ -324,9 +324,10 @@
 
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ ТА ДАШБОРД БАТЬКІВ -->
 <div class="banners-grid">
-    <!-- СВЯТКОВИЙ БАНЕР -->
+    <!-- СВЯТКОВИЙ БАНЕР (лише в дати акції) -->
+    {% if promo_active %}
     <div class="promo-banner promo-nmt" style="background: linear-gradient(135deg, #fff3f3, #ffebeb); border-color: #ff4757;">
-        <div class="promo-tag" style="background: #ff4757;">З 02.10 по 11.10</div>
+        <div class="promo-tag" style="background: #ff4757;">З {{ promo_start|date:"d.m" }} по {{ promo_end|date:"d.m" }}</div>
         <h3 style="color: #c0392b; font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0;">🎉 Акція до Дня Вчителя!</h3>
         <p style="color: var(--text-dark); font-size: 1.05rem; line-height: 1.5; margin-bottom: 20px; font-weight: 600;">
             Використай промокод <span style="background: var(--brand-yellow); color: var(--brand-blue); padding: 2px 8px; border-radius: 4px; font-weight: 900;">ВЧИТЕЛЬ</span> та отримай <strong>-40%</strong> на всі конспекти на вітрині, або <strong>-20%</strong> на заняття до кінця року!
@@ -336,6 +337,7 @@
             <a href="{% url 'materials_list' %}" class="promo-btn" style="background: var(--brand-blue); color: white; border: 2px solid var(--brand-blue); padding: 10px 15px; font-size: 0.9rem; box-shadow: 4px 4px 0px var(--brand-blue);">На вітрину ➔</a>
         </div>
     </div>
+    {% endif %}
 
     <!-- Банер 2: Батьківський контроль -->
     <div class="promo-banner promo-bot" style="background-color: #f0f9ff; border-color: #0088cc;">

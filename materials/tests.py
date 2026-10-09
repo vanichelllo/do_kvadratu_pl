@@ -466,3 +466,129 @@ class ReviewDisplayNameTests(BaseTestCase):
         Review.objects.filter(id=review.id).update(created_at=datetime.datetime(2026, 9, 1, tzinfo=datetime.timezone.utc))
         review.refresh_from_db()
         self.assertEqual(review.display_name, 'Тарас')  # старий відгук до появи поля
+
+
+class DangerousAdminActionsTests(BaseTestCase):
+    def test_data_wiping_actions_removed(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from .models import DiagnosticTopic
+        request = RequestFactory().get('/')
+        request.user = self.make_user('boss2@example.com', is_staff=True, is_superuser=True)
+        for model in (DiagnosticTopic, StudyMaterial):
+            names = set(admin.site._registry[model].get_actions(request))
+            self.assertFalse(names & {'populate_nmt_test', 'import_materials_from_excel'}, model.__name__)
+
+
+class PromoBannerTests(BaseTestCase):
+    def render(self, url, day):
+        with mock.patch('materials.models.timezone.localdate', return_value=day):
+            return self.client.get(url).content.decode()
+
+    def test_banners_shown_during_promo(self):
+        day = datetime.date(2026, 10, 11)
+        self.assertIn('Акція до Дня Вчителя', self.render('/', day))
+        booking = self.render('/booking/', day)
+        self.assertIn('Акція до Дня Вчителя', booking)
+        self.assertIn('192 грн', booking)
+
+    def test_banners_hidden_after_promo(self):
+        day = datetime.date(2026, 10, 12)
+        self.assertNotIn('Акція до Дня Вчителя', self.render('/', day))
+        booking = self.render('/booking/', day)
+        self.assertNotIn('Акція до Дня Вчителя', booking)
+        self.assertNotIn('192 грн', booking)
+        self.assertNotIn('-20%', booking)
+        self.assertIn('240 грн', booking)
+
+    def test_cart_discount_follows_same_dates(self):
+        user = self.make_user('promo@example.com')
+        cart = Cart.objects.create(user=user, promo_code='ВЧИТЕЛЬ')
+        CartItem.objects.create(cart=cart, material=StudyMaterial.objects.create(title='1. Тема', price=100))
+        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 11)):
+            self.assertEqual(cart.get_total_price(), 60)
+        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 12)):
+            self.assertEqual(cart.get_total_price(), 100)
+
+
+class CabinetStudentNameTests(BaseTestCase):
+    def test_apostrophe_and_script_in_name_are_safe(self):
+        teacher = self.make_user('t@example.com', is_staff=True)
+        for course, name in (('grade_7', "Мар'яна"), ('nmt', "x');alert(1);//")):
+            TutorStudentRequest.objects.create(user=self.make_user(f'{course}@example.com'), real_name=name,
+                                               course=course, status='approved')
+        self.client.force_login(teacher)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertNotIn("openReportForm('", html)
+        self.assertNotIn("openNmtForm('", html)
+        self.assertIn('data-student-name="Мар&#x27;яна"', html)
+        self.assertNotIn("alert(1);//')", html)
+
+
+class CourseChoicesTests(BaseTestCase):
+    def test_form_offers_every_grade_with_its_own_value(self):
+        self.client.force_login(self.make_user('kid5@example.com'))
+        html = self.client.get('/cabinet/').content.decode()
+        for value, label in TutorStudentRequest.COURSE_CHOICES:
+            self.assertIn(f'<option value="{value}">{label}</option>', html)
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_grade_5_saved_as_grade_5(self, notify):
+        user = self.make_user('kid6@example.com')
+        self.client.force_login(user)
+        self.client.post('/request-student/', {'real_name': 'Учень', 'course': 'grade_5'})
+        self.assertEqual(TutorStudentRequest.objects.get(user=user).course, 'grade_5')
+
+
+class AdminLoginRateLimitTests(BaseTestCase):
+    def setUp(self):
+        cache.clear()
+        self.admin_user = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        self.url = '/do-kvadratu-secret-control/login/'
+
+    def login(self, password):
+        return self.client.post(self.url, {'username': 'boss@example.com', 'password': password})
+
+    def test_lockout_after_repeated_failures(self):
+        for _ in range(10):
+            self.assertEqual(self.login('wrong').status_code, 200)
+        self.assertEqual(self.login('wrong').status_code, 429)
+        self.assertEqual(self.login('Pass12345!').status_code, 429)  # навіть правильний пароль чекає
+
+    def test_success_resets_counter(self):
+        for _ in range(5):
+            self.login('wrong')
+        self.assertEqual(self.login('Pass12345!').status_code, 302)
+        self.client.logout()
+        for _ in range(9):
+            self.assertEqual(self.login('wrong').status_code, 200)
+
+    def test_robots_does_not_reveal_admin_url(self):
+        self.assertNotIn('secret-control', self.client.get('/robots.txt').content.decode())
+
+
+class DrfAuthTests(BaseTestCase):
+    def test_api_ignores_basic_auth(self):
+        # Раніше DRF перевіряв логін/пароль із заголовка — підбір паролів в обхід лімітів allauth
+        self.make_user('victim2@example.com')
+        bad = base64.b64encode(b'victim2@example.com:wrong').decode()
+        response = self.client.get('/api/materials/', HTTP_AUTHORIZATION=f'Basic {bad}')
+        self.assertEqual(response.status_code, 200)
+
+
+class PasswordResetTests(BaseTestCase):
+    def test_old_url_redirects_to_allauth(self):
+        self.assertRedirects(self.client.get('/reset_password/'), '/accounts/password/reset/',
+                             fetch_redirect_response=False)
+        self.assertContains(self.client.get('/accounts/password/reset/'), 'ЗАБУЛИ ПАРОЛЬ?')
+
+    def test_google_only_user_gets_https_reset_link(self):
+        from django.core import mail
+        user = self.make_user('google@example.com')
+        user.set_unusable_password()
+        user.save()
+        response = self.client.post('/accounts/password/reset/', {'email': 'google@example.com'})
+        self.assertRedirects(response, '/accounts/password/reset/done/', fetch_redirect_response=False)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://', mail.outbox[0].body)
+        self.assertIn('/accounts/password/reset/key/', mail.outbox[0].body)
