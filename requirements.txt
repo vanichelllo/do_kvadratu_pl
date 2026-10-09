@@ -12,7 +12,7 @@ charset-normalizer==3.4.9
 cloudinary==1.46.3
 cryptography==50.0.2
 diff-match-patch==20241021
-Django==6.0.9
+Django==6.1.2
 django-allauth==65.19.7
 django-cloudinary-storage==0.3.0
 django-import-export==4.4.1
