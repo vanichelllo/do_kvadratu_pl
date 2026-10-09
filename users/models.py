@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db import transaction
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -37,38 +36,9 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
-    def buy_material(self, material):
-        try:
-            with transaction.atomic():
-                # Блокуємо рядок, щоб паралельні покупки/поповнення не затерли баланс
-                locked = type(self).objects.select_for_update().get(pk=self.pk)
-                if locked.balance < material.price:
-                    return False
-                locked.balance -= material.price
-                locked.save(update_fields=['balance'])
-                self.balance = locked.balance
-
-                # === МАГІЯ РОЗПАКУВАННЯ ПАКЕТІВ ===
-                if material.is_bundle:
-                    for sub_material in material.included_materials.all():
-                        self.purchased_materials.add(sub_material)
-                else:
-                    self.purchased_materials.add(material)
-                # ==================================
-
-                # В історію покупок завжди записуємо оригінальний товар (Пакет або конспект),
-                # щоб зберігся правильний фінансовий чек
-                PurchaseHistory.objects.create(
-                    student=self,
-                    material=material,
-                    price_paid=material.price
-                )
-            return True
-        except Exception as e:
-            print(f"Критична помилка при покупці: {e}")
-            return False
 
 class PurchaseHistory(models.Model):
+    # Архів покупок старим способом (/buy/, прибрано); поточні покупки — Order/OrderItem
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='history')
     material = models.ForeignKey('materials.StudyMaterial', on_delete=models.SET_NULL, null=True)
     price_paid = models.PositiveIntegerField()

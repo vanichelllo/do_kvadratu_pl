@@ -1,5 +1,6 @@
 import hmac
 import json
+import logging
 import asyncio
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,8 +8,12 @@ from django.conf import settings
 from aiogram import Bot, Dispatcher, types
 
 from .handlers import router
+from .storage import DjangoStorage
 
-dp = Dispatcher()
+logger = logging.getLogger(__name__)
+
+# Стани діалогів — у базі даних (раніше в пам'яті: губились після перезапуску сервера)
+dp = Dispatcher(storage=DjangoStorage())
 dp.include_router(router)
 
 
@@ -39,8 +44,8 @@ def telegram_webhook(request):  # Зверніть увагу, це знову �
                 try:
                     # Згодовуємо повідомлення боту
                     loop.run_until_complete(dp.feed_update(bot, update))
-                except Exception as e:
-                    print(f"Помилка всередині бота: {e}")
+                except Exception:
+                    logger.exception("Помилка всередині бота")
                 finally:
                     # Чистимо пам'ять і закриваємо з'єднання
                     loop.run_until_complete(bot.session.close())
@@ -49,8 +54,8 @@ def telegram_webhook(request):  # Зверніть увагу, це знову �
             # Запускаємо нашу функцію
             process_update()
 
-        except Exception as e:
-            print(f"Помилка Webhook: {e}")
+        except Exception:
+            logger.exception("Помилка вебхука Telegram")
 
         return JsonResponse({"status": "ok"})
 

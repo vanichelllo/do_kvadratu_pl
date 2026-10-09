@@ -4,7 +4,7 @@ from unittest import mock
 
 from aiogram import Bot
 from aiogram.types import Update
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, TransactionTestCase, override_settings
 
 from .handlers import DIAGNOSTIC_QUESTIONS, QuizFSM, SupportFSM, normalize_short_answer
 from .views import dp
@@ -32,8 +32,9 @@ class TelegramWebhookSecretTests(TestCase):
 
 
 @override_settings(TELEGRAM_ADMIN_ID='999')
-class BotHandlerTests(SimpleTestCase):
-    """Проганяємо оновлення через справжній диспетчер; запити до Telegram підмінені."""
+class BotHandlerTests(TransactionTestCase):
+    """Проганяємо оновлення через справжній диспетчер; запити до Telegram підмінені.
+    TransactionTestCase: сховище станів пише в базу з окремого потоку (sync_to_async)."""
 
     def setUp(self):
         self.loop = asyncio.new_event_loop()
@@ -97,6 +98,77 @@ class BotHandlerTests(SimpleTestCase):
         self.assertEqual(len(admin_messages), 1)
         self.assertIn(html.escape('Чому 2 < 3 & <b>?'), admin_messages[0].text)
         self.assertIn(html.escape('<Хакер & Ко>'), admin_messages[0].text)
+
+    def test_quiz_state_survives_restart(self):
+        from aiogram import Dispatcher
+        from aiogram.fsm.storage.base import StorageKey
+        from .storage import DjangoStorage
+        self.run_async(self.state().set_state(QuizFSM.answering_short))
+        self.run_async(self.state().update_data(current_q=7, score=3))
+
+        # «Перезапуск»: новий диспетчер з новим сховищем бачить той самий стан
+        fresh = Dispatcher(storage=DjangoStorage())
+        key = StorageKey(bot_id=self.bot.id, chat_id=100, user_id=100)
+        self.assertEqual(self.run_async(fresh.storage.get_state(key)), QuizFSM.answering_short.state)
+        self.assertEqual(self.run_async(fresh.storage.get_data(key)), {'current_q': 7, 'score': 3})
+
+    def test_enrollment_lead_saved_in_admin(self):
+        from .handlers import EnrollFSM
+        from .models import BotLead
+        self.run_async(self.state().set_state(EnrollFSM.phone))
+        self.run_async(self.state().update_data(role='Батьки', subject='Заняття (5-10 класи)', name='Тарас',
+                                                grade='7', goal='Підтягнути алгебру'))
+        self.feed(self.message_update(text='+380991112233'))
+        lead = BotLead.objects.get()
+        self.assertEqual((lead.name, lead.grade, lead.contact, lead.telegram_id), ('Тарас', '7', '+380991112233', 100))
+        self.assertIsNone(self.run_async(self.state().get_state()))
+
+    def test_all_free_pdf_is_stitched_once(self):
+        from .handlers import send_all_free_materials
+
+        sent_doc = mock.Mock(document=mock.Mock(file_id='FILE-ID-1'))
+        message = mock.AsyncMock()
+        message.answer_document.return_value = sent_doc
+        message.answer.return_value = mock.AsyncMock()  # повідомлення «⏳ Завантажую…»
+        callback = mock.AsyncMock()
+        callback.message = message
+
+        stitched = []
+
+        class FakeResp:
+            status = 200
+            async def read(self_inner):
+                from pypdf import PdfWriter
+                import io
+                writer = PdfWriter()
+                writer.add_blank_page(width=10, height=10)
+                buf = io.BytesIO()
+                writer.write(buf)
+                stitched.append(1)
+                return buf.getvalue()
+            async def __aenter__(self_inner):
+                return self_inner
+            async def __aexit__(self_inner, *a):
+                return False
+
+        class FakeSession:
+            def get(self_inner, url):
+                return FakeResp()
+            async def __aenter__(self_inner):
+                return self_inner
+            async def __aexit__(self_inner, *a):
+                return False
+
+        async def fake_urls():
+            return ['https://res.cloudinary.com/x/1.pdf'], 'fp1'
+
+        with mock.patch('telegram_bot.handlers.get_free_materials_urls', fake_urls), \
+                mock.patch('telegram_bot.handlers.aiohttp.ClientSession', FakeSession):
+            self.run_async(send_all_free_materials(callback))
+            self.run_async(send_all_free_materials(callback))
+
+        self.assertEqual(len(stitched), 1)  # другий раз — готовий файл за file_id
+        self.assertEqual(message.answer_document.call_args.kwargs['document'], 'FILE-ID-1')
 
     def tearDown(self):
         self.run_async(self.state().clear())

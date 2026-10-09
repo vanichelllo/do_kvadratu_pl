@@ -1,5 +1,7 @@
+import hashlib
 import html
 import io
+import logging
 import re
 import aiohttp
 from pypdf import PdfReader, PdfWriter
@@ -14,11 +16,15 @@ from aiogram.fsm.state import State, StatesGroup
 from asgiref.sync import sync_to_async
 
 from materials.models import StudyMaterial
+from django.db import close_old_connections
+
+from .models import BotCachedFile, BotLead
 from django.contrib.auth import get_user_model
 from django.conf import settings
 
 User = get_user_model()
 router = Router()
+logger = logging.getLogger(__name__)
 
 BOT_NAME = "do_kvadratu"
 CONTACT = "@do_kvadratu"
@@ -105,12 +111,34 @@ DIAGNOSTIC_QUESTIONS = [
 # ─── ФУНКЦІЇ ДЛЯ РОБОТИ З БАЗОЮ ДАНИХ ────────────────────────
 @sync_to_async
 def get_free_materials_urls():
-    materials = StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id')
-    return [mat.file.url for mat in materials if mat.file]
+    """Посилання на PDF безкоштовних матеріалів і «відбиток» їхнього складу для кешу збірки."""
+    close_old_connections()
+    materials = [m for m in StudyMaterial.objects.filter(is_published=True, is_free=True).order_by('id') if m.file]
+    fingerprint = hashlib.sha256('|'.join(f'{m.id}:{m.file.name}' for m in materials).encode()).hexdigest()[:32]
+    return [m.file.url for m in materials], fingerprint
+
+
+@sync_to_async
+def get_cached_file_id(key):
+    close_old_connections()
+    return BotCachedFile.objects.filter(key=key).values_list('file_id', flat=True).first()
+
+
+@sync_to_async
+def save_cached_file_id(key, file_id):
+    close_old_connections()
+    BotCachedFile.objects.update_or_create(key=key, defaults={'file_id': file_id})
+
+
+@sync_to_async
+def save_lead(**fields):
+    close_old_connections()
+    return BotLead.objects.create(**fields)
 
 
 @sync_to_async
 def get_recommendations_for_topics(wrong_topics):
+    close_old_connections()
     unique_topics = set(wrong_topics)
     recommendations = []
     for topic in unique_topics:
@@ -324,14 +352,26 @@ async def finish_quiz(message: types.Message, state: FSMContext):
 @router.callback_query(F.data == "download_all_free")
 async def send_all_free_materials(callback: types.CallbackQuery):
     await callback.answer()
+    caption = "🎁 Тримай велику збірку «Вся база для НМТ»! Успішної підготовки."
+    urls, fingerprint = await get_free_materials_urls()
+    if not urls:
+        await callback.message.answer("На жаль, матеріалів для бази поки немає.")
+        return
+
+    # Збірку склеюємо один раз; далі Telegram надсилає вже завантажений файл за його file_id
+    cache_key = f"all_free_pdf:{fingerprint}"
+    cached_file_id = await get_cached_file_id(cache_key)
+    if cached_file_id:
+        try:
+            await callback.message.answer_document(document=cached_file_id, caption=caption)
+            return
+        except Exception:
+            logger.warning("Збережений file_id «Вся база» не спрацював, склеюємо заново", exc_info=True)
+
     wait_msg = await callback.message.answer(
         "⏳ <i>Завантажую та зшиваю збірку «Вся база для НМТ». Це може зайняти близько хвилини...</i>",
         parse_mode="HTML")
     try:
-        urls = await get_free_materials_urls()
-        if not urls:
-            await wait_msg.edit_text("На жаль, матеріалів для бази поки немає.")
-            return
         writer = PdfWriter()
         async with aiohttp.ClientSession() as session:
             for file_index, url in enumerate(urls):
@@ -348,13 +388,15 @@ async def send_all_free_materials(callback: types.CallbackQuery):
         output_buffer = io.BytesIO()
         writer.write(output_buffer)
         output_buffer.seek(0)
-        await callback.message.answer_document(
+        sent = await callback.message.answer_document(
             document=BufferedInputFile(output_buffer.read(), filename="Вся_база_для_НМТ.pdf"),
-            caption="🎁 Тримай велику збірку «Вся база для НМТ»! Успішної підготовки."
+            caption=caption
         )
+        if getattr(sent, 'document', None):
+            await save_cached_file_id(cache_key, sent.document.file_id)
         await wait_msg.delete()
-    except Exception as e:
-        print(f"Помилка зшивання: {e}")
+    except Exception:
+        logger.exception("Помилка зшивання «Вся база для НМТ»")
         await wait_msg.edit_text("❌ Сталася помилка при формуванні файлу.")
 
 
@@ -484,6 +526,22 @@ async def enroll_goal(message: types.Message, state: FSMContext):
 async def enroll_phone(message: types.Message, state: FSMContext):
     data = await state.get_data()
     phone = message.text
+    # Заявку зберігаємо в базі (адмінка → «Заявки з бота»), щоб вона не губилась,
+    # навіть якщо повідомлення адміну не дійде
+    try:
+        await save_lead(
+            telegram_id=message.from_user.id,
+            telegram_username=message.from_user.username or '',
+            telegram_name=message.from_user.full_name or '',
+            role=str(data.get('role') or '')[:50],
+            subject=str(data.get('subject') or '')[:100],
+            name=str(data.get('name') or '')[:255],
+            grade=str(data.get('grade') or '')[:100],
+            goal=str(data.get('goal') or ''),
+            contact=phone[:255],
+        )
+    except Exception:
+        logger.exception("Не вдалося зберегти заявку з бота")
     admin_text = (
         "🔥 <b>Нова заявка на заняття!</b>\n\n"
         f"<b>Хто залишив:</b> {data.get('role')}\n"

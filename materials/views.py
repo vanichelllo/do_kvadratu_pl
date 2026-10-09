@@ -8,6 +8,7 @@ import ecdsa
 import re
 import requests
 import json
+import logging
 import time
 import random  # ДОДАНО ДЛЯ ГЕНЕРАЦІЇ ПРАКТИКИ
 from functools import wraps
@@ -37,6 +38,7 @@ from .serializers import StudyMaterialSerializer, PurchasedMaterialSerializer
 import datetime
 from django.utils import timezone
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def is_teacher(user):
@@ -106,6 +108,18 @@ def user_owns_material(user, material):
         return bool(included_ids) and \
             user.purchased_materials.filter(id__in=included_ids).count() == len(included_ids)
     return False
+
+
+def rate_limit_exceeded(key, limit, window):
+    """Рахує дію в кеші; True, якщо за останні window секунд її зроблено більше ніж limit разів."""
+    key = f'rate-limit:{key}'
+    cache.add(key, 0, window)
+    try:
+        count = cache.incr(key)
+    except ValueError:  # ключ щойно протух
+        cache.set(key, 1, window)
+        count = 1
+    return count > limit
 
 
 def safe_back_url(request, fallback='cabinet'):
@@ -691,35 +705,6 @@ def download_material_view(request, material_id):
     return render(request, 'materials/reader.html', {'material': material})
 
 
-@login_required(login_url='/login/')
-@post_required(material_page)
-def buy_material_view(request, material_id):
-    material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
-    my_user = request.user
-
-    if user_owns_material(my_user, material):
-        messages.info(request, f"Ви вже маєте конспект «{material.title}».")
-        return redirect('cabinet')
-
-    if material.is_free or material.price == 0:
-        if material.is_bundle:
-            for sub_material in material.included_materials.all():
-                my_user.purchased_materials.add(sub_material)
-        else:
-            my_user.purchased_materials.add(material)
-        messages.success(request, f"Успіх! «{material.title}» успішно отримано.")
-        return redirect('cabinet')
-
-    success = my_user.buy_material(material)
-
-    if success:
-        messages.success(request, f"Успіх! Конспект «{material.title}» додано. Залишок: {my_user.balance} грн.")
-        return redirect('cabinet')
-    else:
-        messages.error(request, f"Недостатньо коштів для придбання «{material.title}». Поповніть баланс.")
-        return redirect('materials_list')
-
-
 @api_view(['GET'])
 def api_materials_list(request):
     materials = StudyMaterial.objects.filter(is_published=True).select_related('category')
@@ -831,9 +816,42 @@ def send_telegram_notification(message):
         try:
             response = requests.post(url, json=payload, timeout=5)
             if not response.ok:
-                print(f"Telegram відхилив повідомлення: {response.status_code} {response.text[:300]}")
+                logger.warning("Telegram відхилив повідомлення: %s %s", response.status_code, response.text[:300])
         except Exception as e:
-            print(f"Помилка відправки в Telegram: {e}")
+            logger.warning("Помилка відправки в Telegram: %s", e)
+
+
+SITE_URL = "https://dokvadratu.com.ua"
+MONO_API_URL = "https://api.monobank.ua/api/merchant"
+
+
+def mono_headers():
+    return {'X-Token': getattr(settings, 'MONOBANK_TOKEN', '') or '', 'Content-Type': 'application/json'}
+
+
+def create_mono_invoice(order, amount_kopecks):
+    """Створює рахунок у Monobank для замовлення. Повертає адресу сторінки оплати або None."""
+    payload = {
+        "amount": amount_kopecks,
+        "ccy": 980,
+        "reference": str(order.id),
+        # Після оплати покупець бачить результат саме цього замовлення
+        "redirectUrl": f"{SITE_URL}{reverse('payment_result', args=[order.id])}",
+        "webHookUrl": f"{SITE_URL}/mono/webhook/",
+    }
+    try:
+        response = requests.post(f"{MONO_API_URL}/invoice/create", json=payload, headers=mono_headers(), timeout=15)
+        data = response.json()
+    except Exception:
+        logger.exception("Не вдалося створити рахунок Monobank для замовлення #%s", order.id)
+        return None
+
+    if 'pageUrl' not in data:
+        logger.error("Monobank не створив рахунок для замовлення #%s: %s", order.id, str(data)[:300])
+        return None
+    order.mono_invoice_id = data['invoiceId']
+    order.save(update_fields=['mono_invoice_id'])
+    return data['pageUrl']
 
 
 @login_required
@@ -855,36 +873,11 @@ def pay_with_mono(request):
         for item in cart.items.all():
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)
 
-    amount_kopecks = int(total_price * 100)
-
-    headers = {
-        'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
-        'Content-Type': 'application/json'
-    }
-
-    payload = {
-        "amount": amount_kopecks,
-        "ccy": 980,
-        "reference": str(order.id),
-        "redirectUrl": "https://dokvadratu.com.ua/cabinet/",
-        "webHookUrl": "https://dokvadratu.com.ua/mono/webhook/",
-    }
-    try:
-        response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload, headers=headers,
-                                 timeout=15)
-        data = response.json()
-
-        if 'pageUrl' in data:
-            order.mono_invoice_id = data['invoiceId']
-            order.save()
-            return redirect(data['pageUrl'])
-        else:
-            messages.error(request, "Помилка платіжної системи. Спробуйте пізніше або спишіть з балансу.")
-            return redirect('cart_detail')
-
-    except Exception:
-        messages.error(request, "Помилка з'єднання з Monobank.")
-        return redirect('cart_detail')
+    page_url = create_mono_invoice(order, int(total_price * 100))
+    if page_url:
+        return redirect(page_url)
+    messages.error(request, "Помилка платіжної системи. Спробуйте пізніше або спишіть з балансу.")
+    return redirect('cart_detail')
 
 
 @login_required
@@ -896,8 +889,6 @@ def topup_balance_view(request):
             messages.error(request, "Введіть коректну суму (ціле число гривень від 1 до 100 000).")
             return redirect('cabinet')
 
-        amount_kopecks = amount * 100
-
         # Створюємо технічне замовлення для поповнення
         order = Order.objects.create(
             user=request.user,
@@ -906,35 +897,89 @@ def topup_balance_view(request):
             source='web'
         )
 
-        headers = {
-            'X-Token': getattr(settings, 'MONOBANK_TOKEN', ''),
-            'Content-Type': 'application/json'
-        }
-
-        payload = {
-            "amount": amount_kopecks,
-            "ccy": 980,
-            "reference": str(order.id),
-            "redirectUrl": "https://dokvadratu.com.ua/cabinet/",
-            "webHookUrl": "https://dokvadratu.com.ua/mono/webhook/",
-        }
-        try:
-            response = requests.post("https://api.monobank.ua/api/merchant/invoice/create", json=payload,
-                                     headers=headers, timeout=15)
-            data = response.json()
-
-            if 'pageUrl' in data:
-                order.mono_invoice_id = data['invoiceId']
-                order.save()
-                return redirect(data['pageUrl'])
-            else:
-                messages.error(request, "Помилка платіжної системи.")
-                return redirect('cabinet')
-        except Exception:
-            messages.error(request, "Помилка з'єднання з Monobank.")
-            return redirect('cabinet')
+        page_url = create_mono_invoice(order, amount * 100)
+        if page_url:
+            return redirect(page_url)
+        messages.error(request, "Помилка платіжної системи. Спробуйте пізніше.")
+        return redirect('cabinet')
 
     return redirect('cabinet')
+
+
+def apply_mono_status(invoice_id, status):
+    """Застосовує статус рахунку Monobank до замовлення. Безпечно викликати повторно
+    (повторні вебхуки, сторінка результату, дія в адмінці). Повертає замовлення або None."""
+    msg = None
+    with transaction.atomic():
+        # select_for_update: Monobank може надіслати один вебхук кілька разів одночасно
+        order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
+        if order is None:
+            return None
+        email = html.escape(order.user.email)
+
+        if status == 'success' and order.status in ('pending', 'cancelled'):
+            order.status = 'paid'
+            order.paid_at = timezone.now()
+            order.save(update_fields=['status', 'paid_at'])
+
+            order_items = list(order.items.select_related('material'))
+            if order_items:
+                materials = [item.material for item in order_items if item.material]
+                for material in materials:
+                    if material.is_bundle:
+                        for sub_material in material.included_materials.all():
+                            order.user.purchased_materials.add(sub_material)
+                    else:
+                        order.user.purchased_materials.add(material)
+
+                CartItem.objects.filter(cart__user=order.user, material__in=materials).delete()
+                msg = f"🛒 Нова покупка!\nУчень: {email}\nОплачено: {order.total_amount} ₴"
+            else:
+                User.objects.filter(pk=order.user_id).update(balance=F('balance') + int(order.total_amount))
+                msg = f"💰 Нове поповнення!\nУчень: {email}\nСума: {order.total_amount} ₴"
+
+        elif status in ('failure', 'expired') and order.status == 'pending':
+            order.status = 'cancelled'
+            order.save(update_fields=['status'])
+
+        elif status == 'reversed' and order.status in ('pending', 'paid', 'cancelled'):
+            was_paid = order.status == 'paid'
+            order.status = 'refunded'
+            order.save(update_fields=['status'])
+            if was_paid:
+                what = "матеріали з замовлення" if order.items.exists() else "суму поповнення з балансу"
+                msg = (f"↩️ <b>Повернення коштів через Monobank</b>\nЗамовлення #{order.id}, {email}, "
+                       f"{order.total_amount} ₴.\nАвтоматично нічого не змінено — за потреби заберіть {what} в адмінці.")
+
+    if msg:
+        send_telegram_notification(msg)
+    return order
+
+
+def check_mono_invoice(order):
+    """Запитує в Monobank актуальний статус рахунку й застосовує його (на випадок загубленого вебхука)."""
+    if not order.mono_invoice_id or order.mono_invoice_id == 'balance_payment':
+        return order
+    try:
+        response = requests.get(f"{MONO_API_URL}/invoice/status", params={'invoiceId': order.mono_invoice_id},
+                                headers=mono_headers(), timeout=10)
+        response.raise_for_status()
+        status = response.json().get('status')
+    except Exception:
+        logger.warning("Не вдалося перевірити статус рахунку Monobank для замовлення #%s", order.id, exc_info=True)
+        return order
+    return apply_mono_status(order.mono_invoice_id, status) or order
+
+
+@login_required
+def payment_result(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    if order.status == 'pending':
+        order = check_mono_invoice(order)
+    return render(request, 'materials/payment_result.html', {
+        'order': order,
+        'is_topup': not order.items.exists(),
+    })
 
 
 MONO_PUBKEY_URL = "https://api.monobank.ua/api/merchant/pubkey"
@@ -1000,7 +1045,7 @@ def mono_webhook(request):
             return HttpResponse("Invalid signature", status=403)
     except MonoPubKeyUnavailable as e:
         # 5xx, щоб Monobank повторив запит пізніше
-        print(f"Webhook: не вдалося отримати ключ Monobank: {e}")
+        logger.error("Webhook Monobank: не вдалося отримати ключ: %s", e)
         return HttpResponse("Temporary error", status=503)
 
     try:
@@ -1009,37 +1054,8 @@ def mono_webhook(request):
         return HttpResponse("Error", status=400)
 
     invoice_id = data.get('invoiceId')
-    if data.get('status') != 'success' or not invoice_id:
-        return HttpResponse("OK", status=200)
-
-    msg = None
-    with transaction.atomic():
-        # select_for_update: Monobank може надіслати один вебхук кілька разів одночасно
-        order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
-        if order is None or order.status == 'paid':
-            return HttpResponse("OK", status=200)
-
-        order.status = 'paid'
-        order.paid_at = timezone.now()
-        order.save(update_fields=['status', 'paid_at'])
-
-        order_items = list(order.items.select_related('material'))
-        if order_items:
-            materials = [item.material for item in order_items if item.material]
-            for material in materials:
-                if material.is_bundle:
-                    for sub_material in material.included_materials.all():
-                        order.user.purchased_materials.add(sub_material)
-                else:
-                    order.user.purchased_materials.add(material)
-
-            CartItem.objects.filter(cart__user=order.user, material__in=materials).delete()
-            msg = f"🛒 Нова покупка!\nУчень: {html.escape(order.user.email)}\nОплачено: {order.total_amount} ₴"
-        else:
-            User.objects.filter(pk=order.user_id).update(balance=F('balance') + int(order.total_amount))
-            msg = f"💰 Нове поповнення!\nУчень: {html.escape(order.user.email)}\nСума: {order.total_amount} ₴"
-
-    send_telegram_notification(msg)
+    if invoice_id:
+        apply_mono_status(invoice_id, data.get('status'))
     return HttpResponse("OK", status=200)
 
 
@@ -1098,6 +1114,10 @@ def submit_review(request):
         return redirect(back_url)
     if rating is None:
         messages.error(request, "Оберіть оцінку від 1 до 5.")
+        return redirect(back_url)
+    # Кожен відгук приходить власнику в Telegram — не даємо засипати його спамом
+    if rate_limit_exceeded(f'review:user:{request.user.pk}', limit=5, window=60 * 60):
+        messages.error(request, "Ви вже надіслали кілька відгуків. Спробуйте пізніше.")
         return redirect(back_url)
 
     review = Review(
@@ -1221,6 +1241,8 @@ def report_question_error(request):
             message = str(data.get('message') or '').strip()[:2000]
             if not message:
                 return JsonResponse({'status': 'error', 'message': 'Опишіть помилку'}, status=400)
+            if rate_limit_exceeded(f'question-error:user:{request.user.pk}', limit=20, window=60 * 60):
+                return JsonResponse({'status': 'error', 'message': 'Забагато скарг. Спробуйте пізніше.'}, status=429)
 
             question = get_object_or_404(Question, id=question_id)
 
@@ -1243,8 +1265,8 @@ def report_question_error(request):
             return JsonResponse({'status': 'success'})
         except Http404:
             return JsonResponse({'status': 'error', 'message': 'Завдання не знайдено'}, status=404)
-        except Exception as e:
-            print(f"Помилка збереження скарги: {e}")
+        except Exception:
+            logger.exception("Помилка збереження скарги на завдання")
             return JsonResponse({'status': 'error', 'message': 'Не вдалося надіслати скаргу'}, status=400)
     return JsonResponse({'status': 'invalid method'}, status=405)
 
@@ -1347,6 +1369,9 @@ def submit_parent_review(request, parent_token):
 
         if not text or not reviewer_name or rating is None:
             messages.error(request, "Будь ласка, введіть своє ім'я, оцінку та текст відгуку.")
+            return redirect('parent_dashboard', parent_token=parent_token)
+        if rate_limit_exceeded(f'parent-review:{student_req.pk}', limit=3, window=60 * 60):
+            messages.error(request, "Ви вже надіслали кілька відгуків. Спробуйте пізніше.")
             return redirect('parent_dashboard', parent_token=parent_token)
 
         # Створюємо відгук і прив'язуємо його до профілю учня

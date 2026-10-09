@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Результат оплати | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<div style="max-width: 520px; margin: 50px auto; text-align: center; background: #fff; padding: 35px 30px; border: 3px solid var(--brand-blue); border-radius: 14px; box-shadow: 8px 8px 0px var(--brand-yellow);">
+    {% if order.status == 'paid' %}
+        <div style="font-size: 3.5rem;">🎉</div>
+        <h2 style="margin: 10px 0;">Оплата пройшла успішно!</h2>
+        <p style="font-weight: 600; line-height: 1.5;">
+            {% if is_topup %}
+                Баланс поповнено на <strong>{{ order.total_amount|floatformat:0 }} ₴</strong>.
+            {% else %}
+                Матеріали вже у вашому кабінеті. Сплачено <strong>{{ order.total_amount|floatformat:0 }} ₴</strong>.
+            {% endif %}
+        </p>
+        <a href="{% url 'cabinet' %}" class="btn-brand" style="margin-top: 15px;">Перейти в кабінет</a>
+
+    {% elif order.status == 'pending' %}
+        <div style="font-size: 3.5rem;">⏳</div>
+        <h2 style="margin: 10px 0;">Чекаємо підтвердження від банку</h2>
+        <p style="font-weight: 600; line-height: 1.5;">
+            Зазвичай це займає кілька секунд. Сторінка оновиться сама.
+            Якщо ви закрили сторінку оплати, не завершивши її, — просто поверніться в кошик.
+        </p>
+        <p id="pending-hint" style="display: none; color: #6c757d; font-size: 0.9rem;">
+            Підтвердження затримується. Якщо гроші списано, матеріали з'являться в кабінеті автоматично,
+            щойно банк підтвердить оплату. Питання — пишіть нам: dokvadratu@gmail.com
+        </p>
+        <a href="{% url 'cabinet' %}" class="btn-brand" style="margin-top: 15px;">Перейти в кабінет</a>
+        <script>
+            (function () {
+                var params = new URLSearchParams(window.location.search);
+                var attempt = parseInt(params.get('try') || '0', 10);
+                if (attempt < 12) {
+                    params.set('try', attempt + 1);
+                    setTimeout(function () { window.location.search = params.toString(); }, 5000);
+                } else {
+                    document.getElementById('pending-hint').style.display = 'block';
+                }
+            })();
+        </script>
+
+    {% elif order.status == 'refunded' %}
+        <div style="font-size: 3.5rem;">↩️</div>
+        <h2 style="margin: 10px 0;">Кошти повернено</h2>
+        <p style="font-weight: 600; line-height: 1.5;">Банк повернув оплату за це замовлення.</p>
+        <a href="{% url 'cabinet' %}" class="btn-brand" style="margin-top: 15px;">Перейти в кабінет</a>
+
+    {% else %}
+        <div style="font-size: 3.5rem;">😕</div>
+        <h2 style="margin: 10px 0;">Оплата не пройшла</h2>
+        <p style="font-weight: 600; line-height: 1.5;">
+            Банк відхилив платіж або час на оплату минув. Гроші не списано.
+            Спробуйте ще раз або оберіть інший спосіб оплати.
+        </p>
+        <a href="{% if is_topup %}{% url 'cabinet' %}{% else %}{% url 'cart_detail' %}{% endif %}" class="btn-brand" style="margin-top: 15px;">Спробувати ще раз</a>
+    {% endif %}
+</div>
+{% endblock %}

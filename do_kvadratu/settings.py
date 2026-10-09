@@ -136,6 +136,9 @@ if os.getenv('USE_POSTGRES') == 'True':
             'PASSWORD': os.getenv('DB_PASSWORD'),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '5432'),
+            # Тримати з'єднання з базою до 60 с замість нового на кожен запит
+            'CONN_MAX_AGE': 60,
+            'CONN_HEALTH_CHECKS': True,
         }
     }
 else:
@@ -198,6 +201,7 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_LOGIN_METHODS = {'email'}  # Вхід лише за email
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Без юзернейму
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_ADAPTER = 'users.adapters.AccountAdapter'  # збій Gmail не ламає реєстрацію
 
 # НАЙГОЛОВНІШЕ: Обов'язкове підтвердження пошти
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
@@ -285,4 +289,29 @@ CACHES = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+}
+
+# ==========================================
+# ЖУРНАЛ ПОМИЛОК
+# ==========================================
+# Без цього Django у бойовому режимі (DEBUG=False) не пише трейсбеки помилок 500
+# нікуди. Тепер вони йдуть у логи Render, а власнику — коротке сповіщення в Telegram.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+        'telegram': {'level': 'ERROR', 'class': 'do_kvadratu.logging_handlers.TelegramErrorHandler'},
+    },
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'django.request': {'handlers': ['console', 'telegram'], 'level': 'ERROR', 'propagate': False},
+        'materials': {'handlers': ['console', 'telegram'], 'level': 'INFO', 'propagate': False},
+        'telegram_bot': {'handlers': ['console', 'telegram'], 'level': 'INFO', 'propagate': False},
+        'users': {'handlers': ['console', 'telegram'], 'level': 'INFO', 'propagate': False},
+    },
 }
