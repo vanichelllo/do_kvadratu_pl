@@ -143,3 +143,17 @@ class PayFromBalanceTests(BaseTestCase):
         self.assertEqual(user.balance, 100)
         self.assertIn(material, user.purchased_materials.all())
         self.assertEqual(Order.objects.filter(user=user, status='paid').count(), 1)
+
+
+class ParentDashboardTests(BaseTestCase):
+    def test_each_student_has_own_working_parent_link(self):
+        requests_ = [
+            TutorStudentRequest.objects.create(user=self.make_user(f's{i}@example.com'), real_name=f'Учень {i}',
+                                               course='nmt', status='approved')
+            for i in range(2)
+        ]
+        self.assertNotEqual(requests_[0].parent_token, requests_[1].parent_token)
+        for student_request in requests_:
+            response = self.client.get(f'/parents/{student_request.parent_token}/')
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, student_request.real_name)

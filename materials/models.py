@@ -255,7 +255,7 @@ class TutorStudentRequest(models.Model):
     # ==========================================
     # ДОДАНО: СЕКРЕТНИЙ ТОКЕН ДЛЯ БАТЬКІВ
     # ==========================================
-    parent_token = models.UUIDField(default=uuid.uuid4, editable=False, null=True, verbose_name="Токен для батьків")
+    parent_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name="Токен для батьків")
     class Meta:
         verbose_name = "Заявка на статус учня"
         verbose_name_plural = "Заявки на статус учня"
