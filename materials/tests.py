@@ -961,3 +961,36 @@ class QueryCountTests(BaseTestCase):
         option_queries = [q for q in queries if 'FROM "materials_answeroption"' in q['sql']]
         self.assertLessEqual(len(option_queries), 2)  # варіанти + правильні відповіді відповідностей
         self.assertLessEqual(len(queries), 8)
+
+
+
+class DeferredPresentationSafetyTests(BaseTestCase):
+    """HTML-презентація не завантажується за замовчуванням — переконуємось, що збереження її не стирає."""
+
+    def setUp(self):
+        from .models import Category
+        self.category = Category.objects.create(name='Підготовка до НМТ')
+        self.material = StudyMaterial.objects.create(title='1. Тема', price=25, html_content='<p>СЛАЙДИ</p>',
+                                                     category=self.category)
+
+    def test_saving_deferred_instance_keeps_presentation(self):
+        material = StudyMaterial.objects.get(id=self.material.id)
+        material.price = 30
+        material.save()
+        self.assertEqual(StudyMaterial.objects.get(id=self.material.id).html_content, '<p>СЛАЙДИ</p>')
+
+    def test_admin_edit_keeps_presentation(self):
+        staff = self.make_user('editor@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(staff)
+        url = f'/do-kvadratu-secret-control/materials/studymaterial/{self.material.id}/change/'
+        page = self.client.get(url)
+        self.assertContains(page, 'СЛАЙДИ')
+        form = page.context['adminform'].form
+        data = {name: ('' if value is None else value) for name, value in form.initial.items()
+                if name not in ('file', 'image', 'tags', 'included_materials')}
+        data.update({'price': 35, 'category': self.category.id, 'description': data.get('description') or ''})
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302, getattr(response, 'context', None) and
+                         response.context['adminform'].form.errors)
+        material = StudyMaterial.objects.get(id=self.material.id)
+        self.assertEqual((material.price, material.html_content), (35, '<p>СЛАЙДИ</p>'))

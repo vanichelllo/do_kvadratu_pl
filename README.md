@@ -15,7 +15,11 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-У файлі `.env` для локальної роботи потрібно `DEBUG=True` (або власний `SECRET_KEY`).
+У файлі `.env` для локальної роботи потрібно `DEBUG=True` (тоді `SECRET_KEY` необов'язковий).
+Без `DEBUG=True` спершу виконайте `python manage.py collectstatic`, інакше сторінки зі статикою дають помилку 500.
+
+Сторінки входу й реєстрації показують кнопку Google, тому в локальній базі потрібен запис
+«Social applications» (адмінка → Social applications → Google, прив'язаний до сайту), інакше вони дають помилку.
 
 ## Тести
 
