@@ -2,6 +2,7 @@ import os
 import io
 import base64
 import hashlib
+import hmac
 import ecdsa
 import re
 import requests
@@ -18,6 +19,8 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import F
 
 from users.forms import UserProfileForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, AnswerOption, DiagnosticTopic, \
@@ -29,6 +32,12 @@ from .serializers import StudyMaterialSerializer, PurchasedMaterialSerializer
 import datetime
 from django.utils import timezone
 User = get_user_model()
+
+
+def is_teacher(user):
+    """Доступ до панелі вчителя. Поле role учень обирає сам у профілі,
+    тому права даємо лише персоналу (is_staff / is_superuser, ставиться в адмінці)."""
+    return user.is_authenticated and (user.is_superuser or user.is_staff)
 
 
 def diagnostic_test_view(request):
@@ -568,7 +577,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         ).select_related('material').order_by('-created_at')[:15]
 
         # 5. ПАНЕЛЬ ВЧИТЕЛЯ (Показується тільки тобі)
-        if self.request.user.is_superuser or getattr(self.request.user, 'role', '') == 'teacher':
+        if is_teacher(self.request.user):
             # Дістаємо результати тестів усіх учнів зі статусом 'approved'
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
@@ -666,6 +675,12 @@ def api_materials_list(request):
 
 @api_view(['GET'])
 def api_bot_user_library(request, telegram_id):
+    # Віддає email і покупки учня, тому доступно лише боту із секретним токеном
+    expected_token = getattr(settings, 'BOT_API_TOKEN', '') or ''
+    provided_token = request.headers.get('X-Bot-Token', '')
+    if not expected_token or not hmac.compare_digest(provided_token, expected_token):
+        return Response({'status': 'error', 'message': 'Forbidden'}, status=403)
+
     user = User.objects.filter(telegram_id=telegram_id).first()
 
     if not user:
@@ -690,45 +705,51 @@ def api_bot_user_library(request, telegram_id):
 @login_required
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
-    total_price = cart.get_total_price()
 
-    if not cart.items.exists():
-        messages.error(request, "Ваш кошик порожній.")
-        return redirect('materials_list')
+    with transaction.atomic():
+        # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
+        # не затерли баланс одне одного
+        user = User.objects.select_for_update().get(pk=request.user.pk)
+        cart_items = list(cart.items.select_related('material'))
 
-    if request.user.balance >= total_price:
-        with transaction.atomic():
-            request.user.balance -= total_price
-            request.user.save()
+        if not cart_items:
+            messages.error(request, "Ваш кошик порожній.")
+            return redirect('materials_list')
 
-            order = Order.objects.create(
-                user=request.user,
-                total_amount=total_price,
-                status='paid',
-                mono_invoice_id='balance_payment'
+        total_price = cart.get_total_price()
+        if user.balance < total_price:
+            messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
+            return redirect('cart_detail')
+
+        user.balance -= total_price
+        user.save(update_fields=['balance'])
+
+        order = Order.objects.create(
+            user=user,
+            total_amount=total_price,
+            status='paid',
+            paid_at=timezone.now(),
+            mono_invoice_id='balance_payment'
+        )
+
+        for item in cart_items:
+            if item.material.is_bundle:
+                for sub_material in item.material.included_materials.all():
+                    user.purchased_materials.add(sub_material)
+            else:
+                user.purchased_materials.add(item.material)
+
+            OrderItem.objects.create(
+                order=order,
+                material=item.material,
+                price=item.material.price
             )
 
-            for item in cart.items.all():
-                if item.material.is_bundle:
-                    for sub_material in item.material.included_materials.all():
-                        request.user.purchased_materials.add(sub_material)
-                else:
-                    request.user.purchased_materials.add(item.material)
+        cart.items.all().delete()
 
-                OrderItem.objects.create(
-                    order=order,
-                    material=item.material,
-                    price=item.material.price
-                )
-
-            cart.items.all().delete()
-
-        messages.success(request,
-                         f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
-        return redirect('cabinet')
-    else:
-        messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
-        return redirect('cart_detail')
+    messages.success(request,
+                     f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
+    return redirect('cabinet')
 
 
 def send_telegram_notification(message):
@@ -850,54 +871,110 @@ def topup_balance_view(request):
     return redirect('cabinet')
 
 
+MONO_PUBKEY_URL = "https://api.monobank.ua/api/merchant/pubkey"
+MONO_PUBKEY_CACHE_KEY = 'monobank_pubkey'
+MONO_PUBKEY_REFRESHED_KEY = 'monobank_pubkey_refreshed'
+
+
+class MonoPubKeyUnavailable(Exception):
+    pass
+
+
+def get_mono_pubkey(force_refresh=False):
+    """Публічний ключ Monobank для перевірки підпису вебхуків (base64 від PEM)."""
+    key = None if force_refresh else cache.get(MONO_PUBKEY_CACHE_KEY)
+    if not key:
+        try:
+            response = requests.get(MONO_PUBKEY_URL, headers={'X-Token': getattr(settings, 'MONOBANK_TOKEN', '') or ''},
+                                    timeout=10)
+            response.raise_for_status()
+            key = response.json()['key']
+        except Exception as e:
+            raise MonoPubKeyUnavailable(str(e))
+        cache.set(MONO_PUBKEY_CACHE_KEY, key, 60 * 60 * 24)
+        cache.set(MONO_PUBKEY_REFRESHED_KEY, True, 60 * 10)
+    return key
+
+
+def _signature_matches(pub_key_base64, signature, body):
+    try:
+        verifying_key = ecdsa.VerifyingKey.from_pem(base64.b64decode(pub_key_base64).decode())
+        return verifying_key.verify(signature, body, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256)
+    except Exception:
+        # BadSignatureError, зіпсований DER чи ключ — підпис недійсний
+        return False
+
+
+def verify_mono_signature(body, x_sign):
+    """Перевіряє заголовок X-Sign (ECDSA, SHA-256) вебхука Monobank."""
+    if not x_sign:
+        return False
+    try:
+        signature = base64.b64decode(x_sign, validate=True)
+    except Exception:
+        return False
+
+    if _signature_matches(get_mono_pubkey(), signature, body):
+        return True
+
+    # Monobank міг змінити ключ: перезапитуємо, але не частіше разу на 10 хвилин,
+    # щоб підроблені запити не змушували нас постійно смикати API банку
+    if cache.get(MONO_PUBKEY_REFRESHED_KEY):
+        return False
+    return _signature_matches(get_mono_pubkey(force_refresh=True), signature, body)
+
+
 @csrf_exempt
 def mono_webhook(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            invoice_id = data.get('invoiceId')
-            status = data.get('status')
+    if request.method != 'POST':
+        return HttpResponse("Method not allowed", status=405)
 
-            if status == 'success' and invoice_id:
-                try:
-                    order = Order.objects.get(mono_invoice_id=invoice_id)
+    try:
+        if not verify_mono_signature(request.body, request.headers.get('X-Sign', '')):
+            return HttpResponse("Invalid signature", status=403)
+    except MonoPubKeyUnavailable as e:
+        # 5xx, щоб Monobank повторив запит пізніше
+        print(f"Webhook: не вдалося отримати ключ Monobank: {e}")
+        return HttpResponse("Temporary error", status=503)
 
-                    if order.status != 'paid':
-                        with transaction.atomic():
-                            order.status = 'paid'
-                            order.save()
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return HttpResponse("Error", status=400)
 
-                            order_items = OrderItem.objects.filter(order=order)
+    invoice_id = data.get('invoiceId')
+    if data.get('status') != 'success' or not invoice_id:
+        return HttpResponse("OK", status=200)
 
-                            if order_items.exists():
-                                for item in order_items:
-                                    if item.material.is_bundle:
-                                        for sub_material in item.material.included_materials.all():
-                                            order.user.purchased_materials.add(sub_material)
-                                    else:
-                                        order.user.purchased_materials.add(item.material)
-
-                                CartItem.objects.filter(cart__user=order.user).delete()
-
-                                msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
-                                send_telegram_notification(msg)
-
-                            else:
-                                order.user.balance += float(order.total_amount)
-                                order.user.save()
-
-                                msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
-                                send_telegram_notification(msg)
-
-                except Order.DoesNotExist:
-                    pass
-
+    msg = None
+    with transaction.atomic():
+        # select_for_update: Monobank може надіслати один вебхук кілька разів одночасно
+        order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
+        if order is None or order.status == 'paid':
             return HttpResponse("OK", status=200)
-        except Exception as e:
-            print(f"Webhook Error: {e}")
-            return HttpResponse("Error", status=400)
 
-    return HttpResponse("Method not allowed", status=405)
+        order.status = 'paid'
+        order.paid_at = timezone.now()
+        order.save(update_fields=['status', 'paid_at'])
+
+        order_items = list(order.items.select_related('material'))
+        if order_items:
+            materials = [item.material for item in order_items if item.material]
+            for material in materials:
+                if material.is_bundle:
+                    for sub_material in material.included_materials.all():
+                        order.user.purchased_materials.add(sub_material)
+                else:
+                    order.user.purchased_materials.add(material)
+
+            CartItem.objects.filter(cart__user=order.user, material__in=materials).delete()
+            msg = f"🛒 Нова покупка!\nУчень: {order.user.email}\nОплачено: {order.total_amount} ₴"
+        else:
+            User.objects.filter(pk=order.user_id).update(balance=F('balance') + int(order.total_amount))
+            msg = f"💰 Нове поповнення!\nУчень: {order.user.email}\nСума: {order.total_amount} ₴"
+
+    send_telegram_notification(msg)
+    return HttpResponse("OK", status=200)
 
 
 @login_required
@@ -996,8 +1073,7 @@ def view_attempt_details(request, attempt_id):
     attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
 
     # Перевірка: дивитися може учень свої тести, або вчитель - усі
-    if attempt.user != request.user and not request.user.is_superuser and getattr(request.user, 'role',
-                                                                                  '') != 'teacher':
+    if attempt.user != request.user and not is_teacher(request.user):
         raise Http404("У вас немає доступу до цієї статистики.")
 
     saved_answers = attempt.answers_json
@@ -1153,7 +1229,7 @@ def parent_view_presentation(request, parent_token, presentation_id):
 
 @login_required
 def add_quick_report(request):
-    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+    if request.method == 'POST' and is_teacher(request.user):
         student_id = request.POST.get('student_id')
         student = get_object_or_404(TutorStudentRequest, id=student_id)
 
@@ -1172,7 +1248,7 @@ def add_quick_report(request):
 
 @login_required
 def add_nmt_score(request):
-    if request.method == 'POST' and (request.user.is_superuser or getattr(request.user, 'role', '') == 'teacher'):
+    if request.method == 'POST' and is_teacher(request.user):
         student_id = request.POST.get('student_id')
         material_id = request.POST.get('material_id')
         score = request.POST.get('score', 0)

@@ -1,3 +1,4 @@
+import hmac
 import json
 import asyncio
 from django.http import JsonResponse
@@ -13,6 +14,14 @@ dp.include_router(router)
 
 @csrf_exempt
 def telegram_webhook(request):  # Зверніть увагу, це знову звичайний def (без async)
+    # Telegram надсилає secret_token, вказаний у setWebhook, у цьому заголовку.
+    # Без перевірки будь-хто міг підробити оновлення (зокрема /send від імені адміна).
+    webhook_secret = getattr(settings, 'TELEGRAM_WEBHOOK_SECRET', '') or ''
+    if webhook_secret:
+        provided_secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token', '')
+        if not hmac.compare_digest(provided_secret, webhook_secret):
+            return JsonResponse({"status": "forbidden"}, status=403)
+
     if request.method == 'POST':
         try:
             json_data = request.body.decode('utf-8')
