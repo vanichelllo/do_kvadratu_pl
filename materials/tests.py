@@ -2,6 +2,7 @@ import base64
 import datetime
 import hashlib
 import json
+import re
 from unittest import mock
 
 import ecdsa
@@ -207,6 +208,130 @@ class PayFromBalanceTests(BaseTestCase):
             response = self.client.post('/cart/pay/mono/', {'agree': 'on'})
         self.assertRedirects(response, 'https://pay.mbnk.biz/inv-1', fetch_redirect_response=False)
         self.assertIsNotNone(Order.objects.get(user=user).instant_access_agreed_at)
+
+
+class CabinetSectionsTests(BaseTestCase):
+    def test_teacher_sections_collapse_like_library(self):
+        boss = self.make_user('boss@example.com', is_staff=True)
+        kid = self.make_user('kid@example.com')
+        TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        self.client.force_login(boss)
+        html = self.client.get('/cabinet/').content.decode()
+        for key in ('journal', 'students', 'library', 'topup', 'review', 'settings'):
+            # Розділ — <details> без атрибута open (згорнутий), заголовок — <summary> (відкривається натисканням)
+            tag = re.search(rf'<details\b[^>]*\bdata-section="{key}"[^>]*>', html)
+            self.assertIsNotNone(tag, key)
+            self.assertNotRegex(tag.group(0), r'\sopen(?=[\s>=])', key)
+            self.assertRegex(html, rf'data-section="{key}"[^>]*>\s*<summary>', key)
+
+    def test_student_does_not_see_teacher_sections(self):
+        from materials.models import StudentPresentation
+        kid = self.make_user('kid@example.com')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        StudentPresentation.objects.create(student=kid, title='Урок 1', html_content='<p>x</p>')
+        self.client.force_login(kid)
+        response = self.client.get('/cabinet/')
+        self.assertNotContains(response, 'data-section="journal"')
+        self.assertNotContains(response, 'data-section="students"')
+        for key in ('attempts', 'lessons', 'library'):
+            self.assertContains(response, f'data-section="{key}">', msg_prefix=key)
+
+    def test_settings_open_when_form_has_errors(self):
+        self.client.force_login(self.make_user('kid@example.com'))
+        response = self.client.post('/cabinet/', {'role': 'no-such-role', 'first_name': '', 'last_name': '',
+                                                  'phone_number': '', 'target_grade': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-section="settings" open>')
+
+
+class ParentMaterialTests(BaseTestCase):
+    def setUp(self):
+        self.kid = self.make_user('kid@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.kid, real_name='Учень', course='nmt',
+                                                          status='approved')
+        self.passed = StudyMaterial.objects.create(title='7. Квадратні рівняння', html_content='<p>note-seven</p>',
+                                                   is_published=True)
+        self.not_passed = StudyMaterial.objects.create(title='8. Дробові рівняння', html_content='<p>Конспект 8</p>',
+                                                       is_published=True)
+        self.no_html = StudyMaterial.objects.create(title='9. Корені', is_published=True)
+        self.empty_html = StudyMaterial.objects.create(title='10. Ірраціональні рівняння', html_content='',
+                                                       is_published=True)
+        self.diag = StudyMaterial.objects.create(title='Вхідне діагностичне тестування НМТ',
+                                                 html_content='<p>x</p>')
+        for material in (self.passed, self.passed, self.no_html, self.empty_html, self.diag):
+            PracticeAttempt.objects.create(user=self.kid, material=material, score=5, max_score=10)
+
+    def url(self, material, token=None):
+        return f'/parents/{token or self.student.parent_token}/topic/{material.id}/'
+
+    def test_dashboard_lists_notes_of_passed_topics_once(self):
+        response = self.client.get(f'/parents/{self.student.parent_token}/')
+        self.assertContains(response, 'Конспекти пройдених тем')
+        self.assertContains(response, self.url(self.passed), count=1)
+        for material in (self.not_passed, self.no_html, self.empty_html, self.diag):
+            self.assertNotContains(response, self.url(material))
+
+    def test_parent_opens_passed_topic_without_student_buttons(self):
+        response = self.client.get(self.url(self.passed))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'note-seven')  # презентація (у json_script)
+        self.assertContains(response, f'href="/parents/{self.student.parent_token}/"')  # кнопка «Назад»
+        self.assertNotContains(response, '/practice/')
+        self.assertEqual(response['Referrer-Policy'], 'no-referrer')
+
+    def test_only_passed_topics_of_approved_nmt_students(self):
+        for material in (self.not_passed, self.no_html, self.empty_html, self.diag):
+            self.assertEqual(self.client.get(self.url(material)).status_code, 404, material.title)
+        # Конспект іншого учня за своїм посиланням не відкрити
+        other = TutorStudentRequest.objects.create(user=self.make_user('other@example.com'), real_name='Інший',
+                                                   course='nmt', status='approved')
+        self.assertEqual(self.client.get(self.url(self.passed, other.parent_token)).status_code, 404)
+        for field, value in (('status', 'pending'), ('course', 'grade_7')):
+            TutorStudentRequest.objects.filter(pk=self.student.pk).update(**{field: value})
+            self.assertEqual(self.client.get(self.url(self.passed)).status_code, 404, value)
+            TutorStudentRequest.objects.filter(pk=self.student.pk).update(status='approved', course='nmt')
+
+    def test_parent_reader_hides_pdf_link(self):
+        StudyMaterial.objects.filter(pk=self.passed.pk).update(file='documents/7.pdf')
+        with mock.patch.object(StudyMaterial._meta.get_field('file').storage, 'url',
+                               return_value='https://cdn.example/7.pdf'):
+            response = self.client.get(self.url(self.passed))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'class="action-btn btn-download"')
+        self.assertNotContains(response, 'cdn.example/7.pdf')
+
+    def test_unpublished_draft_stays_hidden(self):
+        draft = StudyMaterial.objects.create(title='11. Чернетка', html_content='<p>secret-draft</p>',
+                                             is_free=True, is_published=False)
+        self.client.force_login(self.kid)
+        # Практика з чернетки закрита навіть для безкоштовної — і батьки її не побачать
+        self.assertEqual(self.client.post(f'/practice/{draft.id}/', {'question_ids': ''}).status_code, 404)
+        PracticeAttempt.objects.create(user=self.kid, material=draft, score=0, max_score=0)  # стара спроба
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url(draft)).status_code, 404)
+        self.assertNotContains(self.client.get(f'/parents/{self.student.parent_token}/'), self.url(draft))
+        # Учень має чернетку в бібліотеці (видав викладач) — тоді батьки бачать
+        self.kid.purchased_materials.add(draft)
+        self.assertEqual(self.client.get(self.url(draft)).status_code, 200)
+
+    def test_parent_lesson_page_hides_referrer(self):
+        from materials.models import StudentPresentation
+        lesson = StudentPresentation.objects.create(student=self.kid, title='Урок 9', html_content='<p>x</p>')
+        response = self.client.get(f'/parents/{self.student.parent_token}/lesson/{lesson.id}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Referrer-Policy'], 'no-referrer')
+
+    def test_score_from_lesson_also_opens_topic(self):
+        boss = self.make_user('boss@example.com', is_staff=True)
+        self.client.force_login(boss)
+        self.client.post('/cabinet/add-nmt-score/', {'student_id': self.student.id,
+                                                     'material_id': self.not_passed.id, 'score': 7,
+                                                     'max_score': 10})
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url(self.not_passed)).status_code, 200)
 
 
 class ParentDashboardTests(BaseTestCase):
