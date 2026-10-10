@@ -1216,3 +1216,173 @@ class LegalPagesTests(BaseTestCase):
         from django.conf import settings as dj_settings
         y, m, d = dj_settings.TERMS_VERSION.split('-')
         self.assertContains(self.client.get('/offer/'), f'Редакція від {d}.{m}.{y}')
+
+
+class PracticePoolTests(BaseTestCase):
+    def setUp(self):
+        self.user = self.make_user('practice@example.com')
+        self.client.force_login(self.user)
+        self.lesson3 = StudyMaterial.objects.create(title='3. Степені', price=0, is_free=True, is_published=True)
+        self.lesson5 = StudyMaterial.objects.create(title='5. Дроби', price=0, is_free=True, is_published=True)
+        self.topic3 = DiagnosticTopic.objects.create(name='3. Степені')
+
+    def make_short(self, text, *materials, topic=None):
+        q = Question.objects.create(text=text, question_type='SHORT', correct_short_answer='1', topic=topic)
+        q.materials.add(*materials)
+        return q
+
+    def shown_ids(self):
+        response = self.client.get(f'/practice/{self.lesson3.id}/')
+        self.assertEqual(response.status_code, 200)
+        return set(response.context['q_short'])
+
+    def test_own_question_stays_even_with_later_tag(self):
+        own = self.make_short('own', self.lesson3, self.lesson5, topic=self.topic3)
+        self.make_short('mixed', self.lesson3, self.lesson5)  # чужа тема + пізніший тег — виключається
+        pool_ids = {q.id for q in self.shown_ids()}
+        self.assertEqual(pool_ids, {own.id})
+
+    def test_later_tag_rule_still_applies_to_other_questions(self):
+        self.make_short('mixed', self.lesson3, self.lesson5)
+        response = self.client.get(f'/practice/{self.lesson3.id}/')
+        self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
+
+    def test_own_by_recommended_material(self):
+        topic = DiagnosticTopic.objects.create(name='Степені (тема)')
+        topic.recommended_materials.add(self.lesson3)
+        own = self.make_short('rec', self.lesson3, self.lesson5, topic=topic)
+        self.assertEqual({q.id for q in self.shown_ids()}, {own.id})
+
+    def test_unseen_questions_come_first(self):
+        old = [self.make_short(f'old{i}', self.lesson3) for i in range(3)]
+        new = self.make_short('new', self.lesson3)
+        PracticeAttempt.objects.create(user=self.user, material=self.lesson3, score=0, max_score=2,
+                                       answers_json={'question_ids': ','.join(str(q.id) for q in old)})
+        other = self.make_user('other@example.com')
+        PracticeAttempt.objects.create(user=other, material=self.lesson3, score=0, max_score=2,
+                                       answers_json={'question_ids': str(new.id)})
+        for _ in range(10):
+            self.assertEqual({q.id for q in self.shown_ids()}, {new.id})
+
+    def test_repeats_only_when_no_new_left(self):
+        seen = self.make_short('seen', self.lesson3)
+        PracticeAttempt.objects.create(user=self.user, material=self.lesson3, score=0, max_score=2,
+                                       answers_json={'question_ids': str(seen.id)})
+        self.assertEqual({q.id for q in self.shown_ids()}, {seen.id})
+
+    def test_broken_attempt_json_is_ignored(self):
+        q = self.make_short('q', self.lesson3)
+        for bad in (None, [], {'question_ids': None}, {'question_ids': 'abc,,'}):
+            PracticeAttempt.objects.create(user=self.user, material=self.lesson3, score=0, max_score=2,
+                                           answers_json=bad)
+        self.assertEqual({x.id for x in self.shown_ids()}, {q.id})
+
+
+BANK_SAMPLE = '''TOPIC_NAME = "34. Теорема косинусів та теорема синусів"
+TASKS = [
+    {
+        "type": "CHOICE", "difficulty": 1, "text": r"Нове завдання $a^2$", "svg_code": "",
+        "options": [(r"А) 1", False), (r"Б) 2", True)],
+        "topic_tags": ["34. Теореми косинусів та теорема синусів", "99. Нема такого"]
+    },
+    {
+        "type": "SHORT", "difficulty": 2, "text": "Уже є в базі", "answer": "5",
+        "topic_tags": ["34. Теорема косинусів та теорема синусів"]
+    },
+    {
+        "type": "MATCH", "difficulty": 3, "text": "Відповідність",
+        "options": ["А) x", "Б) y"],
+        "matches": [("1. one", "А) x"), ("2. two", "Б) y")],
+        "topic_tags": ["34. Теорема косинусів та теорема синусів"]
+    },
+    {"type": "SHORT", "difficulty": 2, "text": "Без відповіді", "topic_tags": []},
+    {"type": "CHOICE", "difficulty": 1, "text": "Нове завдання $a^2$", "options": [("А", True), ("Б", False)]},
+]
+'''
+
+
+class BankImportTests(BaseTestCase):
+    url = '/do-kvadratu-secret-control/materials/question/import-bank/'
+
+    def setUp(self):
+        self.admin = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(self.admin)
+        self.lesson34 = StudyMaterial.objects.create(title='34. Теорема косинусів та теорема синусів', price=10)
+        Question.objects.create(text='Уже є в базі', question_type='SHORT', correct_short_answer='5')
+
+    def upload(self, source, action='preview'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('bank_34.py', source.encode('utf-8'))
+        return self.client.post(self.url, {'action': action, 'bank_file': f})
+
+    def test_preview_reports_without_writing(self):
+        response = self.upload(BANK_SAMPLE)
+        self.assertEqual(response.status_code, 200)
+        report = response.context['report']
+        self.assertEqual(report.total, 5)
+        self.assertEqual(report.to_add, [1, 3])
+        self.assertEqual([i for i, _ in report.duplicates], [2, 5])  # 5-те — повтор тексту з цього ж файлу
+        self.assertEqual([i for i, _ in report.errors], [4])
+        self.assertEqual(report.aliased_tags,
+                         {'34. Теореми косинусів та теорема синусів': '34. Теорема косинусів та теорема синусів'})
+        self.assertEqual(report.unknown_tags, {'99. Нема такого': 1})
+        self.assertEqual(Question.objects.count(), 1)
+
+    def test_import_adds_tasks_and_binds_typo_tag_to_lesson_34(self):
+        self.upload(BANK_SAMPLE)
+        response = self.client.post(self.url, {'action': 'import'})
+        self.assertRedirects(response, '/do-kvadratu-secret-control/materials/question/',
+                             fetch_redirect_response=False)
+        self.assertEqual(Question.objects.count(), 3)
+        choice = Question.objects.get(text__startswith='Нове завдання')
+        self.assertEqual(list(choice.materials.all()), [self.lesson34])
+        self.assertEqual(choice.topic.name, '34. Теорема косинусів та теорема синусів')
+        self.assertEqual(choice.options.filter(is_correct=True).get().text, 'Б) 2')
+        match = Question.objects.get(text='Відповідність')
+        self.assertEqual({(m.text, m.correct_option.text) for m in match.match_items.all()},
+                         {('1. one', 'А) x'), ('2. two', 'Б) y')})
+        # повторне завантаження того ж файлу нічого не додає
+        self.upload(BANK_SAMPLE)
+        self.client.post(self.url, {'action': 'import'})
+        self.assertEqual(Question.objects.count(), 3)
+
+    def test_file_is_never_executed(self):
+        import os
+        marker = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'bank-executed-marker')
+        if os.path.exists(marker):
+            os.remove(marker)
+        evil = f'TOPIC_NAME = "x"\nTASKS = [open({marker!r}, "w").write("1")]\n'
+        response = self.upload(evil)
+        self.assertContains(response, 'лише літерали')
+        self.assertFalse(os.path.exists(marker))
+        for source in ('import os\nTOPIC_NAME = "x"\nTASKS = []', 'TOPIC_NAME = "x"\nTASKS = []\nTASKS[0]["a"] = 1',
+                       'TOPIC_NAME = "x"\nTASKS = [{"a": 1} + {}]', 'TOPIC_NAME = "x"'):
+            self.assertIn('error', self.upload(source).context)
+        self.assertEqual(Question.objects.count(), 1)
+
+    def test_import_without_preview_does_nothing(self):
+        response = self.client.post(self.url, {'action': 'import'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Question.objects.count(), 1)
+
+    def test_requires_add_permission(self):
+        staff = self.make_user('staff@example.com', is_staff=True)
+        self.client.force_login(staff)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_changelist_has_upload_button(self):
+        page = self.client.get('/do-kvadratu-secret-control/materials/question/')
+        self.assertContains(page, 'Завантажити завдання')
+
+    def test_all_repo_bank_files_parse(self):
+        import glob
+        from .bank_import import parse_bank_source, validate_task
+        paths = sorted(glob.glob('import_files/bank_*.py'))
+        self.assertTrue(paths)
+        for path in paths:
+            with open(path, encoding='utf-8') as f:
+                _, tasks = parse_bank_source(f.read())
+            for i, task in enumerate(tasks, start=1):
+                self.assertEqual(validate_task(task), [], f'{path} №{i}')

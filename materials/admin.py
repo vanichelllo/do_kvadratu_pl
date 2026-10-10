@@ -2,6 +2,9 @@ import uuid
 
 from django.contrib import admin
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect, render
+from django.urls import path
 
 # Імпорти для вивантаження бази в Excel
 from import_export import resources
@@ -10,6 +13,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from users.models import PurchaseHistory
+from .bank_import import MAX_FILE_BYTES, BankFormatError, build_report, import_tasks, parse_bank_source
 from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 User = get_user_model()
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
@@ -157,6 +161,60 @@ class QuestionAdmin(admin.ModelAdmin):
     list_filter = ('topic', 'question_type')
     search_fields = ('text',)
     inlines = [MatchItemInline, AnswerOptionInline]
+    change_list_template = 'admin/materials/question/change_list.html'
+
+    def get_urls(self):
+        custom = [path('import-bank/', self.admin_site.admin_view(self.import_bank_view),
+                       name='materials_question_import_bank')]
+        return custom + super().get_urls()
+
+    def import_bank_view(self, request):
+        """Завантаження файлу bank_*.py: пробний звіт, потім імпорт."""
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+
+        session_key = 'bank_import_pending'
+        context = {**self.admin_site.each_context(request), 'opts': self.model._meta,
+                   'title': 'Завантажити завдання', 'max_mb': MAX_FILE_BYTES // (1024 * 1024)}
+
+        if request.method == 'POST' and request.POST.get('action') == 'import':
+            pending = request.session.get(session_key)
+            if not pending:
+                messages.error(request, 'Пробний звіт застарів — завантажте файл ще раз.')
+                return redirect('admin:materials_question_import_bank')
+            try:
+                topic_name, tasks = parse_bank_source(pending['source'])
+            except BankFormatError as exc:
+                messages.error(request, str(exc))
+                return redirect('admin:materials_question_import_bank')
+            report, added = import_tasks(topic_name, tasks)
+            request.session.pop(session_key, None)
+            messages.success(request, f'Імпортовано завдань: {added}. Дублікатів пропущено: '
+                                      f'{len(report.duplicates)}, з помилками пропущено: {len(report.errors)}.')
+            return redirect('admin:materials_question_changelist')
+
+        if request.method == 'POST':
+            upload = request.FILES.get('bank_file')
+            error = None
+            if not upload:
+                error = 'Оберіть файл.'
+            elif upload.size > MAX_FILE_BYTES:
+                error = f'Файл завеликий (максимум {MAX_FILE_BYTES // (1024 * 1024)} МБ).'
+            else:
+                try:
+                    source = upload.read().decode('utf-8-sig')
+                    topic_name, tasks = parse_bank_source(source)
+                except UnicodeDecodeError:
+                    error = 'Файл має бути у кодуванні UTF-8.'
+                except BankFormatError as exc:
+                    error = str(exc)
+            if error:
+                request.session.pop(session_key, None)
+                context['error'] = error
+            else:
+                request.session[session_key] = {'name': upload.name, 'source': source}
+                context.update(report=build_report(topic_name, tasks), file_name=upload.name)
+        return render(request, 'admin/materials/question/import_bank.html', context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         # id завдання — на запиті (не на спільному об'єкті адмінки: його ділять потоки сервера)

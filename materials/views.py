@@ -86,6 +86,39 @@ def questions_in_order(q_id_list):
             .prefetch_related('options', 'match_items__correct_option').order_by(preserved_order))
 
 
+def is_own_question(question, material, material_num):
+    """Завдання «належить» конспекту, якщо його тема (DiagnosticTopic) — це цей конспект:
+    така сама назва, той самий номер у назві або конспект указано в рекомендованих теми."""
+    topic = question.topic
+    if topic is None:
+        return False
+    if topic.name.strip() == material.title.strip():
+        return True
+    match = re.match(r'^(\d+)', topic.name.strip())
+    if match and material_num and int(match.group(1)) == material_num:
+        return True
+    return any(m.pk == material.pk for m in topic.recommended_materials.all())
+
+
+def seen_question_ids(user):
+    """id завдань, які учень уже отримував у практиці (PracticeAttempt.answers_json['question_ids'])."""
+    seen = set()
+    for answers in PracticeAttempt.objects.filter(user=user).values_list('answers_json', flat=True):
+        if isinstance(answers, dict):
+            seen.update(parse_id_list(str(answers.get('question_ids') or '')))
+    return seen
+
+
+def sample_unseen_first(pool, count, seen_ids):
+    """count випадкових завдань: спершу ті, яких немає в seen_ids, решту добираємо з побачених."""
+    unseen = [q for q in pool if q.id not in seen_ids]
+    picked = random.sample(unseen, min(count, len(unseen)))
+    if len(picked) < count:
+        seen = [q for q in pool if q.id in seen_ids]
+        picked += random.sample(seen, min(count - len(picked), len(seen)))
+    return picked
+
+
 def find_option(question, option_id):
     """Варіант відповіді лише з цього завдання, щоб не можна було підставити id правильного варіанта з іншого."""
     option_id = to_int(option_id)
@@ -421,17 +454,22 @@ def practice_session_view(request, material_id):
     # Режим GET залишається без змін
     match_current = re.match(r'^(\d+)', material.title)
     current_topic_num = int(match_current.group(1)) if match_current else 0
-    raw_pool = Question.objects.filter(materials=material).prefetch_related('options', 'match_items', 'materials')
+    raw_pool = (Question.objects.filter(materials=material).select_related('topic')
+                .prefetch_related('options', 'match_items', 'materials', 'topic__recommended_materials'))
 
     safe_pool = []
     for q in raw_pool:
-        is_safe = True
-        for mat in q.materials.all():
-            match_mat = re.match(r'^(\d+)', mat.title)
-            mat_num = int(match_mat.group(1)) if match_mat else 0
-            if mat_num > current_topic_num:
-                is_safe = False
-                break
+        # Власні завдання конспекту (їхня тема = цей конспект) беремо завжди, навіть якщо вони
+        # позначені ще й пізнішою темою; решту — лише без тегів пізніших за поточну тему
+        is_safe = is_own_question(q, material, current_topic_num)
+        if not is_safe:
+            is_safe = True
+            for mat in q.materials.all():
+                match_mat = re.match(r'^(\d+)', mat.title)
+                mat_num = int(match_mat.group(1)) if match_mat else 0
+                if mat_num > current_topic_num:
+                    is_safe = False
+                    break
         if is_safe:
             safe_pool.append(q)
 
@@ -439,9 +477,11 @@ def practice_session_view(request, material_id):
     match_pool = [q for q in safe_pool if q.question_type == 'MATCH']
     short_pool = [q for q in safe_pool if q.question_type == 'SHORT']
 
-    q_choice = random.sample(choice_pool, min(10, len(choice_pool)))
-    q_match = random.sample(match_pool, min(2, len(match_pool)))
-    q_short = random.sample(short_pool, min(1, len(short_pool)))
+    # Спершу завдання, яких учень ще не бачив; повтори лише коли нових не вистачає
+    seen_ids = seen_question_ids(request.user)
+    q_choice = sample_unseen_first(choice_pool, 10, seen_ids)
+    q_match = sample_unseen_first(match_pool, 2, seen_ids)
+    q_short = sample_unseen_first(short_pool, 1, seen_ids)
 
     selected_questions = q_choice + q_match + q_short
     random.shuffle(selected_questions)
