@@ -1,0 +1,78 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Головна</a> &rsaquo;
+  <a href="{% url 'admin:app_list' app_label='materials' %}">Materials</a> &rsaquo;
+  <a href="{% url 'admin:materials_question_changelist' %}">Завдання</a> &rsaquo;
+  Завантажити завдання
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p>Файл у форматі <code>import_files/bank_*.py</code> (<code>TOPIC_NAME = …</code> і <code>TASKS = […]</code>).
+    Файл не виконується, а лише читається як набір значень. Спершу буде пробний звіт, у базу нічого не запишеться;
+    імпорт запускається окремою кнопкою.</p>
+
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="preview">
+    <p><input type="file" name="bank_file" accept=".py,text/x-python,text/plain" required>
+      <small>до {{ max_mb }} МБ</small></p>
+    <input type="submit" class="default" value="Пробний звіт">
+  </form>
+
+  {% if report %}
+  <h2>Пробний звіт: {{ file_name }}</h2>
+  <p>Тема (TOPIC_NAME): <strong>{{ report.topic_name }}</strong></p>
+  <table>
+    <tbody>
+      <tr><th>Завдань у файлі</th><td>{{ report.total }}</td></tr>
+      <tr><th>Буде додано</th><td>{{ report.to_add|length }}</td></tr>
+      <tr><th>Дублікатів (однаковий текст)</th><td>{{ report.duplicates|length }}</td></tr>
+      <tr><th>З помилками</th><td>{{ report.errors|length }}</td></tr>
+    </tbody>
+  </table>
+
+  {% if report.errors %}
+  <h3>Помилки (ці завдання не імпортуються)</h3>
+  <ul>
+    {% for index, message in report.errors %}<li>№{{ index }}: {{ message }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if report.duplicates %}
+  <h3>Дублікати (вже є в базі або повторюються у файлі, пропускаються)</h3>
+  <ul>
+    {% for index, text in report.duplicates %}<li>№{{ index }}: {{ text|truncatechars:120 }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if report.aliased_tags %}
+  <h3>Теги з помилкою в назві (прив'язано до виправленого конспекту)</h3>
+  <ul>
+    {% for wrong, right in report.aliased_tags.items %}<li>«{{ wrong }}» → «{{ right }}»</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if report.unknown_tags %}
+  <h3>Конспект для тегу не знайдено (завдання буде додано без цього тегу)</h3>
+  <ul>
+    {% for tag, count in report.unknown_tags.items %}<li>«{{ tag }}»: завдань {{ count }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if report.can_import %}
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="import">
+    <input type="submit" class="default" value="Імпортувати {{ report.to_add|length }} завдань">
+  </form>
+  {% else %}
+  <p>Нових завдань для імпорту немає.</p>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
