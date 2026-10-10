@@ -172,7 +172,7 @@
                         <button type="submit" style="background: #ff5f56; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Скасувати</button>
                     {% else %}
                         <input type="hidden" name="action" value="apply_promo">
-                        <input type="text" name="promo_code" placeholder="Введіть промокод" required style="flex: 1; min-width: 200px; padding: 10px 15px; border: 2px solid var(--brand-blue); border-radius: 8px; font-size: 1rem; font-weight: 800; outline: none; text-transform: uppercase;">
+                        <input type="text" name="promo_code" placeholder="Введіть промокод" required style="flex: 1; min-width: 0; width: 100%; padding: 10px 15px; border: 2px solid var(--brand-blue); border-radius: 8px; font-size: 1rem; font-weight: 800; outline: none; text-transform: uppercase;">
                         <button type="submit" style="background: var(--brand-blue); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Застосувати</button>
                     {% endif %}
                 </form>
@@ -198,14 +198,17 @@
                     <span style="text-align: left;">
                         Я погоджуюсь з умовами
                         <a href="{% url 'offer' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Договору публічної оферти</a> та
-                        <a href="{% url 'privacy' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Політикою конфіденційності</a>.
+                        <a href="{% url 'privacy' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Політики конфіденційності</a>
+                        і прошу відкрити матеріали одразу після оплати. Я розумію, що після цього відмовитися від покупки
+                        без пояснення причин не можна (пункт 14.2 Договору).
                     </span>
                 </label>
             </div>
 
             <div class="payment-options">
-                <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event);">
+                <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event) && trackCheckout();">
                     {% csrf_token %}
+                    <input type="hidden" name="agree" value="">
                     <button type="submit" class="btn-pay-mono">
                         <span style="font-size: 1.5rem;">🐈</span> Оплатити картою
                         <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
@@ -213,6 +216,7 @@
                 </form>
                 <form method="POST" action="{% url 'pay_from_balance' %}" onsubmit="return checkAgreement(event);">
                     {% csrf_token %}
+                    <input type="hidden" name="agree" value="">
                     <button type="submit" class="btn-pay-balance">
                         <span style="font-size: 1.5rem;">💵</span> Списати з балансу
                         <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0" }} ₴</span>
@@ -233,13 +237,20 @@
 </div>
 
 <script>
+    function trackCheckout() {
+        window.dkTrack('begin_checkout', {value: {{ cart.get_total_price|default:0|stringformat:"s" }}, currency: 'UAH'});
+        return true;
+    }
+
     function checkAgreement(event) {
         const checkbox = document.getElementById('agree-checkbox');
         if (!checkbox.checked) {
             event.preventDefault();
-            alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності.");
+            alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності і з відкриттям матеріалів одразу після оплати.");
             return false;
         }
+        // Галочка стоїть поза формами оплати, тому передаємо її серверу окремим полем — він її записує в замовлення
+        event.target.querySelector('input[name="agree"]').value = 'on';
         return true;
     }
 </script>

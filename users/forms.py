@@ -22,3 +22,15 @@ class UserProfileForm(forms.ModelForm):
             'target_grade': forms.Select(
                 attrs={'style': 'width: 100%; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;'}),
         }
+
+class TermsSignupForm(forms.Form):
+    # Додається до форми реєстрації allauth (ACCOUNT_SIGNUP_FORM_CLASS): галочку перевіряє сервер,
+    # а час і редакція згоди записуються в профіль. Хто входить через Google — підтверджує на /accept-terms/.
+    terms = forms.BooleanField(
+        required=True,
+        label="Я погоджуюсь з умовами Договору оферти та Політикою конфіденційності",
+        error_messages={'required': "Щоб зареєструватися, потрібно погодитися з умовами."},
+    )
+
+    def signup(self, request, user):
+        user.accept_terms()

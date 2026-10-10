@@ -203,3 +203,24 @@ class ShortAnswerNormalizeTests(SimpleTestCase):
             if q['type'] != 'choice' and not str(q['ans']).isdigit():
                 typed = ', '.join(str(q['ans']).upper())
                 self.assertEqual(normalize_short_answer(typed), normalize_short_answer(q['ans']), typed)
+
+
+class FsmCleanupTests(TestCase):
+    def test_states_older_than_30_days_are_removed_once_a_day(self):
+        import datetime
+        from django.core.cache import cache
+        from django.utils import timezone
+        from .models import BotFSMState
+        from .views import cleanup_old_fsm_states
+        cache.delete('bot-fsm-cleanup')
+        old = BotFSMState.objects.create(key='old', state='EnrollFSM:name')
+        fresh = BotFSMState.objects.create(key='fresh', state='EnrollFSM:name')
+        BotFSMState.objects.filter(pk=old.pk).update(updated_at=timezone.now() - datetime.timedelta(days=31))
+        cleanup_old_fsm_states()
+        self.assertFalse(BotFSMState.objects.filter(pk=old.pk).exists())
+        self.assertTrue(BotFSMState.objects.filter(pk=fresh.pk).exists())
+        # Друга перевірка того ж дня нічого не робить (і не навантажує базу)
+        BotFSMState.objects.filter(pk=fresh.pk).update(updated_at=timezone.now() - datetime.timedelta(days=40))
+        cleanup_old_fsm_states()
+        self.assertTrue(BotFSMState.objects.filter(pk=fresh.pk).exists())
+        cache.delete('bot-fsm-cleanup')

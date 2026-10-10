@@ -3,6 +3,8 @@
 
 {% block title %}Вітрина | ДО КВАДРАТУ{% endblock %}
 
+{% block meta_description %}Вітрина авторських конспектів для підготовки до НМТ з математики: алгебра й геометрія по темах, пакети зі знижкою, PDF та інтерактивні презентації з практикою.{% endblock %}
+
 {% block content %}
 <!-- Додаткові стилі спеціально для Вітрини -->
 <style>
@@ -63,7 +65,7 @@
 
     .materials-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
         gap: 35px;
     }
 

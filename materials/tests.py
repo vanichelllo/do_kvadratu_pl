@@ -5,12 +5,14 @@ import json
 from unittest import mock
 
 import ecdsa
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
+from django.utils import timezone
 
-from .models import (AnswerOption, Cart, CartItem, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review,
-                     StudentReport, StudyMaterial, TutorStudentRequest)
+from .models import (AnswerOption, Cart, CartItem, DiagnosticTopic, MatchItem, Order, OrderItem, PracticeAttempt,
+                     Question, Review, StudentReport, StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
 
@@ -29,6 +31,9 @@ class BaseTestCase(TestCase):
         return super().run(result)
 
     def make_user(self, email, **extra):
+        # Користувачі в тестах уже погодилися з офертою (інакше сторінки ведуть на /accept-terms/)
+        extra.setdefault('terms_accepted_at', timezone.now())
+        extra.setdefault('terms_version', settings.TERMS_VERSION)
         return User.objects.create_user(username=email, email=email, password='Pass12345!', **extra)
 
 
@@ -165,13 +170,43 @@ class PayFromBalanceTests(BaseTestCase):
         self.client.force_login(user)
 
         self.assertRedirects(self.client.get('/cart/pay/balance/'), '/cart/')  # GET не платить
-        self.client.post('/cart/pay/balance/')
-        self.client.post('/cart/pay/balance/')  # повторний клік нічого не списує
+        self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        self.client.post('/cart/pay/balance/', {'agree': 'on'})  # повторний клік нічого не списує
 
         user.refresh_from_db()
         self.assertEqual(user.balance, 100)
         self.assertIn(material, user.purchased_materials.all())
-        self.assertEqual(Order.objects.filter(user=user, status='paid').count(), 1)
+        order = Order.objects.get(user=user, status='paid')
+        self.assertIsNotNone(order.instant_access_agreed_at)
+
+    def test_payment_needs_cart_checkbox(self):
+        # Без галочки в Кошику (оферта, п. 14.1) сервер не приймає оплату — навіть якщо обійти перевірку в браузері
+        user = self.make_user('buyer2@example.com', balance=300)
+        material = StudyMaterial.objects.create(title='4. Тема', price=200)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(cart=cart, material=material)
+        self.client.force_login(user)
+        with mock.patch('materials.views.requests.post') as mono_post:
+            for url in ('/cart/pay/balance/', '/cart/pay/mono/'):
+                for data in ({}, {'agree': ''}):
+                    self.assertRedirects(self.client.post(url, data), '/cart/', fetch_redirect_response=False)
+        mono_post.assert_not_called()
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 300)
+        self.assertFalse(Order.objects.filter(user=user).exists())
+        self.assertContains(self.client.get('/cart/'), 'поставте галочку')
+
+    def test_card_payment_records_cart_checkbox(self):
+        user = self.make_user('buyer3@example.com')
+        material = StudyMaterial.objects.create(title='5. Тема', price=200)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(cart=cart, material=material)
+        self.client.force_login(user)
+        with mock.patch('materials.views.requests.post') as mono_post:
+            mono_post.return_value.json.return_value = {'invoiceId': 'inv-1', 'pageUrl': 'https://pay.mbnk.biz/inv-1'}
+            response = self.client.post('/cart/pay/mono/', {'agree': 'on'})
+        self.assertRedirects(response, 'https://pay.mbnk.biz/inv-1', fetch_redirect_response=False)
+        self.assertIsNotNone(Order.objects.get(user=user).instant_access_agreed_at)
 
 
 class ParentDashboardTests(BaseTestCase):
@@ -186,6 +221,104 @@ class ParentDashboardTests(BaseTestCase):
             response = self.client.get(f'/parents/{student_request.parent_token}/')
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, student_request.real_name)
+            # Секретне посилання не має потрапляти до інших сайтів (наприклад, Google Analytics)
+            self.assertContains(response, '<meta name="referrer" content="no-referrer">')
+
+    def test_parent_link_works_only_for_approved_students(self):
+        for status in ('pending', 'rejected'):
+            student = TutorStudentRequest.objects.create(user=self.make_user(f'{status}@example.com'),
+                                                         real_name='Учень', course='nmt', status=status)
+            self.assertEqual(self.client.get(f'/parents/{student.parent_token}/').status_code, 404)
+            self.client.post(f'/parents/{student.parent_token}/review/',
+                             {'reviewer_name': 'Мама', 'rating': '5', 'text': 'Дякуємо'})
+        self.assertFalse(Review.objects.exists())
+
+    def test_revoke_access_keeps_materials_student_paid_for(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from materials.models import Category
+        nmt = Category.objects.create(name='Підготовка до НМТ')
+        bought = StudyMaterial.objects.create(title='Куплена тема', price=25, category=nmt, is_published=True)
+        in_bundle = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True, is_published=True)
+        bundle.included_materials.add(in_bundle)
+        given = StudyMaterial.objects.create(title='Видана тема', price=25, category=nmt, is_published=True)
+        kid = self.make_user('kid@example.com')
+        kid.purchased_materials.add(bought, in_bundle, given)
+        order = Order.objects.create(user=kid, total_amount=125, status='paid')
+        OrderItem.objects.create(order=order, material=bought, price=25)
+        OrderItem.objects.create(order=order, material=bundle, price=100)
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'):
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {bought, in_bundle})
+
+    def test_revoke_access_keeps_everything_if_a_paid_bundle_was_deleted(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from materials.models import Category
+        nmt = Category.objects.create(name='Підготовка до НМТ')
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True)
+        topic = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
+        bundle.included_materials.add(topic)
+        kid = self.make_user('kid2@example.com')
+        kid.purchased_materials.add(topic)
+        order = Order.objects.create(user=kid, total_amount=100, status='paid')
+        OrderItem.objects.create(order=order, material=bundle, price=100)
+        bundle.delete()  # OrderItem.material стає NULL — уже не видно, що було в пакеті
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss2@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'), mock.patch('materials.admin.messages.warning') as warn:
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {topic})
+        warn.assert_called_once()
+
+    def test_revoke_access_keeps_everything_if_an_old_purchase_was_deleted(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from users.models import PurchaseHistory
+        topic = StudyMaterial.objects.create(title='Тема', price=25, is_published=True)
+        old_bundle = StudyMaterial.objects.create(title='Старий пакет', price=100, is_bundle=True)
+        kid = self.make_user('kid3@example.com')
+        kid.purchased_materials.add(topic)
+        PurchaseHistory.objects.create(student=kid, material=old_bundle, price_paid=100)
+        old_bundle.delete()  # покупка старим способом: матеріал став NULL
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss3@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'), mock.patch('materials.admin.messages.warning') as warn:
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {topic})
+        warn.assert_called_once()
+
+    def test_admin_can_regenerate_parent_link(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        student = TutorStudentRequest.objects.create(user=self.make_user('kid@example.com'), real_name='Учень',
+                                                     course='nmt', status='approved')
+        old_token = student.parent_token
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['regenerate_parent_links'][0]
+        with mock.patch('materials.admin.messages.success'):
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        student.refresh_from_db()
+        self.assertNotEqual(student.parent_token, old_token)
+        self.assertEqual(self.client.get(f'/parents/{old_token}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/parents/{student.parent_token}/').status_code, 200)
 
 
 class BotApiTests(BaseTestCase):
@@ -404,6 +537,51 @@ class AnswerCheckingTests(BaseTestCase):
             f'match_{self.match_item.id}': self.match_item.correct_option_id,
         })
         self.assertEqual(response.context['total_score'], 2)
+
+
+class DiagnosticResultsTests(BaseTestCase):
+    def setUp(self):
+        self.topic = DiagnosticTopic.objects.create(name='12. Відсотки')
+        self.question = Question.objects.create(text='q', question_type='CHOICE', topic=self.topic)
+        AnswerOption.objects.create(question=self.question, text='A', is_correct=True)
+        self.linked = StudyMaterial.objects.create(title='Пакет: вся алгебра', is_published=True)
+        self.hidden = StudyMaterial.objects.create(title='Чернетка', is_published=False)
+        self.topic.recommended_materials.add(self.linked, self.hidden)
+
+    def test_weak_topic_recommends_materials_linked_in_admin(self):
+        response = self.client.post('/diagnostic/', {'question_ids': str(self.question.id)})
+        self.assertIn(self.linked, response.context['recommendations'])
+        self.assertNotIn(self.hidden, response.context['recommendations'])
+        self.assertContains(response, 'Записатися на заняття')
+        self.assertContains(response, "diagnostic_complete")
+        # Гість бачить, що результат не збережено, і пропозицію зареєструватися
+        self.assertContains(response, 'не збережено')
+
+
+class SeoTests(BaseTestCase):
+    def test_sitemap_lists_published_materials_on_main_domain(self):
+        published = StudyMaterial.objects.create(title='Тема', is_published=True)
+        hidden = StudyMaterial.objects.create(title='Прихована', is_published=False)
+        body = self.client.get('/sitemap.xml').content.decode()
+        self.assertIn(f'https://dokvadratu.com.ua/material/{published.id}/', body)
+        self.assertNotIn(f'/material/{hidden.id}/', body)
+        self.assertIn('https://dokvadratu.com.ua/booking/', body)
+        self.assertIn('Sitemap: https://dokvadratu.com.ua/sitemap.xml', self.client.get('/robots.txt').content.decode())
+
+    def test_material_page_has_canonical_and_own_description(self):
+        material = StudyMaterial.objects.create(title='Квадратні рівняння', description='Усе про дискримінант',
+                                                is_published=True)
+        page = self.client.get(f'/material/{material.id}/?utm_source=telegram')
+        self.assertContains(page, f'<link rel="canonical" href="https://dokvadratu.com.ua/material/{material.id}/">',
+                            html=False)
+        self.assertContains(page, '<meta name="description" content="Усе про дискримінант">', html=False)
+        self.assertContains(page, 'content="Квадратні рівняння | ДО КВАДРАТУ"')
+        self.assertContains(page, 'social_banner.jpg')
+
+    def test_favicon_redirects_to_static_icon(self):
+        response = self.client.get('/favicon.ico')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('images/favicon.ico'))
 
 
 class TeacherFormsTests(BaseTestCase):
@@ -782,7 +960,8 @@ class SignupWithoutEmailTests(BaseTestCase):
     @override_settings(EMAIL_BACKEND='materials.tests.BrokenEmailBackend')
     def test_signup_survives_smtp_failure(self):
         response = self.client.post('/register/', {
-            'email': 'newkid@example.com', 'password1': 'Strong-Pass-2026!', 'password2': 'Strong-Pass-2026!'})
+            'email': 'newkid@example.com', 'password1': 'Strong-Pass-2026!', 'password2': 'Strong-Pass-2026!',
+            'terms': 'on'})
         self.assertNotEqual(response.status_code, 500)
         self.assertTrue(User.objects.filter(email='newkid@example.com').exists())
 
@@ -994,3 +1173,46 @@ class DeferredPresentationSafetyTests(BaseTestCase):
                          response.context['adminform'].form.errors)
         material = StudyMaterial.objects.get(id=self.material.id)
         self.assertEqual((material.price, material.html_content), (35, '<p>СЛАЙДИ</p>'))
+
+
+class OrderAfterAccountDeletionTests(BaseTestCase):
+    def test_paid_order_survives_account_deletion_with_buyer_email(self):
+        kid = self.make_user('gone@example.com')
+        order = Order.objects.create(user=kid, total_amount=100, status='paid')
+        self.assertEqual(order.customer_email, 'gone@example.com')
+        kid.delete()
+        order.refresh_from_db()
+        self.assertIsNone(order.user)
+        self.assertEqual(order.customer_email, 'gone@example.com')
+        self.assertIn('gone@example.com', str(order))
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_late_payment_for_deleted_account_is_recorded_not_granted(self, notify):
+        from materials.views import apply_mono_status
+        kid = self.make_user('late@example.com')
+        order = Order.objects.create(user=kid, total_amount=50, status='pending', mono_invoice_id='inv-late')
+        kid.delete()
+        result = apply_mono_status('inv-late', 'success')
+        self.assertEqual(result.status, 'paid')
+        notify.assert_called_once()
+        self.assertIn('late@example.com', notify.call_args[0][0])
+
+
+class LegalPagesTests(BaseTestCase):
+    def test_offer_and_privacy_show_approved_texts(self):
+        offer = self.client.get('/offer/')
+        self.assertContains(offer, 'Редакція від 10.10.2026')
+        self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
+        self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
+        self.assertContains(offer, 'href="/privacy/"')
+        self.assertNotContains(offer, '{%')
+        privacy = self.client.get('/privacy/')
+        self.assertContains(privacy, 'Редакція від 10.10.2026')
+        self.assertContains(privacy, 'Google Analytics')
+        self.assertContains(privacy, 'href="/offer/"')
+
+    def test_terms_version_matches_published_edition(self):
+        # Дата редакції на сторінках і TERMS_VERSION мають змінюватися разом
+        from django.conf import settings as dj_settings
+        y, m, d = dj_settings.TERMS_VERSION.split('-')
+        self.assertContains(self.client.get('/offer/'), f'Редакція від {d}.{m}.{y}')

@@ -15,6 +15,13 @@
             {% endif %}
         </p>
         <a href="{% url 'cabinet' %}" class="btn-brand" style="margin-top: 15px;">Перейти в кабінет</a>
+        <script>
+            // Подія «покупка» для аналітики — один раз на замовлення (третій аргумент)
+            window.dkTrack('purchase', {
+                transaction_id: '{{ order.id }}', value: {{ order.total_amount|stringformat:"s" }}, currency: 'UAH',
+                items: [{item_name: '{% if is_topup %}Поповнення балансу{% else %}Конспекти{% endif %}'}]
+            }, 'dk_purchase_{{ order.id }}');
+        </script>
 
     {% elif order.status == 'pending' %}
         <div style="font-size: 3.5rem;">⏳</div>

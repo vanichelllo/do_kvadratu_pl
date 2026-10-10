@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import admin
 from django.contrib import messages
 
@@ -7,6 +9,7 @@ from import_export.admin import ExportActionMixin
 from django import forms
 from django.contrib.auth import get_user_model
 
+from users.models import PurchaseHistory
 from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
 User = get_user_model()
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
@@ -35,31 +38,70 @@ def reject_student_requests(modeladmin, request, queryset):
     queryset.update(status='rejected')
 
 
+def materials_paid_by(user):
+    """id матеріалів, за які учень заплатив сам (оплачені замовлення й архів старих покупок), разом із вмістом пакетів."""
+    paid_ids = set(OrderItem.objects.filter(order__user=user, order__status='paid', material__isnull=False)
+                   .values_list('material_id', flat=True))
+    paid_ids |= set(PurchaseHistory.objects.filter(student=user, material__isnull=False)
+                    .values_list('material_id', flat=True))
+    paid_ids |= set(StudyMaterial.included_materials.through.objects.filter(from_studymaterial_id__in=paid_ids)
+                    .values_list('to_studymaterial_id', flat=True))
+    return paid_ids
+
+
 @admin.action(description="🗑 Забрати доступ (Видалити з учнів)")
 def revoke_student_access(modeladmin, request, queryset):
     # Знаходимо всі НМТ-матеріали
     nmt_materials = StudyMaterial.objects.filter(category__name__icontains='Підготовка до НМТ')
 
     count = 0
+    kept_all = []
     for student_request in queryset:
-        # 1. Забираємо в учня доступ до всіх матеріалів НМТ
-        for material in nmt_materials:
-            student_request.user.purchased_materials.remove(material)
+        user = student_request.user
+        # 1. Забираємо НМТ-матеріали, видані на час навчання. Куплені учнем за власні гроші
+        #    і безкоштовні — залишаються (раніше зникали й вони).
+        #    Якщо учень платив за матеріал, який потім видалили (наприклад, пакет), уже не видно,
+        #    що в ньому було, — тоді нічого не забираємо, щоб не відібрати оплачене
+        if (OrderItem.objects.filter(order__user=user, order__status='paid', material__isnull=True).exists()
+                or PurchaseHistory.objects.filter(student=user, material__isnull=True).exists()):
+            kept_all.append(student_request.real_name)
+        else:
+            keep_ids = materials_paid_by(user)
+            to_remove = nmt_materials.exclude(id__in=keep_ids).exclude(is_free=True).exclude(price=0)
+            user.purchased_materials.remove(*to_remove)
 
         # 2. Видаляємо саму заявку з бази
         student_request.delete()
         count += 1
 
-    messages.success(request, f"Успішно видалено {count} учнів. Доступ до матеріалів закрито.")
+    messages.success(request, f"Успішно видалено {count} учнів. Видані на час навчання матеріали НМТ забрано, "
+                              f"куплені учнем самостійно — залишились.")
+    if kept_all:
+        messages.warning(request, "Матеріали не забирали (серед їхніх оплат є видалений матеріал чи пакет, "
+                                  "тож не видно, що саме оплачено): " + ", ".join(kept_all)
+                         + ". Перевірте доступ цих учнів вручну.")
+
+
+@admin.action(description="🔑 Створити нове посилання для батьків (старе перестане працювати)")
+def regenerate_parent_links(modeladmin, request, queryset):
+    # Якщо посилання потрапило не до тих людей — видаємо нове, а старе одразу перестає відкриватися
+    count = 0
+    for student_request in queryset:
+        student_request.parent_token = uuid.uuid4()
+        student_request.save(update_fields=['parent_token'])
+        count += 1
+    messages.success(request, f"Нові посилання створено: {count}. Старі більше не відкриваються — "
+                              f"скопіюйте нові в кабінеті й надішліть батькам.")
 
 
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
     list_display = ('user', 'real_name', 'course', 'status', 'created_at', 'parent_token')
+    list_select_related = ('user',)
     list_filter = ('course', 'status', 'created_at')
     search_fields = ('user__email', 'real_name')
     readonly_fields = ('parent_token',) # Забороняємо редагувати токен руками
-    actions = [approve_student_requests, reject_student_requests, revoke_student_access]
+    actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links]
 
 # ==========================================
 # НУШ ЗВІТИ ДЛЯ БАТЬКІВ
@@ -160,19 +202,20 @@ class OrderItemInline(admin.TabularInline):
 class OrderResource(resources.ModelResource):
     class Meta:
         model = Order
-        fields = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
-        export_order = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
+        fields = ('id', 'created_at', 'customer_email', 'source', 'status', 'total_amount')
+        export_order = ('id', 'created_at', 'customer_email', 'source', 'status', 'total_amount')
 
 
 @admin.register(Order)
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = OrderResource
 
-    list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
+    list_display = ['id', 'user', 'customer_email', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
     list_filter = ['status', 'source', 'created_at']
-    search_fields = ['user__email', 'mono_invoice_id']
+    search_fields = ['user__email', 'customer_email', 'mono_invoice_id']
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
+    readonly_fields = ['instant_access_agreed_at']
 
     @admin.action(description="🔄 Перевірити статус у Monobank (для «Очікує оплати» і «Скасовано»)")
     def check_monobank_status(self, request, queryset):

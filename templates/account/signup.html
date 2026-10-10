@@ -40,11 +40,14 @@
         <form method="POST" action="{% url 'account_signup' %}" class="auth-form">
             {% csrf_token %}
 
+            {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
             {% for field in form %}
+                {% if field.name != 'terms' %}
                 <label class="main-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.errors %}
                     {{ field.errors }}
+                {% endif %}
                 {% endif %}
             {% endfor %}
 
@@ -52,11 +55,11 @@
                 <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
             {% endif %}
 
-            <!-- Блок для чекбокса Оферти (HTML-версія) -->
+            <!-- Галочка згоди з офертою: перевіряється й записується на сервері (users.forms.TermsSignupForm) -->
             <div style="margin-top: 5px; margin-bottom: 20px; padding: 12px; background: rgba(52, 78, 134, 0.05); border-radius: 8px; border-left: 4px solid var(--brand-yellow);">
                 <div style="display: flex; align-items: flex-start; gap: 10px;">
                     <div style="padding-top: 3px;">
-                        <input type="checkbox" id="terms_agreement" required style="cursor: pointer;">
+                        <input type="checkbox" id="terms_agreement" name="terms" required {% if form.terms.value %}checked{% endif %} style="cursor: pointer;">
                     </div>
                     <label for="terms_agreement" style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark); line-height: 1.4; margin: 0; cursor: pointer; text-transform: none;">
                         Я погоджуюсь з умовами
@@ -64,6 +67,7 @@
                         <a href="{% url 'privacy' %}" target="_blank" style="color: var(--brand-blue); text-decoration: underline;">Політикою конфіденційності</a>
                     </label>
                 </div>
+                {% if form.terms.errors %}<div style="color: #dc3545; font-size: 0.85rem; font-weight: 700; margin-top: 8px;">{{ form.terms.errors.0 }}</div>{% endif %}
             </div>
 
             <button type="submit" class="btn-submit">ЗАРЕЄСТРУВАТИСЯ</button>

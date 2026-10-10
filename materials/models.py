@@ -171,16 +171,36 @@ class Order(models.Model):
         ('bot', 'Telegram-бот'),
     )
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
+    # Записи про оплати зберігаються й після видалення акаунта (податковий облік, політика конфіденційності,
+    # розділ 8): тоді user стає порожнім, а email покупця лишається в самому замовленні
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='orders')
+    customer_email = models.EmailField(blank=True, default='', db_default='', verbose_name="Email покупця")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='web', verbose_name="Джерело")
     mono_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(blank=True, null=True)
+    # Коли покупець у Кошику поставив галочку: згода з офертою і прохання відкрити матеріали
+    # одразу після оплати (оферта, п. 14.1–14.2). Порожньо — у старих замовленнях і поповненнях балансу
+    instant_access_agreed_at = models.DateTimeField(blank=True, null=True,
+                                                    verbose_name="Галочка в Кошику (п. 14.1 оферти)")
+
+    def save(self, *args, **kwargs):
+        if not self.customer_email and self.user_id:
+            self.customer_email = self.user.email
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = list(set(update_fields) | {'customer_email'})
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Замовлення #{self.id} від {self.user.email} ({self.status})"
+        return f"Замовлення #{self.id} від {self.buyer_email} ({self.status})"
+
+    @property
+    def buyer_email(self):
+        return self.customer_email or (self.user.email if self.user_id else '')
 
 
 class OrderItem(models.Model):

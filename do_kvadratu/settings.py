@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.sitemaps',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -101,6 +102,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'users.middleware.TermsAcceptanceMiddleware',  # хто ще не погодився з офертою — спершу на /accept-terms/
 ]
 
 ROOT_URLCONF = 'do_kvadratu.urls'
@@ -117,6 +119,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'materials.context_processors.promo',
+                'materials.context_processors.seo',
             ],
         },
     },
@@ -192,6 +195,8 @@ LOGOUT_REDIRECT_URL = '/materials/'
 # 1. БЕЗПЕКА РЕЄСТРАЦІЇ ТА АВТОРИЗАЦІЇ (ALLAUTH)
 # ==========================================
 SITE_ID = 1
+# Основна адреса сайту: канонічні посилання й карта сайту для Google завжди ведуть сюди
+SITE_URL = 'https://dokvadratu.com.ua'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -202,6 +207,11 @@ ACCOUNT_LOGIN_METHODS = {'email'}  # Вхід лише за email
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Без юзернейму
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_ADAPTER = 'users.adapters.AccountAdapter'  # збій Gmail не ламає реєстрацію
+ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.TermsSignupForm'  # обов'язкова галочка згоди з офертою
+
+# Редакція оферти й політики конфіденційності. Якщо змінити це значення, кожен користувач
+# під час наступного візиту побачить сторінку «Підтвердіть згоду» (/accept-terms/).
+TERMS_VERSION = '2026-10-10'
 
 # НАЙГОЛОВНІШЕ: Обов'язкове підтвердження пошти
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'

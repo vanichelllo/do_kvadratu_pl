@@ -37,7 +37,9 @@ class CustomUserAdmin(UserAdmin):
         ('Права доступу', {'classes': ('collapse',),
                            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Дати', {'fields': ('last_login', 'date_joined')}),
+        ('Згода з офертою', {'fields': ('terms_accepted_at', 'terms_version')}),
     )
+    readonly_fields = ('terms_accepted_at', 'terms_version')
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

@@ -488,6 +488,8 @@ async def enroll_role(callback: types.CallbackQuery, state: FSMContext):
         text = "Чудово! Напиши своє <b>Ім'я та Прізвище</b>:"
     else:
         text = "Дуже приємно! Напишіть <b>Ім'я та Прізвище учня</b> (можете також вказати своє ім'я, щоб я знав, як до вас звертатися):"
+    text += ("\n\n<i>Надсилаючи анкету, ви погоджуєтеся на обробку цих даних, щоб я міг з вами зв'язатися: "
+             "dokvadratu.com.ua/privacy/. Якщо учню менше 14 років, анкету заповнюють батьки.</i>")
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=builder.as_markup())
     await callback.answer()
 

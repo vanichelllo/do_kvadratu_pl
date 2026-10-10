@@ -20,11 +20,12 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, F, When
+from django.db.models import Case, F, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
 from users.forms import UserProfileForm
+from users.views import terms_required
 from .forms import StudentReportForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, DiagnosticTopic, \
     PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
@@ -229,10 +230,14 @@ def diagnostic_test_view(request):
         weak_topics = [stat['topic'] for stat in topics_stats.values() if
                        stat['total'] > 0 and (stat['correct'] / stat['total']) * 100 < 50]
 
+        # Рекомендації: конспекти, які викладач прив'язав до теми в адмінці («Рекомендовані конспекти»),
+        # а також конспекти, у назві яких є назва теми (як і раніше)
         recommended_materials = set()
-        for topic in weak_topics:
-            for mat in StudyMaterial.objects.filter(title__icontains=topic.name, is_published=True):
-                recommended_materials.add(mat)
+        if weak_topics:
+            matches = Q(diagnostictopic__in=weak_topics)
+            for topic in weak_topics:
+                matches |= Q(title__icontains=topic.name)
+            recommended_materials.update(StudyMaterial.objects.filter(matches, is_published=True).distinct())
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
@@ -741,8 +746,14 @@ def api_bot_user_library(request, telegram_id):
 
 @login_required
 @post_required('cart_detail')
+@terms_required('/cart/')
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
+
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами "
+                                "і з відкриттям матеріалів одразу після оплати.")
+        return redirect('cart_detail')
 
     with transaction.atomic():
         # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
@@ -767,7 +778,8 @@ def pay_from_balance(request):
             total_amount=total_price,
             status='paid',
             paid_at=timezone.now(),
-            mono_invoice_id='balance_payment'
+            mono_invoice_id='balance_payment',
+            instant_access_agreed_at=timezone.now(),
         )
 
         for item in cart_items:
@@ -844,6 +856,7 @@ def create_mono_invoice(order, amount_kopecks):
 
 @login_required
 @post_required('cart_detail')
+@terms_required('/cart/')
 def pay_with_mono(request):
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
@@ -852,11 +865,17 @@ def pay_with_mono(request):
         messages.error(request, "Ваш кошик порожній.")
         return redirect('materials_list')
 
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами "
+                                "і з відкриттям матеріалів одразу після оплати.")
+        return redirect('cart_detail')
+
     with transaction.atomic():
         order = Order.objects.create(
             user=request.user,
             total_amount=total_price,
-            status='pending'
+            status='pending',
+            instant_access_agreed_at=timezone.now(),
         )
         for item in cart.items.all():
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)
@@ -869,6 +888,7 @@ def pay_with_mono(request):
 
 
 @login_required
+@terms_required('/cabinet/')
 def topup_balance_view(request):
     if request.method == 'POST':
         # Баланс зберігається в цілих гривнях, тому й поповнення — лише цілими гривнями
@@ -903,9 +923,22 @@ def apply_mono_status(invoice_id, status):
         order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
         if order is None:
             return None
-        email = html.escape(order.user.email)
-
-        if status == 'success' and order.status in ('pending', 'cancelled'):
+        email = html.escape(order.buyer_email)
+        if order.user_id is None:
+            # Акаунт уже видалено: оплату фіксуємо, але видавати матеріали чи баланс нікому
+            if status == 'success' and order.status in ('pending', 'cancelled'):
+                order.status = 'paid'
+                order.paid_at = timezone.now()
+                order.save(update_fields=['status', 'paid_at'])
+                msg = (f"⚠️ <b>Оплата за замовленням видаленого акаунта</b>\nЗамовлення #{order.id}, {email}, "
+                       f"{order.total_amount} ₴. Зв'яжіться з покупцем і за потреби поверніть кошти.")
+            elif status in ('failure', 'expired') and order.status == 'pending':
+                order.status = 'cancelled'
+                order.save(update_fields=['status'])
+            elif status == 'reversed' and order.status in ('pending', 'paid', 'cancelled'):
+                order.status = 'refunded'
+                order.save(update_fields=['status'])
+        elif status == 'success' and order.status in ('pending', 'cancelled'):
             order.status = 'paid'
             order.paid_at = timezone.now()
             order.save(update_fields=['status', 'paid_at'])
@@ -1267,8 +1300,8 @@ def report_question_error(request):
 
 
 def parent_dashboard_view(request, parent_token):
-    # Шукаємо заявку учня за унікальним токеном
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+    # Шукаємо заявку учня за унікальним токеном; дашборд відкривається лише для підтверджених учнів
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
     # === ДОДАНО: Дістаємо всі індивідуальні презентації цього учня ===
     presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
@@ -1295,15 +1328,16 @@ def parent_dashboard_view(request, parent_token):
 
 # === НОВА ФУНКЦІЯ ДЛЯ БАТЬКІВ ===
 def parent_view_presentation(request, parent_token, presentation_id):
-    # Перевіряємо токен батьків
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+    # Перевіряємо токен батьків (лише підтверджені учні)
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
     # Дістаємо презентацію, яка належить саме цьому учню
     presentation = get_object_or_404(StudentPresentation, id=presentation_id, student=student_request.user)
 
     context = {
         'material': presentation,
-        'is_personal': True
+        'is_personal': True,
+        'back_url': reverse('parent_dashboard', args=[parent_token]),  # батьки не мають кабінету
     }
     # Використовуємо існуючий шаблон для відображення презентацій
     return render(request, 'materials/reader.html', context)
@@ -1357,7 +1391,7 @@ def add_nmt_score(request):
 def submit_parent_review(request, parent_token):
     if request.method == 'POST':
         # Знаходимо учня за батьківським токеном
-        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
         rating = parse_rating(request.POST.get('rating', 5))
         text = request.POST.get('text', '').strip()
