@@ -315,10 +315,12 @@ def diagnostic_test_view(request):
 @login_required
 def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
+    has_access = is_teacher(request.user) or user_owns_material(request.user, material)
 
-    if not (material.is_free or is_teacher(request.user) or user_owns_material(request.user, material)):
-        if not material.is_published:
-            raise Http404("Матеріал не знайдено.")
+    # Неопублікований матеріал (чернетка) — лише для власника або вчителя, навіть якщо він безкоштовний
+    if not material.is_published and not has_access:
+        raise Http404("Матеріал не знайдено.")
+    if not (material.is_free or has_access):
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
         return redirect('material_detail', pk=material.id)
 
@@ -1341,7 +1343,9 @@ def parent_dashboard_view(request, parent_token):
 def parent_viewable_materials(student_request):
     """Конспекти з презентацією, за якими в учня є результат (його практика або бал, який виставив
     викладач на уроці). Технічний запис діагностики — не конспект, тому не показується."""
-    return (StudyMaterial.objects.filter(attempts__user=student_request.user)
+    return (StudyMaterial.objects.filter(attempts__user_id=student_request.user_id)
+            # як і скрізь на сайті: опублікований або є в бібліотеці учня (чернетки не показуємо)
+            .filter(Q(is_published=True) | Q(id__in=student_request.user.purchased_materials.values('id')))
             .exclude(html_content__isnull=True).exclude(html_content='')
             .exclude(title=DIAGNOSTIC_MATERIAL_TITLE).distinct())
 
