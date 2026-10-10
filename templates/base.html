@@ -15,14 +15,14 @@
     <meta property="og:title" content="{% block og_title %}ДО КВАДРАТУ | Підготовка до НМТ 2027 з математики{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Сучасна освітня платформа для підготовки до НМТ 2027 з математики. Жодної води — лише чітка структура та практика.{% endblock %}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ canonical_url }}">
-    <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}{% static 'images/social_banner.jpg' %}{% endblock %}">
+    {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
+    <meta property="og:image" content="{% block og_image %}https://dokvadratu.com.ua{% static 'images/social_banner.jpg' %}{% endblock %}">
     <meta property="og:image:alt" content="ДО КВАДРАТУ — підготовка до НМТ з математики">
     <meta property="og:site_name" content="ДО КВАДРАТУ">
     <meta property="og:locale" content="uk_UA">
     <meta name="twitter:card" content="summary_large_image">
     {% endblock %}
-    <link rel="canonical" href="{{ canonical_url }}">
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
 
     <!-- Іконка сайту (логотип) -->
     <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
@@ -167,6 +167,11 @@
         .site-footer :focus-visible, .cookie-banner :focus-visible, .hero-section :focus-visible,
         .dark-section :focus-visible {
             outline-color: var(--brand-yellow) !important;
+        }
+
+        /* Картки з синьою шапкою: подвійна рамка видна і на синьому, і на білому */
+        .mac-window:focus-visible, .mac-window :focus-visible {
+            box-shadow: 0 0 0 6px var(--brand-yellow) !important;
         }
 
         /* ФІРМОВА КНОПКА */
@@ -483,7 +488,7 @@
         margin-left: 15px;
     }
     .btn-cookie {
-        background-color: #27ae60;
+        background-color: #1e8449; /* темніший зелений: білий текст читається (контраст ≥ 4.5) */
         color: white;
         border: none;
         padding: 8px 15px;

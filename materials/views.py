@@ -750,6 +750,11 @@ def api_bot_user_library(request, telegram_id):
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
 
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами "
+                                "і з відкриттям матеріалів одразу після оплати.")
+        return redirect('cart_detail')
+
     with transaction.atomic():
         # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
         # не затерли баланс одне одного
@@ -773,7 +778,8 @@ def pay_from_balance(request):
             total_amount=total_price,
             status='paid',
             paid_at=timezone.now(),
-            mono_invoice_id='balance_payment'
+            mono_invoice_id='balance_payment',
+            instant_access_agreed_at=timezone.now(),
         )
 
         for item in cart_items:
@@ -859,11 +865,17 @@ def pay_with_mono(request):
         messages.error(request, "Ваш кошик порожній.")
         return redirect('materials_list')
 
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами "
+                                "і з відкриттям матеріалів одразу після оплати.")
+        return redirect('cart_detail')
+
     with transaction.atomic():
         order = Order.objects.create(
             user=request.user,
             total_amount=total_price,
-            status='pending'
+            status='pending',
+            instant_access_agreed_at=timezone.now(),
         )
         for item in cart.items.all():
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)

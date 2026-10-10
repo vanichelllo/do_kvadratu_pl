@@ -82,6 +82,22 @@ class TermsConsentTests(TestCase):
         response = self.client.post('/accept-terms/', {'next': 'https://evil.example/', 'terms': 'on'})
         self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
 
+    def test_accept_terms_next_must_be_a_path(self):
+        user = User.objects.create_user(username='g', email='g@example.com', password='x')
+        self.client.force_login(user)
+        response = self.client.post('/accept-terms/', {'next': 'logout', 'terms': 'on'})
+        self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
+
+    def test_personal_lessons_stay_available_without_new_consent(self):
+        from materials.models import StudentPresentation
+        user = User.objects.create_user(username='g', email='g@example.com', password='x')
+        lesson = StudentPresentation.objects.create(student=user, title='Урок 9', html_content='<p>Урок</p>')
+        self.client.force_login(user)
+        self.assertEqual(self.client.get(f'/lesson/{lesson.id}/').status_code, 200)
+        page = self.client.get('/accept-terms/')
+        self.assertContains(page, f'/lesson/{lesson.id}/')
+        self.assertContains(page, 'Урок: Урок 9')
+
     def test_documents_and_staff_are_not_blocked(self):
         user = User.objects.create_user(username='g', email='g@example.com', password='x')
         self.client.force_login(user)

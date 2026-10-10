@@ -25,6 +25,7 @@
         font-weight: 900;
         margin: 0;
         text-transform: uppercase;
+        color: white; /* інакше загальний синій колір заголовків зливається з синьою шапкою */
     }
 
     .balance-badge {
@@ -44,6 +45,13 @@
         gap: 40px;
         align-items: start;
         margin-bottom: 60px;
+    }
+
+    /* Без цього довга таблиця результатів розтягувала колонку, і на телефоні кабінет гортався вбік */
+    .cabinet-grid > * { min-width: 0; }
+
+    .library-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)) !important;
     }
 
     @media (max-width: 900px) {
@@ -365,7 +373,7 @@
                             {{ pres.title }}
                         </h3>
 
-                        <a href="{% url 'view_student_presentation' pres.id %}" target="_blank" class="btn-read-online" style="background-color: var(--brand-green); border-color: var(--brand-green); color: white;">
+                        <a href="{% url 'view_student_presentation' pres.id %}" target="_blank" class="btn-read-online" style="background-color: #1e8449; border-color: #1e8449; color: white;">
                             ▶ Відкрити презентацію
                         </a>
                     </div>

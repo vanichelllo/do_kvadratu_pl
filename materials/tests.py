@@ -170,13 +170,43 @@ class PayFromBalanceTests(BaseTestCase):
         self.client.force_login(user)
 
         self.assertRedirects(self.client.get('/cart/pay/balance/'), '/cart/')  # GET не платить
-        self.client.post('/cart/pay/balance/')
-        self.client.post('/cart/pay/balance/')  # повторний клік нічого не списує
+        self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        self.client.post('/cart/pay/balance/', {'agree': 'on'})  # повторний клік нічого не списує
 
         user.refresh_from_db()
         self.assertEqual(user.balance, 100)
         self.assertIn(material, user.purchased_materials.all())
-        self.assertEqual(Order.objects.filter(user=user, status='paid').count(), 1)
+        order = Order.objects.get(user=user, status='paid')
+        self.assertIsNotNone(order.instant_access_agreed_at)
+
+    def test_payment_needs_cart_checkbox(self):
+        # Без галочки в Кошику (оферта, п. 14.1) сервер не приймає оплату — навіть якщо обійти перевірку в браузері
+        user = self.make_user('buyer2@example.com', balance=300)
+        material = StudyMaterial.objects.create(title='4. Тема', price=200)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(cart=cart, material=material)
+        self.client.force_login(user)
+        with mock.patch('materials.views.requests.post') as mono_post:
+            for url in ('/cart/pay/balance/', '/cart/pay/mono/'):
+                for data in ({}, {'agree': ''}):
+                    self.assertRedirects(self.client.post(url, data), '/cart/', fetch_redirect_response=False)
+        mono_post.assert_not_called()
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 300)
+        self.assertFalse(Order.objects.filter(user=user).exists())
+        self.assertContains(self.client.get('/cart/'), 'поставте галочку')
+
+    def test_card_payment_records_cart_checkbox(self):
+        user = self.make_user('buyer3@example.com')
+        material = StudyMaterial.objects.create(title='5. Тема', price=200)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(cart=cart, material=material)
+        self.client.force_login(user)
+        with mock.patch('materials.views.requests.post') as mono_post:
+            mono_post.return_value.json.return_value = {'invoiceId': 'inv-1', 'pageUrl': 'https://pay.mbnk.biz/inv-1'}
+            response = self.client.post('/cart/pay/mono/', {'agree': 'on'})
+        self.assertRedirects(response, 'https://pay.mbnk.biz/inv-1', fetch_redirect_response=False)
+        self.assertIsNotNone(Order.objects.get(user=user).instant_access_agreed_at)
 
 
 class ParentDashboardTests(BaseTestCase):
@@ -191,6 +221,8 @@ class ParentDashboardTests(BaseTestCase):
             response = self.client.get(f'/parents/{student_request.parent_token}/')
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, student_request.real_name)
+            # Секретне посилання не має потрапляти до інших сайтів (наприклад, Google Analytics)
+            self.assertContains(response, '<meta name="referrer" content="no-referrer">')
 
     def test_parent_link_works_only_for_approved_students(self):
         for status in ('pending', 'rejected'):
@@ -243,6 +275,27 @@ class ParentDashboardTests(BaseTestCase):
 
         request = RequestFactory().post('/')
         request.user = self.make_user('boss2@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'), mock.patch('materials.admin.messages.warning') as warn:
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {topic})
+        warn.assert_called_once()
+
+    def test_revoke_access_keeps_everything_if_an_old_purchase_was_deleted(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from users.models import PurchaseHistory
+        topic = StudyMaterial.objects.create(title='Тема', price=25, is_published=True)
+        old_bundle = StudyMaterial.objects.create(title='Старий пакет', price=100, is_bundle=True)
+        kid = self.make_user('kid3@example.com')
+        kid.purchased_materials.add(topic)
+        PurchaseHistory.objects.create(student=kid, material=old_bundle, price_paid=100)
+        old_bundle.delete()  # покупка старим способом: матеріал став NULL
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss3@example.com', is_staff=True, is_superuser=True)
         model_admin = admin.site._registry[TutorStudentRequest]
         action = model_admin.get_actions(request)['revoke_student_access'][0]
         with mock.patch('materials.admin.messages.success'), mock.patch('materials.admin.messages.warning') as warn:

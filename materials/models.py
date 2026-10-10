@@ -182,6 +182,10 @@ class Order(models.Model):
     mono_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(blank=True, null=True)
+    # Коли покупець у Кошику поставив галочку: згода з офертою і прохання відкрити матеріали
+    # одразу після оплати (оферта, п. 14.1–14.2). Порожньо — у старих замовленнях і поповненнях балансу
+    instant_access_agreed_at = models.DateTimeField(blank=True, null=True,
+                                                    verbose_name="Галочка в Кошику (п. 14.1 оферти)")
 
     def save(self, *args, **kwargs):
         if not self.customer_email and self.user_id:

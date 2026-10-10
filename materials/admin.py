@@ -62,7 +62,8 @@ def revoke_student_access(modeladmin, request, queryset):
         #    і безкоштовні — залишаються (раніше зникали й вони).
         #    Якщо учень платив за матеріал, який потім видалили (наприклад, пакет), уже не видно,
         #    що в ньому було, — тоді нічого не забираємо, щоб не відібрати оплачене
-        if OrderItem.objects.filter(order__user=user, order__status='paid', material__isnull=True).exists():
+        if (OrderItem.objects.filter(order__user=user, order__status='paid', material__isnull=True).exists()
+                or PurchaseHistory.objects.filter(student=user, material__isnull=True).exists()):
             kept_all.append(student_request.real_name)
         else:
             keep_ids = materials_paid_by(user)
@@ -214,6 +215,7 @@ class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     search_fields = ['user__email', 'customer_email', 'mono_invoice_id']
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
+    readonly_fields = ['instant_access_agreed_at']
 
     @admin.action(description="🔄 Перевірити статус у Monobank (для «Очікує оплати» і «Скасовано»)")
     def check_monobank_status(self, request, queryset):

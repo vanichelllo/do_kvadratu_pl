@@ -22,12 +22,15 @@
     {% if error %}<p class="auth-error" style="text-align: center;">{{ error }}</p>{% endif %}
     <button type="submit" class="btn-submit">Погоджуюсь і продовжую</button>
 </form>
-{% if owned_materials %}
+{% if owned_materials or personal_presentations %}
 <details style="margin-top: 20px; font-weight: 600; color: var(--text-dark);">
-    <summary style="cursor: pointer; color: var(--brand-blue); font-weight: 800;">Ваші придбані конспекти (доступні й без згоди)</summary>
+    <summary style="cursor: pointer; color: var(--brand-blue); font-weight: 800;">Ваші конспекти й уроки (доступні й без згоди)</summary>
     <ul style="margin: 10px 0 0; padding-left: 20px; line-height: 1.6;">
         {% for material in owned_materials %}
             <li><a href="{% url 'download_material' material.id %}" style="color: var(--brand-blue);">{{ material.title }}</a></li>
+        {% endfor %}
+        {% for presentation in personal_presentations %}
+            <li><a href="{% url 'view_student_presentation' presentation.id %}" style="color: var(--brand-blue);">Урок: {{ presentation.title }}</a></li>
         {% endfor %}
     </ul>
 </details>

@@ -9,8 +9,9 @@ from django.utils.http import url_has_allowed_host_and_scheme
 @login_required
 def accept_terms_view(request):
     next_url = request.POST.get('next') or request.GET.get('next') or ''
-    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
-                                           require_https=request.is_secure()):
+    # Лише шлях на нашому сайті: інакше redirect() сприйняв би, наприклад, «logout» як назву сторінки
+    if not next_url.startswith('/') or not url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         next_url = reverse('cabinet')
 
     if request.user.has_accepted_current_terms:
@@ -28,6 +29,7 @@ def accept_terms_view(request):
         'error': error,
         # Уже придбане лишається доступним і без нової згоди (оферта, п. 23.3)
         'owned_materials': request.user.purchased_materials.only('id', 'title').order_by('title'),
+        'personal_presentations': request.user.personal_presentations.only('id', 'title').order_by('-id'),
     })
 
 
