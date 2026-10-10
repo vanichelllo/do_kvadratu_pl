@@ -51,6 +51,7 @@ from materials.views import (
     add_nmt_score,
     parent_view_presentation,
     parent_view_material,
+    web_manifest,
     submit_parent_review
 )
 
@@ -131,6 +132,10 @@ urlpatterns = [
          name='django.contrib.sitemaps.views.sitemap'),
     # Браузери за замовчуванням шукають іконку за цією адресою
     path('favicon.ico', lambda request: redirect(static_url('images/favicon.ico'))),
+    # Телефони шукають велику іконку за цими адресами, навіть якщо сторінка її не вказала
+    path('apple-touch-icon.png', lambda request: redirect(static_url('images/apple-touch-icon.png'))),
+    path('apple-touch-icon-precomposed.png', lambda request: redirect(static_url('images/apple-touch-icon.png'))),
+    path('site.webmanifest', web_manifest, name='web_manifest'),
 ]
 
 if settings.DEBUG:

@@ -21,7 +21,7 @@ class TermsAcceptanceMiddleware:
         '/offer/', '/privacy/', '/do-kvadratu-secret-control/',
         '/bot/', '/mono/', '/api/', '/payment/result/', '/parents/',
         '/download/', '/practice/', '/lesson/', '/attempt/',
-        '/robots.txt', '/sitemap.xml', '/favicon.ico',
+        '/robots.txt', '/sitemap.xml', '/favicon.ico', '/apple-touch-icon', '/site.webmanifest',
     )
 
     def __init__(self, get_response):

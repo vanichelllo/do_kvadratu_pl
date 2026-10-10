@@ -210,6 +210,57 @@ class PayFromBalanceTests(BaseTestCase):
         self.assertIsNotNone(Order.objects.get(user=user).instant_access_agreed_at)
 
 
+class SiteIconTests(BaseTestCase):
+    ICON = 'images/favicon.svg'
+
+    def test_manifest_lists_big_icons(self):
+        response = self.client.get('/site.webmanifest')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/manifest+json')
+        data = json.loads(response.content)
+        self.assertEqual(data['short_name'], 'ДО КВАДРАТУ')
+        sizes = {(icon['sizes'], icon.get('purpose', 'any')) for icon in data['icons']}
+        self.assertEqual(sizes, {('192x192', 'any'), ('512x512', 'any'),
+                                 ('192x192', 'maskable'), ('512x512', 'maskable')})
+        self.assertTrue(all(icon['src'].startswith('/static/images/icon-') for icon in data['icons']))
+
+    def test_phones_find_big_icon_at_standard_address(self):
+        for url in ('/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'):
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302, url)
+            self.assertIn('images/apple-touch-icon', response['Location'])
+
+    def test_icon_files_exist(self):
+        from django.contrib.staticfiles import finders
+        for name in ('favicon.svg', 'favicon-32.png', 'favicon.ico', 'apple-touch-icon.png', 'icon-192.png',
+                     'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png'):
+            self.assertIsNotNone(finders.find(f'images/{name}'), name)
+
+    def test_standalone_pages_and_admin_have_icon(self):
+        kid = self.make_user('kid@example.com')
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+        material = StudyMaterial.objects.create(title='1. Тема', is_free=True, is_published=True,
+                                                html_content='<p>x</p>')
+        kid.purchased_materials.add(material)
+        question = Question.objects.create(question_type='CHOICE', text='2+2?')
+        question.materials.add(material)
+        AnswerOption.objects.create(question=question, text='4', is_correct=True)
+        pages = {'parent': f'/parents/{student.parent_token}/', 'admin': '/do-kvadratu-secret-control/login/'}
+        for name, url in pages.items():
+            self.assertContains(self.client.get(url), self.ICON, msg_prefix=name)
+        self.client.force_login(kid)
+        for name, url in {'reader': f'/download/{material.id}/', 'practice': f'/practice/{material.id}/',
+                          'cabinet': '/cabinet/'}.items():
+            self.assertContains(self.client.get(url), self.ICON, msg_prefix=name)
+
+    def test_icons_are_not_behind_consent_page(self):
+        user = User.objects.create_user(username='new', email='new@example.com', password='x')  # без згоди
+        self.client.force_login(user)
+        self.assertEqual(self.client.get('/site.webmanifest').status_code, 200)
+        self.assertEqual(self.client.get('/apple-touch-icon.png').status_code, 302)
+        self.assertIn('images/apple-touch-icon', self.client.get('/apple-touch-icon.png')['Location'])
+
+
 class CabinetSectionsTests(BaseTestCase):
     def test_teacher_sections_collapse_like_library(self):
         boss = self.make_user('boss@example.com', is_staff=True)
