@@ -37,6 +37,13 @@
         letter-spacing: 2px;
     }
 
+    /* На телефоні назва «ДО КВАДРАТУ» обрізалася з правого боку */
+    @media (max-width: 600px) {
+        .hero-section { padding: 45px 20px; }
+        .promo-banner { padding: 30px 20px; }
+        .hero-title { font-size: clamp(1.8rem, 9vw, 3.5rem); letter-spacing: 1px; }
+    }
+
     .hero-subtitle {
         font-size: 1.2rem;
         font-weight: 500;
@@ -90,7 +97,7 @@
     /* Блок "Про формат" */
     .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
         gap: 25px;
         margin-bottom: 60px;
     }
@@ -119,12 +126,13 @@
     /* НОВІ БАНЕРИ (Актуальні пропозиції) */
     .banners-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
         gap: 30px;
         margin-bottom: 60px;
     }
 
     .promo-banner {
+        min-width: 0;
         border-radius: 16px;
         padding: 40px;
         position: relative;
@@ -212,6 +220,7 @@
         display: flex;
         gap: 8px;
         width: 100%;
+        box-sizing: border-box;
     }
 
     /* Блок Соцмереж */
@@ -259,7 +268,7 @@
     /* ОНОВЛЕНО: Стилі для блоку відгуків */
     .reviews-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
         gap: 20px;
         margin-bottom: 60px;
     }

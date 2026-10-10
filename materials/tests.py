@@ -5,12 +5,14 @@ import json
 from unittest import mock
 
 import ecdsa
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
+from django.utils import timezone
 
-from .models import (AnswerOption, Cart, CartItem, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review,
-                     StudentReport, StudyMaterial, TutorStudentRequest)
+from .models import (AnswerOption, Cart, CartItem, DiagnosticTopic, MatchItem, Order, OrderItem, PracticeAttempt,
+                     Question, Review, StudentReport, StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
 
@@ -29,6 +31,9 @@ class BaseTestCase(TestCase):
         return super().run(result)
 
     def make_user(self, email, **extra):
+        # Користувачі в тестах уже погодилися з офертою (інакше сторінки ведуть на /accept-terms/)
+        extra.setdefault('terms_accepted_at', timezone.now())
+        extra.setdefault('terms_version', settings.TERMS_VERSION)
         return User.objects.create_user(username=email, email=email, password='Pass12345!', **extra)
 
 
@@ -186,6 +191,57 @@ class ParentDashboardTests(BaseTestCase):
             response = self.client.get(f'/parents/{student_request.parent_token}/')
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, student_request.real_name)
+
+    def test_parent_link_works_only_for_approved_students(self):
+        for status in ('pending', 'rejected'):
+            student = TutorStudentRequest.objects.create(user=self.make_user(f'{status}@example.com'),
+                                                         real_name='Учень', course='nmt', status=status)
+            self.assertEqual(self.client.get(f'/parents/{student.parent_token}/').status_code, 404)
+            self.client.post(f'/parents/{student.parent_token}/review/',
+                             {'reviewer_name': 'Мама', 'rating': '5', 'text': 'Дякуємо'})
+        self.assertFalse(Review.objects.exists())
+
+    def test_revoke_access_keeps_materials_student_paid_for(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from materials.models import Category
+        nmt = Category.objects.create(name='Підготовка до НМТ')
+        bought = StudyMaterial.objects.create(title='Куплена тема', price=25, category=nmt, is_published=True)
+        in_bundle = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True, is_published=True)
+        bundle.included_materials.add(in_bundle)
+        given = StudyMaterial.objects.create(title='Видана тема', price=25, category=nmt, is_published=True)
+        kid = self.make_user('kid@example.com')
+        kid.purchased_materials.add(bought, in_bundle, given)
+        order = Order.objects.create(user=kid, total_amount=125, status='paid')
+        OrderItem.objects.create(order=order, material=bought, price=25)
+        OrderItem.objects.create(order=order, material=bundle, price=100)
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'):
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {bought, in_bundle})
+
+    def test_admin_can_regenerate_parent_link(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        student = TutorStudentRequest.objects.create(user=self.make_user('kid@example.com'), real_name='Учень',
+                                                     course='nmt', status='approved')
+        old_token = student.parent_token
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['regenerate_parent_links'][0]
+        with mock.patch('materials.admin.messages.success'):
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        student.refresh_from_db()
+        self.assertNotEqual(student.parent_token, old_token)
+        self.assertEqual(self.client.get(f'/parents/{old_token}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/parents/{student.parent_token}/').status_code, 200)
 
 
 class BotApiTests(BaseTestCase):
@@ -404,6 +460,51 @@ class AnswerCheckingTests(BaseTestCase):
             f'match_{self.match_item.id}': self.match_item.correct_option_id,
         })
         self.assertEqual(response.context['total_score'], 2)
+
+
+class DiagnosticResultsTests(BaseTestCase):
+    def setUp(self):
+        self.topic = DiagnosticTopic.objects.create(name='12. Відсотки')
+        self.question = Question.objects.create(text='q', question_type='CHOICE', topic=self.topic)
+        AnswerOption.objects.create(question=self.question, text='A', is_correct=True)
+        self.linked = StudyMaterial.objects.create(title='Пакет: вся алгебра', is_published=True)
+        self.hidden = StudyMaterial.objects.create(title='Чернетка', is_published=False)
+        self.topic.recommended_materials.add(self.linked, self.hidden)
+
+    def test_weak_topic_recommends_materials_linked_in_admin(self):
+        response = self.client.post('/diagnostic/', {'question_ids': str(self.question.id)})
+        self.assertIn(self.linked, response.context['recommendations'])
+        self.assertNotIn(self.hidden, response.context['recommendations'])
+        self.assertContains(response, 'Записатися на заняття')
+        self.assertContains(response, "diagnostic_complete")
+        # Гість бачить, що результат не збережено, і пропозицію зареєструватися
+        self.assertContains(response, 'не збережено')
+
+
+class SeoTests(BaseTestCase):
+    def test_sitemap_lists_published_materials_on_main_domain(self):
+        published = StudyMaterial.objects.create(title='Тема', is_published=True)
+        hidden = StudyMaterial.objects.create(title='Прихована', is_published=False)
+        body = self.client.get('/sitemap.xml').content.decode()
+        self.assertIn(f'https://dokvadratu.com.ua/material/{published.id}/', body)
+        self.assertNotIn(f'/material/{hidden.id}/', body)
+        self.assertIn('https://dokvadratu.com.ua/booking/', body)
+        self.assertIn('Sitemap: https://dokvadratu.com.ua/sitemap.xml', self.client.get('/robots.txt').content.decode())
+
+    def test_material_page_has_canonical_and_own_description(self):
+        material = StudyMaterial.objects.create(title='Квадратні рівняння', description='Усе про дискримінант',
+                                                is_published=True)
+        page = self.client.get(f'/material/{material.id}/?utm_source=telegram')
+        self.assertContains(page, f'<link rel="canonical" href="https://dokvadratu.com.ua/material/{material.id}/">',
+                            html=False)
+        self.assertContains(page, '<meta name="description" content="Усе про дискримінант">', html=False)
+        self.assertContains(page, 'content="Квадратні рівняння | ДО КВАДРАТУ"')
+        self.assertContains(page, 'social_banner.jpg')
+
+    def test_favicon_redirects_to_static_icon(self):
+        response = self.client.get('/favicon.ico')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].endswith('images/favicon.ico'))
 
 
 class TeacherFormsTests(BaseTestCase):
@@ -782,7 +883,8 @@ class SignupWithoutEmailTests(BaseTestCase):
     @override_settings(EMAIL_BACKEND='materials.tests.BrokenEmailBackend')
     def test_signup_survives_smtp_failure(self):
         response = self.client.post('/register/', {
-            'email': 'newkid@example.com', 'password1': 'Strong-Pass-2026!', 'password2': 'Strong-Pass-2026!'})
+            'email': 'newkid@example.com', 'password1': 'Strong-Pass-2026!', 'password2': 'Strong-Pass-2026!',
+            'terms': 'on'})
         self.assertNotEqual(response.status_code, 500)
         self.assertTrue(User.objects.filter(email='newkid@example.com').exists())
 

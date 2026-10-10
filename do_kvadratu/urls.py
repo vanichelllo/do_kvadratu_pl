@@ -1,3 +1,6 @@
+from django.contrib.sitemaps.views import sitemap
+from django.shortcuts import redirect
+from django.templatetags.static import static as static_url
 from django.views.generic import RedirectView, TemplateView
 from django.contrib.auth import views as auth_views
 from django.contrib import admin
@@ -9,6 +12,8 @@ from django.conf.urls.static import static
 from allauth.account import views as allauth_views
 
 from .admin_security import rate_limited_admin_login
+from materials.sitemaps import MaterialSitemap, StaticPagesSitemap
+from users.views import accept_terms_view
 
 # Вхід в адмінку з лімітом невдалих спроб (захист від підбору пароля)
 admin.site.login = rate_limited_admin_login(admin.site.login)
@@ -66,6 +71,7 @@ urlpatterns = [
     path('login/', allauth_views.login, name='login'),
     path('logout/', allauth_views.logout, name='logout'),
     path('accounts/', include('allauth.urls')),  # Залишаємо для внутрішньої логіки Google та Allauth
+    path('accept-terms/', accept_terms_view, name='accept_terms'),  # згода з офертою (вхід через Google тощо)
 
     path('api/materials/', api_materials_list),
     path('cabinet/', CabinetView.as_view(), name='cabinet'),
@@ -118,7 +124,11 @@ urlpatterns = [
     path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
     path('parents/<uuid:parent_token>/lesson/<int:presentation_id>/', parent_view_presentation, name='parent_view_presentation'),
     path('parents/<uuid:parent_token>/review/', submit_parent_review, name='submit_parent_review'),
-    path('sitemap.xml', TemplateView.as_view(template_name="sitemap.xml", content_type="application/xml")),
+    # Карта сайту для Google: головні сторінки + усі опубліковані конспекти
+    path('sitemap.xml', sitemap, {'sitemaps': {'pages': StaticPagesSitemap, 'materials': MaterialSitemap}},
+         name='django.contrib.sitemaps.views.sitemap'),
+    # Браузери за замовчуванням шукають іконку за цією адресою
+    path('favicon.ico', lambda request: redirect(static_url('images/favicon.ico'))),
 ]
 
 if settings.DEBUG:

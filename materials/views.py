@@ -229,10 +229,12 @@ def diagnostic_test_view(request):
         weak_topics = [stat['topic'] for stat in topics_stats.values() if
                        stat['total'] > 0 and (stat['correct'] / stat['total']) * 100 < 50]
 
+        # Рекомендації: конспекти, які викладач прив'язав до теми в адмінці («Рекомендовані конспекти»),
+        # а також конспекти, у назві яких є назва теми (як і раніше)
         recommended_materials = set()
         for topic in weak_topics:
-            for mat in StudyMaterial.objects.filter(title__icontains=topic.name, is_published=True):
-                recommended_materials.add(mat)
+            recommended_materials.update(topic.recommended_materials.filter(is_published=True))
+            recommended_materials.update(StudyMaterial.objects.filter(title__icontains=topic.name, is_published=True))
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
@@ -1267,8 +1269,8 @@ def report_question_error(request):
 
 
 def parent_dashboard_view(request, parent_token):
-    # Шукаємо заявку учня за унікальним токеном
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+    # Шукаємо заявку учня за унікальним токеном; дашборд відкривається лише для підтверджених учнів
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
     # === ДОДАНО: Дістаємо всі індивідуальні презентації цього учня ===
     presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
@@ -1295,15 +1297,16 @@ def parent_dashboard_view(request, parent_token):
 
 # === НОВА ФУНКЦІЯ ДЛЯ БАТЬКІВ ===
 def parent_view_presentation(request, parent_token, presentation_id):
-    # Перевіряємо токен батьків
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+    # Перевіряємо токен батьків (лише підтверджені учні)
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
     # Дістаємо презентацію, яка належить саме цьому учню
     presentation = get_object_or_404(StudentPresentation, id=presentation_id, student=student_request.user)
 
     context = {
         'material': presentation,
-        'is_personal': True
+        'is_personal': True,
+        'back_url': reverse('parent_dashboard', args=[parent_token]),  # батьки не мають кабінету
     }
     # Використовуємо існуючий шаблон для відображення презентацій
     return render(request, 'materials/reader.html', context)
@@ -1357,7 +1360,7 @@ def add_nmt_score(request):
 def submit_parent_review(request, parent_token):
     if request.method == 'POST':
         # Знаходимо учня за батьківським токеном
-        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token)
+        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
         rating = parse_rating(request.POST.get('rating', 5))
         text = request.POST.get('text', '').strip()

@@ -99,6 +99,24 @@
         </div>
     </div>
 
+    <!-- НАСТУПНИЙ КРОК: РОЗІБРАТИ ПОМИЛКИ З ВИКЛАДАЧЕМ -->
+    <div style="background: var(--brand-blue); color: #ffffff; padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 8px 8px 0px var(--brand-yellow);">
+        <h3 style="color: #ffffff; font-size: 1.4rem; margin: 0 0 10px;">Розберемо твої помилки разом?</h3>
+        <p style="margin: 0 0 20px; font-weight: 600; line-height: 1.5;">
+            На пробному занятті покажу, як закрити слабкі теми і що повторити до НМТ в першу чергу.
+        </p>
+        <a href="{% url 'booking' %}" id="diagnosticBookingLink" style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); padding: 14px 28px; border-radius: 8px; font-weight: 900; text-decoration: none; text-transform: uppercase;">
+            Записатися на заняття
+        </a>
+        {% if not user.is_authenticated %}
+            <p style="margin: 20px 0 0; font-size: 0.95rem; line-height: 1.5;">
+                Цей результат не збережено, бо ти не увійшов в акаунт.
+                <a href="{% url 'register' %}" style="color: var(--brand-yellow); font-weight: 800;">Зареєструйся</a>,
+                і наступні спроби збережуться в кабінеті — так буде видно прогрес.
+            </p>
+        {% endif %}
+    </div>
+
     <!-- КНОПКИ ДІЙ -->
     <div style="text-align: center; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
         <a href="{% url 'materials_list' %}" class="btn-brand" style="text-decoration: none; padding: 15px 30px; font-size: 1.1rem;">
@@ -110,4 +128,7 @@
     </div>
 
 </div>
+<script>
+    window.dkTrack('diagnostic_complete', {score: {{ total_score }}, max_score: {{ max_score }}, percent: {{ percent_total }}});
+</script>
 {% endblock %}

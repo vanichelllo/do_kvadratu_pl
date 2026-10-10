@@ -1,0 +1,29 @@
+{% extends 'account/_auth_base.html' %}
+
+{% block title %}Згода з умовами | ДО КВАДРАТУ{% endblock %}
+
+{% block auth_body %}
+<h2 class="auth-title">ОСТАННІЙ КРОК</h2>
+<p class="auth-text">
+    Щоб користуватися кабінетом, купувати конспекти й записуватися на заняття,
+    підтвердіть, будь ласка, згоду з умовами сайту.
+</p>
+<form method="POST" action="{% url 'accept_terms' %}" class="auth-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div style="margin: 20px 0; padding: 12px; background: rgba(52, 78, 134, 0.05); border-radius: 8px; border-left: 4px solid var(--brand-yellow); display: flex; align-items: flex-start; gap: 10px;">
+        <input type="checkbox" id="terms" name="terms" required style="width: auto; margin-top: 3px; cursor: pointer;">
+        <label for="terms" style="text-transform: none; font-size: 0.9rem; font-weight: 600; color: var(--text-dark); line-height: 1.4; margin: 0; cursor: pointer;">
+            Я погоджуюсь з умовами
+            <a href="{% url 'offer' %}" target="_blank" rel="noopener" style="color: var(--brand-blue); text-decoration: underline;">Договору оферти</a> та
+            <a href="{% url 'privacy' %}" target="_blank" rel="noopener" style="color: var(--brand-blue); text-decoration: underline;">Політикою конфіденційності</a>
+        </label>
+    </div>
+    {% if error %}<p class="auth-error" style="text-align: center;">{{ error }}</p>{% endif %}
+    <button type="submit" class="btn-submit">Погоджуюсь і продовжую</button>
+</form>
+<form method="POST" action="{% url 'account_logout' %}" style="margin-top: 20px; text-align: center;">
+    {% csrf_token %}
+    <button type="submit" style="background: none; border: none; color: var(--brand-blue); font-weight: 800; font-size: 0.9rem; text-decoration: underline; cursor: pointer; font-family: inherit;">Не погоджуюсь — вийти</button>
+</form>
+{% endblock %}

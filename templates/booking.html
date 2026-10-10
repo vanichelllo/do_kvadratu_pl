@@ -2,6 +2,8 @@
 
 {% block title %}Запис на заняття | ДО КВАДРАТУ{% endblock %}
 
+{% block meta_description %}Запис на індивідуальні заняття з математики онлайн: підготовка до НМТ та шкільна програма 5–11 класів. Оберіть зручний час у календарі.{% endblock %}
+
 {% block content %}
 <div class="container" style="padding: 40px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
 
@@ -81,8 +83,16 @@
         Перший урок триває 60 хвилин і проходить індивідуально. На ньому ми визначимо ваш рівень і підберемо постійний графік (або місце в міні-групі).
     </p>
     <!-- Calendly inline widget begin -->
-    <div class="calendly-inline-widget" data-url="https://calendly.com/dokvadratu/new-meeting" style="min-width:320px;height:700px;"></div>
+    <div class="calendly-inline-widget" data-url="https://calendly.com/dokvadratu/new-meeting" style="min-width: 0; width: 100%; height: 700px;"></div>
     <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+    <script>
+        // Запис через Calendly — подія «заявка» для аналітики (лише за згоди на аналітику)
+        window.addEventListener('message', function (e) {
+            if (e.origin === 'https://calendly.com' && e.data && e.data.event === 'calendly.event_scheduled') {
+                window.dkTrack('generate_lead', {method: 'calendly'});
+            }
+        });
+    </script>
     <!-- Calendly inline widget end -->
 </div>
 {% endblock %}

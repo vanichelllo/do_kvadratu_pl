@@ -2,6 +2,8 @@
 
 {% block title %}Діагностика НМТ - ДО КВАДРАТУ{% endblock %}
 
+{% block meta_description %}Безкоштовний діагностичний тест НМТ з математики: 22 завдання у форматі екзамену, результат одразу й список тем, які варто підтягнути.{% endblock %}
+
 {% block content %}
 <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
 
@@ -111,10 +113,10 @@
 
             <!-- 3. ЗАВДАННЯ ВІДКРИТОЇ ФОРМИ (19-22) -->
             {% elif question.question_type == 'SHORT' %}
-                <div style="margin-top: 20px; background: rgba(255, 204, 0, 0.1); padding: 20px; border-radius: 10px; display: flex; align-items: center; gap: 15px;">
-                    <label style="font-weight: 800; color: var(--brand-blue); font-size: 1.1rem;">ВІДПОВІДЬ:</label>
-                    <input type="text" name="question_{{ question.id }}" placeholder="Введіть число..."
-                           style="padding: 12px 15px; font-size: 18px; font-weight: 600; border: 2px solid var(--brand-blue); border-radius: 8px; width: 250px; outline: none; font-family: 'Montserrat', sans-serif;">
+                <div style="margin-top: 20px; background: rgba(255, 204, 0, 0.1); padding: 20px; border-radius: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px;">
+                    <label for="short_{{ question.id }}" style="font-weight: 800; color: var(--brand-blue); font-size: 1.1rem;">ВІДПОВІДЬ:</label>
+                    <input type="text" id="short_{{ question.id }}" name="question_{{ question.id }}" placeholder="Введіть число..." autocomplete="off"
+                           style="padding: 12px 15px; font-size: 18px; font-weight: 600; border: 2px solid var(--brand-blue); border-radius: 8px; width: 100%; max-width: 250px; box-sizing: border-box; font-family: 'Montserrat', sans-serif;">
                 </div>
             {% endif %}
 

@@ -15,6 +15,18 @@
             {% endif %}
         </p>
         <a href="{% url 'cabinet' %}" class="btn-brand" style="margin-top: 15px;">Перейти в кабінет</a>
+        <script>
+            (function () {
+                // Подія «покупка» для аналітики — один раз на замовлення
+                var key = 'dk_purchase_{{ order.id }}';
+                try { if (localStorage.getItem(key)) { return; } } catch (e) {}
+                var sent = window.dkTrack('purchase', {
+                    transaction_id: '{{ order.id }}', value: {{ order.total_amount|stringformat:"s" }}, currency: 'UAH',
+                    items: [{item_name: '{% if is_topup %}Поповнення балансу{% else %}Конспекти{% endif %}'}]
+                });
+                if (sent) { try { localStorage.setItem(key, '1'); } catch (e) {} }
+            })();
+        </script>
 
     {% elif order.status == 'pending' %}
         <div style="font-size: 3.5rem;">⏳</div>

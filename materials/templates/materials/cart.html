@@ -204,7 +204,7 @@
             </div>
 
             <div class="payment-options">
-                <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event);">
+                <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event) && trackCheckout();">
                     {% csrf_token %}
                     <button type="submit" class="btn-pay-mono">
                         <span style="font-size: 1.5rem;">🐈</span> Оплатити картою
@@ -233,6 +233,11 @@
 </div>
 
 <script>
+    function trackCheckout() {
+        window.dkTrack('begin_checkout', {value: {{ cart.get_total_price|default:0|stringformat:"s" }}, currency: 'UAH'});
+        return true;
+    }
+
     function checkAgreement(event) {
         const checkbox = document.getElementById('agree-checkbox');
         if (!checkbox.checked) {

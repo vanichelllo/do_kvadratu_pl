@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
@@ -30,11 +32,24 @@ class CustomUser(AbstractUser):
     telegram_id = models.CharField(max_length=100, blank=True, null=True)
     purchased_materials = models.ManyToManyField('materials.StudyMaterial', blank=True)
 
+    # Згода з офертою та політикою конфіденційності: коли і з якою редакцією (settings.TERMS_VERSION)
+    terms_accepted_at = models.DateTimeField(null=True, blank=True, verbose_name="Згода з офертою: коли")
+    terms_version = models.CharField(max_length=20, blank=True, default='', verbose_name="Згода з офертою: редакція")
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         return self.email
+
+    @property
+    def has_accepted_current_terms(self):
+        return self.terms_accepted_at is not None and self.terms_version == settings.TERMS_VERSION
+
+    def accept_terms(self):
+        self.terms_accepted_at = timezone.now()
+        self.terms_version = settings.TERMS_VERSION
+        self.save(update_fields=['terms_accepted_at', 'terms_version'])
 
 
 class PurchaseHistory(models.Model):
