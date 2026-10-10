@@ -13,6 +13,7 @@ from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.http import HttpResponse, JsonResponse, Http404
+from django.templatetags.static import static
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -558,6 +559,27 @@ class OfferView(TemplateView):
 
 class PrivacyView(TemplateView):
     template_name = 'materials/privacy.html'
+
+
+def web_manifest(request):
+    """Опис сайту для телефонів: назва й великі іконки (плитки Android, «Додати на головний екран»)."""
+    icons = [{'src': static(f'images/icon-{size}.png'), 'sizes': f'{size}x{size}', 'type': 'image/png'}
+             for size in (192, 512)]
+    # «maskable» — з відступами: система обрізає іконку кругом чи іншою формою, а логотип лишається цілим
+    icons += [{'src': static(f'images/icon-maskable-{size}.png'), 'sizes': f'{size}x{size}', 'type': 'image/png',
+               'purpose': 'maskable'} for size in (192, 512)]
+    data = {
+        'name': 'ДО КВАДРАТУ — підготовка до НМТ з математики',
+        'short_name': 'ДО КВАДРАТУ',
+        'start_url': '/',
+        'display': 'browser',
+        'background_color': '#ffffff',
+        'theme_color': '#344e86',
+        'icons': icons,
+    }
+    response = JsonResponse(data, json_dumps_params={'ensure_ascii': False})
+    response['Content-Type'] = 'application/manifest+json'
+    return response
 
 
 def booking_view(request):

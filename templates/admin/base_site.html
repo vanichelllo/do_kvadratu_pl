@@ -1,0 +1,3 @@
+{% extends "admin/base_site.html" %}
+{# Адмінка Django — та сама іконка сайту, що й на інших сторінках #}
+{% block extrahead %}{{ block.super }}{% include "_favicons.html" %}{% endblock %}

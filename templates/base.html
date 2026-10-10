@@ -24,11 +24,7 @@
     {% endblock %}
     {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
 
-    <!-- Іконка сайту (логотип) -->
-    <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
-    <link rel="icon" href="{% static 'images/favicon-32.png' %}" type="image/png" sizes="32x32">
-    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}">
-    <meta name="theme-color" content="#344e86">
+    {% include "_favicons.html" %}
     <!-- =================================================== -->
 
     <!-- Підключаємо фірмовий шрифт Montserrat -->
