@@ -11,13 +11,16 @@ class TermsAcceptanceMiddleware:
 
     Перехоплюються лише переходи між сторінками (GET): форми й запити зі сторінок, які вже відкрито,
     не ламаються. Викладач/адміністратор, сторінки входу-виходу, самі документи, вебхуки й
-    сторінка результату оплати — без перевірки.
+    сторінка результату оплати — без перевірки. Уже придбане (читалка, практика, презентації занять)
+    відкривається й без нової згоди: так обіцяє оферта (п. 23.3), а посилання на ці сторінки
+    є на /accept-terms/.
     """
 
     EXEMPT_PREFIXES = (
         '/accept-terms/', '/login/', '/logout/', '/register/', '/accounts/',
         '/offer/', '/privacy/', '/do-kvadratu-secret-control/',
         '/bot/', '/mono/', '/api/', '/payment/result/', '/parents/',
+        '/download/', '/practice/', '/lesson/', '/attempt/',
         '/robots.txt', '/sitemap.xml', '/favicon.ico',
     )
 

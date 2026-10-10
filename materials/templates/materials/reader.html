@@ -289,7 +289,9 @@
                 customStyles = mathJaxScript + customStyles;
             }
 
-            htmlContent = htmlContent.replace('</head>', customStyles);
+            // Функцією, а не рядком: у налаштуваннях MathJax є «$'» і «$$», які replace сприймав
+            // як спецпослідовності й вставляв замість них шматки документа (помилка на кожній сторінці)
+            htmlContent = htmlContent.replace('</head>', () => customStyles);
             iframe.srcdoc = htmlContent;
         } else {
             iframe.srcdoc = `

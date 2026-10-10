@@ -55,13 +55,19 @@ def revoke_student_access(modeladmin, request, queryset):
     nmt_materials = StudyMaterial.objects.filter(category__name__icontains='Підготовка до НМТ')
 
     count = 0
+    kept_all = []
     for student_request in queryset:
         user = student_request.user
         # 1. Забираємо НМТ-матеріали, видані на час навчання. Куплені учнем за власні гроші
-        #    і безкоштовні — залишаються (раніше зникали й вони)
-        keep_ids = materials_paid_by(user)
-        to_remove = nmt_materials.exclude(id__in=keep_ids).exclude(is_free=True).exclude(price=0)
-        user.purchased_materials.remove(*to_remove)
+        #    і безкоштовні — залишаються (раніше зникали й вони).
+        #    Якщо учень платив за матеріал, який потім видалили (наприклад, пакет), уже не видно,
+        #    що в ньому було, — тоді нічого не забираємо, щоб не відібрати оплачене
+        if OrderItem.objects.filter(order__user=user, order__status='paid', material__isnull=True).exists():
+            kept_all.append(student_request.real_name)
+        else:
+            keep_ids = materials_paid_by(user)
+            to_remove = nmt_materials.exclude(id__in=keep_ids).exclude(is_free=True).exclude(price=0)
+            user.purchased_materials.remove(*to_remove)
 
         # 2. Видаляємо саму заявку з бази
         student_request.delete()
@@ -69,6 +75,10 @@ def revoke_student_access(modeladmin, request, queryset):
 
     messages.success(request, f"Успішно видалено {count} учнів. Видані на час навчання матеріали НМТ забрано, "
                               f"куплені учнем самостійно — залишились.")
+    if kept_all:
+        messages.warning(request, "Матеріали не забирали (серед їхніх оплат є видалений матеріал чи пакет, "
+                                  "тож не видно, що саме оплачено): " + ", ".join(kept_all)
+                         + ". Перевірте доступ цих учнів вручну.")
 
 
 @admin.action(description="🔑 Створити нове посилання для батьків (старе перестане працювати)")

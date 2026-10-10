@@ -22,6 +22,16 @@
     {% if error %}<p class="auth-error" style="text-align: center;">{{ error }}</p>{% endif %}
     <button type="submit" class="btn-submit">Погоджуюсь і продовжую</button>
 </form>
+{% if owned_materials %}
+<details style="margin-top: 20px; font-weight: 600; color: var(--text-dark);">
+    <summary style="cursor: pointer; color: var(--brand-blue); font-weight: 800;">Ваші придбані конспекти (доступні й без згоди)</summary>
+    <ul style="margin: 10px 0 0; padding-left: 20px; line-height: 1.6;">
+        {% for material in owned_materials %}
+            <li><a href="{% url 'download_material' material.id %}" style="color: var(--brand-blue);">{{ material.title }}</a></li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
 <form method="POST" action="{% url 'account_logout' %}" style="margin-top: 20px; text-align: center;">
     {% csrf_token %}
     <button type="submit" style="background: none; border: none; color: var(--brand-blue); font-weight: 800; font-size: 0.9rem; text-decoration: underline; cursor: pointer; font-family: inherit;">Не погоджуюсь — вийти</button>

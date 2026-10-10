@@ -34,7 +34,9 @@ class CustomUser(AbstractUser):
 
     # Згода з офертою та політикою конфіденційності: коли і з якою редакцією (settings.TERMS_VERSION)
     terms_accepted_at = models.DateTimeField(null=True, blank=True, verbose_name="Згода з офертою: коли")
-    terms_version = models.CharField(max_length=20, blank=True, default='', verbose_name="Згода з офертою: редакція")
+    # db_default: під час деплою стара версія сайту ще створює користувачів без цього поля
+    terms_version = models.CharField(max_length=20, blank=True, default='', db_default='',
+                                     verbose_name="Згода з офертою: редакція")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

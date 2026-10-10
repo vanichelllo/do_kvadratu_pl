@@ -2,7 +2,7 @@
 
 {% block title %}{{ material.title }} | ДО КВАДРАТУ{% endblock %}
 
-{% block meta_description %}{% if material.description %}{{ material.description|striptags|truncatechars:160 }}{% else %}Авторський конспект «{{ material.title }}» для підготовки до НМТ з математики: теорія без води, формули, алгоритми та розбір типових завдань.{% endif %}{% endblock %}
+{% block meta_description %}{% if material.description %}{{ material.description|truncatechars:160 }}{% else %}Авторський конспект «{{ material.title }}» для підготовки до НМТ з математики: теорія без води, формули, алгоритми та розбір типових завдань.{% endif %}{% endblock %}
 {% block og_title %}{{ material.title }} | ДО КВАДРАТУ{% endblock %}
 {% block og_description %}{% if material.is_free %}Безкоштовний конспект{% else %}Конспект за {{ material.price }} ₴{% endif %} для підготовки до НМТ з математики: теорія, формули й розбір завдань.{% endblock %}
 {% block og_image %}{% if material.image %}{% with image_url=material.image.url %}{% if image_url|slice:":1" == "/" %}{{ SITE_URL }}{% endif %}{{ image_url }}{% endwith %}{% else %}{{ block.super }}{% endif %}{% endblock %}

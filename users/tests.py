@@ -92,6 +92,18 @@ class TermsConsentTests(TestCase):
         self.client.force_login(boss)
         self.assertEqual(self.client.get('/cabinet/').status_code, 200)
 
+    def test_purchased_materials_stay_available_without_new_consent(self):
+        from materials.models import StudyMaterial
+        material = StudyMaterial.objects.create(title='Куплена тема', is_published=True)
+        user = User.objects.create_user(username='g', email='g@example.com', password='x')
+        user.purchased_materials.add(material)
+        self.client.force_login(user)
+        with self.settings(STORAGES={
+                'default': {'BACKEND': 'django.core.files.storage.InMemoryStorage'},
+                'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}}):
+            self.assertEqual(self.client.get(f'/download/{material.id}/').status_code, 200)
+        self.assertContains(self.client.get('/accept-terms/'), f'/download/{material.id}/')
+
     def test_new_terms_version_asks_again(self):
         user = User.objects.create_user(username='g', email='g@example.com', password='x')
         user.accept_terms()
@@ -122,3 +134,38 @@ class AnalyticsConsentTests(TestCase):
         self.assertContains(page, 'dk-analytics-events')
         self.assertContains(page, '"sign_up"')
         self.assertNotContains(self.client.get('/offer/'), 'dk-analytics-events')
+
+
+class TermsVersionTests(TestCase):
+    def test_terms_version_fits_database_field(self):
+        # Задовга редакція не влізла б у поле, і після її зміни ніхто не зміг би підтвердити згоду
+        max_length = User._meta.get_field('terms_version').max_length
+        self.assertLessEqual(len(settings.TERMS_VERSION), max_length)
+
+    def test_payment_without_current_consent_goes_to_accept_terms(self):
+        user = User.objects.create_user(username='p', email='p@example.com', password='x', balance=500)
+        self.client.force_login(user)
+        for url, next_url in (('/cart/pay/balance/', '/cart/'), ('/cart/pay/mono/', '/cart/'),
+                              ('/cabinet/topup/', '/cabinet/')):
+            response = self.client.post(url, {'amount': '100'})
+            self.assertRedirects(response, f'/accept-terms/?next={next_url}', fetch_redirect_response=False)
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 500)
+
+
+class SocialSignupTemplateTests(TestCase):
+    def test_google_signup_form_links_to_documents(self):
+        from django import forms
+        from django.template.loader import render_to_string
+        from django.test import RequestFactory
+
+        class FakeSocialSignupForm(forms.Form):
+            email = forms.EmailField(label='E-mail')
+            terms = forms.BooleanField()
+
+        html = render_to_string('socialaccount/signup.html', {'form': FakeSocialSignupForm()},
+                                request=RequestFactory().get('/accounts/social/signup/'))
+        self.assertIn('/offer/', html)
+        self.assertIn('/privacy/', html)
+        self.assertIn('name="terms"', html)
+        self.assertIn('name="email"', html)

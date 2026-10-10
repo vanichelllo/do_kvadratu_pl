@@ -226,6 +226,30 @@ class ParentDashboardTests(BaseTestCase):
             action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
         self.assertEqual(set(kid.purchased_materials.all()), {bought, in_bundle})
 
+    def test_revoke_access_keeps_everything_if_a_paid_bundle_was_deleted(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        from materials.models import Category
+        nmt = Category.objects.create(name='Підготовка до НМТ')
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True)
+        topic = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
+        bundle.included_materials.add(topic)
+        kid = self.make_user('kid2@example.com')
+        kid.purchased_materials.add(topic)
+        order = Order.objects.create(user=kid, total_amount=100, status='paid')
+        OrderItem.objects.create(order=order, material=bundle, price=100)
+        bundle.delete()  # OrderItem.material стає NULL — уже не видно, що було в пакеті
+        student = TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+
+        request = RequestFactory().post('/')
+        request.user = self.make_user('boss2@example.com', is_staff=True, is_superuser=True)
+        model_admin = admin.site._registry[TutorStudentRequest]
+        action = model_admin.get_actions(request)['revoke_student_access'][0]
+        with mock.patch('materials.admin.messages.success'), mock.patch('materials.admin.messages.warning') as warn:
+            action(model_admin, request, TutorStudentRequest.objects.filter(pk=student.pk))
+        self.assertEqual(set(kid.purchased_materials.all()), {topic})
+        warn.assert_called_once()
+
     def test_admin_can_regenerate_parent_link(self):
         from django.contrib import admin
         from django.test import RequestFactory

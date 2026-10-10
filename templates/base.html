@@ -71,7 +71,7 @@
 
         /* На телефоні великі заголовки сторінок («ПОЛІТИКА КОНФІДЕНЦІЙНОСТІ» тощо) не влазили в ширину */
         @media (max-width: 600px) {
-            h1:not(.hero-title) { font-size: 1.6rem !important; }
+            h1:not(.hero-title):not(.error-code) { font-size: 1.6rem !important; }
         }
 
         /* НАВІГАЦІЙНА ПАНЕЛЬ */
@@ -155,11 +155,18 @@
             text-decoration: none;
         }
 
-        /* Помітна рамка фокусу для тих, хто ходить сайтом клавіатурою */
+        /* Помітна рамка фокусу для тих, хто ходить сайтом клавіатурою
+           (!important — щоб її не ховали старі стилі полів з outline: none) */
         a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
         summary:focus-visible {
-            outline: 3px solid #1f3260;
+            outline: 3px solid #1f3260 !important;
             outline-offset: 2px;
+        }
+
+        /* На темному тлі темна рамка не видна — там вона жовта */
+        .site-footer :focus-visible, .cookie-banner :focus-visible, .hero-section :focus-visible,
+        .dark-section :focus-visible {
+            outline-color: var(--brand-yellow) !important;
         }
 
         /* ФІРМОВА КНОПКА */
@@ -225,7 +232,8 @@
         }
 
         /* === АДАПТИВНІСТЬ ДЛЯ ТЕЛЕФОНІВ ТА ПЛАНШЕТІВ === */
-        @media (max-width: 1024px) {
+        /* Меню-бургер і на невеликих ноутбуках: до 1200 px пункти меню не вміщалися в рядок */
+        @media (max-width: 1199px) {
             .navbar {
                 padding: 15px 20px;
             }
@@ -280,27 +288,49 @@
       (function () {
         var GA_ID = 'G-MFQMSE2VCY';
         var loaded = false;
-        window.dkConsent = function (value) {
+        var pending = [];  // події, що сталися до відповіді в банері
+        function store(key, value) {
           try {
-            if (value) { localStorage.setItem('analyticsConsent', value); }
-            return localStorage.getItem('analyticsConsent');
+            if (value !== undefined) { localStorage.setItem(key, value); }
+            return localStorage.getItem(key);
           } catch (e) { return null; }
+        }
+        function send(e) {
+          // onceKey — щоб ту саму подію (наприклад, оплату) не надіслати двічі після оновлення сторінки
+          if (e.onceKey) {
+            if (store(e.onceKey)) { return; }
+            store(e.onceKey, '1');
+          }
+          gtag('event', e.name, e.params || {});
+        }
+        window.dkConsent = function (value) {
+          return store('analyticsConsent', value);
         };
         window.dkLoadAnalytics = function () {
-          if (loaded) { return; }
-          loaded = true;
-          var s = document.createElement('script');
-          s.async = true;
-          s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
-          document.head.appendChild(s);
-          gtag('js', new Date());
-          gtag('config', GA_ID);
+          window['ga-disable-' + GA_ID] = false;
+          if (!loaded) {
+            loaded = true;
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+            document.head.appendChild(s);
+            gtag('js', new Date());
+            gtag('config', GA_ID);
+          }
+          pending.splice(0).forEach(send);
         };
-        // Подія для аналітики (реєстрація, оплата тощо). Без згоди нічого не надсилається.
-        window.dkTrack = function (name, params) {
-          if (!loaded) { return false; }
-          gtag('event', name, params || {});
-          return true;
+        // «Ні, дякую» діє одразу, навіть якщо Google Analytics уже завантажився на цій сторінці
+        window.dkStopAnalytics = function () {
+          pending = [];
+          window['ga-disable-' + GA_ID] = true;
+        };
+        // Подія для аналітики (реєстрація, оплата тощо). Без згоди нічого не надсилається;
+        // поки людина не відповіла в банері, подія чекає і піде лише після «Дозволити».
+        window.dkTrack = function (name, params, onceKey) {
+          var e = {name: name, params: params, onceKey: onceKey};
+          var consent = window.dkConsent();
+          if (consent === 'granted' && loaded) { send(e); }
+          else if (!consent) { pending.push(e); }
         };
         if (window.dkConsent() === 'granted') { window.dkLoadAnalytics(); }
       })();
@@ -511,6 +541,7 @@
 
         document.getElementById('declineCookiesBtn').addEventListener('click', function() {
             window.dkConsent('denied');
+            window.dkStopAnalytics();
             banner.style.display = 'none';
             // Якщо згоду відкликано — прибираємо cookie Google Analytics (_ga, _ga_XXXX)
             document.cookie.split(';').forEach(function (c) {

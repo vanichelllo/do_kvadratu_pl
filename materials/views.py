@@ -20,11 +20,12 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, F, When
+from django.db.models import Case, F, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
 from users.forms import UserProfileForm
+from users.views import terms_required
 from .forms import StudentReportForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, DiagnosticTopic, \
     PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
@@ -232,9 +233,11 @@ def diagnostic_test_view(request):
         # Рекомендації: конспекти, які викладач прив'язав до теми в адмінці («Рекомендовані конспекти»),
         # а також конспекти, у назві яких є назва теми (як і раніше)
         recommended_materials = set()
-        for topic in weak_topics:
-            recommended_materials.update(topic.recommended_materials.filter(is_published=True))
-            recommended_materials.update(StudyMaterial.objects.filter(title__icontains=topic.name, is_published=True))
+        if weak_topics:
+            matches = Q(diagnostictopic__in=weak_topics)
+            for topic in weak_topics:
+                matches |= Q(title__icontains=topic.name)
+            recommended_materials.update(StudyMaterial.objects.filter(matches, is_published=True).distinct())
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
@@ -743,6 +746,7 @@ def api_bot_user_library(request, telegram_id):
 
 @login_required
 @post_required('cart_detail')
+@terms_required('/cart/')
 def pay_from_balance(request):
     cart = get_object_or_404(Cart, user=request.user)
 
@@ -846,6 +850,7 @@ def create_mono_invoice(order, amount_kopecks):
 
 @login_required
 @post_required('cart_detail')
+@terms_required('/cart/')
 def pay_with_mono(request):
     cart = get_object_or_404(Cart, user=request.user)
     total_price = cart.get_total_price()
@@ -871,6 +876,7 @@ def pay_with_mono(request):
 
 
 @login_required
+@terms_required('/cabinet/')
 def topup_balance_view(request):
     if request.method == 'POST':
         # Баланс зберігається в цілих гривнях, тому й поповнення — лише цілими гривнями
