@@ -206,11 +206,24 @@
         opacity: 0.9;
     }
 
-    /* НОВІ СТИЛІ: Згортання та таблиці статистики */
-    .toggle-header { cursor: pointer; display: inline-flex; align-items: center; gap: 10px; user-select: none; transition: opacity 0.2s; }
-    .toggle-header:hover { opacity: 0.7; }
-    .toggle-icon { font-size: 1.2rem; transition: transform 0.3s; }
-    .toggle-icon.open { transform: rotate(180deg); }
+    /* Розділи кабінету відкриваються й закриваються натисканням на заголовок (як бібліотека конспектів) */
+    .cab-section { margin-bottom: 30px; }
+    .cabinet-grid > div > .cab-section:last-child { margin-bottom: 0; }
+    .cab-section > summary, .cab-card > summary { list-style: none; cursor: pointer; user-select: none; }
+    .cab-section > summary::-webkit-details-marker, .cab-card > summary::-webkit-details-marker { display: none; }
+    .cab-section-title, .cab-card-title {
+        color: var(--brand-blue); font-weight: 900; text-transform: uppercase; margin: 0;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: opacity 0.2s;
+    }
+    .cab-section-title { font-size: 1.5rem; }
+    .cab-card-title { font-size: 1.3rem; }
+    summary:hover > .cab-section-title, summary:hover > .cab-card-title { opacity: 0.7; }
+    .toggle-icon { font-size: 1.2rem; transition: transform 0.3s; flex-shrink: 0; }
+    details[open] > summary .toggle-icon { transform: rotate(180deg); }
+    .cab-section-body { margin-top: 15px; }
+    .cab-section-body > :last-child { margin-bottom: 0 !important; }
+
+    /* Таблиці статистики */
 
     .stats-table-wrapper { width: 100%; overflow-x: auto; background: white; border: 3px solid var(--brand-blue); border-radius: 12px; box-shadow: 4px 4px 0px var(--brand-yellow); margin-bottom: 30px; }
     .stats-table { width: 100%; border-collapse: collapse; min-width: 500px; }
@@ -241,9 +254,9 @@
     <div>
         <!-- 1. ПАНЕЛЬ ВЧИТЕЛЯ (ВИДНО ТІЛЬКИ АДМІНУ/ВЧИТЕЛЮ) -->
         {% if students_attempts %}
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                👨‍🏫 Журнал моїх учнів
-            </h2>
+        <details class="cab-section" data-section="journal">
+            <summary><h2 class="cab-section-title"><span>👨‍🏫 Журнал моїх учнів</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             <div class="stats-table-wrapper" style="border-color: #27ae60; box-shadow: 4px 4px 0px #27ae60;">
                 <table class="stats-table">
                     <thead style="background: #27ae60;">
@@ -272,13 +285,15 @@
                     </tbody>
                 </table>
             </div>
+            </div>
+        </details>
         {% endif %}
 
         <!-- УПРАВЛІННЯ УЧНЯМИ ТА ЗВІТИ (ДЛЯ ВЧИТЕЛЯ) -->
         {% if my_students %}
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                📝 Мої учні (Звіти)
-            </h2>
+        <details class="cab-section" data-section="students">
+            <summary><h2 class="cab-section-title"><span>📝 Мої учні (Звіти)</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             <div class="stats-table-wrapper" style="border-color: var(--brand-yellow); box-shadow: 4px 4px 0px var(--brand-blue); margin-bottom: 40px; overflow: visible;">
                 <table class="stats-table">
                     <thead style="background: var(--brand-yellow); color: var(--brand-blue);">
@@ -319,13 +334,15 @@
                     </tbody>
                 </table>
             </div>
+            </div>
+        </details>
         {% endif %}
 
         <!-- 2. ОСОБИСТИЙ ПРОГРЕС УЧНЯ -->
         {% if my_attempts %}
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1.5rem;">
-                📊 Мої результати практики
-            </h2>
+        <details class="cab-section" data-section="attempts">
+            <summary><h2 class="cab-section-title"><span>📊 Мої результати практики</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             <div class="stats-table-wrapper">
                 <table class="stats-table">
                     <thead>
@@ -352,11 +369,15 @@
                     </tbody>
                 </table>
             </div>
+            </div>
+        </details>
         {% endif %}
 
         <!-- 3. ІНДИВІДУАЛЬНІ УРОКИ -->
         {% if personal_presentations %}
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">📅 Мої уроки</h2>
+        <details class="cab-section" data-section="lessons">
+            <summary><h2 class="cab-section-title"><span>📅 Мої уроки</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
 
             <div class="library-grid" style="margin-bottom: 40px;">
                 {% for pres in personal_presentations %}
@@ -380,15 +401,14 @@
                 </div>
                 {% endfor %}
             </div>
+            </div>
+        </details>
         {% endif %}
 
         <!-- 4. БІБЛІОТЕКА КОНСПЕКТІВ (Згортається) -->
-        <h2 class="toggle-header" onclick="toggleLibrary()" style="color: var(--brand-blue); font-weight: 900; margin-bottom: 20px; text-transform: uppercase; font-size: 1.5rem;">
-            📚 Бібліотека конспектів <span id="lib-icon" class="toggle-icon">🔽</span>
-        </h2>
-
-        <!-- Контейнер бібліотеки (початково схований через display: none) -->
-        <div id="library-content" style="display: none; margin-bottom: 40px;">
+        <details class="cab-section" data-section="library">
+            <summary><h2 class="cab-section-title"><span>📚 Бібліотека конспектів</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             {% if purchased_materials %}
                 <div class="library-grid">
                     {% for item in purchased_materials %}
@@ -421,15 +441,17 @@
                     </a>
                 </div>
             {% endif %}
-        </div>
+            </div>
+        </details>
     </div>
 
     <!-- ПРАВА КОЛОНКА: ДІЇ ТА НАЛАШТУВАННЯ -->
     <div>
 
         <!-- БЛОК: ПОПОВНЕННЯ БАЛАНСУ -->
-        <div class="topup-section">
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; text-transform: uppercase;">💳 Поповнити</h2>
+        <details class="topup-section cab-card" data-section="topup">
+            <summary><h2 class="cab-card-title"><span>💳 Поповнити</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0;">Швидка оплата через Monobank</p>
 
             <form action="{% url 'topup_balance' %}" method="POST" class="topup-form">
@@ -444,7 +466,8 @@
                 <a href="{% url 'offer' %}" target="_blank" style="color: var(--brand-blue);">Договору оферти</a> (розділ 9).
                 Невикористаний залишок можна повернути на вимогу.
             </p>
-        </div>
+            </div>
+        </details>
 
         <!-- БЛОК: ЗАЯВКА НА СТАТУС УЧНЯ -->
         <div class="student-status-card" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
@@ -480,8 +503,9 @@
         </div>
 
         <!-- БЛОК: ЗАЛИШИТИ ВІДГУК -->
-        <div class="topup-section" style="margin-bottom: 25px;">
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 10px; font-size: 1.3rem; text-transform: uppercase;">💬 Залишити відгук</h2>
+        <details class="topup-section cab-card" data-section="review">
+            <summary><h2 class="cab-card-title"><span>💬 Залишити відгук</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
             <p style="color: #6c757d; font-size: 0.9rem; margin-top: 0;">Поділіться враженнями про заняття або платформу</p>
 
             <form action="{% url 'submit_review' %}" method="POST" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
@@ -503,11 +527,13 @@
                     Надіслати відгук
                 </button>
             </form>
-        </div>
+            </div>
+        </details>
 
         <!-- БЛОК: НАЛАШТУВАННЯ -->
-        <div class="profile-section">
-            <h2 style="color: var(--brand-blue); font-weight: 900; margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; text-transform: uppercase;">⚙️ Налаштування</h2>
+        <details class="profile-section cab-card" data-section="settings"{% if form.errors %} open{% endif %}>
+            <summary><h2 class="cab-card-title"><span>⚙️ Налаштування</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
 
             <form method="post">
                 {% csrf_token %}
@@ -524,7 +550,8 @@
                     </button>
                 </form>
             </div>
-        </div>
+            </div>
+        </details>
 
     </div>
 </div>
@@ -630,19 +657,27 @@
 </div>
 
 <script>
-    // Скрипт для відкриття/закриття бібліотеки конспектів
-    function toggleLibrary() {
-        const content = document.getElementById("library-content");
-        const icon = document.getElementById("lib-icon");
+    // Розділи кабінету: браузер запам'ятовує, які з них ви відкрили (лише на цьому пристрої)
+    (function () {
+        const KEY = 'dk_cabinet_open';
+        const sections = Array.from(document.querySelectorAll('details[data-section]'));
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { saved = []; }
+        if (!Array.isArray(saved)) saved = [];
 
-        if (content.style.display === "none") {
-            content.style.display = "block";
-            icon.classList.add("open");
-        } else {
-            content.style.display = "none";
-            icon.classList.remove("open");
-        }
-    }
+        sections.forEach(function (section) {
+            if (saved.indexOf(section.dataset.section) !== -1) section.open = true;
+            section.addEventListener('toggle', function () {
+                const here = sections.map(function (s) { return s.dataset.section; });
+                // Розділи, яких на цій сторінці немає (наприклад, панель вчителя), не чіпаємо
+                const keep = saved.filter(function (key) { return here.indexOf(key) === -1; });
+                const opened = sections.filter(function (s) { return s.open; })
+                                       .map(function (s) { return s.dataset.section; });
+                saved = keep.concat(opened);
+                try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+            });
+        });
+    })();
 
     // Скрипт для копіювання лінка
     function copyLink(studentId) {

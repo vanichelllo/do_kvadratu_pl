@@ -50,6 +50,7 @@ from materials.views import (
     add_quick_report,
     add_nmt_score,
     parent_view_presentation,
+    parent_view_material,
     submit_parent_review
 )
 
@@ -123,6 +124,7 @@ urlpatterns = [
     path('cabinet/add-report/', add_quick_report, name='add_quick_report'),
     path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
     path('parents/<uuid:parent_token>/lesson/<int:presentation_id>/', parent_view_presentation, name='parent_view_presentation'),
+    path('parents/<uuid:parent_token>/topic/<int:material_id>/', parent_view_material, name='parent_view_material'),
     path('parents/<uuid:parent_token>/review/', submit_parent_review, name='submit_parent_review'),
     # Карта сайту для Google: головні сторінки + усі опубліковані конспекти
     path('sitemap.xml', sitemap, {'sitemaps': {'pages': StaticPagesSitemap, 'materials': MaterialSitemap}},

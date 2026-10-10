@@ -94,6 +94,10 @@ def find_option(question, option_id):
     return next((opt for opt in question.options.all() if opt.id == option_id), None)
 
 
+# Технічний запис, до якого прив'язані результати вхідної діагностики (не конспект, без презентації)
+DIAGNOSTIC_MATERIAL_TITLE = "Вхідне діагностичне тестування НМТ"
+
+
 def user_owns_material(user, material):
     """Пакет у покупки не додається — лише його вміст, тому пакет вважається купленим,
     коли куплено всі матеріали, що в нього входять."""
@@ -210,7 +214,7 @@ def diagnostic_test_view(request):
         if request.user.is_authenticated:
             # Створюємо технічний запис "уроку" для діагностики, якщо його ще немає
             diag_material, created = StudyMaterial.objects.get_or_create(
-                title="Вхідне діагностичне тестування НМТ",
+                title=DIAGNOSTIC_MATERIAL_TITLE,
                 defaults={
                     'price': 0,
                     'is_published': False,  # Не показуватиметься в магазині
@@ -1317,6 +1321,14 @@ def parent_dashboard_view(request, parent_token):
                     .defer('material__html_content').order_by('-created_at'))
         context['attempts'] = attempts
         context['is_nmt'] = True
+        # Конспекти тем, які учень уже проходив (практика або бал з уроку), — батьки можуть їх переглянути
+        passed = list(parent_viewable_materials(student_request))
+
+        def topic_number(material):
+            match = re.match(r'^(\d+)', material.title)
+            return int(match.group(1)) if match else 99999
+
+        context['passed_materials'] = sorted(passed, key=topic_number)
     else:
         # Для шкільної програми НУШ -> дістаємо ваші ручні звіти
         reports = StudentReport.objects.filter(student=student_request).order_by('-date')
@@ -1324,6 +1336,29 @@ def parent_dashboard_view(request, parent_token):
         context['is_nmt'] = False
 
     return render(request, 'materials/parent_dashboard.html', context)
+
+
+def parent_viewable_materials(student_request):
+    """Конспекти з презентацією, за якими в учня є результат (його практика або бал, який виставив
+    викладач на уроці). Технічний запис діагностики — не конспект, тому не показується."""
+    return (StudyMaterial.objects.filter(attempts__user=student_request.user)
+            .exclude(html_content__isnull=True).exclude(html_content='')
+            .exclude(title=DIAGNOSTIC_MATERIAL_TITLE).distinct())
+
+
+def parent_view_material(request, parent_token, material_id):
+    # Лише батьки підтверджених учнів НМТ і лише конспекти тем, які учень уже проходив
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved',
+                                        course='nmt')
+    material = get_object_or_404(parent_viewable_materials(student_request), id=material_id)
+
+    response = render(request, 'materials/reader.html', {
+        'material': material,
+        'is_personal': True,  # без кнопок «Практика» і «PDF»: вони для учня з акаунтом
+        'back_url': reverse('parent_dashboard', args=[parent_token]),
+    })
+    response['Referrer-Policy'] = 'no-referrer'  # секретне посилання не передається іншим сторінкам
+    return response
 
 
 # === НОВА ФУНКЦІЯ ДЛЯ БАТЬКІВ ===
@@ -1340,7 +1375,9 @@ def parent_view_presentation(request, parent_token, presentation_id):
         'back_url': reverse('parent_dashboard', args=[parent_token]),  # батьки не мають кабінету
     }
     # Використовуємо існуючий шаблон для відображення презентацій
-    return render(request, 'materials/reader.html', context)
+    response = render(request, 'materials/reader.html', context)
+    response['Referrer-Policy'] = 'no-referrer'  # секретне посилання не передається іншим сторінкам
+    return response
 
 @login_required
 @post_required('cabinet')
