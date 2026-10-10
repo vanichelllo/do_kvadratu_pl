@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280">
-  <rect x="5" y="5" width="270" height="270" rx="58" fill="#ffffff" stroke="#d5dbe6" stroke-width="10"/>
-  <rect x="26.00" y="26.00" width="107.16" height="107.16" rx="21.43" fill="#344e86"/>
-  <rect x="146.84" y="26.00" width="107.16" height="107.16" rx="21.43" fill="#344e86"/>
-  <rect x="26.00" y="146.84" width="107.16" height="107.16" rx="21.43" fill="#344e86"/>
-  <rect x="146.84" y="146.84" width="107.16" height="107.16" rx="21.43" fill="#344e86"/>
-  <path d="M60.24 79.58H98.92M79.58 60.24V98.92" stroke="#ffffff" stroke-width="13.70" stroke-linecap="round" fill="none"/>
-  <path d="M181.08 79.58H219.76" stroke="#ffffff" stroke-width="13.70" stroke-linecap="round" fill="none"/>
-  <path d="M65.08 185.92L94.08 214.92M94.08 185.92L65.08 214.92" stroke="#ffffff" stroke-width="13.70" stroke-linecap="round" fill="none"/>
-  <circle cx="200.42" cy="182.63" r="7.65" fill="#ffffff"/>
-  <circle cx="200.42" cy="218.21" r="7.65" fill="#ffffff"/>
+  <rect width="280" height="280" rx="62" fill="#344e86"/>
+  <rect x="45.00" y="45.00" width="190.00" height="190.00" rx="11.40" fill="#ffffff"/>
+  <rect x="135.25" y="45.00" width="9.50" height="190.00" fill="#344e86"/>
+  <rect x="45.00" y="135.25" width="190.00" height="9.50" fill="#344e86"/>
+  <path d="M68.28 90.12H111.97M90.12 68.28V111.97" stroke="#344e86" stroke-width="9.12" stroke-linecap="round" fill="none"/>
+  <path d="M168.03 90.12H211.72" stroke="#344e86" stroke-width="9.12" stroke-linecap="round" fill="none"/>
+  <path d="M73.22 172.97L107.03 206.78M107.03 172.97L73.22 206.78" stroke="#344e86" stroke-width="9.12" stroke-linecap="round" fill="none"/>
+  <circle cx="189.88" cy="175.62" r="6.46" fill="#344e86"/>
+  <circle cx="189.88" cy="204.12" r="6.46" fill="#344e86"/>
 </svg>

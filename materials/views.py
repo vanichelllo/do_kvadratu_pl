@@ -573,7 +573,7 @@ def web_manifest(request):
         'short_name': 'ДО КВАДРАТУ',
         'start_url': '/',
         'display': 'browser',
-        'background_color': '#ffffff',
+        'background_color': '#344e86',
         'theme_color': '#344e86',
         'icons': icons,
     }
