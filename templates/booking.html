@@ -80,7 +80,13 @@
 
     <h2 style="color: var(--brand-blue); margin-bottom: 10px;">Запис на перше діагностичне заняття</h2>
     <p style="color: var(--text-dark); margin-bottom: 30px; font-weight: 600;">
-        Перший урок триває 60 хвилин і проходить індивідуально. На ньому ми визначимо ваш рівень і підберемо постійний графік (або місце в міні-групі).
+        Перший урок безкоштовний, триває 60 хвилин і проходить індивідуально. На ньому ми визначимо ваш рівень і підберемо постійний графік (або місце в міні-групі).
+    </p>
+    <p style="color: #6c757d; margin: -15px 0 25px; font-size: 0.9rem; line-height: 1.5;">
+        Записуючись на заняття, ви приймаєте умови <a href="{% url 'offer' %}" target="_blank" style="color: var(--brand-blue);">Договору публічної оферти</a>
+        (зокрема правила перенесення і скасування, розділи 12–13) і погоджуєтеся з
+        <a href="{% url 'privacy' %}" target="_blank" style="color: var(--brand-blue);">Політикою конфіденційності</a>.
+        Якщо учню ще немає 14 років, записують батьки.
     </p>
     <!-- Calendly inline widget begin -->
     <div class="calendly-inline-widget" data-url="https://calendly.com/dokvadratu/new-meeting" style="min-width: 0; width: 100%; height: 700px;"></div>

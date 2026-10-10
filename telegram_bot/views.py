@@ -1,12 +1,17 @@
 import hmac
 import logging
 import asyncio
+from datetime import timedelta
+
+from django.core.cache import cache
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from aiogram import Bot, Dispatcher, types
 
 from .handlers import router
+from .models import BotFSMState
 from .storage import DjangoStorage
 
 logger = logging.getLogger(__name__)
@@ -14,6 +19,16 @@ logger = logging.getLogger(__name__)
 # Стани діалогів — у базі даних (раніше в пам'яті: губились після перезапуску сервера)
 dp = Dispatcher(storage=DjangoStorage())
 dp.include_router(router)
+
+
+FSM_STATE_MAX_AGE = timedelta(days=30)
+
+
+def cleanup_old_fsm_states():
+    """Незавершені анкети й квізи зберігаються не довше 30 днів (політика конфіденційності, розділ 8).
+    Перевіряємо не частіше разу на добу."""
+    if cache.add('bot-fsm-cleanup', True, 60 * 60 * 24):
+        BotFSMState.objects.filter(updated_at__lt=timezone.now() - FSM_STATE_MAX_AGE).delete()
 
 
 @csrf_exempt
@@ -52,6 +67,7 @@ def telegram_webhook(request):  # Зверніть увагу, це знову �
 
             # Запускаємо нашу функцію
             process_update()
+            cleanup_old_fsm_states()
 
         except Exception:
             logger.exception("Помилка вебхука Telegram")

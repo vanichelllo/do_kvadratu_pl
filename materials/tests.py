@@ -1120,3 +1120,46 @@ class DeferredPresentationSafetyTests(BaseTestCase):
                          response.context['adminform'].form.errors)
         material = StudyMaterial.objects.get(id=self.material.id)
         self.assertEqual((material.price, material.html_content), (35, '<p>СЛАЙДИ</p>'))
+
+
+class OrderAfterAccountDeletionTests(BaseTestCase):
+    def test_paid_order_survives_account_deletion_with_buyer_email(self):
+        kid = self.make_user('gone@example.com')
+        order = Order.objects.create(user=kid, total_amount=100, status='paid')
+        self.assertEqual(order.customer_email, 'gone@example.com')
+        kid.delete()
+        order.refresh_from_db()
+        self.assertIsNone(order.user)
+        self.assertEqual(order.customer_email, 'gone@example.com')
+        self.assertIn('gone@example.com', str(order))
+
+    @mock.patch('materials.views.send_telegram_notification')
+    def test_late_payment_for_deleted_account_is_recorded_not_granted(self, notify):
+        from materials.views import apply_mono_status
+        kid = self.make_user('late@example.com')
+        order = Order.objects.create(user=kid, total_amount=50, status='pending', mono_invoice_id='inv-late')
+        kid.delete()
+        result = apply_mono_status('inv-late', 'success')
+        self.assertEqual(result.status, 'paid')
+        notify.assert_called_once()
+        self.assertIn('late@example.com', notify.call_args[0][0])
+
+
+class LegalPagesTests(BaseTestCase):
+    def test_offer_and_privacy_show_approved_texts(self):
+        offer = self.client.get('/offer/')
+        self.assertContains(offer, 'Редакція від 10.10.2026')
+        self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
+        self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
+        self.assertContains(offer, 'href="/privacy/"')
+        self.assertNotContains(offer, '{%')
+        privacy = self.client.get('/privacy/')
+        self.assertContains(privacy, 'Редакція від 10.10.2026')
+        self.assertContains(privacy, 'Google Analytics')
+        self.assertContains(privacy, 'href="/offer/"')
+
+    def test_terms_version_matches_published_edition(self):
+        # Дата редакції на сторінках і TERMS_VERSION мають змінюватися разом
+        from django.conf import settings as dj_settings
+        y, m, d = dj_settings.TERMS_VERSION.split('-')
+        self.assertContains(self.client.get('/offer/'), f'Редакція від {d}.{m}.{y}')

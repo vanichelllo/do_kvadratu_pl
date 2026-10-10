@@ -201,17 +201,17 @@ class OrderItemInline(admin.TabularInline):
 class OrderResource(resources.ModelResource):
     class Meta:
         model = Order
-        fields = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
-        export_order = ('id', 'created_at', 'user__email', 'source', 'status', 'total_amount')
+        fields = ('id', 'created_at', 'customer_email', 'source', 'status', 'total_amount')
+        export_order = ('id', 'created_at', 'customer_email', 'source', 'status', 'total_amount')
 
 
 @admin.register(Order)
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = OrderResource
 
-    list_display = ['id', 'user', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
+    list_display = ['id', 'user', 'customer_email', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
     list_filter = ['status', 'source', 'created_at']
-    search_fields = ['user__email', 'mono_invoice_id']
+    search_fields = ['user__email', 'customer_email', 'mono_invoice_id']
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
 

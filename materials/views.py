@@ -911,9 +911,22 @@ def apply_mono_status(invoice_id, status):
         order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
         if order is None:
             return None
-        email = html.escape(order.user.email)
-
-        if status == 'success' and order.status in ('pending', 'cancelled'):
+        email = html.escape(order.buyer_email)
+        if order.user_id is None:
+            # Акаунт уже видалено: оплату фіксуємо, але видавати матеріали чи баланс нікому
+            if status == 'success' and order.status in ('pending', 'cancelled'):
+                order.status = 'paid'
+                order.paid_at = timezone.now()
+                order.save(update_fields=['status', 'paid_at'])
+                msg = (f"⚠️ <b>Оплата за замовленням видаленого акаунта</b>\nЗамовлення #{order.id}, {email}, "
+                       f"{order.total_amount} ₴. Зв'яжіться з покупцем і за потреби поверніть кошти.")
+            elif status in ('failure', 'expired') and order.status == 'pending':
+                order.status = 'cancelled'
+                order.save(update_fields=['status'])
+            elif status == 'reversed' and order.status in ('pending', 'paid', 'cancelled'):
+                order.status = 'refunded'
+                order.save(update_fields=['status'])
+        elif status == 'success' and order.status in ('pending', 'cancelled'):
             order.status = 'paid'
             order.paid_at = timezone.now()
             order.save(update_fields=['status', 'paid_at'])

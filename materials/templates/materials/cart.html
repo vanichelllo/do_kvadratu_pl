@@ -198,7 +198,9 @@
                     <span style="text-align: left;">
                         Я погоджуюсь з умовами
                         <a href="{% url 'offer' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Договору публічної оферти</a> та
-                        <a href="{% url 'privacy' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Політикою конфіденційності</a>.
+                        <a href="{% url 'privacy' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Політики конфіденційності</a>
+                        і прошу відкрити матеріали одразу після оплати. Я розумію, що після цього відмовитися від покупки
+                        без пояснення причин не можна (пункт 14.2 Договору).
                     </span>
                 </label>
             </div>
@@ -242,7 +244,7 @@
         const checkbox = document.getElementById('agree-checkbox');
         if (!checkbox.checked) {
             event.preventDefault();
-            alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності.");
+            alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності і з відкриттям матеріалів одразу після оплати.");
             return false;
         }
         return true;
