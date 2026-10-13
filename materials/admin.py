@@ -14,8 +14,32 @@ from django.contrib.auth import get_user_model
 
 from users.models import PurchaseHistory
 from .bank_import import MAX_FILE_BYTES, BankFormatError, build_report, import_tasks, parse_bank_source
-from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
+from .models import StudyMaterial, Category, Tag, Cart, CartItem, Order, OrderItem, DiagnosticTopic, Question, AnswerOption, MatchItem, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic
 User = get_user_model()
+@admin.register(CurriculumSubject)
+class CurriculumSubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'order')
+    ordering = ('order',)
+
+@admin.register(CurriculumGrade)
+class CurriculumGradeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'subject', 'order')
+    list_filter = ('subject',)
+    ordering = ('subject__order', 'order')
+
+@admin.register(CurriculumChapter)
+class CurriculumChapterAdmin(admin.ModelAdmin):
+    list_display = ('name', 'grade', 'order')
+    list_filter = ('grade__subject', 'grade')
+    search_fields = ('name',)
+    ordering = ('grade__order', 'order')
+
+@admin.register(CurriculumTopic)
+class CurriculumTopicAdmin(admin.ModelAdmin):
+    list_display = ('name', 'chapter', 'order')
+    list_filter = ('chapter__grade__subject', 'chapter__grade')
+    search_fields = ('name',)
+    ordering = ('chapter__order', 'order')
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):
     # Шукаємо всі матеріали НМТ
@@ -230,6 +254,9 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     list_select_related = ('category',)
     list_filter = ('is_published', 'category')
     search_fields = ('title',)
+    # materials/admin.py, всередині StudyMaterialAdmin
+    list_display = ('title', 'category', 'curriculum_topic', 'price', 'is_published')
+    autocomplete_fields = ['curriculum_topic']  # Щоб був зручний пошук по темах НУШ
     # Дію «Імпортувати з Excel» прибрано: вона ставила всім конспектам ціну 25 грн
     # і публікувала приховані. Нові матеріали додаються тут вручну (кнопка «Додати»).
 
