@@ -149,20 +149,38 @@
     <form method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
         <input type="text" name="search" class="search-input" placeholder="Пошук за назвою..." value="{{ request.GET.search }}" style="flex: 2; min-width: 200px;">
 
-        <select name="category" class="search-select" style="flex: 1; min-width: 150px; cursor: pointer;">
-            <option value="">Всі категорії</option>
-            {% for cat in categories %}
-                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
-                    {{ cat.name }}
-                </option>
+        <!-- НОВИЙ ВИБІР КЛАСУ/КУРСУ -->
+        <select name="grade" class="search-select" style="flex: 1; min-width: 200px; cursor: pointer;">
+            <option value="">Усі матеріали</option>
+
+            {% for subject in subjects %}
+                <optgroup label="{{ subject.name }}">
+                    <!-- Якщо хочемо шукати по всьому курсу одразу (додамо пізніше, якщо треба), зараз фільтруємо по класах -->
+                    {% for grade in subject.grades.all %}
+                        <option value="{{ grade.id }}" {% if request.GET.grade == grade.id|stringformat:"s" %}selected{% endif %}>
+                            {{ grade.name }}
+                        </option>
+                    {% endfor %}
+                </optgroup>
             {% endfor %}
+
+            <!-- Старі категорії для сумісності (якщо такі ще є) -->
+            {% if categories %}
+                <optgroup label="Інше">
+                {% for cat in categories %}
+                    <option value="cat_{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                {% endfor %}
+                </optgroup>
+            {% endif %}
         </select>
 
         {% if request.GET.type %}
             <input type="hidden" name="type" value="{{ request.GET.type }}">
         {% endif %}
 
-        <button type="submit" class="btn-brand" style="flex: 1; min-width: 150px; padding: 14px 20px;">ШУКАТИ</button>
+        <button type="submit" class="btn-brand" style="flex: 1; min-width: 120px; padding: 14px 20px;">ШУКАТИ</button>
     </form>
 </div>
 
@@ -206,7 +224,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     {% if material.category %}
                     <span style="background-color: rgba(255, 255, 255, 0.15); color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                        {{ material.category.name }}
+                        {{ material.curriculum_topic.chapter.grade.name|default:material.category.name }}
                     </span>
                     {% else %}
                     <span></span>

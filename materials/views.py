@@ -29,7 +29,7 @@ from users.forms import UserProfileForm
 from users.views import terms_required
 from .forms import StudentReportForm
 from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, DiagnosticTopic, \
-    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport
+    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport, CurriculumSubject, CurriculumGrade
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -633,7 +633,7 @@ class MaterialListView(ListView):
 
     def get_queryset(self):
         queryset = StudyMaterial.objects.filter(is_published=True) \
-            .select_related('category') \
+            .select_related('curriculum_topic__chapter__grade__subject') \
             .prefetch_related('tags')
 
         filter_type = self.request.GET.get('type')
@@ -646,28 +646,55 @@ class MaterialListView(ListView):
         if search_query:
             queryset = queryset.filter(title__icontains=search_query)
 
-        category_id = self.request.GET.get('category')
-        if category_id:
-            queryset = queryset.filter(category_id=category_id)
+        # Фільтрація за новим класифікатором (Курс або Клас)
+        subject_id = self.request.GET.get('subject')
+        grade_id = self.request.GET.get('grade')
+
+        if grade_id:
+            queryset = queryset.filter(curriculum_topic__chapter__grade_id=grade_id)
+        elif subject_id:
+            queryset = queryset.filter(curriculum_topic__chapter__grade__subject_id=subject_id)
+
+        # Якщо в нас все ще є конспекти зі старою "Категорією", але без нового топіка (про всяк випадок)
+        old_category_id = self.request.GET.get('category')
+        if old_category_id:
+            queryset = queryset.filter(category_id=old_category_id)
 
         materials_list = list(queryset)
 
-        def get_number(material):
-            match = re.match(r'^(\d+)', material.title)
-            if match:
-                return int(match.group(1))
-            return 99999
+        # ОНОВЛЕНЕ СОРТУВАННЯ: Спочатку за новим класифікатором, потім (якщо його немає) за назвою/номером
+        def get_sort_key(material):
+            if material.curriculum_topic:
+                # Сортуємо: Курс -> Клас -> Розділ -> Тема
+                ct = material.curriculum_topic
+                return (
+                    ct.chapter.grade.subject.order,
+                    ct.chapter.grade.order,
+                    ct.chapter.order,
+                    ct.order
+                )
+            else:
+                # Fallback для старих конспектів
+                match = re.match(r'^(\d+)', material.title)
+                num = int(match.group(1)) if match else 99999
+                return (999, 999, 999, num)
 
-        materials_list.sort(key=get_number)
+        materials_list.sort(key=get_sort_key)
         return materials_list
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Передаємо нові предмети і класи в шаблон для створення красивого меню
+        context['subjects'] = CurriculumSubject.objects.prefetch_related('grades').all()
+
+        # Зберігаємо старі категорії для сумісності
         context['categories'] = Category.objects.all()
-        context['current_category'] = self.request.GET.get('category', '')
+
+        context['current_subject'] = self.request.GET.get('subject', '')
+        context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
         return context
-
 
 class MaterialDetailView(DetailView):
     model = StudyMaterial
@@ -703,15 +730,21 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         # 1. Завантаження конспектів (StudyMaterial)
-        purchased_qs = self.request.user.purchased_materials.all()
+        purchased_qs = self.request.user.purchased_materials.select_related('curriculum_topic__chapter__grade__subject')
         purchased_list = list(purchased_qs)
 
         def get_number(material):
+            if material.curriculum_topic:
+                ct = material.curriculum_topic
+                return (ct.chapter.grade.subject.order, ct.chapter.grade.order, ct.chapter.order, ct.order)
+
             match = re.match(r'^(\d+)', material.title)
             if match:
-                return int(match.group(1))
-            return 99999
+                return (999, 999, 999, int(match.group(1)))
+            return (999, 999, 999, 99999)
 
+        purchased_list.sort(key=get_number)
+        context['purchased_materials'] = purchased_list
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
 
