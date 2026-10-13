@@ -131,8 +131,14 @@
                     <span class="text-muted small fw-bold">{{ report.date|date:"d.m.Y" }}</span>
                 </div>
                 <div class="report-card-body">
-                    <h5 class="fw-bold text-dark mb-3">{{ report.topic }}</h5>
-
+                    <h5 class="fw-bold text-dark mb-3">
+                        {% if report.curriculum_topic %}
+                            <span style="font-size: 0.8rem; color: #7c3aed; text-transform: uppercase;">{{ report.curriculum_topic.chapter.grade.name }}</span><br>
+                            {{ report.curriculum_topic.name }}
+                        {% else %}
+                            {{ report.topic }}
+                        {% endif %}
+                    </h5>
                     <div class="mb-3">
                         <div class="hw-badge">
                             ДЗ: {{ report.get_homework_status_display }}

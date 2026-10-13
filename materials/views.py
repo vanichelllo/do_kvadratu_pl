@@ -770,6 +770,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 'material__html_content').order_by('-created_at')[:50]
             context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
             context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
+            context['report_form'] = StudentReportForm()
 
         return context
 

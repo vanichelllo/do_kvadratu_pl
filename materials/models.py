@@ -480,8 +480,25 @@ class StudentReport(models.Model):
 
     student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='reports', verbose_name="Учень")
     date = models.DateField(default=timezone.now, verbose_name="Дата заняття")
-    topic = models.CharField(max_length=200, verbose_name="Тема уроку")
-
+    # Змінено: тепер тема вибирається з нашого нового дерева
+    curriculum_topic = models.ForeignKey(
+        'CurriculumTopic',
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Тема уроку (з програми)"
+    )
+    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
+    # але робимо його необов'язковим:
+    # Змінено: тепер тема вибирається з нашого нового дерева
+    curriculum_topic = models.ForeignKey(
+        'CurriculumTopic',
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Тема уроку (з програми)"
+    )
+    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
+    # але робимо його необов'язковим:
+    topic = models.CharField(max_length=200, blank=True, null=True, verbose_name="Стара тема (архів)")
     # Оцінки за критеріями НУШ (від 1 до 12)
     nush_modeling = models.PositiveIntegerField(default=0, verbose_name="Моделювання (1-12)")
     nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")
