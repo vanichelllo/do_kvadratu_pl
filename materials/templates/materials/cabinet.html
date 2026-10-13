@@ -573,13 +573,16 @@
 
 <div>
                 <label style="font-weight: 900; font-size: 0.9rem; color: var(--brand-blue);">Тема уроку</label>
-                <!-- Django автоматично відрендерить `<select>` з усіма темами з нашої форми -->
                 <select name="curriculum_topic" required style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; background: white; font-family: inherit; font-weight: bold; box-sizing: border-box; font-size: 0.85rem;">
                     <option value="" disabled selected>-- Оберіть тему --</option>
-                    <!-- Оскільки ми не передаємо саму форму, ми можемо перебрати всі теми вручну, якщо треба, але найпростіше передати форму з views -->
-                    {% for topic in form.fields.curriculum_topic.queryset %}
-                        <option value="{{ topic.id }}">{{ topic.chapter.grade.name }} | {{ topic.chapter.name|truncatechars:30 }} -> {{ topic.name }}</option>
+
+                    <!-- ЗМІНІТЬ ЦЕЙ БЛОК: -->
+                    {% for topic in all_curriculum_topics %}
+                        <option value="{{ topic.id }}">
+                            {{ topic.chapter.grade.name }} | {{ topic.chapter.name|truncatechars:30 }} -> {{ topic.name }}
+                        </option>
                     {% endfor %}
+
                 </select>
             </div>
 
