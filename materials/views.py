@@ -87,19 +87,11 @@ def questions_in_order(q_id_list):
             .prefetch_related('options', 'match_items__correct_option').order_by(preserved_order))
 
 
-def is_own_question(question, material, material_num):
-    """Завдання «належить» конспекту, якщо його тема (DiagnosticTopic) — це цей конспект:
-    така сама назва, той самий номер у назві або конспект указано в рекомендованих теми."""
-    topic = question.topic
-    if topic is None:
-        return False
-    if topic.name.strip() == material.title.strip():
-        return True
-    match = re.match(r'^(\d+)', topic.name.strip())
-    if match and material_num and int(match.group(1)) == material_num:
-        return True
-    return any(m.pk == material.pk for m in topic.recommended_materials.all())
-
+def is_own_question(question, material, material_num=None):
+    """Тепер завдання просто і надійно перевіряється за новим полем."""
+    if question.curriculum_topic_id and material.curriculum_topic_id:
+        return question.curriculum_topic_id == material.curriculum_topic_id
+    return False
 
 def seen_question_ids(user):
     """id завдань, які учень уже отримував у практиці (PracticeAttempt.answers_json['question_ids'])."""
@@ -175,65 +167,57 @@ def diagnostic_test_view(request):
         question_ids_str = request.POST.get('question_ids', '')
         q_id_list = parse_id_list(question_ids_str)
 
-        # === НОВЕ: Словник для збереження історії відповідей у БД ===
         saved_answers = {
-            'q_choice': {},
-            'q_match': {},
-            'q_short': {},
-            'question_ids': question_ids_str,
-            'note': 'Вхідна діагностика НМТ'
+            'q_choice': {}, 'q_match': {}, 'q_short': {},
+            'question_ids': question_ids_str, 'note': 'Вхідна діагностика НМТ'
         }
 
-        # Витягуємо тільки ті запитання, які випали в тесті, зберігаючи порядок
         questions = questions_in_order(q_id_list)
 
+        # ДИНАМІЧНА СТАТИСТИКА (Створюємо лише для тем, які випали)
         topics_stats = {}
-        for topic in DiagnosticTopic.objects.all():
-            topics_stats[topic.name] = {'topic': topic, 'correct': 0, 'total': 0}
-
         total_score = 0
         max_score = 0
 
         for question in questions:
-            topic_name = question.topic.name if question.topic else None
+            topic = question.curriculum_topic
+            topic_id = topic.id if topic else 0
+
+            if topic_id not in topics_stats:
+                topics_stats[topic_id] = {'topic': topic, 'correct': 0, 'total': 0}
+
+            stat = topics_stats[topic_id]
 
             if question.question_type == 'CHOICE':
-                if topic_name: topics_stats[topic_name]['total'] += 1
+                stat['total'] += 1
                 max_score += 1
                 user_answer = request.POST.get(f'question_{question.id}')
-
-                # Зберігаємо відповідь для історії
                 saved_answers['q_choice'][str(question.id)] = user_answer
 
                 selected_option = find_option(question, user_answer)
                 if selected_option and selected_option.is_correct:
                     total_score += 1
-                    if topic_name: topics_stats[topic_name]['correct'] += 1
+                    stat['correct'] += 1
 
             elif question.question_type == 'MATCH':
-                if topic_name: topics_stats[topic_name]['total'] += 3
+                stat['total'] += 3
                 max_score += 3
                 match_correct_count = 0
-
                 saved_answers['q_match'][str(question.id)] = {}
 
                 for item in question.match_items.all():
                     user_match_answer = request.POST.get(f'match_{item.id}')
-
-                    # Зберігаємо відповідь для історії
                     saved_answers['q_match'][str(question.id)][str(item.id)] = user_match_answer
 
                     if to_int(user_match_answer) == item.correct_option_id:
                         match_correct_count += 1
                 total_score += match_correct_count
-                if topic_name: topics_stats[topic_name]['correct'] += match_correct_count
+                stat['correct'] += match_correct_count
 
             elif question.question_type == 'SHORT':
-                if topic_name: topics_stats[topic_name]['total'] += 2
+                stat['total'] += 2
                 max_score += 2
                 user_answer = request.POST.get(f'question_{question.id}')
-
-                # Зберігаємо відповідь для історії
                 saved_answers['q_short'][str(question.id)] = user_answer
 
                 if user_answer:
@@ -241,99 +225,65 @@ def diagnostic_test_view(request):
                     correct_clean = str(question.correct_short_answer).strip().replace(',', '.')
                     if user_clean == correct_clean:
                         total_score += 2
-                        if topic_name: topics_stats[topic_name]['correct'] += 2
+                        stat['correct'] += 2
 
-        # === НОВЕ: ЗБЕРЕЖЕННЯ РЕЗУЛЬТАТУ В БАЗУ ===
-        # Зберігаємо тільки якщо тест пройшов зареєстрований користувач
         if request.user.is_authenticated:
-            # Створюємо технічний запис "уроку" для діагностики, якщо його ще немає
-            diag_material, created = StudyMaterial.objects.get_or_create(
+            diag_material, _ = StudyMaterial.objects.get_or_create(
                 title=DIAGNOSTIC_MATERIAL_TITLE,
-                defaults={
-                    'price': 0,
-                    'is_published': False,  # Не показуватиметься в магазині
-                    'is_free': True
-                }
+                defaults={'price': 0, 'is_published': False, 'is_free': True}
             )
-            # Записуємо фінальний результат
             PracticeAttempt.objects.create(
-                user=request.user,
-                material=diag_material,
-                score=total_score,
-                max_score=max_score,
-                answers_json=saved_answers
+                user=request.user, material=diag_material,
+                score=total_score, max_score=max_score, answers_json=saved_answers
             )
-        # ==========================================
 
-        weak_topics = [stat['topic'] for stat in topics_stats.values() if
-                       stat['total'] > 0 and (stat['correct'] / stat['total']) * 100 < 50]
+        # Слабкі теми (там, де менше 50%)
+        weak_topics = [s['topic'] for s in topics_stats.values() if
+                       s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
 
-        # Рекомендації: конспекти, які викладач прив'язав до теми в адмінці («Рекомендовані конспекти»),
-        # а також конспекти, у назві яких є назва теми (як і раніше)
+        # ІДЕАЛЬНО ТОЧНІ РЕКОМЕНДАЦІЇ: Шукаємо конспекти саме з цим curriculum_topic!
         recommended_materials = set()
         if weak_topics:
-            matches = Q(diagnostictopic__in=weak_topics)
-            for topic in weak_topics:
-                matches |= Q(title__icontains=topic.name)
-            recommended_materials.update(StudyMaterial.objects.filter(matches, is_published=True).distinct())
+            recommended_materials.update(
+                StudyMaterial.objects.filter(curriculum_topic__in=weak_topics, is_published=True).distinct())
 
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
-        def extract_number(text):
-            match = re.match(r'^(\d+)', text)
-            return int(match.group(1)) if match else 99999
-
-        weak_topics.sort(key=lambda t: extract_number(t.name))
-        recommendations_list = sorted(list(recommended_materials), key=lambda m: extract_number(m.title))
-        sorted_stats = sorted(topics_stats.values(), key=lambda s: extract_number(s['topic'].name))
+        recommendations_list = sorted(list(recommended_materials),
+                                      key=lambda m: m.curriculum_topic.order if m.curriculum_topic else 999)
+        sorted_stats = sorted([s for s in topics_stats.values() if s['topic']], key=lambda s: s['topic'].order)
 
         return render(request, 'materials/diagnostic_results.html', {
-            'total_score': total_score,
-            'max_score': max_score,
-            'percent_total': percent_total,
-            'weak_topics': weak_topics,
-            'topics_stats': sorted_stats,
-            'recommendations': recommendations_list,
+            'total_score': total_score, 'max_score': max_score, 'percent_total': percent_total,
+            'weak_topics': weak_topics, 'topics_stats': sorted_stats, 'recommendations': recommendations_list,
         })
 
     # ==========================================
     # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
-    # [Твій старий код залишається без змін...]
     # ==========================================
-    # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
-    # ==========================================
-    # Спершу лише id, тип і тема (без варіантів відповідей): раніше в пам'ять тягнувся
-    # весь банк (~1500 завдань з усіма варіантами), щоб показати 22
     buckets = {}
-    for q_id, q_type, topic_name in Question.objects.values_list('id', 'question_type', 'topic__name'):
-        topic_num = 999
-        if topic_name:
-            match = re.match(r'^(\d+)', topic_name)
-            if match:
-                topic_num = int(match.group(1))
-        # Логіка: <= 29 — Алгебра, інакше — Геометрія
-        buckets.setdefault((q_type, topic_num <= 29), []).append(q_id)
+
+    # Магія бази даних: визначаємо Алгебру/Геометрію просто по полю `order` розділу!
+    # Розділи 1-6 (Алгебра) мають order <= 540. Розділи 7-9 (Геометрія) мають order >= 550.
+    for q_id, q_type, chapter_order in Question.objects.exclude(curriculum_topic__isnull=True).values_list('id',
+                                                                                                           'question_type',
+                                                                                                           'curriculum_topic__chapter__order'):
+        is_algebra = (chapter_order <= 540)
+        buckets.setdefault((q_type, is_algebra), []).append(q_id)
 
     def pick(q_type, is_algebra, count):
         ids = buckets.get((q_type, is_algebra), [])
         return random.sample(ids, min(count, len(ids)))
 
-    # Вибираємо випадкові завдання за пропорціями НМТ:
-    # тести (10 алгебра, 5 геометрія), відповідності (2 + 1), коротка відповідь (2 + 2)
     sel_choice = pick('CHOICE', True, 10) + pick('CHOICE', False, 5)
     sel_match = pick('MATCH', True, 2) + pick('MATCH', False, 1)
     sel_short = pick('SHORT', True, 2) + pick('SHORT', False, 2)
 
-    # Перемішуємо завдання всередині своїх блоків
     random.shuffle(sel_choice)
     random.shuffle(sel_match)
     random.shuffle(sel_short)
 
-    # Фінальний варіант: спочатку вибір, потім відповідність, потім коротка відповідь (як на НМТ);
-    # повністю (з варіантами) завантажуємо лише ці 22 завдання
     final_questions = list(questions_in_order(sel_choice + sel_match + sel_short))
-
-    # Створюємо строку з ID вибраних завдань, щоб перевірити саме їх, коли учень натисне "Завершити"
     question_ids_str = ','.join(str(q.id) for q in final_questions)
 
     return render(request, 'materials/diagnostic_test.html', {
@@ -341,7 +291,6 @@ def diagnostic_test_view(request):
         'question_ids_str': question_ids_str,
         'total_selected': len(final_questions)
     })
-
 
 # ==========================================
 # ПРАКТИКА НМТ ПІСЛЯ УРОКУ
@@ -461,9 +410,8 @@ def practice_session_view(request, material_id):
     # Режим GET залишається без змін
     match_current = re.match(r'^(\d+)', material.title)
     current_topic_num = int(match_current.group(1)) if match_current else 0
-    raw_pool = (Question.objects.filter(materials=material).select_related('topic')
-                .prefetch_related('options', 'match_items', 'materials', 'topic__recommended_materials'))
-
+    raw_pool = (Question.objects.filter(materials=material).select_related('curriculum_topic')
+                .prefetch_related('options', 'match_items', 'materials'))
     safe_pool = []
     for q in raw_pool:
         # Власні завдання конспекту (їхня тема = цей конспект) беремо завжди, навіть якщо вони
