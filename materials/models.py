@@ -291,8 +291,19 @@ class Question(models.Model):
         (3, 'Профільний (Складний)'),
     )
 
-    topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='questions', null=True,
-                              blank=True, verbose_name="Тема (для діагностики)")
+    # Старе поле (залишаємо поки що, щоб не втратити дані)
+    topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='old_questions', null=True,
+                              blank=True, verbose_name="Тема (СТАРА, під видалення)")
+
+    # НОВЕ ПОЛЕ:
+    curriculum_topic = models.ForeignKey(
+        'CurriculumTopic',
+        on_delete=models.SET_NULL,
+        related_name='diagnostic_questions',
+        null=True,
+        blank=True,
+        verbose_name="Тема НМТ (НОВА)"
+    )
 
     materials = models.ManyToManyField('StudyMaterial', blank=True, related_name='practice_questions',
                                        verbose_name="Теги (До яких уроків належить)")
