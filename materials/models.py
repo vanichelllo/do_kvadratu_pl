@@ -115,6 +115,13 @@ class StudyMaterial(models.Model):
     is_published = models.BooleanField(default=False, verbose_name="Опубліковано на вітрині")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, verbose_name="Категорія")
     tags = models.ManyToManyField(Tag, blank=True, verbose_name="Теги")
+    curriculum_topic = models.ForeignKey(
+        'CurriculumTopic', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name="Тема в класифікаторі (НУШ/НМТ)"
+    )
 
     is_free = models.BooleanField(default=False, verbose_name="Безкоштовний матеріал")
     is_bundle = models.BooleanField(default=False, verbose_name="Це Пакет (Bundle)")
