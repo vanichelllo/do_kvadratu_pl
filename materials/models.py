@@ -26,6 +26,57 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+class CurriculumSubject(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Курс (напр. Алгебра 7-9)")
+    order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Курс"
+        verbose_name_plural = "1. Курси"
+
+    def __str__(self):
+        return self.name
+
+class CurriculumGrade(models.Model):
+    subject = models.ForeignKey(CurriculumSubject, on_delete=models.CASCADE, related_name='grades', verbose_name="Курс")
+    name = models.CharField(max_length=50, verbose_name="Клас (напр. 8 клас, НМТ)")
+    number = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Номер класу (число)")
+    order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+
+    class Meta:
+        ordering = ['subject__order', 'order']
+        verbose_name = "Клас"
+        verbose_name_plural = "2. Класи"
+
+    def __str__(self):
+        return f"{self.subject.name} - {self.name}"
+
+class CurriculumChapter(models.Model):
+    grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='chapters', verbose_name="Клас")
+    name = models.CharField(max_length=200, verbose_name="Розділ")
+    order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+
+    class Meta:
+        ordering = ['grade__order', 'order']
+        verbose_name = "Розділ"
+        verbose_name_plural = "3. Розділи"
+
+    def __str__(self):
+        return f"{self.grade.name} - {self.name}"
+
+class CurriculumTopic(models.Model):
+    chapter = models.ForeignKey(CurriculumChapter, on_delete=models.CASCADE, related_name='topics', verbose_name="Розділ")
+    name = models.CharField(max_length=255, verbose_name="Тема уроку")
+    order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+
+    class Meta:
+        ordering = ['chapter__order', 'order']
+        verbose_name = "Тема"
+        verbose_name_plural = "4. Теми (Уроки)"
+
+    def __str__(self):
+        return f"{self.chapter.name} -> {self.name}"
 
 class WithoutHtmlManager(models.Manager):
     """HTML-презентація (до кількох МБ) потрібна лише в читалці. Скрізь інде вона не
