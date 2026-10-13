@@ -113,7 +113,7 @@ class StudyMaterial(models.Model):
         null=True
     )
     is_published = models.BooleanField(default=False, verbose_name="Опубліковано на вітрині")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, verbose_name="Категорія")
+
     tags = models.ManyToManyField(Tag, blank=True, verbose_name="Теги")
     curriculum_topic = models.ForeignKey(
         'CurriculumTopic', 
@@ -291,9 +291,6 @@ class Question(models.Model):
         (3, 'Профільний (Складний)'),
     )
 
-    # Старе поле (залишаємо поки що, щоб не втратити дані)
-    topic = models.ForeignKey(DiagnosticTopic, on_delete=models.CASCADE, related_name='old_questions', null=True,
-                              blank=True, verbose_name="Тема (СТАРА, під видалення)")
 
     # НОВЕ ПОЛЕ:
     curriculum_topic = models.ForeignKey(
@@ -509,7 +506,6 @@ class StudentReport(models.Model):
     )
     # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
     # але робимо його необов'язковим:
-    topic = models.CharField(max_length=200, blank=True, null=True, verbose_name="Стара тема (архів)")
     # Оцінки за критеріями НУШ (від 1 до 12)
     nush_modeling = models.PositiveIntegerField(default=0, verbose_name="Моделювання (1-12)")
     nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")

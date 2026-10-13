@@ -164,16 +164,7 @@
                 </optgroup>
             {% endfor %}
 
-            <!-- Старі категорії для сумісності (якщо такі ще є) -->
-            {% if categories %}
-                <optgroup label="Інше">
-                {% for cat in categories %}
-                    <option value="cat_{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
-                        {{ cat.name }}
-                    </option>
-                {% endfor %}
-                </optgroup>
-            {% endif %}
+
         </select>
 
         {% if request.GET.type %}

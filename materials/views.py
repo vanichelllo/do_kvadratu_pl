@@ -7,7 +7,7 @@ import re
 import requests
 import json
 import logging
-import random  # ДОДАНО ДЛЯ ГЕНЕРАЦІЇ ПРАКТИКИ
+import random
 from functools import wraps
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
@@ -28,20 +28,24 @@ from django.core.cache import cache
 from users.forms import UserProfileForm
 from users.views import terms_required
 from .forms import StudentReportForm
-from .models import StudyMaterial, Category, Cart, CartItem, Order, OrderItem, Question, DiagnosticTopic, \
-    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation, QuestionError, StudentReport, CurriculumSubject, CurriculumGrade
+
+# ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
+from .models import (
+    StudyMaterial, Cart, CartItem, Order, OrderItem, Question,
+    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
+    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic
+)
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import StudyMaterialSerializer, PurchasedMaterialSerializer
 from django.utils import timezone
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 def is_teacher(user):
-    """Доступ до панелі вчителя. Поле role учень обирає сам у профілі,
-    тому права даємо лише персоналу (is_staff / is_superuser, ставиться в адмінці)."""
     return user.is_authenticated and (user.is_superuser or user.is_staff)
 
 
@@ -49,7 +53,6 @@ MAX_DB_INT = 2 ** 63 - 1
 
 
 def to_int(value):
-    """int із даних форми; None для порожніх, зіпсованих або завеликих значень замість помилки 500."""
     try:
         number = int(value)
     except (TypeError, ValueError):
@@ -58,15 +61,15 @@ def to_int(value):
 
 
 def post_required(redirect_to):
-    """Дія лише через POST (захист від CSRF через посилання). GET — напр. повтор після входу
-    за ?next= — нічого не робить і повертає на зрозумілу сторінку замість порожньої 405."""
     def decorator(view):
         @wraps(view)
         def wrapper(request, *args, **kwargs):
             if request.method != 'POST':
                 return redirect(redirect_to(**kwargs) if callable(redirect_to) else redirect_to)
             return view(request, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -75,7 +78,6 @@ def material_page(material_id, **kwargs):
 
 
 def parse_id_list(ids_str):
-    """'1,2,3' -> [1, 2, 3]; некоректні шматки ігноруються."""
     return [i for i in (to_int(x) for x in (ids_str or '').split(',')) if i is not None]
 
 
@@ -87,14 +89,14 @@ def questions_in_order(q_id_list):
             .prefetch_related('options', 'match_items__correct_option').order_by(preserved_order))
 
 
+# ОНОВЛЕНО: Тепер використовуємо curriculum_topic_id
 def is_own_question(question, material, material_num=None):
-    """Тепер завдання просто і надійно перевіряється за новим полем."""
     if question.curriculum_topic_id and material.curriculum_topic_id:
         return question.curriculum_topic_id == material.curriculum_topic_id
     return False
 
+
 def seen_question_ids(user):
-    """id завдань, які учень уже отримував у практиці (PracticeAttempt.answers_json['question_ids'])."""
     seen = set()
     for answers in PracticeAttempt.objects.filter(user=user).values_list('answers_json', flat=True):
         if isinstance(answers, dict):
@@ -103,7 +105,6 @@ def seen_question_ids(user):
 
 
 def sample_unseen_first(pool, count, seen_ids):
-    """count випадкових завдань: спершу ті, яких немає в seen_ids, решту добираємо з побачених."""
     unseen = [q for q in pool if q.id not in seen_ids]
     picked = random.sample(unseen, min(count, len(unseen)))
     if len(picked) < count:
@@ -113,24 +114,20 @@ def sample_unseen_first(pool, count, seen_ids):
 
 
 def find_option(question, option_id):
-    """Варіант відповіді лише з цього завдання, щоб не можна було підставити id правильного варіанта з іншого."""
     option_id = to_int(option_id)
     if option_id is None:
         return None
     return next((opt for opt in question.options.all() if opt.id == option_id), None)
 
 
-# Технічний запис, до якого прив'язані результати вхідної діагностики (не конспект, без презентації)
 DIAGNOSTIC_MATERIAL_TITLE = "Вхідне діагностичне тестування НМТ"
 
 
 def user_owns_material(user, material):
-    """Пакет у покупки не додається — лише його вміст, тому пакет вважається купленим,
-    коли куплено всі матеріали, що в нього входять."""
     if not user.is_authenticated:
         return False
     if user.purchased_materials.filter(id=material.id).exists():
-        return True  # зокрема пакет, виданий напряму через адмінку
+        return True
     if material.is_bundle:
         included_ids = list(material.included_materials.values_list('id', flat=True))
         return bool(included_ids) and \
@@ -139,19 +136,17 @@ def user_owns_material(user, material):
 
 
 def rate_limit_exceeded(key, limit, window):
-    """Рахує дію в кеші; True, якщо за останні window секунд її зроблено більше ніж limit разів."""
     key = f'rate-limit:{key}'
     cache.add(key, 0, window)
     try:
         count = cache.incr(key)
-    except ValueError:  # ключ щойно протух
+    except ValueError:
         cache.set(key, 1, window)
         count = 1
     return count > limit
 
 
 def safe_back_url(request, fallback='cabinet'):
-    """Повернення на попередню сторінку лише в межах нашого сайту."""
     referer = request.META.get('HTTP_REFERER', '')
     if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={request.get_host()},
                                                    require_https=request.is_secure()):
@@ -159,10 +154,10 @@ def safe_back_url(request, fallback='cabinet'):
     return fallback
 
 
+# ==========================================
+# ОНОВЛЕНИЙ ГЕНЕРАТОР ДІАГНОСТИКИ
+# ==========================================
 def diagnostic_test_view(request):
-    # ==========================================
-    # 1. ПЕРЕВІРКА ВІДПОВІДЕЙ (РЕЖИМ POST)
-    # ==========================================
     if request.method == 'POST':
         question_ids_str = request.POST.get('question_ids', '')
         q_id_list = parse_id_list(question_ids_str)
@@ -174,7 +169,6 @@ def diagnostic_test_view(request):
 
         questions = questions_in_order(q_id_list)
 
-        # ДИНАМІЧНА СТАТИСТИКА (Створюємо лише для тем, які випали)
         topics_stats = {}
         total_score = 0
         max_score = 0
@@ -237,11 +231,9 @@ def diagnostic_test_view(request):
                 score=total_score, max_score=max_score, answers_json=saved_answers
             )
 
-        # Слабкі теми (там, де менше 50%)
         weak_topics = [s['topic'] for s in topics_stats.values() if
                        s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
 
-        # ІДЕАЛЬНО ТОЧНІ РЕКОМЕНДАЦІЇ: Шукаємо конспекти саме з цим curriculum_topic!
         recommended_materials = set()
         if weak_topics:
             recommended_materials.update(
@@ -258,13 +250,8 @@ def diagnostic_test_view(request):
             'weak_topics': weak_topics, 'topics_stats': sorted_stats, 'recommendations': recommendations_list,
         })
 
-    # ==========================================
-    # 2. ГЕНЕРАЦІЯ НОВОГО ТЕСТУ НМТ (РЕЖИМ GET)
-    # ==========================================
     buckets = {}
 
-    # Магія бази даних: визначаємо Алгебру/Геометрію просто по полю `order` розділу!
-    # Розділи 1-6 (Алгебра) мають order <= 540. Розділи 7-9 (Геометрія) мають order >= 550.
     for q_id, q_type, chapter_order in Question.objects.exclude(curriculum_topic__isnull=True).values_list('id',
                                                                                                            'question_type',
                                                                                                            'curriculum_topic__chapter__order'):
@@ -292,6 +279,7 @@ def diagnostic_test_view(request):
         'total_selected': len(final_questions)
     })
 
+
 # ==========================================
 # ПРАКТИКА НМТ ПІСЛЯ УРОКУ
 # ==========================================
@@ -300,7 +288,6 @@ def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
     has_access = is_teacher(request.user) or user_owns_material(request.user, material)
 
-    # Неопублікований матеріал (чернетка) — лише для власника або вчителя, навіть якщо він безкоштовний
     if not material.is_published and not has_access:
         raise Http404("Матеріал не знайдено.")
     if not (material.is_free or has_access):
@@ -312,14 +299,11 @@ def practice_session_view(request, material_id):
         max_score = 0
         results_data = []
 
-        # Словник для збереження історії відповідей у БД
         saved_answers = {'q_choice': {}, 'q_match': {}, 'q_short': {}}
 
         question_ids_str = request.POST.get('question_ids', '')
         saved_answers['question_ids'] = question_ids_str
 
-        # Лише завдання цього уроку: id приходять з форми, тож без фільтра можна
-        # було б підставити завдання з іншого (некупленого) уроку й побачити відповіді
         questions = questions_in_order(parse_id_list(question_ids_str))
         if questions:
             questions = questions.filter(materials=material).distinct()
@@ -334,8 +318,7 @@ def practice_session_view(request, material_id):
                 q_result['max_points'] = 1
                 q_result['correct_answer'] = next((opt for opt in q.options.all() if opt.is_correct), None)
                 user_ans = request.POST.get(f'q_{q.id}')
-
-                saved_answers['q_choice'][str(q.id)] = user_ans  # Зберігаємо для історії
+                saved_answers['q_choice'][str(q.id)] = user_ans
 
                 opt = find_option(q, user_ans)
                 if opt:
@@ -354,7 +337,7 @@ def practice_session_view(request, material_id):
 
                 for item in q.match_items.all():
                     user_match = request.POST.get(f'match_{item.id}')
-                    saved_answers['q_match'][str(q.id)][str(item.id)] = user_match  # Зберігаємо для історії
+                    saved_answers['q_match'][str(q.id)][str(item.id)] = user_match
 
                     user_opt = find_option(q, user_match)
                     is_match_correct = user_opt is not None and user_opt.id == item.correct_option_id
@@ -375,8 +358,7 @@ def practice_session_view(request, material_id):
                 q_result['max_points'] = 2
                 q_result['correct_answer'] = q.correct_short_answer
                 user_ans = request.POST.get(f'q_{q.id}')
-
-                saved_answers['q_short'][str(q.id)] = user_ans  # Зберігаємо для історії
+                saved_answers['q_short'][str(q.id)] = user_ans
                 q_result['user_answer'] = user_ans
 
                 if user_ans:
@@ -390,7 +372,6 @@ def practice_session_view(request, material_id):
 
             results_data.append(q_result)
 
-        # Записуємо спробу в базу разом із JSON-історією
         PracticeAttempt.objects.create(
             user=request.user,
             material=material,
@@ -407,15 +388,14 @@ def practice_session_view(request, material_id):
         }
         return render(request, 'materials/practice_results.html', context)
 
-    # Режим GET залишається без змін
     match_current = re.match(r'^(\d+)', material.title)
     current_topic_num = int(match_current.group(1)) if match_current else 0
+    # ОНОВЛЕНО: select_related('curriculum_topic')
     raw_pool = (Question.objects.filter(materials=material).select_related('curriculum_topic')
                 .prefetch_related('options', 'match_items', 'materials'))
+
     safe_pool = []
     for q in raw_pool:
-        # Власні завдання конспекту (їхня тема = цей конспект) беремо завжди, навіть якщо вони
-        # позначені ще й пізнішою темою; решту — лише без тегів пізніших за поточну тему
         is_safe = is_own_question(q, material, current_topic_num)
         if not is_safe:
             is_safe = True
@@ -432,7 +412,6 @@ def practice_session_view(request, material_id):
     match_pool = [q for q in safe_pool if q.question_type == 'MATCH']
     short_pool = [q for q in safe_pool if q.question_type == 'SHORT']
 
-    # Спершу завдання, яких учень ще не бачив; повтори лише коли нових не вистачає
     seen_ids = seen_question_ids(request.user)
     q_choice = sample_unseen_first(choice_pool, 10, seen_ids)
     q_match = sample_unseen_first(match_pool, 2, seen_ids)
@@ -454,12 +433,12 @@ def practice_session_view(request, material_id):
 
 
 # ==========================================
-
+# КОШИК
+# ==========================================
 @login_required
 def cart_detail(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
 
-    # Обробка застосування/скасування промокоду
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'apply_promo':
@@ -487,6 +466,7 @@ def cart_detail(request):
         return redirect('cart_detail')
 
     return render(request, 'materials/cart.html', {'cart': cart, 'cart_items': cart.cached_items()})
+
 
 @login_required
 @post_required(material_page)
@@ -550,10 +530,8 @@ class PrivacyView(TemplateView):
 
 
 def web_manifest(request):
-    """Опис сайту для телефонів: назва й великі іконки (плитки Android, «Додати на головний екран»)."""
     icons = [{'src': static(f'images/icon-{size}.png'), 'sizes': f'{size}x{size}', 'type': 'image/png'}
              for size in (192, 512)]
-    # «maskable» — з відступами: система обрізає іконку кругом чи іншою формою, а логотип лишається цілим
     icons += [{'src': static(f'images/icon-maskable-{size}.png'), 'sizes': f'{size}x{size}', 'type': 'image/png',
                'purpose': 'maskable'} for size in (192, 512)]
     data = {
@@ -574,6 +552,9 @@ def booking_view(request):
     return render(request, 'booking.html')
 
 
+# ==========================================
+# ОНОВЛЕНА ВІТРИНА
+# ==========================================
 class MaterialListView(ListView):
     model = StudyMaterial
     template_name = 'materials/list.html'
@@ -594,7 +575,6 @@ class MaterialListView(ListView):
         if search_query:
             queryset = queryset.filter(title__icontains=search_query)
 
-        # Фільтрація за новим класифікатором (Курс або Клас)
         subject_id = self.request.GET.get('subject')
         grade_id = self.request.GET.get('grade')
 
@@ -603,17 +583,10 @@ class MaterialListView(ListView):
         elif subject_id:
             queryset = queryset.filter(curriculum_topic__chapter__grade__subject_id=subject_id)
 
-        # Якщо в нас все ще є конспекти зі старою "Категорією", але без нового топіка (про всяк випадок)
-        old_category_id = self.request.GET.get('category')
-        if old_category_id:
-            queryset = queryset.filter(category_id=old_category_id)
-
         materials_list = list(queryset)
 
-        # ОНОВЛЕНЕ СОРТУВАННЯ: Спочатку за новим класифікатором, потім (якщо його немає) за назвою/номером
         def get_sort_key(material):
             if material.curriculum_topic:
-                # Сортуємо: Курс -> Клас -> Розділ -> Тема
                 ct = material.curriculum_topic
                 return (
                     ct.chapter.grade.subject.order,
@@ -622,7 +595,6 @@ class MaterialListView(ListView):
                     ct.order
                 )
             else:
-                # Fallback для старих конспектів
                 match = re.match(r'^(\d+)', material.title)
                 num = int(match.group(1)) if match else 99999
                 return (999, 999, 999, num)
@@ -632,17 +604,12 @@ class MaterialListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Передаємо нові предмети і класи в шаблон для створення красивого меню
         context['subjects'] = CurriculumSubject.objects.prefetch_related('grades').all()
-
-        # Зберігаємо старі категорії для сумісності
-        context['categories'] = Category.objects.all()
-
         context['current_subject'] = self.request.GET.get('subject', '')
         context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
         return context
+
 
 class MaterialDetailView(DetailView):
     model = StudyMaterial
@@ -650,7 +617,6 @@ class MaterialDetailView(DetailView):
     context_object_name = 'material'
 
     def get_object(self, queryset=None):
-        # Неопубліковані матеріали бачать лише персонал і ті, хто їх уже має
         material = super().get_object(queryset)
         user = self.request.user
         if not (material.is_published or is_teacher(user) or user_owns_material(user, material)):
@@ -677,7 +643,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Завантаження конспектів (StudyMaterial)
         purchased_qs = self.request.user.purchased_materials.select_related('curriculum_topic__chapter__grade__subject')
         purchased_list = list(purchased_qs)
 
@@ -693,33 +658,24 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
-        purchased_list.sort(key=get_number)
-        context['purchased_materials'] = purchased_list
 
-        # 2. Інші дані кабінету
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
         context['course_choices'] = TutorStudentRequest.COURSE_CHOICES
-
-        # 3. Індивідуальні презентації
         context['personal_presentations'] = self.request.user.personal_presentations.all()
-
-        # 4. Власна статистика учня (останні 15 спроб)
         context['my_attempts'] = PracticeAttempt.objects.filter(
             user=self.request.user
         ).select_related('material').defer('material__html_content').order_by('-created_at')[:15]
 
-        # 5. ПАНЕЛЬ ВЧИТЕЛЯ (Показується тільки тобі)
         if is_teacher(self.request.user):
-            # Дістаємо результати тестів усіх учнів зі статусом 'approved'
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
             ).select_related('user', 'user__tutor_request', 'material').defer(
                 'material__html_content').order_by('-created_at')[:50]
             context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
             context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
-            from .models import CurriculumTopic
-            # Витягуємо всі теми НУШ (щоб не тягнути теми НМТ) і передаємо в шаблон
+
+            # ОНОВЛЕНО: Теми для звітів НУШ
             context['all_curriculum_topics'] = CurriculumTopic.objects.exclude(
                 chapter__grade__subject__name="Підготовка до НМТ / ЗНО"
             ).select_related('chapter__grade').order_by('chapter__grade__subject__order', 'chapter__grade__order',
@@ -738,9 +694,6 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         return self.render_to_response(context)
 
 
-# ==========================================
-# Безпечне читання матеріалу з Cloudinary + HTML Презентації + Кнопка Практики
-# ==========================================
 @login_required(login_url='/login/')
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
@@ -748,14 +701,12 @@ def download_material_view(request, material_id):
     if not request.user.purchased_materials.filter(id=material.id).exists() and not is_teacher(request.user):
         raise Http404("У вас немає доступу до цього матеріалу.")
 
-    # Раніше тут PDF щоразу завантажувався з Cloudinary (до 10 с) і кодувався в base64,
-    # хоча шаблон його не використовує
     return render(request, 'materials/reader.html', {'material': material})
 
 
 @api_view(['GET'])
 def api_materials_list(request):
-    materials = StudyMaterial.objects.filter(is_published=True).select_related('category')
+    materials = StudyMaterial.objects.filter(is_published=True).select_related('curriculum_topic')
     materials_list = list(materials)
 
     def get_number(material):
@@ -772,7 +723,6 @@ def api_materials_list(request):
 
 @api_view(['GET'])
 def api_bot_user_library(request, telegram_id):
-    # Віддає email і покупки учня, тому доступно лише боту із секретним токеном
     expected_token = getattr(settings, 'BOT_API_TOKEN', '') or ''
     provided_token = request.headers.get('X-Bot-Token', '')
     if not expected_token or not hmac.compare_digest(provided_token, expected_token):
@@ -811,8 +761,6 @@ def pay_from_balance(request):
         return redirect('cart_detail')
 
     with transaction.atomic():
-        # Блокуємо рядок користувача, щоб подвійний клік або паралельне поповнення
-        # не затерли баланс одне одного
         user = User.objects.select_for_update().get(pk=request.user.pk)
         cart_items = list(cart.items.select_related('material').defer('material__html_content'))
 
@@ -822,7 +770,8 @@ def pay_from_balance(request):
 
         total_price = cart.get_total_price()
         if user.balance < total_price:
-            messages.error(request, "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
+            messages.error(request,
+                           "На вашому балансі недостатньо коштів. Будь ласка, оберіть оплату карткою (Monobank).")
             return redirect('cart_detail')
 
         user.balance -= total_price
@@ -852,8 +801,7 @@ def pay_from_balance(request):
 
         cart.items.all().delete()
 
-    messages.success(request,
-                     f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
+    messages.success(request, f"Оплата пройшла успішно! Списано {total_price} ₴. Матеріали вже у вашому кабінеті. 🎉")
     return redirect('cabinet')
 
 
@@ -885,12 +833,10 @@ def mono_headers():
 
 
 def create_mono_invoice(order, amount_kopecks):
-    """Створює рахунок у Monobank для замовлення. Повертає адресу сторінки оплати або None."""
     payload = {
         "amount": amount_kopecks,
         "ccy": 980,
         "reference": str(order.id),
-        # Після оплати покупець бачить результат саме цього замовлення
         "redirectUrl": f"{SITE_URL}{reverse('payment_result', args=[order.id])}",
         "webHookUrl": f"{SITE_URL}/mono/webhook/",
     }
@@ -946,13 +892,11 @@ def pay_with_mono(request):
 @terms_required('/cabinet/')
 def topup_balance_view(request):
     if request.method == 'POST':
-        # Баланс зберігається в цілих гривнях, тому й поповнення — лише цілими гривнями
         amount = to_int(request.POST.get('amount'))
         if amount is None or not 1 <= amount <= 100000:
             messages.error(request, "Введіть коректну суму (ціле число гривень від 1 до 100 000).")
             return redirect('cabinet')
 
-        # Створюємо технічне замовлення для поповнення
         order = Order.objects.create(
             user=request.user,
             total_amount=amount,
@@ -970,17 +914,13 @@ def topup_balance_view(request):
 
 
 def apply_mono_status(invoice_id, status):
-    """Застосовує статус рахунку Monobank до замовлення. Безпечно викликати повторно
-    (повторні вебхуки, сторінка результату, дія в адмінці). Повертає замовлення або None."""
     msg = None
     with transaction.atomic():
-        # select_for_update: Monobank може надіслати один вебхук кілька разів одночасно
         order = Order.objects.select_for_update().filter(mono_invoice_id=invoice_id).first()
         if order is None:
             return None
         email = html.escape(order.buyer_email)
         if order.user_id is None:
-            # Акаунт уже видалено: оплату фіксуємо, але видавати матеріали чи баланс нікому
             if status == 'success' and order.status in ('pending', 'cancelled'):
                 order.status = 'paid'
                 order.paid_at = timezone.now()
@@ -1033,7 +973,6 @@ def apply_mono_status(invoice_id, status):
 
 
 def check_mono_invoice(order):
-    """Запитує в Monobank актуальний статус рахунку й застосовує його (на випадок загубленого вебхука)."""
     if not order.mono_invoice_id or order.mono_invoice_id == 'balance_payment':
         return order
     try:
@@ -1050,8 +989,6 @@ def check_mono_invoice(order):
 @login_required
 def payment_result(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    # «Скасовані» теж перепитуємо: після невдалої спроби покупець може повторити оплату
-    # на тій самій сторінці Monobank, а вебхук про успіх — загубитись
     if order.status in ('pending', 'cancelled'):
         order = check_mono_invoice(order)
     return render(request, 'materials/payment_result.html', {
@@ -1070,7 +1007,6 @@ class MonoPubKeyUnavailable(Exception):
 
 
 def get_mono_pubkey(force_refresh=False):
-    """Публічний ключ Monobank для перевірки підпису вебхуків (base64 від PEM)."""
     key = None if force_refresh else cache.get(MONO_PUBKEY_CACHE_KEY)
     if not key:
         try:
@@ -1090,12 +1026,10 @@ def _signature_matches(pub_key_base64, signature, body):
         verifying_key = ecdsa.VerifyingKey.from_pem(base64.b64decode(pub_key_base64).decode())
         return verifying_key.verify(signature, body, sigdecode=ecdsa.util.sigdecode_der, hashfunc=hashlib.sha256)
     except Exception:
-        # BadSignatureError, зіпсований DER чи ключ — підпис недійсний
         return False
 
 
 def verify_mono_signature(body, x_sign):
-    """Перевіряє заголовок X-Sign (ECDSA, SHA-256) вебхука Monobank."""
     if not x_sign:
         return False
     try:
@@ -1106,8 +1040,6 @@ def verify_mono_signature(body, x_sign):
     if _signature_matches(get_mono_pubkey(), signature, body):
         return True
 
-    # Monobank міг змінити ключ: перезапитуємо, але не частіше разу на 10 хвилин,
-    # щоб підроблені запити не змушували нас постійно смикати API банку
     if cache.get(MONO_PUBKEY_REFRESHED_KEY):
         return False
     return _signature_matches(get_mono_pubkey(force_refresh=True), signature, body)
@@ -1122,7 +1054,6 @@ def mono_webhook(request):
         if not verify_mono_signature(request.body, request.headers.get('X-Sign', '')):
             return HttpResponse("Invalid signature", status=403)
     except MonoPubKeyUnavailable as e:
-        # 5xx, щоб Monobank повторив запит пізніше
         logger.error("Webhook Monobank: не вдалося отримати ключ: %s", e)
         return HttpResponse("Temporary error", status=503)
 
@@ -1193,7 +1124,7 @@ def submit_review(request):
     if rating is None:
         messages.error(request, "Оберіть оцінку від 1 до 5.")
         return redirect(back_url)
-    # Кожен відгук приходить власнику в Telegram — не даємо засипати його спамом
+
     if rate_limit_exceeded(f'review:user:{request.user.pk}', limit=5, window=60 * 60):
         messages.error(request, "Ви вже надіслали кілька відгуків. Спробуйте пізніше.")
         return redirect(back_url)
@@ -1240,7 +1171,6 @@ def view_student_presentation(request, presentation_id):
 def view_attempt_details(request, attempt_id):
     attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
 
-    # Перевірка: дивитися може учень свої тести, або вчитель - усі
     if attempt.user != request.user and not is_teacher(request.user):
         raise Http404("У вас немає доступу до цієї статистики.")
 
@@ -1306,7 +1236,6 @@ def view_attempt_details(request, attempt_id):
         'max_score': attempt.max_score,
         'results_data': results_data,
     }
-    # Використовуємо той самий шаблон результатів!
     return render(request, 'materials/practice_results.html', context)
 
 
@@ -1324,19 +1253,18 @@ def report_question_error(request):
             message = str(data.get('message') or '').strip()[:2000]
             if not message:
                 return JsonResponse({'status': 'error', 'message': 'Опишіть помилку'}, status=400)
+
             if rate_limit_exceeded(f'question-error:user:{request.user.pk}', limit=20, window=60 * 60):
                 return JsonResponse({'status': 'error', 'message': 'Забагато скарг. Спробуйте пізніше.'}, status=429)
 
             question = get_object_or_404(Question, id=question_id)
 
-            # Зберігаємо в базу
             QuestionError.objects.create(
                 question=question,
                 user=request.user,
                 message=message
             )
 
-            # Відправляємо в Telegram
             msg = f"🚨 <b>СКАРГА НА ЗАВДАННЯ!</b>\n\n"
             msg += f"<b>ID Завдання:</b> {question.id}\n"
             msg += f"<b>Учень:</b> {html.escape(request.user.email)}\n\n"
@@ -1355,24 +1283,20 @@ def report_question_error(request):
 
 
 def parent_dashboard_view(request, parent_token):
-    # Шукаємо заявку учня за унікальним токеном; дашборд відкривається лише для підтверджених учнів
     student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
-    # === ДОДАНО: Дістаємо всі індивідуальні презентації цього учня ===
     presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
 
     context = {
         'student': student_request,
-        'presentations': presentations,  # Передаємо в шаблон
+        'presentations': presentations,
     }
 
-    # Якщо це підготовка до НМТ -> дістаємо результати тестів
     if student_request.course == 'nmt':
         attempts = (PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
                     .defer('material__html_content').order_by('-created_at'))
         context['attempts'] = attempts
         context['is_nmt'] = True
-        # Конспекти тем, які учень уже проходив (практика або бал з уроку), — батьки можуть їх переглянути
         passed = list(parent_viewable_materials(student_request))
 
         def topic_number(material):
@@ -1381,7 +1305,6 @@ def parent_dashboard_view(request, parent_token):
 
         context['passed_materials'] = sorted(passed, key=topic_number)
     else:
-        # Для шкільної програми НУШ -> дістаємо ваші ручні звіти
         reports = StudentReport.objects.filter(student=student_request).order_by('-date')
         context['reports'] = reports
         context['is_nmt'] = False
@@ -1390,47 +1313,39 @@ def parent_dashboard_view(request, parent_token):
 
 
 def parent_viewable_materials(student_request):
-    """Конспекти з презентацією, за якими в учня є результат (його практика або бал, який виставив
-    викладач на уроці). Технічний запис діагностики — не конспект, тому не показується."""
     return (StudyMaterial.objects.filter(attempts__user_id=student_request.user_id)
-            # як і скрізь на сайті: опублікований або є в бібліотеці учня (чернетки не показуємо)
             .filter(Q(is_published=True) | Q(id__in=student_request.user.purchased_materials.values('id')))
             .exclude(html_content__isnull=True).exclude(html_content='')
             .exclude(title=DIAGNOSTIC_MATERIAL_TITLE).distinct())
 
 
 def parent_view_material(request, parent_token, material_id):
-    # Лише батьки підтверджених учнів НМТ і лише конспекти тем, які учень уже проходив
     student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved',
                                         course='nmt')
     material = get_object_or_404(parent_viewable_materials(student_request), id=material_id)
 
     response = render(request, 'materials/reader.html', {
         'material': material,
-        'is_personal': True,  # без кнопок «Практика» і «PDF»: вони для учня з акаунтом
+        'is_personal': True,
         'back_url': reverse('parent_dashboard', args=[parent_token]),
     })
-    response['Referrer-Policy'] = 'no-referrer'  # секретне посилання не передається іншим сторінкам
+    response['Referrer-Policy'] = 'no-referrer'
     return response
 
 
-# === НОВА ФУНКЦІЯ ДЛЯ БАТЬКІВ ===
 def parent_view_presentation(request, parent_token, presentation_id):
-    # Перевіряємо токен батьків (лише підтверджені учні)
     student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
-
-    # Дістаємо презентацію, яка належить саме цьому учню
     presentation = get_object_or_404(StudentPresentation, id=presentation_id, student=student_request.user)
 
     context = {
         'material': presentation,
         'is_personal': True,
-        'back_url': reverse('parent_dashboard', args=[parent_token]),  # батьки не мають кабінету
+        'back_url': reverse('parent_dashboard', args=[parent_token]),
     }
-    # Використовуємо існуючий шаблон для відображення презентацій
     response = render(request, 'materials/reader.html', context)
-    response['Referrer-Policy'] = 'no-referrer'  # секретне посилання не передається іншим сторінкам
+    response['Referrer-Policy'] = 'no-referrer'
     return response
+
 
 @login_required
 @post_required('cabinet')
@@ -1466,7 +1381,6 @@ def add_nmt_score(request):
         messages.error(request, "Бал має бути числом від 0 до максимуму, а максимум — більшим за 0.")
         return redirect('cabinet')
 
-    # Створюємо спробу з позначкою в JSON
     PracticeAttempt.objects.create(
         user=student_req.user,
         material=material,
@@ -1480,7 +1394,6 @@ def add_nmt_score(request):
 
 def submit_parent_review(request, parent_token):
     if request.method == 'POST':
-        # Знаходимо учня за батьківським токеном
         student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
 
         rating = parse_rating(request.POST.get('rating', 5))
@@ -1490,11 +1403,11 @@ def submit_parent_review(request, parent_token):
         if not text or not reviewer_name or rating is None:
             messages.error(request, "Будь ласка, введіть своє ім'я, оцінку та текст відгуку.")
             return redirect('parent_dashboard', parent_token=parent_token)
+
         if rate_limit_exceeded(f'parent-review:{student_req.pk}', limit=3, window=60 * 60):
             messages.error(request, "Ви вже надіслали кілька відгуків. Спробуйте пізніше.")
             return redirect('parent_dashboard', parent_token=parent_token)
 
-        # Створюємо відгук і прив'язуємо його до профілю учня
         Review.objects.create(
             user=student_req.user,
             reviewer_name=reviewer_name,
@@ -1502,7 +1415,6 @@ def submit_parent_review(request, parent_token):
             text=text
         )
 
-        # Відправляємо тобі сповіщення у Telegram із подвійним ім'ям (ім'я на сайті + чиї це батьки)
         msg = f"⭐️ <b>Новий відгук від батьків!</b>\n\n"
         msg += f"Від: <b>{html.escape(reviewer_name)}</b> <i>(Батьки учня: {html.escape(student_req.real_name)})</i>\n"
         msg += f"Оцінка: {'⭐' * rating}\n\n"
