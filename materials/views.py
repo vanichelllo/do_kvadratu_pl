@@ -1428,14 +1428,22 @@ def submit_parent_review(request, parent_token):
     return redirect('parent_dashboard', parent_token=parent_token)
 def math_sprint_game(request):
   """Ігровий тренажер 'Математичний Спринт (60 секунд)'."""
+  import json
+  import random
+  from django.http import JsonResponse
+  from django.shortcuts import render
+  from django.utils import timezone
+  from .models import Question, StudyMaterial
+
   # POST: збереження результату та щоденний бонус на баланс
   if request.method == 'POST':
     if not request.user.is_authenticated:
       return JsonResponse({
+          'rewarded': False,
           'message': (
               'Зареєструйтеся на платформі, щоб зберігати рекорди та отримувати'
               ' бонусні бали!'
-          )
+          ),
       })
     try:
       data = json.loads(request.body)
@@ -1451,23 +1459,24 @@ def math_sprint_game(request):
       request.user.save(update_fields=['balance'])
       request.session['sprint_reward_date'] = today_str
       return JsonResponse({
+          'rewarded': True,
           'message': (
               '🎁 Вітаємо! Ви дали 5+ правильних відповідей і отримали +2'
               ' бонусні бали на баланс!'
-          )
+          ),
       })
-    elif correct_count >= 5:
-      return JsonResponse({
-          'message': (
-              '👏 Чудовий результат! Щоденний бонус (+2 бали) сьогодні вже'
-              ' нараховано.'
-          )
-      })
+
     return JsonResponse({
+        'rewarded': False,
         'message': (
-            'Наберіть щонайменше 5 правильних відповідей за хвилину, щоб'
-            ' отримати +2 бонусні бали!'
-        )
+            '👏 Чудовий результат! Щоденний бонус (+2 бали) сьогодні вже'
+            ' нараховано.'
+            if last_reward_date == today_str
+            else (
+                'Наберіть щонайменше 5 правильних відповідей за хвилину, щоб'
+                ' отримати +2 бонусні бали!'
+            )
+        ),
     })
 
   # GET: визначаємо доступні теми залежно від ролі користувача
@@ -1477,23 +1486,23 @@ def math_sprint_game(request):
       or user.is_superuser
       or getattr(user, 'role', '') == 'teacher'
   ):
-    available_materials = StudyMaterial.objects.filter(
-        is_bundle=False
-    ).distinct()
+    available_materials = StudyMaterial.objects.filter(is_bundle=False)
     access_label = 'Повний доступ викладача'
   elif user.is_authenticated:
-    purchased_ids = user.purchased_materials.values_list('id', flat=True)
-    free_ids = StudyMaterial.objects.filter(is_free=True).values_list(
-        'id', flat=True
+    purchased_ids = list(
+        user.purchased_materials.values_list('id', flat=True)
+    )
+    free_ids = list(
+        StudyMaterial.objects.filter(is_free=True).values_list('id', flat=True)
     )
     available_materials = StudyMaterial.objects.filter(
-        id__in=set(purchased_ids) | set(free_ids), is_bundle=False
-    ).distinct()
+        id__in=set(purchased_ids + free_ids), is_bundle=False
+    )
     access_label = 'Ваші відкриті та безкоштовні теми'
   else:
     available_materials = StudyMaterial.objects.filter(
         is_free=True, is_bundle=False
-    ).distinct()
+    )
     access_label = 'Безкоштовні демо-теми'
 
   selected_material = None
@@ -1501,17 +1510,20 @@ def math_sprint_game(request):
   if material_id and material_id.isdigit():
     selected_material = available_materials.filter(id=int(material_id)).first()
 
-  # Вибираємо питання типу CHOICE з варіантами відповідей
-  qs = Question.objects.filter(question_type='CHOICE').prefetch_related(
-      'options'
-  )
+  # Безпечна для PostgreSQL вибірка випадкових ID питань без .distinct().order_by('?')
+  base_qs = Question.objects.filter(question_type='CHOICE')
   if selected_material:
-    qs = qs.filter(materials=selected_material)
+    base_qs = base_qs.filter(materials=selected_material)
   elif available_materials.exists():
-    qs = qs.filter(materials__in=available_materials).distinct()
+    base_qs = base_qs.filter(materials__in=available_materials)
+
+  all_q_ids = list(set(base_qs.values_list('id', flat=True)))
+  sampled_ids = random.sample(all_q_ids, min(len(all_q_ids), 30))
+
+  qs = Question.objects.filter(id__in=sampled_ids).prefetch_related('options')
 
   questions_list = []
-  for q in qs.order_by('?')[:30]:
+  for q in qs:
     opts = [
         {'text': o.text, 'is_correct': o.is_correct} for o in q.options.all()
     ]
@@ -1530,6 +1542,6 @@ def math_sprint_game(request):
           'available_materials': available_materials,
           'selected_material': selected_material,
           'access_label': access_label,
-          'questions_json': json.dumps(questions_list, ensure_ascii=False),
+          'questions_list': questions_list,
       },
   )
