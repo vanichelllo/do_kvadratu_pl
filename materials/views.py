@@ -1426,3 +1426,110 @@ def submit_parent_review(request, parent_token):
         messages.success(request, "Щиро дякуємо за ваш відгук! Ваша думка дуже важлива для нас.")
 
     return redirect('parent_dashboard', parent_token=parent_token)
+def math_sprint_game(request):
+  """Ігровий тренажер 'Математичний Спринт (60 секунд)'."""
+  # POST: збереження результату та щоденний бонус на баланс
+  if request.method == 'POST':
+    if not request.user.is_authenticated:
+      return JsonResponse({
+          'message': (
+              'Зареєструйтеся на платформі, щоб зберігати рекорди та отримувати'
+              ' бонусні бали!'
+          )
+      })
+    try:
+      data = json.loads(request.body)
+      correct_count = int(data.get('correct_count', 0))
+    except (ValueError, TypeError, json.JSONDecodeError):
+      correct_count = 0
+
+    today_str = str(timezone.localdate())
+    last_reward_date = request.session.get('sprint_reward_date')
+
+    if correct_count >= 5 and last_reward_date != today_str:
+      request.user.balance = (request.user.balance or 0) + 2
+      request.user.save(update_fields=['balance'])
+      request.session['sprint_reward_date'] = today_str
+      return JsonResponse({
+          'message': (
+              '🎁 Вітаємо! Ви дали 5+ правильних відповідей і отримали +2'
+              ' бонусні бали на баланс!'
+          )
+      })
+    elif correct_count >= 5:
+      return JsonResponse({
+          'message': (
+              '👏 Чудовий результат! Щоденний бонус (+2 бали) сьогодні вже'
+              ' нараховано.'
+          )
+      })
+    return JsonResponse({
+        'message': (
+            'Наберіть щонайменше 5 правильних відповідей за хвилину, щоб'
+            ' отримати +2 бонусні бали!'
+        )
+    })
+
+  # GET: визначаємо доступні теми залежно від ролі користувача
+  user = request.user
+  if user.is_authenticated and (
+      user.is_staff
+      or user.is_superuser
+      or getattr(user, 'role', '') == 'teacher'
+  ):
+    available_materials = StudyMaterial.objects.filter(
+        is_bundle=False
+    ).distinct()
+    access_label = 'Повний доступ викладача'
+  elif user.is_authenticated:
+    purchased_ids = user.purchased_materials.values_list('id', flat=True)
+    free_ids = StudyMaterial.objects.filter(is_free=True).values_list(
+        'id', flat=True
+    )
+    available_materials = StudyMaterial.objects.filter(
+        id__in=set(purchased_ids) | set(free_ids), is_bundle=False
+    ).distinct()
+    access_label = 'Ваші відкриті та безкоштовні теми'
+  else:
+    available_materials = StudyMaterial.objects.filter(
+        is_free=True, is_bundle=False
+    ).distinct()
+    access_label = 'Безкоштовні демо-теми'
+
+  selected_material = None
+  material_id = request.GET.get('material_id')
+  if material_id and material_id.isdigit():
+    selected_material = available_materials.filter(id=int(material_id)).first()
+
+  # Вибираємо питання типу CHOICE з варіантами відповідей
+  qs = Question.objects.filter(question_type='CHOICE').prefetch_related(
+      'options'
+  )
+  if selected_material:
+    qs = qs.filter(materials=selected_material)
+  elif available_materials.exists():
+    qs = qs.filter(materials__in=available_materials).distinct()
+
+  questions_list = []
+  for q in qs.order_by('?')[:30]:
+    opts = [
+        {'text': o.text, 'is_correct': o.is_correct} for o in q.options.all()
+    ]
+    if len(opts) >= 2 and any(o['is_correct'] for o in opts):
+      questions_list.append({
+          'id': q.id,
+          'text': q.text,
+          'svg_code': q.svg_code or '',
+          'options': opts,
+      })
+
+  return render(
+      request,
+      'materials/math_sprint.html',
+      {
+          'available_materials': available_materials,
+          'selected_material': selected_material,
+          'access_label': access_label,
+          'questions_json': json.dumps(questions_list, ensure_ascii=False),
+      },
+  )

@@ -136,6 +136,7 @@ urlpatterns = [
     path('apple-touch-icon.png', lambda request: redirect(static_url('images/apple-touch-icon.png'))),
     path('apple-touch-icon-precomposed.png', lambda request: redirect(static_url('images/apple-touch-icon.png'))),
     path('site.webmanifest', web_manifest, name='web_manifest'),
+    path('game/sprint/', math_sprint_game, name='math_sprint'),
 ]
 
 if settings.DEBUG:
