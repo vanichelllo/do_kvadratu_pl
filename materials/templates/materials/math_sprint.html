@@ -7,7 +7,7 @@
     window.MathJax = {
         tex: {
             inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            displayMath: [['$$', '$$'], ['[', ']']],
             processEscapes: true
         },
         svg: { fontCache: 'global' }
@@ -166,6 +166,8 @@
     }
 </style>
 
+{{ questions_list|json_script:"sprint-questions-data" }}
+
 <div class="sprint-wrapper">
     <div class="sprint-card">
         <!-- ЕКРАН СТАРТУ -->
@@ -249,17 +251,17 @@
 
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <button class="sprint-btn-main" onclick="startSprintGame()">🔄 Грати ще раз</button>
-                <a href="{% url 'material_list' %}" class="sprint-btn-main" style="background: #64748B; text-decoration: none;">📚 До матеріалів</a>
+                <a href="{% url 'materials_list' %}" class="sprint-btn-main" style="background: #64748B; text-decoration: none;">📚 До матеріалів</a>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const DB_QUESTIONS = {{ questions_json|safe }};
+    const rawDataEl = document.getElementById('sprint-questions-data');
+    const DB_QUESTIONS = rawDataEl ? JSON.parse(rawDataEl.textContent) : [];
     const CSRF_TOKEN = "{{ csrf_token }}";
 
-    // Резервний генератор швидких прикладів, якщо в обраній темі мало тестових питань
     function generateFallbackQuestions() {
         const list = [];
         for (let i = 0; i < 20; i++) {
@@ -412,7 +414,6 @@
         document.getElementById('end-correct').innerText = correctCount;
         document.getElementById('end-streak').innerText = maxStreak;
 
-        // Надсилаємо результат на сервер для нарахування бонусних балів
         fetch(window.location.pathname, {
             method: 'POST',
             headers: {
