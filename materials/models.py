@@ -58,7 +58,7 @@ class CurriculumGrade(models.Model):
         verbose_name_plural = "2. Класи"
 
     def __str__(self):
-        return f"{self.subject.name} - {self.name}"
+        return self.short_label
 
     @property
     def short_label(self):
@@ -347,14 +347,13 @@ class Question(models.Model):
     )
 
 
-    # НОВЕ ПОЛЕ:
     curriculum_topic = models.ForeignKey(
         'CurriculumTopic',
         on_delete=models.SET_NULL,
         related_name='diagnostic_questions',
         null=True,
         blank=True,
-        verbose_name="Тема НМТ (НОВА)"
+        verbose_name="Тема"
     )
 
     materials = models.ManyToManyField('StudyMaterial', blank=True, related_name='practice_questions',
@@ -362,7 +361,7 @@ class Question(models.Model):
     difficulty = models.IntegerField(choices=DIFFICULTY_CHOICES, default=2, verbose_name="Складність")
 
     question_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='CHOICE', verbose_name="Тип завдання")
-    text = models.TextField(verbose_name="Текст запитання")
+    text = models.TextField(verbose_name="Текст завдання")
     image = models.ImageField(upload_to='diagnostic_questions/', blank=True, null=True,
                               verbose_name="Картинка (якщо є)")
 

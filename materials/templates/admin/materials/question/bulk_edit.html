@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'materials/admin_mathjax.js' %}"></script>{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Домівка</a> ›
+    <a href="{% url 'admin:materials_question_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a> ›
+    {{ title }}
+</div>
+{% endblock %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <p>Заповніть лише те, що треба змінити. Порожні поля лишають завдання як є.</p>
+    <fieldset class="module aligned">
+        {% for field in form %}
+            <div class="form-row">
+                {{ field.errors }}
+                <div class="flex-container">{{ field.label_tag }} {{ field }}</div>
+            </div>
+        {% endfor %}
+    </fieldset>
+
+    <h2>Обрано завдань: {{ questions|length }}</h2>
+    <ul>
+        {% for question in questions %}
+            <li>{{ question.text|truncatechars:150 }}
+                <input type="hidden" name="{{ action_checkbox_name }}" value="{{ question.pk }}"></li>
+        {% endfor %}
+    </ul>
+
+    <input type="hidden" name="action" value="bulk_edit_questions">
+    <input type="hidden" name="apply" value="1">
+    <div class="submit-row">
+        <input type="submit" class="default" value="Застосувати">
+        <a href="{% url 'admin:materials_question_changelist' %}" class="button cancel-link">Скасувати</a>
+    </div>
+</form>
+{% endblock %}

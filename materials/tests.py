@@ -1642,3 +1642,33 @@ class AdminConvenienceTests(BaseTestCase):
         upload = SimpleUploadedFile('1.html', '﻿<p>нове</p>'.encode('utf-8'))
         self.assertEqual(self.client.post(url, dict(data, html_file=upload)).status_code, 302)
         self.assertEqual(StudyMaterial.objects.get(id=material.id).html_content, '<p>нове</p>')
+
+
+class QuestionAdminTests(BaseTestCase):
+    url = '/do-kvadratu-secret-control/materials/question/'
+
+    def setUp(self):
+        self.client.force_login(self.make_user('boss@example.com', is_staff=True, is_superuser=True))
+        self.t21, self.t22 = make_nmt_topic('21. Показникові рівняння'), make_nmt_topic('22. Логарифмічні рівняння')
+        self.good = Question.objects.create(text='Добре', question_type='CHOICE', curriculum_topic=self.t21)
+        for i in range(5):
+            AnswerOption.objects.create(question=self.good, text=str(i), is_correct=(i == 0))
+        self.broken = Question.objects.create(text='Без відповіді', question_type='SHORT', curriculum_topic=self.t22)
+
+    def test_topic_filter_appears_after_grade_and_health_column(self):
+        grade = self.t21.chapter.grade_id
+        self.assertNotContains(self.client.get(self.url), 'тема (спершу оберіть клас)')
+        response = self.client.get(self.url, {'curriculum_topic__chapter__grade__id__exact': grade, 'topic': self.t22.id})
+        self.assertContains(response, 'тема (спершу оберіть клас)')
+        self.assertEqual(list(response.context['cl'].result_list), [self.broken])
+        self.assertContains(response, '⚠ немає правильної відповіді')
+
+    def test_bulk_edit_changes_topic_difficulty_and_lessons(self):
+        lesson = StudyMaterial.objects.create(title='21. Показникові рівняння')
+        ids = [self.good.id, self.broken.id]
+        intermediate = self.client.post(self.url, {'action': 'bulk_edit_questions', '_selected_action': ids})
+        self.assertContains(intermediate, 'Обрано завдань: 2')
+        self.client.post(self.url, {'action': 'bulk_edit_questions', '_selected_action': ids, 'apply': '1',
+                                    'curriculum_topic': self.t21.id, 'difficulty': '3', 'add_material': lesson.id})
+        self.assertEqual(set(Question.objects.values_list('curriculum_topic', 'difficulty')), {(self.t21.id, 3)})
+        self.assertEqual(lesson.practice_questions.count(), 2)
