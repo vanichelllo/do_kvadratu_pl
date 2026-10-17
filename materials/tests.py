@@ -1517,6 +1517,12 @@ class BankImportTests(BaseTestCase):
         self.assertEqual(report.to_add, [1, 3, 5])
         self.assertEqual([i for i, _ in report.duplicates], [2])
 
+    def test_duplicate_text_filter_lists_copies_side_by_side(self):
+        old = Question.objects.create(text='Знайдіть  $x$.', question_type='SHORT', correct_short_answer='1')
+        new = Question.objects.create(text='Знайдіть $x$.', question_type='SHORT', correct_short_answer='2')
+        response = self.client.get('/do-kvadratu-secret-control/materials/question/?dup=yes')
+        self.assertEqual([q.id for q in response.context['cl'].result_list], [old.id, new.id])
+
     def test_task_topic_overrides_file_topic(self):
         # Файл з усіма банками: тема кожного завдання — у полі "topic"
         topic21 = make_nmt_topic('21. Показникові рівняння')
