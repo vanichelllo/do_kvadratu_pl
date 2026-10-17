@@ -495,17 +495,6 @@ class StudentReport(models.Model):
         null=True,
         verbose_name="Тема уроку (з програми)"
     )
-    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
-    # але робимо його необов'язковим:
-    # Змінено: тепер тема вибирається з нашого нового дерева
-    curriculum_topic = models.ForeignKey(
-        'CurriculumTopic',
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Тема уроку (з програми)"
-    )
-    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
-    # але робимо його необов'язковим:
     # Оцінки за критеріями НУШ (від 1 до 12)
     nush_modeling = models.PositiveIntegerField(default=0, verbose_name="Моделювання (1-12)")
     nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")
@@ -520,4 +509,4 @@ class StudentReport(models.Model):
         verbose_name_plural = "Звіти"
 
     def __str__(self):
-        return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.topic})"
+        return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.curriculum_topic})"

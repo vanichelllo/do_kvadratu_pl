@@ -46,7 +46,6 @@ class CurriculumTopicAdmin(admin.ModelAdmin):
     list_display = ('name', 'chapter', 'order')
     list_filter = ('chapter__grade__subject', 'chapter__grade')
     search_fields = ('name',)
-    ordering = ('chapter__order', 'order')
 
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):

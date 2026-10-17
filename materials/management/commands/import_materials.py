@@ -2,7 +2,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.core.files import File
 from openpyxl import load_workbook
-from materials.models import StudyMaterial, Category
+from materials.models import StudyMaterial
 
 
 class Command(BaseCommand):
@@ -11,8 +11,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         excel_path = 'matrix.xlsx'
         pdf_folder = 'import_files'
-
-        category, _ = Category.objects.get_or_create(name="Підготовка до НМТ")
 
         wb = load_workbook(excel_path)
         ws = wb.active
@@ -49,7 +47,6 @@ class Command(BaseCommand):
                 is_free=bool(is_free),
                 is_bundle=bool(is_bundle),
                 is_published=True,
-                category=category,
             )
             created_count += 1
 

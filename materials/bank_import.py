@@ -51,7 +51,7 @@ def parse_bank_source(source):
         try:
             values[name] = ast.literal_eval(node.value)
         except Exception as exc:
-            raise BankFormatError(f'Помилка читання {name}: {exc}') from exc
+            raise BankFormatError(f'Рядок {node.lineno}: {name} має містити лише літерали ({exc}).') from exc
 
     if not isinstance(values.get('TOPIC_NAME'), str) or not values['TOPIC_NAME'].strip():
         raise BankFormatError('У файлі немає TOPIC_NAME.')

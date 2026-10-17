@@ -851,7 +851,7 @@ class Command(BaseCommand):
             nmt_topics = CurriculumTopic.objects.filter(chapter__grade__subject__name="Підготовка до НМТ / ЗНО")
 
             linked_count = 0
-            for material in StudyMaterial.objects.filter(category__name__icontains='НМТ'):
+            for material in StudyMaterial.objects.filter(curriculum_topic__isnull=True):
                 # Шукаємо номер у назві конспекту (наприклад, "34. Теорема косинусів")
                 match = re.match(r'^(\d+)', material.title)
                 if match:
