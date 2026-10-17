@@ -75,7 +75,8 @@
                     <div class="opt-row 
                         {% if opt == res.correct_answer %}opt-correct{% endif %}
                         {% if opt == res.user_answer and not opt.is_correct %}opt-wrong-user{% endif %}">
-                        {{ opt.text|safe }}
+                        {# Під час розв'язування варіанти перемішувалися з новими літерами — тут показуємо без літер #}
+                        {{ opt.body|safe }}
                         {% if opt == res.correct_answer %} ✅ (Правильна відповідь){% endif %}
                         {% if opt == res.user_answer and not opt.is_correct %} ❌ (Ваш вибір){% endif %}
                     </div>

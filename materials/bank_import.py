@@ -86,6 +86,26 @@ def validate_task(task):
 def _normalize(text):
     return ' '.join(str(text).split())
 
+
+def _key(text, options=(), lefts=(), answer=''):
+    # Повтор — це той самий текст І ті самі варіанти/пари/відповідь: загальні умови на кшталт
+    # «Узгодьте вираз (1–3) із …» повторюються в різних завданнях з різним змістом
+    return (_normalize(text), tuple(sorted(map(_normalize, options))), tuple(sorted(map(_normalize, lefts))),
+            _normalize(answer or ''))
+
+
+def task_key(task):
+    options = task.get('options') or []
+    if task.get('type') == 'CHOICE':
+        options = [text for text, _ in options]
+    return _key(task['text'], options, [left for left, _ in task.get('matches') or []],
+                task.get('answer', '') if task.get('type') == 'SHORT' else '')
+
+
+def question_key(question):
+    return _key(question.text, [o.text for o in question.options.all()],
+                [m.text for m in question.match_items.all()], question.correct_short_answer)
+
 def resolve_material(tag, materials_cache):
     corrected = TAG_ALIASES.get(tag)
     needle = corrected or tag
@@ -95,7 +115,7 @@ def resolve_material(tag, materials_cache):
 
 def build_report(topic_name, tasks):
     report = ImportReport(topic_name=topic_name, total=len(tasks))
-    seen_texts = {_normalize(t) for t in Question.objects.values_list('text', flat=True)}
+    seen = {question_key(q) for q in Question.objects.prefetch_related('options', 'match_items')}
     materials_cache = {}
     tag_counts = {}
 
@@ -104,11 +124,11 @@ def build_report(topic_name, tasks):
         if problems:
             report.errors.append((index, '; '.join(problems)))
             continue
-        key = _normalize(task['text'])
-        if key in seen_texts:
+        key = task_key(task)
+        if key in seen:
             report.duplicates.append((index, task['text']))
             continue
-        seen_texts.add(key)
+        seen.add(key)
         report.to_add.append(index)
         for tag in task.get('topic_tags', []):
             material, corrected = resolve_material(tag, materials_cache)

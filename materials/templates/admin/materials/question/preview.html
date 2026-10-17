@@ -1,6 +1,7 @@
 <div style="max-width: 640px; line-height: 1.6;">
     {% if problem %}<p style="color: var(--error-fg); font-weight: bold;">⚠ {{ problem }}</p>{% endif %}
-    <p style="margin-top: 0;">{{ question.text|linebreaksbr }}</p>
+    {# Як на сайті: текст завдання може містити <br>, <i> тощо #}
+    <p style="margin-top: 0;">{{ question.text|safe }}</p>
     {% if question.svg_code %}
         <div style="max-width: 360px; background: #fff; border-radius: 8px; padding: 8px;">{{ question.svg_code|safe }}</div>
     {% elif question.image %}

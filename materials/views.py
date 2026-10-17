@@ -1547,7 +1547,7 @@ def math_sprint_game(request):
   questions_list = []
   for q in qs:
     opts = [
-        {'text': o.text, 'is_correct': o.is_correct} for o in q.options.all()
+        {'text': o.body, 'is_correct': o.is_correct} for o in q.options.all()
     ]
     if len(opts) >= 2 and any(o['is_correct'] for o in opts):
       questions_list.append({
