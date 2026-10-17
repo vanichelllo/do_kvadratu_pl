@@ -33,6 +33,10 @@ if not SECRET_KEY:
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # Render приймає HTTPS і передає запит застосунку з цим заголовком — щоб Django знав, що з'єднання захищене
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Браузер рік відкриває сайт лише через HTTPS (без субдоменів — не всі вони можуть мати сертифікат)
+    SECURE_HSTS_SECONDS = 31536000
 
 # ДОЗВОЛЯЄМО НАШІ ДОМЕНИ ТА ЛОКАЛЬНІ ХОСТИ
 ALLOWED_HOSTS = [

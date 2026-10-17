@@ -139,7 +139,7 @@
 Сайт показує файл усередині рамки (iframe) і керує ним ззовні, тому ці правила не можна порушувати:
 
 1. **Один самодостатній файл.** Увесь CSS — у `<style>` в `<head>`, увесь JS — у `<script>` перед `</body>`. Тег `</head>` обов'язковий: сайт вставляє перед ним свої стилі.
-2. **Зовнішні ресурси — лише MathJax 3** (`https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js`) з конфігурацією з шаблону. Жодних інших бібліотек, шрифтів, зображень з інтернету.
+2. **Зовнішні ресурси — лише MathJax 3** (`https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js`) з конфігурацією з шаблону. Жодних інших бібліотек, шрифтів, зображень з інтернету.
 3. **Ілюстрації — тільки вбудований SVG** (статичний або згенерований JS). Без `<img>`, без base64. Розмір файлу — до 100 КБ.
 4. **Навігація:** слайди — `<section class="slide-card" data-slide="N">`, перший має клас `active`. Перемикання — функцією `goToSlide(n)`. Клавіші: `→` і пробіл — вперед, `←` — назад, `F` — повний екран. **Кнопки «Назад/Вперед» сайту надсилають у рамку саме натискання ← / →**, тому обробник `keydown` на `document` обов'язковий.
 5. **Не змінюй службові id і класи** з шаблону: `navbar`, `brand-logo-container`, `btn-theme`, `btn-fullscreen`, `progress-bar`, `presentation-viewport`, `slide-card`, `controls-footer`, `slide-counter`, `btn-prev`, `btn-next`. Сайт за ними ховає логотип і кнопки та підлаштовує висоту.
@@ -166,7 +166,7 @@
             svg: { fontCache: 'global' }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
     <style>
         :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
         body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }

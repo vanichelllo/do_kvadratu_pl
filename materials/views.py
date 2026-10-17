@@ -29,7 +29,7 @@ from django.core.cache import cache
 from users.forms import UserProfileForm
 from users.views import terms_required
 from .forms import StudentReportForm
-from .games import record_game_answer
+from .games import record_game_answer, short_answer_matches
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
@@ -217,9 +217,7 @@ def diagnostic_test_view(request):
                 saved_answers['q_short'][str(question.id)] = user_answer
 
                 if user_answer:
-                    user_clean = str(user_answer).strip().replace(',', '.')
-                    correct_clean = str(question.correct_short_answer).strip().replace(',', '.')
-                    if user_clean == correct_clean:
+                    if short_answer_matches(user_answer, question.correct_short_answer):
                         total_score += 2
                         stat['correct'] += 2
 
@@ -364,9 +362,7 @@ def practice_session_view(request, material_id):
                 q_result['user_answer'] = user_ans
 
                 if user_ans:
-                    user_clean = str(user_ans).strip().replace(',', '.')
-                    correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
-                    if user_clean == correct_clean:
+                    if short_answer_matches(user_ans, q.correct_short_answer):
                         total_score += 2
                         q_result['points_earned'] = 2
                         q_result['is_correct'] = True
@@ -1247,9 +1243,7 @@ def view_attempt_details(request, attempt_id):
             user_ans = saved_answers.get('q_short', {}).get(str(q.id))
             q_result['user_answer'] = user_ans
             if user_ans:
-                user_clean = str(user_ans).strip().replace(',', '.')
-                correct_clean = str(q.correct_short_answer).strip().replace(',', '.')
-                if user_clean == correct_clean:
+                if short_answer_matches(user_ans, q.correct_short_answer):
                     q_result['points_earned'] = 2
                     q_result['is_correct'] = True
 
