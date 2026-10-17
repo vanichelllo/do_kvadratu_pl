@@ -87,7 +87,7 @@ def questions_in_order(q_id_list):
     if not q_id_list:
         return []
     preserved_order = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(q_id_list)])
-    return (Question.objects.filter(id__in=q_id_list)
+    return (Question.objects.filter(id__in=q_id_list).select_related('curriculum_topic')
             .prefetch_related('options', 'match_items__correct_option').order_by(preserved_order))
 
 
@@ -159,69 +159,79 @@ def safe_back_url(request, fallback='cabinet'):
 # ==========================================
 # ОНОВЛЕНИЙ ГЕНЕРАТОР ДІАГНОСТИКИ
 # ==========================================
+def diagnostic_stats(saved_answers):
+    """Бали й статистика за темами зі збережених відповідей діагностики — і щойно надісланої, і старої з бази."""
+    topics_stats = {}
+    total_score = max_score = 0
+    for question in questions_in_order(parse_id_list(saved_answers.get('question_ids', ''))):
+        topic = question.curriculum_topic
+        stat = topics_stats.setdefault(topic.id if topic else 0, {'topic': topic, 'correct': 0, 'total': 0})
+        key = str(question.id)
+
+        if question.question_type == 'CHOICE':
+            points, earned = 1, 0
+            selected_option = find_option(question, saved_answers.get('q_choice', {}).get(key))
+            if selected_option and selected_option.is_correct:
+                earned = 1
+        elif question.question_type == 'MATCH':
+            points = 3
+            answers = saved_answers.get('q_match', {}).get(key, {})
+            earned = sum(to_int(answers.get(str(item.id))) == item.correct_option_id
+                         for item in question.match_items.all())
+        else:
+            points = 2
+            earned = 2 if short_answer_matches(saved_answers.get('q_short', {}).get(key),
+                                               question.correct_short_answer) else 0
+
+        stat['total'] += points
+        stat['correct'] += earned
+        max_score += points
+        total_score += earned
+    return total_score, max_score, topics_stats
+
+
+def diagnostic_summary(topics_stats):
+    """Слабкі теми (менше 50%), матеріали для них і статистика за темами в порядку курсу."""
+    weak_topics = [s['topic'] for s in topics_stats.values() if
+                   s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
+    recommendations = []
+    if weak_topics:
+        recommendations = sorted(
+            StudyMaterial.objects.filter(curriculum_topic__in=weak_topics, is_published=True)
+            .select_related('curriculum_topic').distinct(),
+            key=lambda m: m.curriculum_topic.order if m.curriculum_topic else 999)
+    sorted_stats = sorted([s for s in topics_stats.values() if s['topic']], key=lambda s: s['topic'].order)
+    return weak_topics, recommendations, sorted_stats
+
+
+def user_diagnostics(user):
+    return (PracticeAttempt.objects.filter(user=user, material__title=DIAGNOSTIC_MATERIAL_TITLE)
+            .defer('material__html_content').order_by('-created_at'))
+
+
 def diagnostic_test_view(request):
     if request.method == 'POST':
         question_ids_str = request.POST.get('question_ids', '')
-        q_id_list = parse_id_list(question_ids_str)
-
         saved_answers = {
             'q_choice': {}, 'q_match': {}, 'q_short': {},
             'question_ids': question_ids_str, 'note': 'Вхідна діагностика НМТ'
         }
+        for question in questions_in_order(parse_id_list(question_ids_str)):
+            key = str(question.id)
+            if question.question_type == 'MATCH':
+                saved_answers['q_match'][key] = {str(item.id): request.POST.get(f'match_{item.id}')
+                                                 for item in question.match_items.all()}
+            else:
+                bucket = 'q_choice' if question.question_type == 'CHOICE' else 'q_short'
+                saved_answers[bucket][key] = request.POST.get(f'question_{question.id}')
 
-        questions = questions_in_order(q_id_list)
+        total_score, max_score, topics_stats = diagnostic_stats(saved_answers)
+        percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
-        topics_stats = {}
-        total_score = 0
-        max_score = 0
-
-        for question in questions:
-            topic = question.curriculum_topic
-            topic_id = topic.id if topic else 0
-
-            if topic_id not in topics_stats:
-                topics_stats[topic_id] = {'topic': topic, 'correct': 0, 'total': 0}
-
-            stat = topics_stats[topic_id]
-
-            if question.question_type == 'CHOICE':
-                stat['total'] += 1
-                max_score += 1
-                user_answer = request.POST.get(f'question_{question.id}')
-                saved_answers['q_choice'][str(question.id)] = user_answer
-
-                selected_option = find_option(question, user_answer)
-                if selected_option and selected_option.is_correct:
-                    total_score += 1
-                    stat['correct'] += 1
-
-            elif question.question_type == 'MATCH':
-                stat['total'] += 3
-                max_score += 3
-                match_correct_count = 0
-                saved_answers['q_match'][str(question.id)] = {}
-
-                for item in question.match_items.all():
-                    user_match_answer = request.POST.get(f'match_{item.id}')
-                    saved_answers['q_match'][str(question.id)][str(item.id)] = user_match_answer
-
-                    if to_int(user_match_answer) == item.correct_option_id:
-                        match_correct_count += 1
-                total_score += match_correct_count
-                stat['correct'] += match_correct_count
-
-            elif question.question_type == 'SHORT':
-                stat['total'] += 2
-                max_score += 2
-                user_answer = request.POST.get(f'question_{question.id}')
-                saved_answers['q_short'][str(question.id)] = user_answer
-
-                if user_answer:
-                    if short_answer_matches(user_answer, question.correct_short_answer):
-                        total_score += 2
-                        stat['correct'] += 2
-
+        previous_percent = None
         if request.user.is_authenticated:
+            previous = user_diagnostics(request.user).first()
+            previous_percent = previous.get_percent() if previous else None
             diag_material, _ = StudyMaterial.objects.get_or_create(
                 title=DIAGNOSTIC_MATERIAL_TITLE,
                 defaults={'price': 0, 'is_published': False, 'is_free': True}
@@ -231,23 +241,12 @@ def diagnostic_test_view(request):
                 score=total_score, max_score=max_score, answers_json=saved_answers
             )
 
-        weak_topics = [s['topic'] for s in topics_stats.values() if
-                       s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
-
-        recommended_materials = set()
-        if weak_topics:
-            recommended_materials.update(
-                StudyMaterial.objects.filter(curriculum_topic__in=weak_topics, is_published=True).distinct())
-
-        percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
-
-        recommendations_list = sorted(list(recommended_materials),
-                                      key=lambda m: m.curriculum_topic.order if m.curriculum_topic else 999)
-        sorted_stats = sorted([s for s in topics_stats.values() if s['topic']], key=lambda s: s['topic'].order)
-
+        weak_topics, recommendations, sorted_stats = diagnostic_summary(topics_stats)
         return render(request, 'materials/diagnostic_results.html', {
             'total_score': total_score, 'max_score': max_score, 'percent_total': percent_total,
-            'weak_topics': weak_topics, 'topics_stats': sorted_stats, 'recommendations': recommendations_list,
+            'weak_topics': weak_topics, 'topics_stats': sorted_stats, 'recommendations': recommendations,
+            'previous_percent': previous_percent,
+            'percent_change': None if previous_percent is None else percent_total - previous_percent,
         })
 
     buckets = {}
@@ -687,6 +686,15 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context['my_attempts'] = PracticeAttempt.objects.filter(
             user=self.request.user
         ).select_related('material').defer('material__html_content').order_by('-created_at')[:15]
+
+        # Діагностики: динаміка від разу до разу і що повторити за останньою
+        diagnostics = list(user_diagnostics(self.request.user)[:10])
+        for attempt, previous in zip(diagnostics, diagnostics[1:] + [None]):
+            attempt.change = attempt.get_percent() - previous.get_percent() if previous else None
+        context['diagnostics'] = diagnostics
+        if diagnostics:
+            context['diagnostic_weak_topics'], context['diagnostic_recommendations'], _ = diagnostic_summary(
+                diagnostic_stats(diagnostics[0].answers_json or {})[2])
 
         if is_teacher(self.request.user):
             context['students_attempts'] = PracticeAttempt.objects.filter(
