@@ -22,13 +22,14 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, Count, F, Prefetch, Q, When
+from django.db.models import Case, F, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
 from .forms import StudentReportForm
+from .games import record_game_answer
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
@@ -371,6 +372,7 @@ def practice_session_view(request, material_id):
                         q_result['is_correct'] = True
                 max_score += 2
 
+            record_game_answer(request.user, q, q_result['is_correct'])
             results_data.append(q_result)
 
         PracticeAttempt.objects.create(
@@ -1458,33 +1460,11 @@ def math_sprint_game(request):
   """Ігровий тренажер 'Математичний Спринт (60 секунд)'."""
   import random
   from django.shortcuts import render
-  from .models import Question, StudyMaterial
+  from .games import game_materials, topics_with_enough
+  from .models import Question
 
-  # Гра без нагород: результат лишається в браузері. Доступні теми залежать від ролі користувача
-  user = request.user
-  if user.is_authenticated and (
-      user.is_staff
-      or user.is_superuser
-      or getattr(user, 'role', '') == 'teacher'
-  ):
-    available_materials = StudyMaterial.objects.filter(is_bundle=False)
-    access_label = 'Повний доступ викладача'
-  elif user.is_authenticated:
-    purchased_ids = list(
-        user.purchased_materials.values_list('id', flat=True)
-    )
-    free_ids = list(
-        StudyMaterial.objects.filter(is_free=True).values_list('id', flat=True)
-    )
-    available_materials = StudyMaterial.objects.filter(
-        id__in=set(purchased_ids + free_ids), is_bundle=False
-    )
-    access_label = 'Ваші відкриті та безкоштовні теми'
-  else:
-    available_materials = StudyMaterial.objects.filter(
-        is_free=True, is_bundle=False
-    )
-    access_label = 'Безкоштовні демо-теми'
+  # Гра без нагород. Доступні теми залежать від ролі користувача
+  available_materials, access_label = game_materials(request.user)
 
   # Спринт тренує швидкість у простих діях: беремо легкі завдання без рисунка, середні — лише якщо легких мало
   sprint_qs = Question.objects.filter(
@@ -1494,11 +1474,7 @@ def math_sprint_game(request):
   )
 
   # У списку лише теми, де вистачає завдань для гри
-  counts = dict(
-      sprint_qs.filter(materials__in=available_materials)
-      .values('materials').annotate(n=Count('id', distinct=True)).values_list('materials', 'n')
-  )
-  available_materials = [m for m in available_materials if counts.get(m.id, 0) >= SPRINT_MIN_QUESTIONS]
+  available_materials = topics_with_enough(sprint_qs, available_materials, SPRINT_MIN_QUESTIONS)
 
   selected_material = None
   material_id = request.GET.get('material_id')
@@ -1520,11 +1496,13 @@ def math_sprint_game(request):
     scope_ids = {m.id for m in scope}
     qs = Question.objects.filter(id__in=sampled_ids).prefetch_related('options', 'materials')
     for q in qs:
-      opts = [{'text': o.body, 'is_correct': o.is_correct} for o in q.options.all()]
+      # Перевірка — у браузері (без нагород); id потрібні, щоб записати помилку в «Роботу над помилками»
+      opts = [{'id': o.id, 'text': o.body, 'is_correct': o.is_correct} for o in q.options.all()]
       if len(opts) < 2 or sum(o['is_correct'] for o in opts) != 1:
         continue
       lesson = next((m for m in q.materials.all() if m.id in scope_ids), None)
       questions_list.append({
+          'id': q.id,
           'text': q.text,
           'options': opts,
           'lesson_title': lesson.title if lesson else '',

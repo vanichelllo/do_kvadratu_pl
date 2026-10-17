@@ -407,6 +407,29 @@ class MatchItem(models.Model):
         return f"{self.text} -> {self.correct_option.text}"
 
 
+class GameMistake(models.Model):
+    """Завдання, у якому учень помилився (у практиці чи іграх). Гра «Робота над помилками» дає його знову,
+    доки учень не відповість правильно MASTERED_STREAK рази поспіль, — тоді запис зникає."""
+    MASTERED_STREAK = 2
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='game_mistakes',
+                             verbose_name="Учень")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='game_mistakes',
+                                 verbose_name="Завдання")
+    correct_streak = models.PositiveSmallIntegerField(default=0, verbose_name="Правильних поспіль")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Перша помилка")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Остання відповідь")
+
+    class Meta:
+        verbose_name = "Помилка учня"
+        verbose_name_plural = "Помилки учнів"
+        ordering = ['updated_at']
+        constraints = [models.UniqueConstraint(fields=['user', 'question'], name='unique_game_mistake')]
+
+    def __str__(self):
+        return f"{self.user} — завдання #{self.question_id}"
+
+
 class TutorStudentRequest(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Очікує підтвердження'),
