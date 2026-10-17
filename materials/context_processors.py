@@ -1,4 +1,6 @@
+
 from django.conf import settings
+from django.utils import timezone
 from django.utils.encoding import escape_uri_path
 
 from .models import Cart
@@ -11,6 +13,16 @@ def promo(request):
         'promo_start': Cart.PROMO_START,
         'promo_end': Cart.PROMO_END,
     }
+
+
+HALLOWEEN_START = (10, 17)  # (місяць, день) — щороку, включно
+HALLOWEEN_END = (11, 1)
+
+
+def seasonal(request):
+    """Святкове оформлення головної — лише в його дати (за київським часом)."""
+    today = timezone.localdate()
+    return {'halloween_active': HALLOWEEN_START <= (today.month, today.day) <= HALLOWEEN_END}
 
 
 def seo(request):

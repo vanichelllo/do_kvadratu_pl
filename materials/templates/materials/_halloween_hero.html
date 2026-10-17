@@ -1,0 +1,47 @@
+{# Хелловінські прикраси банера на головній: місяць, павутиння, кажани. Лише в дати з context_processors.seasonal #}
+<style>
+    .hero-section.halloween { background: radial-gradient(circle at 85% 18%, #3d4f8f 0%, var(--brand-blue) 45%, #1f2d55 100%); box-shadow: 12px 12px 0px #ff7a00; }
+    .hw-deco { position: absolute; pointer-events: none; user-select: none; }
+    .hw-moon { top: 26px; right: 34px; width: 74px; height: 74px; border-radius: 50%; background: #ffe9a8; box-shadow: 0 0 40px 10px rgba(255, 233, 168, 0.35); }
+    .hw-moon::after { content: ''; position: absolute; top: 18px; left: 16px; width: 14px; height: 14px; border-radius: 50%; background: rgba(0, 0, 0, 0.07); box-shadow: 26px 18px 0 -2px rgba(0, 0, 0, 0.07), 8px 32px 0 -4px rgba(0, 0, 0, 0.06); }
+    .hw-web { top: 0; width: 130px; height: 130px; opacity: 0.55; }
+    .hw-web-left { left: 0; }
+    .hw-web-right { right: 0; transform: scaleX(-1); opacity: 0.3; }
+    .hw-bat { width: 46px; top: 30%; left: -60px; animation: hw-fly 14s linear infinite; }
+    .hw-bat path { fill: #11182e; }
+    .hw-bat-2 { width: 32px; top: 62%; animation-duration: 18s; animation-delay: -7s; }
+    .hw-bat-3 { width: 26px; top: 14%; animation-duration: 22s; animation-delay: -15s; }
+    @keyframes hw-fly {
+        0% { transform: translate(0, 0); }
+        25% { transform: translate(30vw, -30px); }
+        50% { transform: translate(60vw, 20px); }
+        75% { transform: translate(90vw, -20px); }
+        100% { transform: translate(130vw, 10px); }
+    }
+    .hw-badge { display: inline-block; background: #ff7a00; color: #fff; border-radius: 30px; padding: 6px 16px; font-weight: 900; font-size: 0.95rem; letter-spacing: 1px; margin-bottom: 18px; position: relative; }
+    .hero-section.halloween .hero-logo, .hero-section.halloween .hero-title, .hero-section.halloween .hero-subtitle, .hero-section.halloween .hero-buttons { position: relative; }
+    @media (max-width: 600px) {
+        .hw-moon { width: 48px; height: 48px; top: 16px; right: 16px; }
+        .hw-web { width: 80px; height: 80px; }
+        .hw-badge { font-size: 0.72rem; padding: 5px 12px; white-space: nowrap; margin-top: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .hw-bat { animation: none; left: 8%; } .hw-bat-2, .hw-bat-3 { display: none; } }
+</style>
+<div class="hw-deco hw-moon" aria-hidden="true"></div>
+<svg class="hw-deco hw-web hw-web-left" viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.2">
+    <path d="M0 0 L100 30 M0 0 L80 80 M0 0 L30 100 M0 0 L100 0 M0 0 L0 100"/>
+    <path d="M25 0 Q22 9 24 8 Q14 14 18 18 Q10 20 8 24 Q2 22 0 25"/>
+    <path d="M50 0 Q45 16 48 15 Q30 28 36 36 Q20 40 16 48 Q5 45 0 50"/>
+    <path d="M78 0 Q70 24 74 23 Q46 42 55 55 Q32 60 24 74 Q8 70 0 78"/>
+</svg>
+<svg class="hw-deco hw-web hw-web-right" viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#fff" stroke-width="1.2">
+    <path d="M0 0 L100 30 M0 0 L80 80 M0 0 L30 100"/>
+    <path d="M50 0 Q45 16 48 15 Q30 28 36 36 Q20 40 16 48 Q5 45 0 50"/>
+    <path d="M78 0 Q70 24 74 23 Q46 42 55 55 Q32 60 24 74 Q8 70 0 78"/>
+</svg>
+{% for n in "123" %}
+<svg class="hw-deco hw-bat hw-bat-{{ n }}" viewBox="0 0 64 32" aria-hidden="true">
+    <path d="M32 10 C29 4 27 6 26 9 C20 2 10 2 0 8 C6 10 8 14 8 18 C12 15 17 15 20 19 C23 15 27 16 29 20 L32 26 L35 20 C37 16 41 15 44 19 C47 15 52 15 56 18 C56 14 58 10 64 8 C54 2 44 2 38 9 C37 6 35 4 32 10 Z"/>
+</svg>
+{% endfor %}
+<div class="hw-badge">🎃 ХЕЛЛОВІН НА «ДО КВАДРАТУ»</div>

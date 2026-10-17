@@ -345,9 +345,16 @@
     </script>
 </head>
 <body>
+    {% if halloween_active %}{% include '_halloween_site.html' %}{% endif %}
 
     <!-- НАВІГАЦІЯ -->
     <nav class="navbar">
+        {% if halloween_active %}<svg class="hw-site-web" viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#344e86" stroke-width="1.2" style="transform: scaleX(-1);">
+            <path d="M0 0 L100 30 M0 0 L80 80 M0 0 L30 100 M0 0 L100 0 M0 0 L0 100"/>
+            <path d="M25 0 Q22 9 24 8 Q14 14 18 18 Q10 20 8 24 Q2 22 0 25"/>
+            <path d="M50 0 Q45 16 48 15 Q30 28 36 36 Q20 40 16 48 Q5 45 0 50"/>
+            <path d="M78 0 Q70 24 74 23 Q46 42 55 55 Q32 60 24 74 Q8 70 0 78"/>
+        </svg>{% endif %}
         <a href="{% url 'home' %}" class="nav-logo">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" aria-hidden="true">
               <rect width="280" height="280" rx="40" ry="40" fill="#344e86" />
@@ -427,6 +434,7 @@
 
     <!-- ПІДВАЛ -->
     <footer class="site-footer">
+        {% if halloween_active %}<div class="hw-site-footer">🎃 Моторошно щасливого Хелловіну! Хай усі корені будуть справжніми 👻</div>{% endif %}
         <div style="font-weight: 800; font-size: 1.1rem; margin-bottom: 10px;">© 2026 ДО КВАДРАТУ. Всі права захищено.</div>
 
         <div style="font-size: 0.9rem; margin-bottom: 15px; color: #e5e7eb; line-height: 1.5;">

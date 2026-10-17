@@ -285,7 +285,8 @@
 </style>
 
 <!-- HERO SECTION -->
-<div class="hero-section">
+<div class="hero-section{% if halloween_active %} halloween{% endif %}">
+    {% if halloween_active %}{% include 'materials/_halloween_hero.html' %}{% endif %}
 
     <!-- ВАШ БІЛИЙ SVG ЛОГОТИП -->
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" class="hero-logo">
@@ -347,6 +348,9 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- ХЕЛЛОВІН (17.10–01.11) -->
+    {% if halloween_active %}{% include 'materials/_halloween_card.html' %}{% endif %}
 
     <!-- Банер 2: Батьківський контроль -->
     <div class="promo-banner promo-bot" style="background-color: #f0f9ff; border-color: #0088cc;">
