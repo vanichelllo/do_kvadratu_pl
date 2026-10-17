@@ -1836,3 +1836,26 @@ class GamesTests(BaseTestCase):
         response = self.client.get('/game/mistakes/')
         self.assertEqual([item['id'] for item in response.context['questions']], [q.id])
         self.assertContains(self.client.get('/game/'), 'Завдань у списку: 1')
+
+
+class PlatformHardeningTests(BaseTestCase):
+    def test_practice_accepts_equivalent_short_answers(self):
+        material = StudyMaterial.objects.create(title='1. Тема', price=0, is_free=True, is_published=True)
+        q = Question.objects.create(text='Половина', question_type='SHORT', correct_short_answer='0.5')
+        q.materials.add(material)
+        self.client.force_login(self.make_user('kid@example.com'))
+        response = self.client.post(f'/practice/{material.id}/', {'question_ids': str(q.id), f'q_{q.id}': '0,50'})
+        self.assertEqual(response.context['total_score'], 2)
+
+    def test_hsts_header_on_https(self):
+        response = self.client.get('/', secure=True)
+        self.assertEqual(response['Strict-Transport-Security'], 'max-age=31536000')
+
+    def test_stored_lessons_get_pinned_mathjax(self):
+        import importlib
+        from django.apps import apps
+        material = StudyMaterial.objects.create(
+            title='Урок', html_content='<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>')
+        importlib.import_module('materials.migrations.0039_pin_mathjax_in_lessons').forwards(apps, None)
+        material.refresh_from_db()
+        self.assertIn('npm/mathjax@3.2.2/es5', material.html_content)
