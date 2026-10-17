@@ -179,8 +179,8 @@ TASKS = [
         "svg_code": "",
         "options": [
             (r"А) $0$", False),
-            (r"Б) $3$", False),
-            (r"В) $0; 3$", True),
+            (r"Б) $3$", True),
+            (r"В) $0; 3$", False),
             (r"Г) $-3; 0$", False),
             (r"Д) Коренів немає", False)
         ],

@@ -232,7 +232,7 @@ TASKS = [
         "text": r"Спростіть вираз $\frac{1}{x - 2} - \frac{1}{x + 2}$.",
         "svg_code": "",
         "options": [
-            (r"А) $\frac{4}{x^2 - -4}$", False),
+            (r"А) $\frac{4}{x^2 + 4}$", False),
             (r"Б) $0$", False),
             (r"В) $\frac{5}{x^2 - 4}$", False),
             (r"Г) $\frac{4}{x^2 - 4}$", True),
@@ -248,7 +248,7 @@ TASKS = [
         "options": [
             (r"А) $\frac{7}{x^2 - 9}$", False),
             (r"Б) $0$", False),
-            (r"В) $\frac{6}{x^2 - -9}$", False),
+            (r"В) $\frac{6}{x^2 + 9}$", False),
             (r"Г) $\frac{3}{x^2 - 9}$", False),
             (r"Д) $\frac{6}{x^2 - 9}$", True)
         ],
