@@ -1517,6 +1517,17 @@ class BankImportTests(BaseTestCase):
         self.assertEqual(report.to_add, [1, 3, 5])
         self.assertEqual([i for i, _ in report.duplicates], [2])
 
+    def test_task_topic_overrides_file_topic(self):
+        # Файл з усіма банками: тема кожного завдання — у полі "topic"
+        topic21 = make_nmt_topic('21. Показникові рівняння')
+        source = ('TOPIC_NAME = "Усі банки завдань"\nTASKS = [\n'
+                  '{"type": "SHORT", "difficulty": 1, "text": "a", "answer": "1", "topic": "21. Показникові рівняння"},\n'
+                  '{"type": "SHORT", "difficulty": 1, "text": "b", "answer": "2", "topic": "34. Теорема косинусів та теорема синусів"},\n]')
+        self.upload(source)
+        self.client.post(self.url, {'action': 'import'})
+        self.assertEqual(Question.objects.get(text='a').curriculum_topic, topic21)
+        self.assertEqual(Question.objects.get(text='b').curriculum_topic, self.topic34)
+
     def test_import_adds_tasks_and_binds_typo_tag_to_lesson_34(self):
         self.upload(BANK_SAMPLE)
         response = self.client.post(self.url, {'action': 'import'})
