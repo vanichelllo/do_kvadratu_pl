@@ -21,7 +21,7 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, F, Q, When
+from django.db.models import Case, F, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
@@ -33,7 +33,7 @@ from .forms import StudentReportForm
 from .models import (
     StudyMaterial, Cart, CartItem, Order, OrderItem, Question,
     PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
-    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic
+    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION
 )
 
 from rest_framework.decorators import api_view
@@ -627,6 +627,7 @@ class MaterialDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         material = self.object
         context['is_owned'] = user_owns_material(self.request.user, material)
+        context['default_description'] = DEFAULT_MATERIAL_DESCRIPTION
         context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
 
         if material.is_bundle:
@@ -643,8 +644,9 @@ class CabinetView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        purchased_qs = self.request.user.purchased_materials.select_related('curriculum_topic__chapter__grade__subject')
-        purchased_list = list(purchased_qs)
+        with_tree = 'curriculum_topic__chapter__grade__subject'
+        purchased_list = list(self.request.user.purchased_materials.select_related(with_tree).prefetch_related(
+            Prefetch('included_materials', queryset=StudyMaterial.objects.select_related(with_tree))))
 
         def get_number(material):
             if material.curriculum_topic:
@@ -658,6 +660,26 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
+
+        # Бібліотека: окремі теми групуємо за курсом і класом (список уже відсортовано за деревом тем)
+        library_groups = []
+        for material in purchased_list:
+            if material.is_bundle:
+                continue
+            grade = material.curriculum_grade
+            label = grade.short_label if grade else 'Інші матеріали'
+            if not library_groups or library_groups[-1]['label'] != label:
+                library_groups.append({'label': label, 'materials': []})
+            library_groups[-1]['materials'].append(material)
+        context['library_groups'] = library_groups
+
+        # Пакет сам не має контенту — показуємо його теми; посилання лише на ті, до яких є доступ
+        owned_ids = {m.id for m in purchased_list}
+        context['library_bundles'] = [
+            {'bundle': bundle, 'topics': [{'material': m, 'owned': m.id in owned_ids}
+                                          for m in sorted(bundle.included_materials.all(), key=get_number)]}
+            for bundle in purchased_list if bundle.is_bundle
+        ]
 
         context['form'] = UserProfileForm(instance=self.request.user)
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)

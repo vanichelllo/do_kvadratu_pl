@@ -21,8 +21,8 @@ User = get_user_model()
 
 def make_nmt_topic(name, chapter_order=1):
     """Тема з курсу НМТ (класифікатор: курс → клас → розділ → тема)."""
-    subject, _ = CurriculumSubject.objects.get_or_create(name='Підготовка до НМТ / ЗНО')
-    grade, _ = CurriculumGrade.objects.get_or_create(subject=subject, name='НМТ')
+    subject, _ = CurriculumSubject.objects.get_or_create(name='Підготовка до НМТ / ЗНО', defaults={'order': 5})
+    grade, _ = CurriculumGrade.objects.get_or_create(subject=subject, name='Підготовка до НМТ')
     chapter, _ = CurriculumChapter.objects.get_or_create(grade=grade, name=f'Розділ {chapter_order}',
                                                          order=chapter_order)
     return CurriculumTopic.objects.create(chapter=chapter, name=name)
@@ -272,7 +272,7 @@ class SiteIconTests(BaseTestCase):
 
 
 class CabinetSectionsTests(BaseTestCase):
-    def test_teacher_sections_collapse_like_library(self):
+    def test_teacher_sections_collapsed_library_open(self):
         boss = self.make_user('boss@example.com', is_staff=True)
         kid = self.make_user('kid@example.com')
         TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
@@ -281,10 +281,14 @@ class CabinetSectionsTests(BaseTestCase):
         self.client.force_login(boss)
         html = self.client.get('/cabinet/').content.decode()
         for key in ('journal', 'students', 'library', 'topup', 'review', 'settings'):
-            # Розділ — <details> без атрибута open (згорнутий), заголовок — <summary> (відкривається натисканням)
+            # Розділ — <details> з заголовком <summary> (згортається натисканням); відкрита за замовчуванням
+            # лише бібліотека — основний вміст кабінету
             tag = re.search(rf'<details\b[^>]*\bdata-section="{key}"[^>]*>', html)
             self.assertIsNotNone(tag, key)
-            self.assertNotRegex(tag.group(0), r'\sopen(?=[\s>=])', key)
+            if key == 'library':
+                self.assertRegex(tag.group(0), r'\sopen(?=[\s>=])', key)
+            else:
+                self.assertNotRegex(tag.group(0), r'\sopen(?=[\s>=])', key)
             self.assertRegex(html, rf'data-section="{key}"[^>]*>\s*<summary>', key)
 
     def test_student_does_not_see_teacher_sections(self):
@@ -298,7 +302,7 @@ class CabinetSectionsTests(BaseTestCase):
         self.assertNotContains(response, 'data-section="journal"')
         self.assertNotContains(response, 'data-section="students"')
         for key in ('attempts', 'lessons', 'library'):
-            self.assertContains(response, f'data-section="{key}">', msg_prefix=key)
+            self.assertContains(response, f'data-section="{key}"', msg_prefix=key)
 
     def test_settings_open_when_form_has_errors(self):
         self.client.force_login(self.make_user('kid@example.com'))
@@ -1563,3 +1567,39 @@ class BankImportTests(BaseTestCase):
                 _, tasks = parse_bank_source(f.read())
             for i, task in enumerate(tasks, start=1):
                 self.assertEqual(validate_task(task), [], f'{path} №{i}')
+
+
+class LibraryAndStorefrontTests(BaseTestCase):
+    def setUp(self):
+        self.nmt_topic = make_nmt_topic('1. Числа')
+        subject = CurriculumSubject.objects.create(name='Алгебра (7-9 класи)', order=2)
+        grade = CurriculumGrade.objects.create(subject=subject, name='8 клас', number=8)
+        chapter = CurriculumChapter.objects.create(grade=grade, name='Розділ 1')
+        self.school_topic = CurriculumTopic.objects.create(chapter=chapter, name='Квадратні рівняння')
+        self.nmt = StudyMaterial.objects.create(title='1. Числа', price=25, is_published=True,
+                                                curriculum_topic=self.nmt_topic)
+        self.school = StudyMaterial.objects.create(title='Квадратні рівняння', price=30, is_published=True,
+                                                   curriculum_topic=self.school_topic)
+        self.not_owned = StudyMaterial.objects.create(title='2. Не куплена', price=25, is_published=True)
+        self.bundle = StudyMaterial.objects.create(title='Вся алгебра', price=399, is_bundle=True, is_published=True)
+        self.bundle.included_materials.add(self.nmt, self.not_owned)
+
+    def test_storefront_shows_course_and_grade_badge(self):
+        page = self.client.get('/materials/')
+        self.assertContains(page, 'Алгебра · 8 клас')
+        self.assertContains(page, 'Підготовка до НМТ')
+
+    def test_library_groups_by_grade_and_lists_bundle_topics(self):
+        kid = self.make_user('lib@example.com')
+        kid.purchased_materials.add(self.nmt, self.school, self.bundle)
+        self.client.force_login(kid)
+        response = self.client.get('/cabinet/')
+        groups = [(g['label'], [m.title for m in g['materials']]) for g in response.context['library_groups']]
+        self.assertEqual(groups, [('Алгебра · 8 клас', ['Квадратні рівняння']), ('Підготовка до НМТ', ['1. Числа'])])
+        [entry] = response.context['library_bundles']
+        self.assertEqual([(t['material'].title, t['owned']) for t in entry['topics']],
+                         [('1. Числа', True), ('2. Не куплена', False)])
+        # Пакет не веде в порожню читалку, а не куплена тема — не посилання
+        self.assertNotContains(response, f'/download/{self.bundle.id}/')
+        self.assertNotContains(response, f'/download/{self.not_owned.id}/')
+        self.assertContains(response, f'/download/{self.nmt.id}/')

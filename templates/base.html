@@ -130,6 +130,13 @@
             text-transform: uppercase;
         }
 
+        .nav-logout { display: inline; margin-left: 25px; }
+
+        /* Вузький ПК: для залогіненого меню (кабінет, кошик, вихід) відступи 25px не вміщуються */
+        @media (min-width: 1200px) and (max-width: 1439px) {
+            .nav-links a, .nav-logout { margin-left: 16px; }
+        }
+
         /* Жовтий текст на білому погано видно — при наведенні підкреслюємо жовтим, а текст лишається синім */
         .nav-links a:hover {
             text-decoration: underline;
@@ -387,7 +394,7 @@
                 <a href="{% url 'cabinet' %}">МІЙ КАБІНЕТ</a>
                 <a href="{% url 'cart_detail' %}">КОШИК</a>
 
-                <form action="{% url 'logout' %}" method="post" style="display:inline; margin-left: 25px;">
+                <form action="{% url 'logout' %}" method="post" class="nav-logout">
                     {% csrf_token %}
                     <button type="submit" class="btn-brand" style="background-color: transparent; border-color: var(--brand-blue); color: var(--brand-blue); box-shadow: none;">ВИЙТИ</button>
                 </form>

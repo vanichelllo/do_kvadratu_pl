@@ -2,6 +2,7 @@ import datetime
 import os
 import io
 import logging
+import re
 from django.db import models
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -25,6 +26,9 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+NMT_SUBJECT_NAME = "Підготовка до НМТ / ЗНО"
+
 
 class CurriculumSubject(models.Model):
     name = models.CharField(max_length=100, verbose_name="Курс (напр. Алгебра 7-9)")
@@ -52,6 +56,13 @@ class CurriculumGrade(models.Model):
     def __str__(self):
         return f"{self.subject.name} - {self.name}"
 
+    @property
+    def short_label(self):
+        """«Алгебра (7-9 класи)» + «8 клас» → «Алгебра · 8 клас»; для НМТ — лише «Підготовка до НМТ»."""
+        if self.subject.name == NMT_SUBJECT_NAME:
+            return self.name
+        return f"{re.sub(r'\s*\(.*?\)', '', self.subject.name)} · {self.name}"
+
 class CurriculumChapter(models.Model):
     grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='chapters', verbose_name="Клас")
     name = models.CharField(max_length=200, verbose_name="Розділ")
@@ -78,6 +89,13 @@ class CurriculumTopic(models.Model):
     def __str__(self):
         return f"{self.chapter.name} -> {self.name}"
 
+DEFAULT_MATERIAL_DESCRIPTION = (
+    "Авторський конспект від освітнього проєкту «До Квадрату», створений з урахуванням 7-річного досвіду "
+    "викладання. Містить лише найголовніше: структуровану теорію без зайвої води, необхідні формули, алгоритми "
+    "розв'язання та детальний розбір типових завдань. Підходить як для вивчення теми з нуля, так і для швидкого повторення."
+)
+
+
 class WithoutHtmlManager(models.Manager):
     """HTML-презентація (до кількох МБ) потрібна лише в читалці. Скрізь інде вона не
     завантажується з бази; при зверненні до material.html_content Django догрузить її окремо."""
@@ -96,7 +114,7 @@ class StudyMaterial(models.Model):
         verbose_name="Опис матеріалу",
         blank=True,
         null=True,
-        default="Авторський конспект від освітнього проєкту «До Квадрату» — це ваш надійний помічник для успішного складання НМТ з математики. Матеріал створений з урахуванням 7-річного досвіду викладання та містить лише найголовніше: структуровану теорію без зайвої води, усі необхідні базові формули, алгоритми розв'язання та детальний розбір типових практичних завдань. Ідеально підходить як для самостійного вивчення теми з нуля, так і для швидкого повторення перед іспитом."
+        default=DEFAULT_MATERIAL_DESCRIPTION
     )
     image = models.ImageField(upload_to='material_images/', blank=True, null=True, verbose_name="Обкладинка (Фото)")
 
@@ -159,6 +177,16 @@ class StudyMaterial(models.Model):
                 logging.getLogger(__name__).exception("Помилка об'єднання PDF з intro.pdf")
 
         super().save(*args, **kwargs)
+
+    @property
+    def curriculum_grade(self):
+        return self.curriculum_topic.chapter.grade if self.curriculum_topic_id else None
+
+    @property
+    def is_nmt(self):
+        # Пакети й старі конспекти без теми в класифікаторі — це матеріали НМТ
+        grade = self.curriculum_grade
+        return grade is None or grade.subject.name == NMT_SUBJECT_NAME
 
     def __str__(self):
         if self.is_free:

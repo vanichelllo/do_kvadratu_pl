@@ -122,6 +122,41 @@
         color: var(--brand-blue);
     }
 
+    /* Групи бібліотеки (курс · клас) і картка пакета зі списком тем */
+    .library-group-title {
+        font-size: 1rem;
+        color: var(--brand-blue);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 25px 0 12px;
+    }
+    .library-group-title:first-child { margin-top: 0; }
+    .bundle-badge {
+        align-self: flex-start;
+        background: var(--brand-yellow);
+        color: var(--brand-blue);
+        font-size: 0.7rem;
+        font-weight: 900;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    .bundle-count { margin: 0 0 12px; color: #6c757d; font-size: 0.9rem; }
+    .bundle-topics summary {
+        cursor: pointer;
+        font-weight: 800;
+        color: var(--brand-blue);
+        padding: 10px 12px;
+        border: 2px solid var(--brand-blue);
+        border-radius: 8px;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    .bundle-topics ul { margin: 12px 0 0; padding-left: 20px; line-height: 1.7; font-size: 0.95rem; }
+    .bundle-topics a { color: var(--brand-blue); font-weight: 600; }
+    .bundle-topics span { color: #6c757d; }
+
     /* Блок поповнення балансу та відгуків */
     .topup-section {
         background: white;
@@ -406,32 +441,68 @@
         {% endif %}
 
         <!-- 4. БІБЛІОТЕКА КОНСПЕКТІВ (Згортається) -->
-        <details class="cab-section" data-section="library">
+        <details class="cab-section" data-section="library" data-default-open open>
             <summary><h2 class="cab-section-title"><span>📚 Бібліотека конспектів</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
             <div class="cab-section-body">
             {% if purchased_materials %}
-                <div class="library-grid">
-                    {% for item in purchased_materials %}
-                    <div class="mac-card">
-                        <div class="mac-header-sm">
-                            <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
-                            <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
-                            <div class="mac-dot-sm" style="background-color: #27c93f;"></div>
+                {% for group in library_groups %}
+                    <h3 class="library-group-title">{{ group.label }}</h3>
+                    <div class="library-grid">
+                        {% for item in group.materials %}
+                        <div class="mac-card">
+                            <div class="mac-header-sm">
+                                <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
+                                <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
+                                <div class="mac-dot-sm" style="background-color: #27c93f;"></div>
+                            </div>
+                            <div class="card-body">
+                                <h3 style="font-size: 1.1rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 15px; line-height: 1.3;">
+                                    {{ item.title }}
+                                </h3>
+                                <a href="{% url 'download_material' item.id %}" target="_blank" class="btn-read-online">
+                                    📖 Читати онлайн
+                                </a>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            {% if item.is_bundle %}
-                                <span style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); font-size: 0.7rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--brand-blue);">📦 ПАКЕТ</span>
-                            {% endif %}
-                            <h3 style="font-size: 1.1rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 15px; line-height: 1.3;">
-                                {{ item.title }}
-                            </h3>
-                            <a href="{% url 'download_material' item.id %}" target="_blank" class="btn-read-online">
-                                📖 Читати онлайн
-                            </a>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
+                {% endfor %}
+
+                {% if library_bundles %}
+                    <h3 class="library-group-title">📦 Мої пакети</h3>
+                    <div class="library-grid">
+                        {% for entry in library_bundles %}
+                        <div class="mac-card">
+                            <div class="mac-header-sm">
+                                <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
+                                <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
+                                <div class="mac-dot-sm" style="background-color: #27c93f;"></div>
+                            </div>
+                            <div class="card-body">
+                                <span class="bundle-badge">📦 ПАКЕТ</span>
+                                <h3 style="font-size: 1.1rem; color: var(--brand-blue); margin-top: 0; margin-bottom: 6px; line-height: 1.3;">
+                                    {{ entry.bundle.title }}
+                                </h3>
+                                <p class="bundle-count">Тем у пакеті: {{ entry.topics|length }}</p>
+                                <details class="bundle-topics">
+                                    <summary>Показати теми</summary>
+                                    <ul>
+                                        {% for topic in entry.topics %}
+                                            <li>
+                                                {% if topic.owned %}
+                                                    <a href="{% url 'download_material' topic.material.id %}" target="_blank">{{ topic.material.title }}</a>
+                                                {% else %}
+                                                    <span>{{ topic.material.title }}</span>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </details>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             {% else %}
                 <div style="background: white; border: 2px dashed #ccc; padding: 40px; text-align: center; border-radius: 12px;">
                     <h3 style="color: var(--text-dark); margin-bottom: 15px;">Тут поки порожньо 😔</h3>
@@ -675,8 +746,24 @@
         try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { saved = []; }
         if (!Array.isArray(saved)) saved = [];
 
+        // Розділи з data-default-open відкриті, доки користувач сам їх не згорне
+        const CLOSED_KEY = 'dk_cabinet_closed';
+        let closed = [];
+        try { closed = JSON.parse(localStorage.getItem(CLOSED_KEY) || '[]'); } catch (e) { closed = []; }
+        if (!Array.isArray(closed)) closed = [];
+
         sections.forEach(function (section) {
-            if (saved.indexOf(section.dataset.section) !== -1) section.open = true;
+            const key = section.dataset.section;
+            if (section.hasAttribute('data-default-open')) {
+                if (closed.indexOf(key) !== -1) section.open = false;
+                section.addEventListener('toggle', function () {
+                    closed = closed.filter(function (k) { return k !== key; });
+                    if (!section.open) closed.push(key);
+                    try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch (e) {}
+                });
+                return;
+            }
+            if (saved.indexOf(key) !== -1) section.open = true;
             section.addEventListener('toggle', function () {
                 const here = sections.map(function (s) { return s.dataset.section; });
                 // Розділи, яких на цій сторінці немає (наприклад, панель вчителя), не чіпаємо
