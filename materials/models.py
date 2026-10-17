@@ -58,7 +58,7 @@ class CurriculumChapter(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
 
     class Meta:
-        ordering = ['grade__order', 'order']
+        ordering = ['grade__subject__order', 'grade__order', 'order']
         verbose_name = "Розділ"
         verbose_name_plural = "3. Розділи"
 
@@ -71,7 +71,7 @@ class CurriculumTopic(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
 
     class Meta:
-        ordering = ['chapter__order', 'order']
+        ordering = ['chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order']
         verbose_name = "Тема"
         verbose_name_plural = "4. Теми (Уроки)"
 
