@@ -732,12 +732,14 @@ class DiagnosticResultsTests(BaseTestCase):
         self.topic = make_nmt_topic('12. Відсотки')
         self.question = Question.objects.create(text='q', question_type='CHOICE', curriculum_topic=self.topic)
         AnswerOption.objects.create(question=self.question, text='A', is_correct=True)
+        self.wrong = AnswerOption.objects.create(question=self.question, text='B', is_correct=False)
         self.linked = StudyMaterial.objects.create(title='12. Відсотки', is_published=True,
                                                    curriculum_topic=self.topic)
         self.hidden = StudyMaterial.objects.create(title='Чернетка', is_published=False, curriculum_topic=self.topic)
 
     def test_weak_topic_recommends_published_materials_of_that_topic(self):
-        response = self.client.post('/diagnostic/', {'question_ids': str(self.question.id)})
+        response = self.client.post('/diagnostic/', {'question_ids': str(self.question.id),
+                                                     f'question_{self.question.id}': str(self.wrong.id)})
         self.assertIn(self.linked, response.context['recommendations'])
         self.assertNotIn(self.hidden, response.context['recommendations'])
         self.assertContains(response, 'Записатися на заняття')
@@ -1891,3 +1893,24 @@ class DiagnosticHistoryTests(BaseTestCase):
         cabinet = self.client.get('/cabinet/')
         self.assertEqual([a.change for a in cabinet.context['diagnostics']], [100, None])
         self.assertContains(cabinet, 'слабких тем немає')
+        # Діагностики не дублюються в результатах практики
+        self.assertEqual(list(cabinet.context['my_attempts']), [])
+
+    def test_empty_diagnostic_is_not_saved(self):
+        response = self.client.post('/diagnostic/', {'question_ids': str(self.q.id)})
+        self.assertContains(response, 'Ти не відповів на жодне завдання')
+        self.assertFalse(PracticeAttempt.objects.filter(user=self.kid).exists())
+
+    def test_cabinet_focuses_on_five_weakest_topics(self):
+        ids = []
+        for i in range(7):
+            topic = make_nmt_topic(f'{i + 1}. Тема {i}')
+            q = Question.objects.create(text=f'Завдання {i}', question_type='CHOICE', curriculum_topic=topic)
+            AnswerOption.objects.create(question=q, text='А) так', is_correct=True)
+            ids.append(q.id)
+        # Неіснуючий варіант — відповідь є (спроба зберігається), але неправильна, тож усі 7 тем слабкі
+        self.client.post('/diagnostic/', {'question_ids': ','.join(map(str, ids)), f'question_{ids[0]}': '0'})
+        cabinet = self.client.get('/cabinet/')
+        self.assertEqual(len(cabinet.context['diagnostic_weak_topics']), 5)
+        self.assertEqual(cabinet.context['diagnostic_more_weak'], 2)
+        self.assertContains(cabinet, 'І ще 2 теми нижче 50%')

@@ -190,10 +190,15 @@ def diagnostic_stats(saved_answers):
     return total_score, max_score, topics_stats
 
 
+def weak_topic_stats(topics_stats):
+    """Теми, де менше 50%: найслабші першими, за рівного результату — у порядку курсу."""
+    weak = [s for s in topics_stats.values() if s['topic'] and s['total'] > 0 and s['correct'] / s['total'] < 0.5]
+    return sorted(weak, key=lambda s: (s['correct'] / s['total'], s['topic'].order))
+
+
 def diagnostic_summary(topics_stats):
     """Слабкі теми (менше 50%), матеріали для них і статистика за темами в порядку курсу."""
-    weak_topics = [s['topic'] for s in topics_stats.values() if
-                   s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
+    weak_topics = sorted((s['topic'] for s in weak_topic_stats(topics_stats)), key=lambda t: t.order)
     recommendations = []
     if weak_topics:
         recommendations = sorted(
@@ -216,7 +221,8 @@ def diagnostic_test_view(request):
             'q_choice': {}, 'q_match': {}, 'q_short': {},
             'question_ids': question_ids_str, 'note': 'Вхідна діагностика НМТ'
         }
-        for question in questions_in_order(parse_id_list(question_ids_str)):
+        questions = list(questions_in_order(parse_id_list(question_ids_str)))
+        for question in questions:
             key = str(question.id)
             if question.question_type == 'MATCH':
                 saved_answers['q_match'][key] = {str(item.id): request.POST.get(f'match_{item.id}')
@@ -224,6 +230,12 @@ def diagnostic_test_view(request):
             else:
                 bucket = 'q_choice' if question.question_type == 'CHOICE' else 'q_short'
                 saved_answers[bucket][key] = request.POST.get(f'question_{question.id}')
+
+        # Без жодної відповіді — це не результат: не зберігаємо і не рахуємо «слабкими» всі теми
+        answered = any(saved_answers['q_choice'].values()) or any(saved_answers['q_short'].values()) or any(
+            any(pairs.values()) for pairs in saved_answers['q_match'].values())
+        if not answered:
+            return render(request, 'materials/diagnostic_results.html', {'no_answers': True})
 
         total_score, max_score, topics_stats = diagnostic_stats(saved_answers)
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
@@ -683,9 +695,11 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
         context['course_choices'] = TutorStudentRequest.COURSE_CHOICES
         context['personal_presentations'] = self.request.user.personal_presentations.all()
+        # Діагностики — в окремому розділі нижче, тут лише практика тем
         context['my_attempts'] = PracticeAttempt.objects.filter(
             user=self.request.user
-        ).select_related('material').defer('material__html_content').order_by('-created_at')[:15]
+        ).exclude(material__title=DIAGNOSTIC_MATERIAL_TITLE).select_related('material').defer(
+            'material__html_content').order_by('-created_at')[:15]
 
         # Діагностики: динаміка від разу до разу і що повторити за останньою
         diagnostics = list(user_diagnostics(self.request.user)[:10])
@@ -693,8 +707,15 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             attempt.change = attempt.get_percent() - previous.get_percent() if previous else None
         context['diagnostics'] = diagnostics
         if diagnostics:
-            context['diagnostic_weak_topics'], context['diagnostic_recommendations'], _ = diagnostic_summary(
-                diagnostic_stats(diagnostics[0].answers_json or {})[2])
+            # Не стіна з усіх слабких тем, а 5 найслабших і матеріали саме до них
+            weak = weak_topic_stats(diagnostic_stats(diagnostics[0].answers_json or {})[2])
+            focus = weak[:5]
+            context['diagnostic_weak_topics'] = focus
+            context['diagnostic_more_weak'] = len(weak) - len(focus)
+            context['diagnostic_recommendations'] = sorted(
+                StudyMaterial.objects.filter(curriculum_topic__in=[s['topic'] for s in focus], is_published=True)
+                .select_related('curriculum_topic').distinct(),
+                key=lambda m: m.curriculum_topic.order)
 
         if is_teacher(self.request.user):
             context['students_attempts'] = PracticeAttempt.objects.filter(
