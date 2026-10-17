@@ -20,6 +20,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Case, F, Prefetch, Q, When
 from django.conf import settings
@@ -1448,60 +1449,14 @@ def submit_parent_review(request, parent_token):
         messages.success(request, "Щиро дякуємо за ваш відгук! Ваша думка дуже важлива для нас.")
 
     return redirect('parent_dashboard', parent_token=parent_token)
+@require_GET
 def math_sprint_game(request):
   """Ігровий тренажер 'Математичний Спринт (60 секунд)'."""
-  import json
   import random
-  from django.http import JsonResponse
   from django.shortcuts import render
-  from django.utils import timezone
   from .models import Question, StudyMaterial
 
-  # POST: збереження результату та щоденний бонус на баланс
-  if request.method == 'POST':
-    if not request.user.is_authenticated:
-      return JsonResponse({
-          'rewarded': False,
-          'message': (
-              'Зареєструйтеся на платформі, щоб зберігати рекорди та отримувати'
-              ' бонусні бали!'
-          ),
-      })
-    try:
-      data = json.loads(request.body)
-      correct_count = int(data.get('correct_count', 0))
-    except (ValueError, TypeError, json.JSONDecodeError):
-      correct_count = 0
-
-    today_str = str(timezone.localdate())
-    last_reward_date = request.session.get('sprint_reward_date')
-
-    if correct_count >= 5 and last_reward_date != today_str:
-      request.user.balance = (request.user.balance or 0) + 2
-      request.user.save(update_fields=['balance'])
-      request.session['sprint_reward_date'] = today_str
-      return JsonResponse({
-          'rewarded': True,
-          'message': (
-              '🎁 Вітаємо! Ви дали 5+ правильних відповідей і отримали +2'
-              ' бонусні бали на баланс!'
-          ),
-      })
-
-    return JsonResponse({
-        'rewarded': False,
-        'message': (
-            '👏 Чудовий результат! Щоденний бонус (+2 бали) сьогодні вже'
-            ' нараховано.'
-            if last_reward_date == today_str
-            else (
-                'Наберіть щонайменше 5 правильних відповідей за хвилину, щоб'
-                ' отримати +2 бонусні бали!'
-            )
-        ),
-    })
-
-  # GET: визначаємо доступні теми залежно від ролі користувача
+  # Гра без нагород: результат лишається в браузері. Доступні теми залежать від ролі користувача
   user = request.user
   if user.is_authenticated and (
       user.is_staff

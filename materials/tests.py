@@ -1717,3 +1717,14 @@ class ShuffledOptionsTests(BaseTestCase):
         self.assertEqual([o.display_text for o in options],
                          ['А) варіант 4', 'Б) варіант 3', 'В) варіант 2', 'Г) варіант 1', 'Д) варіант 0'])
         self.assertEqual(AnswerOption.objects.get(is_correct=True).body, 'варіант 1')
+
+
+class MathSprintTests(BaseTestCase):
+    def test_sprint_gives_no_balance_bonus(self):
+        user = self.make_user('kid@example.com')
+        self.client.force_login(user)
+        self.assertEqual(self.client.get('/game/sprint/').status_code, 200)
+        response = self.client.post('/game/sprint/', '{"correct_count": 50}', content_type='application/json')
+        self.assertEqual(response.status_code, 405)
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 0)
