@@ -213,9 +213,9 @@
             <div class="mac-body">
                 <!-- Верхній рядок: Категорія + Бейджик -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                    {% if material.category %}
+                    {% if material.curriculum_grade %}
                     <span style="background-color: rgba(255, 255, 255, 0.15); color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
-                        {{ material.curriculum_topic.chapter.grade.name|default:material.category.name }}
+                        {{ material.curriculum_grade.short_label }}
                     </span>
                     {% else %}
                     <span></span>
@@ -234,19 +234,19 @@
                 </h3>
 
                 <!-- Теги -->
-                {% if material.tags.exists %}
+                {% with tags=material.tags.all %}{% if tags %}
                     <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                        {% for tag in material.tags.all %}
+                        {% for tag in tags %}
                             <span style="border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">
                                 #{{ tag.name }}
                             </span>
                         {% endfor %}
                     </div>
-                {% endif %}
+                {% endif %}{% endwith %}
 
                 <!-- Опис -->
                 <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; flex-grow: 1;">
-                    {{ material.description|default:"Авторський конспект для підготовки до НМТ. Містить теорію та практичні завдання."|truncatewords:15 }}
+                    {{ material.description|default:"Авторський конспект: теорія без зайвої води та розбір практичних завдань."|truncatewords:15 }}
                 </p>
 
                 <!-- Ціна та кнопка -->
