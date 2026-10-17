@@ -1933,6 +1933,20 @@ class DiagnosticTopicChoiceTests(BaseTestCase):
         q = Question.objects.create(text='Шкільне', question_type='CHOICE', curriculum_topic=self.school_topic)
         AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
 
+    def test_picker_groups_each_chapter_once_in_course_order(self):
+        # Теми створено впереміш: розділи не повинні дублюватися, а теми — йти за номером
+        mixed = [make_nmt_topic(name, chapter_order=order) for name, order in
+                 (('42. Циліндр', 9), ('32. Рівнобедрений трикутник', 8), ('39. Вступ до стереометрії', 9),
+                  ('37. Многокутники', 8), ('43. Конус', 9))]
+        for topic in mixed:
+            q = Question.objects.create(text=topic.name, question_type='CHOICE', curriculum_topic=topic)
+            AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+        groups = self.client.get('/diagnostic/').context['chapters']
+        names = [g['chapter'].name for g in groups]
+        self.assertEqual(names, ['Розділ 1', 'Розділ 2', 'Розділ 3', 'Розділ 8', 'Розділ 9'])
+        self.assertEqual([t.name for t in groups[-1]['topics']], ['39. Вступ до стереометрії', '42. Циліндр', '43. Конус'])
+        self.assertEqual([t.name for t in groups[-2]['topics']], ['32. Рівнобедрений трикутник', '37. Многокутники'])
+
     def test_picker_lists_only_nmt_topics_with_questions(self):
         response = self.client.get('/diagnostic/')
         self.assertTemplateUsed(response, 'materials/diagnostic_choose.html')
