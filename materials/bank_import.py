@@ -24,6 +24,7 @@ class ImportReport:
     topic_name: str = ''
     total: int = 0
     to_add: list = field(default_factory=list)
+    added: list = field(default_factory=list)
     duplicates: list = field(default_factory=list)
     errors: list = field(default_factory=list)
     unknown_tags: dict = field(default_factory=dict)
@@ -132,6 +133,7 @@ def build_report(topic_name, tasks):
             continue
         seen.add(key)
         report.to_add.append(index)
+        report.added.append((index, task.get('topic') or topic_name, task['text']))
         for tag in task.get('topic_tags', []):
             material, corrected = resolve_material(tag, materials_cache)
             if corrected: report.aliased_tags[tag] = corrected
