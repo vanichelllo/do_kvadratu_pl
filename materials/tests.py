@@ -1523,6 +1523,13 @@ class BankImportTests(BaseTestCase):
         response = self.client.get('/do-kvadratu-secret-control/materials/question/?dup=yes')
         self.assertEqual([q.id for q in response.context['cl'].result_list], [old.id, new.id])
 
+    def test_picture_filter(self):
+        svg = Question.objects.create(text='SVG', question_type='SHORT', svg_code='<svg></svg>')
+        Question.objects.create(text='Пробіли', question_type='SHORT', svg_code='  \n ')
+        url = '/do-kvadratu-secret-control/materials/question/?picture='
+        self.assertEqual([q.id for q in self.client.get(url + 'yes').context['cl'].result_list], [svg.id])
+        self.assertNotIn(svg, self.client.get(url + 'no').context['cl'].result_list)
+
     def test_task_topic_overrides_file_topic(self):
         # Файл з усіма банками: тема кожного завдання — у полі "topic"
         topic21 = make_nmt_topic('21. Показникові рівняння')
@@ -1710,3 +1717,43 @@ class ShuffledOptionsTests(BaseTestCase):
         self.assertEqual([o.display_text for o in options],
                          ['А) варіант 4', 'Б) варіант 3', 'В) варіант 2', 'Г) варіант 1', 'Д) варіант 0'])
         self.assertEqual(AnswerOption.objects.get(is_correct=True).body, 'варіант 1')
+
+
+class MathSprintTests(BaseTestCase):
+    def make_questions(self, material, count, **extra):
+        for i in range(count):
+            q = Question.objects.create(text=f'{material.title} {i} {extra}', question_type='CHOICE',
+                                        difficulty=extra.get('difficulty', 1), svg_code=extra.get('svg_code', ''))
+            AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+            AnswerOption.objects.create(question=q, text='Б) 2', is_correct=False)
+            q.materials.add(material)
+
+    def test_guest_without_free_topics_gets_no_bank_questions(self):
+        self.make_questions(StudyMaterial.objects.create(title='Платна', price=10), 5)
+        response = self.client.get('/game/sprint/')
+        self.assertEqual(response.context['questions_list'], [])
+        self.assertEqual(response.context['available_materials'], [])
+
+    def test_only_easy_questions_without_picture_and_topics_with_enough_of_them(self):
+        free = StudyMaterial.objects.create(title='Безкоштовна', price=0, is_free=True)
+        thin = StudyMaterial.objects.create(title='Мало завдань', price=0, is_free=True)
+        self.make_questions(free, 4)
+        self.make_questions(free, 3, difficulty=3)
+        self.make_questions(free, 3, svg_code='<svg></svg>')
+        self.make_questions(thin, 3)
+        response = self.client.get('/game/sprint/')
+        self.assertEqual(response.context['available_materials'], [free])
+        self.assertEqual(len(response.context['questions_list']), 4)
+        self.assertEqual(response.context['questions_list'][0]['lesson_url'], f'/material/{free.id}/')
+        # Тему, де завдань замало, не можна обрати навіть через URL
+        response = self.client.get(f'/game/sprint/?material_id={thin.id}')
+        self.assertIsNone(response.context['selected_material'])
+
+    def test_sprint_gives_no_balance_bonus(self):
+        user = self.make_user('kid@example.com')
+        self.client.force_login(user)
+        self.assertEqual(self.client.get('/game/sprint/').status_code, 200)
+        response = self.client.post('/game/sprint/', '{"correct_count": 50}', content_type='application/json')
+        self.assertEqual(response.status_code, 405)
+        user.refresh_from_db()
+        self.assertEqual(user.balance, 0)

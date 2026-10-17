@@ -20,8 +20,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, F, Prefetch, Q, When
+from django.db.models import Case, Count, F, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
@@ -1448,60 +1449,18 @@ def submit_parent_review(request, parent_token):
         messages.success(request, "Щиро дякуємо за ваш відгук! Ваша думка дуже важлива для нас.")
 
     return redirect('parent_dashboard', parent_token=parent_token)
+SPRINT_MIN_QUESTIONS = 4
+SPRINT_POOL = 40
+
+
+@require_GET
 def math_sprint_game(request):
   """Ігровий тренажер 'Математичний Спринт (60 секунд)'."""
-  import json
   import random
-  from django.http import JsonResponse
   from django.shortcuts import render
-  from django.utils import timezone
   from .models import Question, StudyMaterial
 
-  # POST: збереження результату та щоденний бонус на баланс
-  if request.method == 'POST':
-    if not request.user.is_authenticated:
-      return JsonResponse({
-          'rewarded': False,
-          'message': (
-              'Зареєструйтеся на платформі, щоб зберігати рекорди та отримувати'
-              ' бонусні бали!'
-          ),
-      })
-    try:
-      data = json.loads(request.body)
-      correct_count = int(data.get('correct_count', 0))
-    except (ValueError, TypeError, json.JSONDecodeError):
-      correct_count = 0
-
-    today_str = str(timezone.localdate())
-    last_reward_date = request.session.get('sprint_reward_date')
-
-    if correct_count >= 5 and last_reward_date != today_str:
-      request.user.balance = (request.user.balance or 0) + 2
-      request.user.save(update_fields=['balance'])
-      request.session['sprint_reward_date'] = today_str
-      return JsonResponse({
-          'rewarded': True,
-          'message': (
-              '🎁 Вітаємо! Ви дали 5+ правильних відповідей і отримали +2'
-              ' бонусні бали на баланс!'
-          ),
-      })
-
-    return JsonResponse({
-        'rewarded': False,
-        'message': (
-            '👏 Чудовий результат! Щоденний бонус (+2 бали) сьогодні вже'
-            ' нараховано.'
-            if last_reward_date == today_str
-            else (
-                'Наберіть щонайменше 5 правильних відповідей за хвилину, щоб'
-                ' отримати +2 бонусні бали!'
-            )
-        ),
-    })
-
-  # GET: визначаємо доступні теми залежно від ролі користувача
+  # Гра без нагород: результат лишається в браузері. Доступні теми залежать від ролі користувача
   user = request.user
   if user.is_authenticated and (
       user.is_staff
@@ -1527,34 +1486,49 @@ def math_sprint_game(request):
     )
     access_label = 'Безкоштовні демо-теми'
 
+  # Спринт тренує швидкість у простих діях: беремо легкі завдання без рисунка, середні — лише якщо легких мало
+  sprint_qs = Question.objects.filter(
+      Q(svg_code__isnull=True) | Q(svg_code__regex=r'^\s*$'),
+      Q(image__isnull=True) | Q(image=''),
+      question_type='CHOICE', difficulty__lte=2,
+  )
+
+  # У списку лише теми, де вистачає завдань для гри
+  counts = dict(
+      sprint_qs.filter(materials__in=available_materials)
+      .values('materials').annotate(n=Count('id', distinct=True)).values_list('materials', 'n')
+  )
+  available_materials = [m for m in available_materials if counts.get(m.id, 0) >= SPRINT_MIN_QUESTIONS]
+
   selected_material = None
   material_id = request.GET.get('material_id')
   if material_id and material_id.isdigit():
-    selected_material = available_materials.filter(id=int(material_id)).first()
+    selected_material = next((m for m in available_materials if m.id == int(material_id)), None)
 
-  # Безпечна для PostgreSQL вибірка випадкових ID питань без .distinct().order_by('?')
-  base_qs = Question.objects.filter(question_type='CHOICE')
-  if selected_material:
-    base_qs = base_qs.filter(materials=selected_material)
-  elif available_materials.exists():
-    base_qs = base_qs.filter(materials__in=available_materials)
-
-  all_q_ids = list(set(base_qs.values_list('id', flat=True)))
-  sampled_ids = random.sample(all_q_ids, min(len(all_q_ids), 30))
-
-  qs = Question.objects.filter(id__in=sampled_ids).prefetch_related('options')
-
+  # Без доступних тем — лише усний рахунок, ніколи не весь банк (там і платні теми)
+  scope = [selected_material] if selected_material else available_materials
   questions_list = []
-  for q in qs:
-    opts = [
-        {'text': o.body, 'is_correct': o.is_correct} for o in q.options.all()
-    ]
-    if len(opts) >= 2 and any(o['is_correct'] for o in opts):
+  if scope:
+    by_level = {}
+    for q_id, level in sprint_qs.filter(materials__in=scope).values_list('id', 'difficulty').distinct():
+      by_level.setdefault(level, set()).add(q_id)
+    easy, medium = list(by_level.get(1, ())), list(by_level.get(2, ()))
+    sampled_ids = random.sample(easy, min(len(easy), SPRINT_POOL))
+    if len(sampled_ids) < SPRINT_POOL:
+      sampled_ids += random.sample(medium, min(len(medium), SPRINT_POOL - len(sampled_ids)))
+
+    scope_ids = {m.id for m in scope}
+    qs = Question.objects.filter(id__in=sampled_ids).prefetch_related('options', 'materials')
+    for q in qs:
+      opts = [{'text': o.body, 'is_correct': o.is_correct} for o in q.options.all()]
+      if len(opts) < 2 or sum(o['is_correct'] for o in opts) != 1:
+        continue
+      lesson = next((m for m in q.materials.all() if m.id in scope_ids), None)
       questions_list.append({
-          'id': q.id,
           'text': q.text,
-          'svg_code': q.svg_code or '',
           'options': opts,
+          'lesson_title': lesson.title if lesson else '',
+          'lesson_url': reverse('material_detail', args=[lesson.id]) if lesson else '',
       })
 
   return render(
@@ -1565,5 +1539,6 @@ def math_sprint_game(request):
           'selected_material': selected_material,
           'access_label': access_label,
           'questions_list': questions_list,
+          'autostart': request.GET.get('autostart') == '1',
       },
   )
