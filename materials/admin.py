@@ -199,6 +199,26 @@ class TopicOfGradeFilter(admin.SimpleListFilter):
         return queryset
 
 
+class DuplicateTextFilter(admin.SimpleListFilter):
+    """Завдання з однаковим текстом (без урахування пробілів) — поруч, щоб прибрати зайву копію.
+    Менший ID — старіша копія. Загальні умови на кшталт «Узгодьте вираз (1–3) …» теж потраплять сюди,
+    тож перед видаленням порівняйте варіанти."""
+    title = 'повтор тексту'
+    parameter_name = 'dup'
+
+    def lookups(self, request, model_admin):
+        return [('yes', 'Є завдання з таким самим текстом')]
+
+    def queryset(self, request, queryset):
+        if self.value() != 'yes':
+            return queryset
+        groups = {}
+        for pk, text in Question.objects.values_list('id', 'text'):
+            groups.setdefault(' '.join(text.split()), []).append(pk)
+        ids = [pk for pks in groups.values() if len(pks) > 1 for pk in pks]
+        return queryset.filter(id__in=ids).order_by('text', 'id')
+
+
 class HasTopicFilter(admin.EmptyFieldListFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -250,10 +270,10 @@ def bulk_edit_questions(modeladmin, request, queryset):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('short_text', 'topic_name', 'question_type', 'difficulty', 'health')
+    list_display = ('short_text', 'id', 'topic_name', 'question_type', 'difficulty', 'health')
     list_select_related = ('curriculum_topic',)
     list_filter = ('curriculum_topic__chapter__grade', TopicOfGradeFilter,
-                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty')
+                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', DuplicateTextFilter)
     # Пошук і за назвою теми: «21» або «логарифм»
     search_fields = ('text', 'curriculum_topic__name')
     autocomplete_fields = ['curriculum_topic']
