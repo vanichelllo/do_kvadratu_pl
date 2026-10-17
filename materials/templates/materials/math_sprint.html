@@ -275,6 +275,18 @@
     const AUTOSTART = {{ autostart|yesno:"true,false" }};
     const BEST_KEY = 'sprint-best-' + (new URL(window.location.href).searchParams.get('material_id') || 'mix');
     const WRONG_PENALTY = 3;
+    const RECORD_ANSWERS = {{ user.is_authenticated|yesno:"true,false" }};
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    function recordAnswer(q, opt) {
+        // Помилки зі спринту потрапляють у «Роботу над помилками»; нагород немає
+        if (!RECORD_ANSWERS || !q.id) return;
+        fetch("{% url 'game_answer' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+            body: JSON.stringify({ question_id: q.id, option_id: opt.id })
+        }).catch(() => {});
+    }
 
     function generateFallbackQuestions() {
         const list = [];
@@ -431,6 +443,7 @@
         if (locked || timeLeft <= 0) return;
         locked = true;
         answered++;
+        recordAnswer(q, opt);
 
         let pause = 400;
         if (opt.is_correct) {

@@ -13,7 +13,7 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, CurriculumGrade, CurriculumSubject,
-                     CurriculumTopic, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review, StudentReport,
+                     CurriculumTopic, GameMistake, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review, StudentReport,
                      StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
@@ -1735,8 +1735,9 @@ class MathSprintTests(BaseTestCase):
         self.assertEqual(response.context['available_materials'], [])
 
     def test_only_easy_questions_without_picture_and_topics_with_enough_of_them(self):
-        free = StudyMaterial.objects.create(title='Безкоштовна', price=0, is_free=True)
-        thin = StudyMaterial.objects.create(title='Мало завдань', price=0, is_free=True)
+        free = StudyMaterial.objects.create(title='Безкоштовна', price=0, is_free=True, is_published=True)
+        thin = StudyMaterial.objects.create(title='Мало завдань', price=0, is_free=True, is_published=True)
+        self.make_questions(StudyMaterial.objects.create(title='Чернетка', price=0, is_free=True), 5)
         self.make_questions(free, 4)
         self.make_questions(free, 3, difficulty=3)
         self.make_questions(free, 3, svg_code='<svg></svg>')
@@ -1757,3 +1758,81 @@ class MathSprintTests(BaseTestCase):
         self.assertEqual(response.status_code, 405)
         user.refresh_from_db()
         self.assertEqual(user.balance, 0)
+
+
+class GamesTests(BaseTestCase):
+    def setUp(self):
+        self.free = StudyMaterial.objects.create(title='1. Безкоштовна', price=0, is_free=True, is_published=True)
+        self.paid = StudyMaterial.objects.create(title='2. Платна', price=10)
+        self.kid = self.make_user('kid@example.com')
+
+    def choice(self, material, text='2+2?'):
+        q = Question.objects.create(text=text, question_type='CHOICE', difficulty=1)
+        right = AnswerOption.objects.create(question=q, text='А) 4', is_correct=True)
+        wrong = AnswerOption.objects.create(question=q, text='Б) 5', is_correct=False)
+        q.materials.add(material)
+        return q, right, wrong
+
+    def answer(self, **data):
+        return self.client.post('/game/answer/', json.dumps(data), content_type='application/json')
+
+    def test_short_answer_matching(self):
+        from .games import short_answer_matches
+        self.assertTrue(short_answer_matches('0,5', '1/2'))
+        self.assertTrue(short_answer_matches(' 0.50 ', '0.5'))
+        self.assertTrue(short_answer_matches('−3', '-3'))
+        self.assertFalse(short_answer_matches('0.51', '0.5'))
+        self.assertFalse(short_answer_matches('', '0'))
+        self.assertTrue(short_answer_matches('Так', 'так'))
+
+    def test_answer_is_checked_on_server_and_mistakes_are_tracked(self):
+        q, right, wrong = self.choice(self.free)
+        self.client.force_login(self.kid)
+        response = self.answer(question_id=q.id, option_id=wrong.id).json()
+        self.assertEqual(response, {'correct': False, 'option_id': right.id})
+        mistake = GameMistake.objects.get(user=self.kid, question=q)
+        self.assertTrue(self.answer(question_id=q.id, option_id=right.id).json()['correct'])
+        mistake.refresh_from_db()
+        self.assertEqual(mistake.correct_streak, 1)
+        self.answer(question_id=q.id, option_id=wrong.id)  # помилка обнуляє серію
+        mistake.refresh_from_db()
+        self.assertEqual(mistake.correct_streak, 0)
+        self.answer(question_id=q.id, option_id=right.id)
+        self.answer(question_id=q.id, option_id=right.id)  # двічі поспіль — засвоєно
+        self.assertFalse(GameMistake.objects.filter(user=self.kid).exists())
+
+    def test_match_and_short_answers(self):
+        q = Question.objects.create(text='Пари', question_type='MATCH')
+        a = AnswerOption.objects.create(question=q, text='А) 1')
+        b = AnswerOption.objects.create(question=q, text='Б) 2')
+        one = MatchItem.objects.create(question=q, text='1. x', correct_option=a)
+        two = MatchItem.objects.create(question=q, text='2. y', correct_option=b)
+        q.materials.add(self.free)
+        self.assertTrue(self.answer(question_id=q.id, pairs={one.id: a.id, two.id: b.id}).json()['correct'])
+        self.assertFalse(self.answer(question_id=q.id, pairs={one.id: b.id, two.id: a.id}).json()['correct'])
+        short = Question.objects.create(text='Половина', question_type='SHORT', correct_short_answer='0.5')
+        short.materials.add(self.free)
+        self.assertTrue(self.answer(question_id=short.id, answer='1/2').json()['correct'])
+
+    def test_no_answers_for_paid_topics_and_none_in_page(self):
+        q, right, _ = self.choice(self.paid)
+        self.assertEqual(self.answer(question_id=q.id, option_id=right.id).status_code, 404)
+        for i in range(2):
+            pair = Question.objects.create(text=f'Пари {i}', question_type='MATCH')
+            option = AnswerOption.objects.create(question=pair, text='А) 1')
+            MatchItem.objects.create(question=pair, text='1. x', correct_option=option)
+            pair.materials.add(self.free)
+        response = self.client.get('/game/pairs/')
+        self.assertEqual(len(response.context['questions']), 2)
+        self.assertNotIn('is_correct', response.content.decode())
+        self.assertNotIn('correct_option', response.content.decode())
+
+    def test_mistakes_game_and_practice_records_mistakes(self):
+        self.assertEqual(self.client.get('/game/mistakes/').status_code, 302)
+        q, right, wrong = self.choice(self.free)
+        self.client.force_login(self.kid)
+        self.client.post(f'/practice/{self.free.id}/', {'question_ids': str(q.id), f'q_{q.id}': str(wrong.id)})
+        self.assertTrue(GameMistake.objects.filter(user=self.kid, question=q).exists())
+        response = self.client.get('/game/mistakes/')
+        self.assertEqual([item['id'] for item in response.context['questions']], [q.id])
+        self.assertContains(self.client.get('/game/'), 'Завдань у списку: 1')

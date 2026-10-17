@@ -19,6 +19,7 @@ from users.views import accept_terms_view
 admin.site.login = rate_limited_admin_login(admin.site.login)
 
 # ІМПОРТ З MATERIALS
+from materials import games
 from materials.views import (
     AboutView,
     CabinetView,
@@ -138,6 +139,11 @@ urlpatterns = [
     path('apple-touch-icon-precomposed.png', lambda request: redirect(static_url('images/apple-touch-icon.png'))),
     path('site.webmanifest', web_manifest, name='web_manifest'),
     path('game/sprint/', math_sprint_game, name='math_sprint'),
+    path('game/', games.game_hub, name='game_hub'),
+    path('game/pairs/', games.game_pairs, name='game_pairs'),
+    path('game/input/', games.game_input, name='game_input'),
+    path('game/mistakes/', games.game_mistakes, name='game_mistakes'),
+    path('game/answer/', games.game_answer, name='game_answer'),
 ]
 
 if settings.DEBUG:
