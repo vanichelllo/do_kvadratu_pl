@@ -1615,3 +1615,30 @@ class NmtCurriculumTests(BaseTestCase):
         files = [f[:-4] for f in os.listdir(os.path.join(dj_settings.BASE_DIR, 'import_files')) if f.endswith('.pdf')]
         self.assertEqual(sorted(topics), sorted(files))
         self.assertEqual([int(t.split('.')[0]) for t in topics], list(range(1, 47)))
+
+
+class AdminConvenienceTests(BaseTestCase):
+    def setUp(self):
+        self.boss = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(self.boss)
+
+    def test_index_lists_what_needs_attention(self):
+        StudyMaterial.objects.create(title='Без презентації', is_published=True)
+        TutorStudentRequest.objects.create(user=self.make_user('kid@example.com'), real_name='Учень', course='nmt')
+        items = {i['label']: i for i in self.client.get('/do-kvadratu-secret-control/').context['attention_items']}
+        self.assertEqual(items['Нові заявки на статус учня']['count'], 1)
+        self.assertEqual(items['Опубліковані матеріали без презентації']['count'], 1)
+        self.assertEqual(items['Нові скарги на завдання']['count'], 0)
+        for item in items.values():
+            self.assertEqual(self.client.get(item['url']).status_code, 200, item['label'])
+
+    def test_html_file_upload_replaces_presentation(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        material = StudyMaterial.objects.create(title='1. Тема', price=25, html_content='<p>старе</p>')
+        url = f'/do-kvadratu-secret-control/materials/studymaterial/{material.id}/change/'
+        data = {'title': '1. Тема', 'price': 25, 'description': '', 'html_content': '<p>старе</p>'}
+        response = self.client.post(url, dict(data, html_file=SimpleUploadedFile('1.txt', b'x')))
+        self.assertContains(response, 'Потрібен файл .html')
+        upload = SimpleUploadedFile('1.html', '﻿<p>нове</p>'.encode('utf-8'))
+        self.assertEqual(self.client.post(url, dict(data, html_file=upload)).status_code, 302)
+        self.assertEqual(StudyMaterial.objects.get(id=material.id).html_content, '<p>нове</p>')

@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.db.models import BooleanField, Case, Q, Value, When
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.html import format_html
 
 # Імпорти для вивантаження бази в Excel
 from import_export import resources
@@ -282,7 +283,40 @@ class HasPdfFilter(admin.SimpleListFilter):
         return queryset
 
 
+MAX_HTML_UPLOAD_BYTES = 5 * 1024 * 1024
+
+
+class StudyMaterialAdminForm(forms.ModelForm):
+    html_file = forms.FileField(
+        required=False, label='Завантажити .html',
+        help_text='Вміст файлу замінить HTML-презентацію. Без файлу презентація не змінюється.')
+
+    class Meta:
+        model = StudyMaterial
+        fields = '__all__'
+
+    def clean_html_file(self):
+        upload = self.cleaned_data.get('html_file')
+        if not upload:
+            return None
+        if not upload.name.lower().endswith(('.html', '.htm')):
+            raise forms.ValidationError('Потрібен файл .html')
+        if upload.size > MAX_HTML_UPLOAD_BYTES:
+            raise forms.ValidationError(f'Файл завеликий (максимум {MAX_HTML_UPLOAD_BYTES // (1024 * 1024)} МБ).')
+        try:
+            return upload.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            raise forms.ValidationError('Файл має бути у кодуванні UTF-8.')
+
+    def save(self, commit=True):
+        html = self.cleaned_data.get('html_file')
+        if html:
+            self.instance.html_content = html
+        return super().save(commit)
+
+
 class StudyMaterialAdmin(admin.ModelAdmin):
+    form = StudyMaterialAdminForm
     list_display = ('title', 'grade_label', 'price', 'is_published', 'is_free', 'is_bundle', 'has_html', 'has_pdf')
     list_display_links = ('title',)
     # Ціну й публікацію можна змінити прямо в списку і зберегти кнопкою внизу
@@ -294,6 +328,29 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     autocomplete_fields = ['curriculum_topic']
     # Два списки з пошуком замість множинного вибору з Ctrl
     filter_horizontal = ('included_materials', 'tags')
+    readonly_fields = ('reader_link',)
+    fieldsets = (
+        ('Основне', {'fields': ('title', 'curriculum_topic', 'tags', 'description')}),
+        ('Вітрина', {'fields': ('price', 'is_free', 'is_published', 'image')}),
+        ('Контент', {'fields': ('file', 'html_file', 'reader_link')}),
+        ('HTML-код вручну', {'classes': ('collapse',), 'fields': ('html_content',),
+                             'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
+        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        # Склад пакета згорнутий для звичайних матеріалів, але одразу видно, коли редагуємо пакет
+        if obj is not None and obj.is_bundle:
+            return [(name, {**options, 'classes': ()}) if name == 'Пакет' else (name, options)
+                    for name, options in self.fieldsets]
+        return self.fieldsets
+
+    @admin.display(description='Перевірити')
+    def reader_link(self, obj):
+        if not obj.pk:
+            return 'Посилання з\'явиться після збереження.'
+        return format_html('<a href="{}" target="_blank">📖 Відкрити в читалці</a> (так, як бачить учень)',
+                           reverse('download_material', args=[obj.pk]))
 
     def get_queryset(self, request):
         # Презентація (до кількох МБ) у списку не завантажується — лише позначка, чи вона є
@@ -436,3 +493,48 @@ def ordered_app_list(request, app_label=None):
 
 
 admin.site.get_app_list = ordered_app_list
+
+
+# ==========================================
+# ГОЛОВНА АДМІНКИ: «ПОТРЕБУЄ УВАГИ»
+# ==========================================
+def attention_items(request):
+    """Що варто переглянути: кількість і посилання на вже відфільтрований список."""
+    from telegram_bot.models import BotLead
+
+    no_html = Q(html_content__isnull=True) | Q(html_content='')
+    checks = [
+        ('Нові заявки на статус учня', TutorStudentRequest.objects.filter(status='pending'),
+         'materials.tutorstudentrequest', 'status__exact=pending'),
+        ('Нові заявки з бота', BotLead.objects.filter(processed=False),
+         'telegram_bot.botlead', 'processed__exact=0'),
+        ('Нові скарги на завдання', QuestionError.objects.filter(status='new'),
+         'materials.questionerror', 'status__exact=new'),
+        ('Відгуки чекають модерації', Review.objects.filter(is_approved=False),
+         'materials.review', 'is_approved__exact=0'),
+        ('Опубліковані матеріали без презентації', StudyMaterial.objects.filter(
+            no_html, is_published=True, is_bundle=False), 'materials.studymaterial',
+         'is_published__exact=1&is_bundle__exact=0&has_html=no'),
+        ('Неопубліковані матеріали', StudyMaterial.objects.filter(is_published=False),
+         'materials.studymaterial', 'is_published__exact=0'),
+        ('Завдання без теми', Question.objects.filter(curriculum_topic__isnull=True),
+         'materials.question', 'curriculum_topic__isempty=1'),
+    ]
+    items = []
+    for label, queryset, model, query in checks:
+        app_label, model_name = model.split('.')
+        if not request.user.has_perm(f'{app_label}.view_{model_name}'):
+            continue
+        items.append({'label': label, 'count': queryset.count(),
+                      'url': f"{reverse(f'admin:{app_label}_{model_name}_changelist')}?{query}"})
+    return items
+
+
+_default_index = admin.site.index
+
+
+def index_with_attention(request, extra_context=None):
+    return _default_index(request, {**(extra_context or {}), 'attention_items': attention_items(request)})
+
+
+admin.site.index = index_with_attention
