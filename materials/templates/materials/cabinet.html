@@ -425,7 +425,7 @@
                     <tbody>
                         {% for attempt in diagnostics %}
                         <tr onclick="window.location='{% url 'view_attempt_details' attempt.id %}';" style="cursor: pointer;" title="Натисніть, щоб переглянути відповіді">
-                            <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}</td>
+                            <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}<div style="font-size: 0.8rem; color: var(--brand-blue); font-weight: 700;">{{ attempt.scope_label }}</div></td>
                             <td>
                                 {% with p=attempt.get_percent %}
                                     <span class="score-badge {% if p >= 70 %}score-good{% elif p >= 40 %}score-avg{% else %}score-bad{% endif %}">{{ attempt.score }} з {{ attempt.max_score }} ({{ p }}%)</span>

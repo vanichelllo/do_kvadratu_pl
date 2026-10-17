@@ -29,7 +29,7 @@
         </div>
         {% if previous_percent is not None %}
         <p style="font-size: 1.05rem; font-weight: 700; margin: -10px 0 20px 0; {% if percent_change > 0 %}color: #28a745;{% elif percent_change < 0 %}color: #dc3545;{% else %}color: #666;{% endif %}">
-            Минулого разу: {{ previous_percent }}% →
+            Минулого разу за цими темами: {{ previous_percent }}% →
             {% if percent_change > 0 %}+{{ percent_change }} п.п. 📈{% elif percent_change < 0 %}{{ percent_change }} п.п.{% else %}без змін{% endif %}
         </p>
         {% endif %}

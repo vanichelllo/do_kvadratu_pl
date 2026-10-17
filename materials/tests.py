@@ -1323,9 +1323,9 @@ class QueryCountTests(BaseTestCase):
                     q = Question.objects.create(text=f'{q_type}{i}', question_type=q_type, curriculum_topic=topic,
                                                 correct_short_answer='1')
                     AnswerOption.objects.create(question=q, text='a', is_correct=True)
-        response = Client().get('/diagnostic/')
+        response = Client().get('/diagnostic/?topics=all')
         self.assertEqual(len(response.context['questions']), 15 + 3 + 4)
-        queries = self.queries('/diagnostic/', Client())
+        queries = self.queries('/diagnostic/?topics=all', Client())
         option_queries = [q for q in queries if 'FROM "materials_answeroption"' in q['sql']]
         self.assertLessEqual(len(option_queries), 2)  # варіанти + правильні відповіді відповідностей
         self.assertLessEqual(len(queries), 8)
@@ -1889,7 +1889,7 @@ class DiagnosticHistoryTests(BaseTestCase):
 
         second = self.take(self.right)
         self.assertEqual((second.context['previous_percent'], second.context['percent_change']), (0, 100))
-        self.assertContains(second, 'Минулого разу: 0%')
+        self.assertContains(second, 'Минулого разу за цими темами: 0%')
         cabinet = self.client.get('/cabinet/')
         self.assertEqual([a.change for a in cabinet.context['diagnostics']], [100, None])
         self.assertContains(cabinet, 'слабких тем немає')
@@ -1914,3 +1914,59 @@ class DiagnosticHistoryTests(BaseTestCase):
         self.assertEqual(len(cabinet.context['diagnostic_weak_topics']), 5)
         self.assertEqual(cabinet.context['diagnostic_more_weak'], 2)
         self.assertContains(cabinet, 'І ще 2 теми нижче 50%')
+
+
+class DiagnosticTopicChoiceTests(BaseTestCase):
+    def setUp(self):
+        self.topics = [make_nmt_topic(f'{i}. Тема {i}', chapter_order=i) for i in (1, 2, 3)]
+        for topic in self.topics:
+            for i in range(6):
+                for q_type in ('CHOICE', 'MATCH', 'SHORT'):
+                    q = Question.objects.create(text=f'{topic.name} {q_type} {i}', question_type=q_type,
+                                                curriculum_topic=topic, correct_short_answer='1')
+                    AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+        self.empty = make_nmt_topic('9. Без завдань', chapter_order=9)
+        school_subject = CurriculumSubject.objects.create(name='Алгебра', order=1)
+        school_grade = CurriculumGrade.objects.create(subject=school_subject, name='7 клас')
+        chapter = CurriculumChapter.objects.create(grade=school_grade, name='Вирази', order=1)
+        self.school_topic = CurriculumTopic.objects.create(chapter=chapter, name='Шкільна тема')
+        q = Question.objects.create(text='Шкільне', question_type='CHOICE', curriculum_topic=self.school_topic)
+        AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+
+    def test_picker_lists_only_nmt_topics_with_questions(self):
+        response = self.client.get('/diagnostic/')
+        self.assertTemplateUsed(response, 'materials/diagnostic_choose.html')
+        listed = [t for group in response.context['chapters'] for t in group['topics']]
+        self.assertEqual(listed, self.topics)
+        self.assertContains(response, '?topics=all')
+
+    def test_selected_topics_only_and_balanced(self):
+        chosen = self.topics[:2]
+        response = self.client.get('/diagnostic/', {'topic': [t.id for t in chosen] + [self.school_topic.id]})
+        questions = response.context['questions']
+        self.assertEqual(len(questions), 12 + 3 + 4)  # з вибором відповіді в двох темах лише 2×6
+        self.assertEqual({q.curriculum_topic_id for q in questions}, {t.id for t in chosen})
+        choice_topics = [q.curriculum_topic_id for q in questions if q.question_type == 'CHOICE']
+        self.assertEqual(sorted(choice_topics.count(t.id) for t in chosen), [6, 6])  # по колу: банк має по 6
+        self.assertEqual(response.context['scope'], f'{chosen[0].id},{chosen[1].id}')
+        self.assertContains(response, 'name="scope"')
+        self.assertContains(response, '19 завдань ·')
+        from .views import tasks_word
+        self.assertEqual([tasks_word(n) for n in (1, 4, 5, 11, 14, 19, 21, 22)],
+                         ['завдання', 'завдання', 'завдань', 'завдань', 'завдань', 'завдань', 'завдання', 'завдання'])
+
+    def test_comparison_and_cabinet_use_same_topic_set(self):
+        self.client.force_login(self.make_user('kid@example.com'))
+        q = Question.objects.filter(curriculum_topic=self.topics[0], question_type='CHOICE').first()
+        option = q.options.first()
+
+        def take(scope):
+            return self.client.post('/diagnostic/', {'question_ids': str(q.id), f'question_{q.id}': str(option.id),
+                                                     'scope': scope})
+
+        take(str(self.topics[0].id))
+        self.assertIsNone(take('all').context['previous_percent'])  # інший набір тем — не порівнюємо
+        self.assertEqual(take(str(self.topics[0].id)).context['previous_percent'], 100)
+        cabinet = self.client.get('/cabinet/')
+        labels = [(a.scope_label, a.change) for a in cabinet.context['diagnostics']]
+        self.assertEqual(labels, [('1. Тема 1', 0), ('Усі теми НМТ', None), ('1. Тема 1', None)])

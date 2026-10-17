@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Діагностика НМТ — ДО КВАДРАТУ{% endblock %}
+
+{% block meta_description %}Безкоштовний діагностичний тест НМТ з математики: обери теми або всі теми НМТ, отримай результат одразу й список тем, які варто підтягнути.{% endblock %}
+
+{% block content %}
+<style>
+    .diag-choose { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .diag-all { display: block; text-align: center; background: var(--brand-blue); color: #fff; text-decoration: none;
+                border-radius: 12px; padding: 18px 20px; font-weight: 900; font-size: 1.15rem; margin-bottom: 8px; }
+    .diag-all:hover { opacity: 0.92; }
+    .diag-chapter { background: #fff; border: 2px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+    .diag-chapter > label { font-weight: 900; color: var(--brand-blue); display: flex; gap: 8px; align-items: center; cursor: pointer; }
+    .diag-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; margin-top: 10px; }
+    .diag-topics label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; line-height: 1.35; }
+    .diag-topics input, .diag-chapter > label input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+    .diag-submit { position: sticky; bottom: 0; background: rgba(255,255,255,0.96); padding: 12px 0; text-align: center; }
+    .diag-submit button { background: var(--brand-yellow); color: var(--brand-blue); border: none; border-radius: 10px;
+                          padding: 14px 28px; font-weight: 900; font-size: 1.05rem; cursor: pointer; }
+    .diag-submit button:disabled { background: #E2E8F0; color: #94A3B8; cursor: default; }
+</style>
+
+<div class="diag-choose">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 10px;">🔥 ДІАГНОСТИКА НМТ</h1>
+        <p style="color: #666; font-size: 1.05rem; font-weight: 600; max-width: 640px; margin: 0 auto;">
+            Обери, що перевірити: усі теми НМТ, як на екзамені, або лише кілька тем, які зараз вчиш.
+            Завдання у форматі НМТ: з вибором відповіді, на відповідність і з короткою відповіддю.
+        </p>
+    </div>
+
+    <a class="diag-all" href="?topics=all">🎯 Усі теми НМТ — 22 завдання, як на екзамені</a>
+    <p style="text-align:center; color:#666; margin: 0 0 24px;">або обери теми нижче</p>
+
+    <form method="get" action="" id="topics-form">
+        {% for group in chapters %}
+        <div class="diag-chapter">
+            <label><input type="checkbox" class="chapter-toggle"> {{ group.chapter.name }}</label>
+            <div class="diag-topics">
+                {% for topic in group.topics %}
+                <label><input type="checkbox" name="topic" value="{{ topic.id }}"> {{ topic.name }}</label>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <p style="text-align:center; color:#666;">Теми НМТ ще не наповнені завданнями.</p>
+        {% endfor %}
+
+        <div class="diag-submit">
+            <button type="submit" id="start-btn" disabled>Почати діагностику з обраних тем</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('topics-form');
+        const button = document.getElementById('start-btn');
+        function refresh() {
+            const count = form.querySelectorAll('input[name="topic"]:checked').length;
+            button.disabled = count === 0;
+            button.innerText = count ? `Почати діагностику (${count} ${count === 1 ? 'тема' : count < 5 ? 'теми' : 'тем'})`
+                                     : 'Почати діагностику з обраних тем';
+            form.querySelectorAll('.diag-chapter').forEach(chapter => {
+                const boxes = [...chapter.querySelectorAll('input[name="topic"]')];
+                const toggle = chapter.querySelector('.chapter-toggle');
+                toggle.checked = boxes.every(b => b.checked);
+                toggle.indeterminate = !toggle.checked && boxes.some(b => b.checked);
+            });
+        }
+        form.querySelectorAll('.chapter-toggle').forEach(toggle => {
+            toggle.addEventListener('change', () => {
+                toggle.closest('.diag-chapter').querySelectorAll('input[name="topic"]').forEach(b => { b.checked = toggle.checked; });
+                refresh();
+            });
+        });
+        form.addEventListener('change', e => { if (e.target.name === 'topic') refresh(); });
+        refresh();
+    })();
+</script>
+{% endblock %}
