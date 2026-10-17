@@ -7,6 +7,7 @@ import re
 import requests
 import json
 import logging
+import datetime
 import random
 from functools import wraps
 from django.db import transaction
@@ -33,7 +34,7 @@ from .games import record_game_answer, short_answer_matches
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
-    StudyMaterial, Cart, CartItem, Order, OrderItem, Question,
+    StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
     PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
@@ -259,11 +260,20 @@ def diagnostic_test_view(request):
             )
 
         weak_topics, recommendations, sorted_stats = diagnostic_summary(topics_stats)
+        offer_materials = offer_candidates(request.user, recommendations)
+        if request.user.is_authenticated:
+            offer = DiagnosticOffer.offer_for(request.user, offer_materials)
+        else:
+            # Гість побачить пакет і знижку; отримає її, коли увійде (уроки запам'ятовуємо в сесії)
+            offer = None
+            request.session['diagnostic_offer_materials'] = [m.id for m in offer_materials]
         return render(request, 'materials/diagnostic_results.html', {
             'total_score': total_score, 'max_score': max_score, 'percent_total': percent_total,
             'weak_topics': weak_topics, 'topics_stats': sorted_stats, 'recommendations': recommendations,
             'previous_percent': previous_percent,
             'percent_change': None if previous_percent is None else percent_total - previous_percent,
+            **offer_context(offer, offer_materials),
+            'countdown': nmt_countdown(len(weak_topics)),
         })
 
     # Спершу учень обирає теми: кілька або всі теми НМТ
@@ -295,9 +305,73 @@ def diagnostic_test_view(request):
     })
 
 
+def offer_candidates(user, recommendations):
+    """Платні уроки слабких тем, яких учень ще не має, — з них складається пакет після діагностики."""
+    return [m for m in recommendations
+            if not m.is_free and m.price > 0 and not m.is_bundle and not user_owns_material(user, m)]
+
+
+def offer_context(offer, materials):
+    """Ціни пакета для сторінки: повна сума, сума зі знижкою, економія і до коли діє знижка."""
+    materials = list(offer.materials.all()) if offer else list(materials)
+    if not materials:
+        return {}
+    full = sum(m.price for m in materials)
+    percent = offer.discount_percent if offer else DiagnosticOffer.DISCOUNT_PERCENT
+    discount = int(round(full * percent / 100))
+    return {'offer': offer, 'offer_materials': materials, 'offer_full': full, 'offer_price': full - discount,
+            'offer_saving': discount, 'offer_percent': percent,
+            'offer_hours': int(DiagnosticOffer.DURATION.total_seconds() // 3600)}
+
+
+def nmt_countdown(weak_count):
+    """Скільки днів до НМТ і скільки днів припадає на одну слабку тему, якщо почати зараз."""
+    days = (datetime.date.fromisoformat(settings.NMT_DATE) - timezone.localdate()).days
+    if days <= 0:
+        return None
+    per_topic = days // weak_count if weak_count else None
+    return {'days': days, 'days_word': uk_plural(days, 'день', 'дні', 'днів'), 'exact': settings.NMT_DATE_EXACT,
+            'weak': weak_count, 'weak_word': uk_plural(weak_count, 'тему', 'теми', 'тем'),
+            'days_per_topic': per_topic, 'per_topic_word': uk_plural(per_topic or 0, 'день', 'дні', 'днів')}
+
+
+@login_required
+def diagnostic_offer_view(request):
+    """Пакет слабких тем зі знижкою: сторінка після входу гостя й кнопка «Купити пакет» (додає уроки в кошик)."""
+    offer = DiagnosticOffer.objects.filter(user=request.user, expires_at__gt=timezone.now()).first()
+    claimed_ids = request.session.pop('diagnostic_offer_materials', None)
+    if offer is None and claimed_ids:
+        candidates = offer_candidates(request.user, StudyMaterial.objects.filter(id__in=claimed_ids, is_published=True))
+        offer = DiagnosticOffer.offer_for(request.user, candidates)
+
+    if request.method == 'POST' and offer:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        added = 0
+        for material in offer.materials.all():
+            if not user_owns_material(request.user, material):
+                _, created = CartItem.objects.get_or_create(cart=cart, material=material)
+                added += created
+        messages.success(request, f"🎯 Уроки слабких тем у кошику, знижка −{offer.discount_percent}% уже врахована."
+                         if added else "Ці уроки вже у вашому кошику.")
+        return redirect('cart_detail')
+
+    if offer is None:
+        messages.info(request, "Пропозиції зі знижкою зараз немає. Пройдіть діагностику, щоб побачити слабкі теми.")
+        return redirect('diagnostic_test')
+    return render(request, 'materials/diagnostic_offer.html', offer_context(offer, []))
+
+
+def uk_plural(count, one, few, many):
+    """1, 21… — one; 2–4, 22–24… — few; решта (і 11–14) — many."""
+    if count % 10 == 1 and count % 100 != 11:
+        return one
+    if count % 10 in (2, 3, 4) and count % 100 not in (12, 13, 14):
+        return few
+    return many
+
+
 def tasks_word(count):
-    """1–4, 21–24… — «завдання», решта (і 11–14) — «завдань»."""
-    return 'завдання' if count % 10 in (1, 2, 3, 4) and count % 100 not in (11, 12, 13, 14) else 'завдань'
+    return uk_plural(count, 'завдання', 'завдання', 'завдань')
 
 
 # Склад як на НМТ: 15 з вибором відповіді, 3 на відповідність, 4 з короткою відповіддю
@@ -704,6 +778,7 @@ class MaterialListView(ListView):
         context['current_subject'] = self.request.GET.get('subject', '')
         context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
+        context['nmt_countdown'] = nmt_countdown(0)
         return context
 
 

@@ -1,0 +1,71 @@
+{# Пакет уроків слабких тем зі знижкою після діагностики + відлік до НМТ. Змінні — з views.offer_context і nmt_countdown #}
+{% if countdown %}
+<div style="background: var(--brand-blue); color: #fff; border-radius: 15px; padding: 22px 24px; margin-bottom: 24px; text-align: center;">
+    <div style="font-size: 0.85rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: 0.85;">До НМТ {% if not countdown.exact %}орієнтовно{% endif %}</div>
+    <div style="font-size: 2.6rem; font-weight: 900; line-height: 1.1; margin: 4px 0;">{{ countdown.days }} {{ countdown.days_word }}</div>
+    {% if countdown.weak %}
+        <div style="font-size: 1.05rem; line-height: 1.5;">
+            Тобі лишилося підтягнути <strong>{{ countdown.weak }}</strong> {{ countdown.weak_word }} —
+            це одна тема на <strong>{{ countdown.days_per_topic }}</strong> {{ countdown.per_topic_word }}, якщо почати сьогодні.
+        </div>
+    {% else %}
+        <div style="font-size: 1.05rem;">Слабких тем за цією діагностикою немає — тримай рівень і перевір інші теми.</div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if offer_materials %}
+<div style="background: #fffaf0; border: 3px solid var(--brand-yellow); border-radius: 15px; padding: 26px 24px; margin-bottom: 30px; box-shadow: 4px 4px 0 var(--brand-blue);">
+    <h3 style="color: var(--brand-blue); font-size: 1.4rem; margin: 0 0 6px; text-align: center;">🎯 Пакет саме твоїх слабких тем</h3>
+    <p style="text-align: center; color: #555; margin: 0 0 18px;">Повні уроки з калькуляторами, міні-тестами та практикою НМТ до кожної теми:</p>
+
+    <ul style="list-style: none; padding: 0; margin: 0 0 18px;">
+        {% for mat in offer_materials %}
+        <li style="display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #e5d3a8;">
+            <a href="{% url 'material_detail' mat.id %}" style="color: var(--text-dark); font-weight: 700; text-decoration: none;">{{ mat.title }}</a>
+            <span style="white-space: nowrap; color: #777;">{{ mat.price }} ₴</span>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <div style="text-align: center;">
+        {% if offer or not user.is_authenticated %}
+            <div style="font-size: 1.1rem; color: #888;"><s>{{ offer_full }} ₴</s> <span style="background: #27c93f; color: #fff; border-radius: 6px; padding: 2px 8px; font-weight: 800; font-size: 0.95rem;">−{{ offer_percent }}%</span></div>
+            <div style="font-size: 2.4rem; font-weight: 900; color: var(--brand-blue); line-height: 1.2;">{{ offer_price }} ₴</div>
+            <div style="color: #1e8449; font-weight: 800; margin-bottom: 14px;">Економія {{ offer_saving }} ₴</div>
+        {% else %}
+            <div style="font-size: 2rem; font-weight: 900; color: var(--brand-blue); margin-bottom: 14px;">{{ offer_full }} ₴</div>
+        {% endif %}
+
+        {% if offer %}
+            <div style="font-weight: 800; color: #c0392b; margin-bottom: 14px;">⏳ Знижка діє ще <span id="offer-timer" data-expires="{{ offer.expires_at|date:'c' }}">{{ offer.expires_at|timeuntil }}</span></div>
+            <form method="post" action="{% url 'diagnostic_offer' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background: var(--brand-yellow); color: var(--brand-blue); border: none; border-radius: 10px; padding: 16px 32px; font-size: 1.15rem; font-weight: 900; cursor: pointer; text-transform: uppercase;">Купити пакет зі знижкою</button>
+            </form>
+        {% elif not user.is_authenticated %}
+            <p style="font-weight: 700; margin: 0 0 12px;">Знижка −{{ offer_percent }}% діє {{ offer_hours }} год після діагностики — для тих, хто має акаунт.</p>
+            <a href="{% url 'register' %}?next={% url 'diagnostic_offer' %}" style="display: inline-block; background: var(--brand-yellow); color: var(--brand-blue); border-radius: 10px; padding: 16px 28px; font-size: 1.1rem; font-weight: 900; text-decoration: none; text-transform: uppercase;">Зареєструватися й отримати знижку</a>
+            <p style="margin: 10px 0 0;">Вже є акаунт? <a href="{% url 'account_login' %}?next={% url 'diagnostic_offer' %}" style="color: var(--brand-blue); font-weight: 800;">Увійти</a></p>
+        {% else %}
+            <p style="color: #666; margin: 0;">Знижку за діагностикою дають раз на 30 днів, тож зараз ціна звичайна. Купити уроки можна на сторінці кожної теми.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if offer %}
+<script>
+    (function () {
+        const el = document.getElementById('offer-timer');
+        const end = new Date(el.dataset.expires).getTime();
+        function tick() {
+            const left = Math.max(0, end - Date.now());
+            const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000), s = Math.floor(left % 60000 / 1000);
+            el.textContent = left ? `${h} год ${String(m).padStart(2, '0')} хв ${String(s).padStart(2, '0')} с` : 'знижка закінчилася';
+            if (left) setTimeout(tick, 1000);
+        }
+        tick();
+    })();
+</script>
+{% endif %}
+{% endif %}

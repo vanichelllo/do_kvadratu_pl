@@ -159,12 +159,20 @@
                 </div>
             {% endfor %}
 
+            {% if cart.get_offer_discount > 0 and not cart.promo_applies %}
+            <!-- ЗНИЖКА ЗА ДІАГНОСТИКОЮ -->
+            <div style="background: #eafaf1; border: 2px solid #27c93f; border-radius: 12px; padding: 16px 20px; margin-top: 30px; color: #1e8449; font-weight: 800;">
+                🎯 Знижка за діагностикою −{{ cart.diagnostic_offer.discount_percent }}% на уроки слабких тем: −{{ cart.get_offer_discount }} ₴
+                <div style="font-weight: 600; color: #555; margin-top: 4px;">Діє до {{ cart.diagnostic_offer.expires_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            {% endif %}
+
             <!-- ПРОМОКОД -->
             <div style="background: #f8f9fa; border: 2px dashed var(--brand-blue); border-radius: 12px; padding: 20px; margin-top: 30px;">
                 <h3 style="margin-top: 0; color: var(--brand-blue); font-size: 1.1rem;">🎁 Маєте промокод?</h3>
                 <form method="POST" action="{% url 'cart_detail' %}" style="display: flex; gap: 10px; flex-wrap: wrap;">
                     {% csrf_token %}
-                    {% if cart.get_discount_amount > 0 %}
+                    {% if cart.promo_applies %}
                         <div style="flex: 1; min-width: 200px; padding: 10px 15px; background: #eafaf1; border: 2px solid #27c93f; border-radius: 8px; color: #27c93f; font-weight: 800; display: flex; align-items: center;">
                             ✅ АКТИВОВАНО: {{ cart.promo_code }} (-40%)
                         </div>
