@@ -1,0 +1,25 @@
+<div style="max-width: 640px; line-height: 1.6;">
+    {% if problem %}<p style="color: var(--error-fg); font-weight: bold;">⚠ {{ problem }}</p>{% endif %}
+    <p style="margin-top: 0;">{{ question.text|linebreaksbr }}</p>
+    {% if question.svg_code %}
+        <div style="max-width: 360px; background: #fff; border-radius: 8px; padding: 8px;">{{ question.svg_code|safe }}</div>
+    {% elif question.image %}
+        <img src="{{ question.image.url }}" alt="" style="max-width: 360px; border-radius: 8px;">
+    {% endif %}
+
+    {% if question.question_type == 'SHORT' %}
+        <p>Правильна відповідь: <strong>{{ question.correct_short_answer|default:"—" }}</strong></p>
+    {% else %}
+        <ul style="padding-left: 20px;">
+            {% for option in options %}
+                <li>{{ option.text }}{% if question.question_type == 'CHOICE' and option.is_correct %} <strong style="color: var(--message-success-bg, #2e7d32);">✓ правильна</strong>{% endif %}</li>
+            {% endfor %}
+        </ul>
+        {% if question.question_type == 'MATCH' %}
+            <p style="margin-bottom: 4px;"><strong>Пари:</strong></p>
+            <ul style="padding-left: 20px; margin-top: 0;">
+                {% for pair in pairs %}<li>{{ pair.text }} → {{ pair.correct_option.text }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+    {% endif %}
+</div>

@@ -1,0 +1,26 @@
+{% extends "admin/index.html" %}
+{# Над списком розділів — що потребує уваги, з посиланнями на вже відфільтровані списки #}
+{% block extrastyle %}{{ block.super }}
+<style>
+    .attention { margin-bottom: 20px; }
+    .attention caption { text-align: left; }
+    .attention td.count { width: 4em; text-align: right; font-weight: bold; }
+    .attention tr.done td, .attention tr.done a { color: var(--body-quiet-color); font-weight: normal; }
+</style>
+{% endblock %}
+{% block content %}
+{% if attention_items %}
+<div class="module attention">
+    <table>
+        <caption>Потребує уваги</caption>
+        {% for item in attention_items %}
+        <tr class="{% if not item.count %}done{% endif %}">
+            <th scope="row"><a href="{{ item.url }}">{{ item.label }}</a></th>
+            <td class="count">{% if item.count %}{{ item.count }}{% else %}✓{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -2,10 +2,12 @@ import uuid
 import datetime
 from django.contrib import admin
 from django.contrib import messages
-from django.db.models import BooleanField, Case, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Q, Value, When
+from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
-from django.urls import path
+from django.urls import path, reverse
+from django.utils.html import format_html
 
 # Імпорти для вивантаження бази в Excel
 from import_export import resources
@@ -177,16 +179,91 @@ class MatchItemInline(admin.TabularInline):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+GRADE_FILTER_PARAM = 'curriculum_topic__chapter__grade__id__exact'
+
+
+class TopicOfGradeFilter(admin.SimpleListFilter):
+    """Теми з'являються після вибору класу — лише теми цього класу, а не всі сотні."""
+    title = 'тема (спершу оберіть клас)'
+    parameter_name = 'topic'
+
+    def lookups(self, request, model_admin):
+        grade_id = request.GET.get(GRADE_FILTER_PARAM)
+        if not grade_id or not grade_id.isdigit():
+            return []
+        return [(topic.id, topic.name) for topic in CurriculumTopic.objects.filter(chapter__grade_id=grade_id)]
+
+    def queryset(self, request, queryset):
+        if self.value() and self.value().isdigit():
+            return queryset.filter(curriculum_topic_id=self.value())
+        return queryset
+
+
+class HasTopicFilter(admin.EmptyFieldListFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.title = 'наявність теми'
+
+
+class QuestionBulkEditForm(forms.Form):
+    curriculum_topic = forms.ModelChoiceField(
+        CurriculumTopic.objects.select_related('chapter__grade__subject'), required=False, label='Нова тема')
+    difficulty = forms.TypedChoiceField(choices=[('', '— не змінювати —')] + list(Question.DIFFICULTY_CHOICES),
+                                        coerce=int, empty_value=None, required=False, label='Нова складність')
+    add_material = forms.ModelChoiceField(StudyMaterial.objects.filter(is_bundle=False), required=False,
+                                          label='Додати до уроку')
+    remove_material = forms.ModelChoiceField(StudyMaterial.objects.filter(is_bundle=False), required=False,
+                                             label='Прибрати з уроку')
+
+
+@admin.action(description='✏️ Змінити позначені завдання (тема, складність, урок)…')
+def bulk_edit_questions(modeladmin, request, queryset):
+    if request.POST.get('apply'):
+        form = QuestionBulkEditForm(request.POST)
+        if form.is_valid():
+            data, changes = form.cleaned_data, []
+            if data['curriculum_topic']:
+                queryset.update(curriculum_topic=data['curriculum_topic'])
+                changes.append(f"тема → {data['curriculum_topic'].name}")
+            if data['difficulty']:
+                queryset.update(difficulty=data['difficulty'])
+                changes.append(f"складність → {dict(Question.DIFFICULTY_CHOICES)[data['difficulty']]}")
+            if data['add_material']:
+                data['add_material'].practice_questions.add(*queryset)
+                changes.append(f"додано до «{data['add_material'].title}»")
+            if data['remove_material']:
+                data['remove_material'].practice_questions.remove(*queryset)
+                changes.append(f"прибрано з «{data['remove_material'].title}»")
+            if changes:
+                messages.success(request, f"Змінено завдань: {queryset.count()} ({'; '.join(changes)}).")
+            else:
+                messages.warning(request, 'Нічого не обрано для зміни — завдання не змінено.')
+            return None
+    else:
+        form = QuestionBulkEditForm()
+    return render(request, 'admin/materials/question/bulk_edit.html', {
+        **modeladmin.admin_site.each_context(request), 'opts': modeladmin.model._meta,
+        'title': 'Змінити позначені завдання', 'form': form, 'questions': queryset,
+        'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
+    })
+
+
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    # ОНОВЛЕНО: curriculum_topic замість topic
-    list_display = ('text', 'curriculum_topic', 'question_type')
-    list_select_related = ('curriculum_topic__chapter__grade__subject',)
-    # Фільтр за класом, а не за кожною з сотень тем; окремо — завдання без теми
-    list_filter = ('curriculum_topic__chapter__grade', ('curriculum_topic', admin.EmptyFieldListFilter),
-                   'question_type', 'difficulty')
-    search_fields = ('text',)
+    list_display = ('short_text', 'topic_name', 'question_type', 'difficulty', 'health')
+    list_select_related = ('curriculum_topic',)
+    list_filter = ('curriculum_topic__chapter__grade', TopicOfGradeFilter,
+                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty')
+    # Пошук і за назвою теми: «21» або «логарифм»
+    search_fields = ('text', 'curriculum_topic__name')
     autocomplete_fields = ['curriculum_topic']
+    actions = [bulk_edit_questions]
+    readonly_fields = ('preview',)
+    fieldsets = (
+        (None, {'fields': ('text', 'question_type', 'difficulty', 'curriculum_topic', 'materials', 'image',
+                           'svg_code', 'correct_short_answer')}),
+        ('Попередній перегляд (збережена версія)', {'fields': ('preview',)}),
+    )
     filter_horizontal = ('materials',)
     inlines = [MatchItemInline, AnswerOptionInline]
     change_list_template = 'admin/materials/question/change_list.html'
@@ -247,6 +324,57 @@ class QuestionAdmin(admin.ModelAdmin):
         request._admin_question_id = object_id
         return super().change_view(request, object_id, form_url, extra_context)
 
+    class Media:
+        # Формули $…$ у списку, попередньому перегляді й масовому редагуванні відмальовуються MathJax
+        js = ('materials/admin_mathjax.js',)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            n_options=Count('options', distinct=True),
+            n_correct=Count('options', filter=Q(options__is_correct=True), distinct=True),
+            n_pairs=Count('match_items', distinct=True))
+
+    @admin.display(description='Текст', ordering='text')
+    def short_text(self, obj):
+        return obj.text if len(obj.text) <= 120 else obj.text[:117] + '…'
+
+    @admin.display(description='Тема', ordering='curriculum_topic__name')
+    def topic_name(self, obj):
+        return obj.curriculum_topic.name if obj.curriculum_topic else '—'
+
+    @admin.display(description='Перевірка')
+    def health(self, obj):
+        problem = question_problem(obj, obj.n_options, obj.n_correct, obj.n_pairs)
+        return f'⚠ {problem}' if problem else '✓'
+
+    @admin.display(description='Як бачить учень')
+    def preview(self, obj):
+        if not obj.pk:
+            return 'Попередній перегляд з\'явиться після збереження.'
+        return render_to_string('admin/materials/question/preview.html', {
+            'question': obj, 'options': obj.options.all(),
+            'pairs': obj.match_items.select_related('correct_option'),
+            'problem': question_problem(obj, obj.options.count(), obj.options.filter(is_correct=True).count(),
+                                        obj.match_items.count()),
+        })
+
+
+def question_problem(question, n_options, n_correct, n_pairs):
+    """Чому завдання не можна нормально розв'язати, або None."""
+    if question.question_type == 'CHOICE':
+        if n_options < 2:
+            return 'менше двох варіантів'
+        if n_correct != 1:
+            return 'має бути рівно одна правильна відповідь'
+    elif question.question_type == 'MATCH':
+        if not n_pairs:
+            return 'немає пар відповідності'
+        if n_options < n_pairs:
+            return 'варіантів менше, ніж пар'
+    elif question.question_type == 'SHORT' and not (question.correct_short_answer or '').strip():
+        return 'немає правильної відповіді'
+    return None
+
 
 # ==========================================
 # ВІТРИНА: МАТЕРІАЛИ ТА ІМПОРТ
@@ -282,7 +410,40 @@ class HasPdfFilter(admin.SimpleListFilter):
         return queryset
 
 
+MAX_HTML_UPLOAD_BYTES = 5 * 1024 * 1024
+
+
+class StudyMaterialAdminForm(forms.ModelForm):
+    html_file = forms.FileField(
+        required=False, label='Завантажити .html',
+        help_text='Вміст файлу замінить HTML-презентацію. Без файлу презентація не змінюється.')
+
+    class Meta:
+        model = StudyMaterial
+        fields = '__all__'
+
+    def clean_html_file(self):
+        upload = self.cleaned_data.get('html_file')
+        if not upload:
+            return None
+        if not upload.name.lower().endswith(('.html', '.htm')):
+            raise forms.ValidationError('Потрібен файл .html')
+        if upload.size > MAX_HTML_UPLOAD_BYTES:
+            raise forms.ValidationError(f'Файл завеликий (максимум {MAX_HTML_UPLOAD_BYTES // (1024 * 1024)} МБ).')
+        try:
+            return upload.read().decode('utf-8-sig')
+        except UnicodeDecodeError:
+            raise forms.ValidationError('Файл має бути у кодуванні UTF-8.')
+
+    def save(self, commit=True):
+        html = self.cleaned_data.get('html_file')
+        if html:
+            self.instance.html_content = html
+        return super().save(commit)
+
+
 class StudyMaterialAdmin(admin.ModelAdmin):
+    form = StudyMaterialAdminForm
     list_display = ('title', 'grade_label', 'price', 'is_published', 'is_free', 'is_bundle', 'has_html', 'has_pdf')
     list_display_links = ('title',)
     # Ціну й публікацію можна змінити прямо в списку і зберегти кнопкою внизу
@@ -294,6 +455,29 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     autocomplete_fields = ['curriculum_topic']
     # Два списки з пошуком замість множинного вибору з Ctrl
     filter_horizontal = ('included_materials', 'tags')
+    readonly_fields = ('reader_link',)
+    fieldsets = (
+        ('Основне', {'fields': ('title', 'curriculum_topic', 'tags', 'description')}),
+        ('Вітрина', {'fields': ('price', 'is_free', 'is_published', 'image')}),
+        ('Контент', {'fields': ('file', 'html_file', 'reader_link')}),
+        ('HTML-код вручну', {'classes': ('collapse',), 'fields': ('html_content',),
+                             'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
+        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        # Склад пакета згорнутий для звичайних матеріалів, але одразу видно, коли редагуємо пакет
+        if obj is not None and obj.is_bundle:
+            return [(name, {**options, 'classes': ()}) if name == 'Пакет' else (name, options)
+                    for name, options in self.fieldsets]
+        return self.fieldsets
+
+    @admin.display(description='Перевірити')
+    def reader_link(self, obj):
+        if not obj.pk:
+            return 'Посилання з\'явиться після збереження.'
+        return format_html('<a href="{}" target="_blank">📖 Відкрити в читалці</a> (так, як бачить учень)',
+                           reverse('download_material', args=[obj.pk]))
 
     def get_queryset(self, request):
         # Презентація (до кількох МБ) у списку не завантажується — лише позначка, чи вона є
@@ -403,7 +587,14 @@ class StudentPresentationAdmin(admin.ModelAdmin):
 
 @admin.register(QuestionError)
 class QuestionErrorAdmin(admin.ModelAdmin):
-    list_display = ('question', 'user', 'status', 'created_at')
+    list_display = ('question', 'question_link', 'user', 'status', 'created_at')
+    list_select_related = ('question', 'user')
+    readonly_fields = ('question_link',)
+
+    @admin.display(description='Завдання в адмінці')
+    def question_link(self, obj):
+        return format_html('<a href="{}">✏️ Відкрити завдання</a>',
+                           reverse('admin:materials_question_change', args=[obj.question_id]))
     list_filter = ('status', 'created_at')
     search_fields = ('message', 'question__text')
 
@@ -436,3 +627,48 @@ def ordered_app_list(request, app_label=None):
 
 
 admin.site.get_app_list = ordered_app_list
+
+
+# ==========================================
+# ГОЛОВНА АДМІНКИ: «ПОТРЕБУЄ УВАГИ»
+# ==========================================
+def attention_items(request):
+    """Що варто переглянути: кількість і посилання на вже відфільтрований список."""
+    from telegram_bot.models import BotLead
+
+    no_html = Q(html_content__isnull=True) | Q(html_content='')
+    checks = [
+        ('Нові заявки на статус учня', TutorStudentRequest.objects.filter(status='pending'),
+         'materials.tutorstudentrequest', 'status__exact=pending'),
+        ('Нові заявки з бота', BotLead.objects.filter(processed=False),
+         'telegram_bot.botlead', 'processed__exact=0'),
+        ('Нові скарги на завдання', QuestionError.objects.filter(status='new'),
+         'materials.questionerror', 'status__exact=new'),
+        ('Відгуки чекають модерації', Review.objects.filter(is_approved=False),
+         'materials.review', 'is_approved__exact=0'),
+        ('Опубліковані матеріали без презентації', StudyMaterial.objects.filter(
+            no_html, is_published=True, is_bundle=False), 'materials.studymaterial',
+         'is_published__exact=1&is_bundle__exact=0&has_html=no'),
+        ('Неопубліковані матеріали', StudyMaterial.objects.filter(is_published=False),
+         'materials.studymaterial', 'is_published__exact=0'),
+        ('Завдання без теми', Question.objects.filter(curriculum_topic__isnull=True),
+         'materials.question', 'curriculum_topic__isempty=1'),
+    ]
+    items = []
+    for label, queryset, model, query in checks:
+        app_label, model_name = model.split('.')
+        if not request.user.has_perm(f'{app_label}.view_{model_name}'):
+            continue
+        items.append({'label': label, 'count': queryset.count(),
+                      'url': f"{reverse(f'admin:{app_label}_{model_name}_changelist')}?{query}"})
+    return items
+
+
+_default_index = admin.site.index
+
+
+def index_with_attention(request, extra_context=None):
+    return _default_index(request, {**(extra_context or {}), 'attention_items': attention_items(request)})
+
+
+admin.site.index = index_with_attention
