@@ -74,7 +74,7 @@ class CurriculumChapter(models.Model):
         verbose_name_plural = "3. Розділи"
 
     def __str__(self):
-        return f"{self.grade.name} - {self.name}"
+        return f"{self.grade.short_label} | {self.name}"
 
 class CurriculumTopic(models.Model):
     chapter = models.ForeignKey(CurriculumChapter, on_delete=models.CASCADE, related_name='topics', verbose_name="Розділ")
@@ -87,7 +87,8 @@ class CurriculumTopic(models.Model):
         verbose_name_plural = "4. Теми (Уроки)"
 
     def __str__(self):
-        return f"{self.chapter.name} -> {self.name}"
+        # Курс і клас на початку: розділи з однаковими назвами є в багатьох класах, і в адмінці їх легко сплутати
+        return f"{self.chapter.grade.short_label} | {self.chapter.name} -> {self.name}"
 
 DEFAULT_MATERIAL_DESCRIPTION = (
     "Авторський конспект від освітнього проєкту «До Квадрату», створений з урахуванням 7-річного досвіду "

@@ -37,15 +37,21 @@ class CurriculumGradeAdmin(admin.ModelAdmin):
 @admin.register(CurriculumChapter)
 class CurriculumChapterAdmin(admin.ModelAdmin):
     list_display = ('name', 'grade', 'order')
+    list_select_related = ('grade__subject',)
     list_filter = ('grade__subject', 'grade')
     search_fields = ('name',)
-    ordering = ('grade__order', 'order')
 
 @admin.register(CurriculumTopic)
 class CurriculumTopicAdmin(admin.ModelAdmin):
     list_display = ('name', 'chapter', 'order')
+    list_select_related = ('chapter__grade__subject',)
     list_filter = ('chapter__grade__subject', 'chapter__grade')
-    search_fields = ('name',)
+    # Пошук і за курсом/класом: «11 клас логарифм» знаходить тему лише з потрібного класу
+    search_fields = ('name', 'chapter__name', 'chapter__grade__name', 'chapter__grade__subject__name')
+
+    def get_queryset(self, request):
+        # Назва теми містить курс і клас — підтягуємо їх одним запитом (і для пошуку в автодоповненні)
+        return super().get_queryset(request).select_related('chapter__grade__subject')
 
 @admin.action(description="✅ Підтвердити статус (та видати курс для НМТ)")
 def approve_student_requests(modeladmin, request, queryset):
@@ -142,6 +148,8 @@ class TutorStudentRequestAdmin(admin.ModelAdmin):
 class StudentReportAdmin(admin.ModelAdmin):
     # ОНОВЛЕНО: curriculum_topic замість topic
     list_display = ('student', 'date', 'curriculum_topic', 'homework_status')
+    list_select_related = ('student', 'curriculum_topic__chapter__grade__subject')
+    autocomplete_fields = ['curriculum_topic']
     list_filter = ('date', 'homework_status', 'student__course')
     search_fields = ('student__real_name', 'curriculum_topic__name', 'teacher_comment')
 
@@ -172,9 +180,12 @@ class MatchItemInline(admin.TabularInline):
 class QuestionAdmin(admin.ModelAdmin):
     # ОНОВЛЕНО: curriculum_topic замість topic
     list_display = ('text', 'curriculum_topic', 'question_type')
-    list_select_related = ('curriculum_topic',)
-    list_filter = ('curriculum_topic', 'question_type')
+    list_select_related = ('curriculum_topic__chapter__grade__subject',)
+    # Фільтр за класом, а не за кожною з сотень тем; окремо — завдання без теми
+    list_filter = ('curriculum_topic__chapter__grade', ('curriculum_topic', admin.EmptyFieldListFilter),
+                   'question_type', 'difficulty')
     search_fields = ('text',)
+    autocomplete_fields = ['curriculum_topic']
     inlines = [MatchItemInline, AnswerOptionInline]
     change_list_template = 'admin/materials/question/change_list.html'
 
@@ -241,7 +252,7 @@ class QuestionAdmin(admin.ModelAdmin):
 class StudyMaterialAdmin(admin.ModelAdmin):
     # ОНОВЛЕНО: повністю прибрали category, додали curriculum_topic
     list_display = ('title', 'curriculum_topic', 'price', 'is_published')
-    list_select_related = ('curriculum_topic',)
+    list_select_related = ('curriculum_topic__chapter__grade__subject',)
     list_filter = ('is_published',)
     search_fields = ('title',)
     autocomplete_fields = ['curriculum_topic']
