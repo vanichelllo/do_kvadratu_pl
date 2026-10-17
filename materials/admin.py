@@ -2,6 +2,7 @@ import uuid
 import datetime
 from django.contrib import admin
 from django.contrib import messages
+from django.db.models import BooleanField, Case, Q, Value, When
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import path
@@ -186,6 +187,7 @@ class QuestionAdmin(admin.ModelAdmin):
                    'question_type', 'difficulty')
     search_fields = ('text',)
     autocomplete_fields = ['curriculum_topic']
+    filter_horizontal = ('materials',)
     inlines = [MatchItemInline, AnswerOptionInline]
     change_list_template = 'admin/materials/question/change_list.html'
 
@@ -249,13 +251,68 @@ class QuestionAdmin(admin.ModelAdmin):
 # ==========================================
 # ВІТРИНА: МАТЕРІАЛИ ТА ІМПОРТ
 # ==========================================
+class HasPresentationFilter(admin.SimpleListFilter):
+    title = 'HTML-презентація'
+    parameter_name = 'has_html'
+
+    def lookups(self, request, model_admin):
+        return (('yes', 'Є'), ('no', 'Немає'))
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(has_html=True)
+        if self.value() == 'no':
+            return queryset.filter(has_html=False)
+        return queryset
+
+
+class HasPdfFilter(admin.SimpleListFilter):
+    title = 'PDF-файл'
+    parameter_name = 'has_pdf'
+
+    def lookups(self, request, model_admin):
+        return (('yes', 'Є'), ('no', 'Немає'))
+
+    def queryset(self, request, queryset):
+        no_file = Q(file__isnull=True) | Q(file='')
+        if self.value() == 'yes':
+            return queryset.exclude(no_file)
+        if self.value() == 'no':
+            return queryset.filter(no_file)
+        return queryset
+
+
 class StudyMaterialAdmin(admin.ModelAdmin):
-    # ОНОВЛЕНО: повністю прибрали category, додали curriculum_topic
-    list_display = ('title', 'curriculum_topic', 'price', 'is_published')
+    list_display = ('title', 'grade_label', 'price', 'is_published', 'is_free', 'is_bundle', 'has_html', 'has_pdf')
+    list_display_links = ('title',)
+    # Ціну й публікацію можна змінити прямо в списку і зберегти кнопкою внизу
+    list_editable = ('price', 'is_published')
     list_select_related = ('curriculum_topic__chapter__grade__subject',)
-    list_filter = ('is_published',)
+    list_filter = ('is_published', 'is_free', 'is_bundle', HasPresentationFilter, HasPdfFilter,
+                   'curriculum_topic__chapter__grade')
     search_fields = ('title',)
     autocomplete_fields = ['curriculum_topic']
+    # Два списки з пошуком замість множинного вибору з Ctrl
+    filter_horizontal = ('included_materials', 'tags')
+
+    def get_queryset(self, request):
+        # Презентація (до кількох МБ) у списку не завантажується — лише позначка, чи вона є
+        filled = Q(html_content__isnull=False) & ~Q(html_content='')
+        return super().get_queryset(request).annotate(
+            has_html=Case(When(filled, then=Value(True)), default=Value(False), output_field=BooleanField()))
+
+    @admin.display(description='Курс / клас', ordering='curriculum_topic__chapter__grade__order')
+    def grade_label(self, obj):
+        grade = obj.curriculum_grade
+        return grade.short_label if grade else '—'
+
+    @admin.display(description='HTML', boolean=True, ordering='has_html')
+    def has_html(self, obj):
+        return obj.has_html
+
+    @admin.display(description='PDF', boolean=True)
+    def has_pdf(self, obj):
+        return bool(obj.file)
 
 admin.site.register(StudyMaterial, StudyMaterialAdmin)
 
@@ -349,3 +406,33 @@ class QuestionErrorAdmin(admin.ModelAdmin):
     list_display = ('question', 'user', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('message', 'question__text')
+
+# ==========================================
+# ЗАГОЛОВОК І ПОРЯДОК РОЗДІЛІВ АДМІНКИ
+# ==========================================
+admin.site.site_header = 'ДО КВАДРАТУ — адмінка'
+admin.site.site_title = 'ДО КВАДРАТУ'
+admin.site.index_title = 'Керування платформою'
+
+# Спершу щоденна робота, далі класифікатор, службове — в кінці. Не вказані тут моделі й застосунки йдуть після
+APP_ORDER = ['materials', 'users', 'telegram_bot', 'account', 'socialaccount', 'auth', 'sites']
+MODEL_ORDER = [
+    'StudyMaterial', 'Question', 'TutorStudentRequest', 'StudentReport', 'StudentPresentation', 'Order', 'Review',
+    'QuestionError', 'Tag', 'CurriculumSubject', 'CurriculumGrade', 'CurriculumChapter', 'CurriculumTopic', 'Cart',
+    'CustomUser', 'PurchaseHistory',
+]
+_default_get_app_list = admin.site.get_app_list
+
+
+def ordered_app_list(request, app_label=None):
+    def position(order, key):
+        return order.index(key) if key in order else len(order)
+
+    app_list = _default_get_app_list(request, app_label)
+    for app in app_list:
+        app['models'].sort(key=lambda model: position(MODEL_ORDER, model['object_name']))
+    app_list.sort(key=lambda app: position(APP_ORDER, app['app_label']))
+    return app_list
+
+
+admin.site.get_app_list = ordered_app_list
