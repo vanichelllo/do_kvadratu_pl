@@ -1523,6 +1523,13 @@ class BankImportTests(BaseTestCase):
         response = self.client.get('/do-kvadratu-secret-control/materials/question/?dup=yes')
         self.assertEqual([q.id for q in response.context['cl'].result_list], [old.id, new.id])
 
+    def test_picture_filter(self):
+        svg = Question.objects.create(text='SVG', question_type='SHORT', svg_code='<svg></svg>')
+        Question.objects.create(text='Пробіли', question_type='SHORT', svg_code='  \n ')
+        url = '/do-kvadratu-secret-control/materials/question/?picture='
+        self.assertEqual([q.id for q in self.client.get(url + 'yes').context['cl'].result_list], [svg.id])
+        self.assertNotIn(svg, self.client.get(url + 'no').context['cl'].result_list)
+
     def test_task_topic_overrides_file_topic(self):
         # Файл з усіма банками: тема кожного завдання — у полі "topic"
         topic21 = make_nmt_topic('21. Показникові рівняння')

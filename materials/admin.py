@@ -219,6 +219,22 @@ class DuplicateTextFilter(admin.SimpleListFilter):
         return queryset.filter(id__in=ids).order_by('text', 'id')
 
 
+class HasPictureFilter(admin.SimpleListFilter):
+    title = 'малюнок'
+    parameter_name = 'picture'
+
+    def lookups(self, request, model_admin):
+        return [('yes', 'З малюнком'), ('no', 'Без малюнка')]
+
+    def queryset(self, request, queryset):
+        has_picture = (Q(svg_code__isnull=False) & ~Q(svg_code__regex=r'^\s*$')) | (Q(image__isnull=False) & ~Q(image=''))
+        if self.value() == 'yes':
+            return queryset.filter(has_picture)
+        if self.value() == 'no':
+            return queryset.exclude(has_picture)
+        return queryset
+
+
 class HasTopicFilter(admin.EmptyFieldListFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -273,7 +289,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('short_text', 'id', 'topic_name', 'question_type', 'difficulty', 'health')
     list_select_related = ('curriculum_topic',)
     list_filter = ('curriculum_topic__chapter__grade', TopicOfGradeFilter,
-                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', DuplicateTextFilter)
+                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', HasPictureFilter, DuplicateTextFilter)
     # Пошук і за назвою теми: «21» або «логарифм»
     search_fields = ('text', 'curriculum_topic__name')
     autocomplete_fields = ['curriculum_topic']
