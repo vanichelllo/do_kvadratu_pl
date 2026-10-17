@@ -43,6 +43,15 @@
   </ul>
   {% endif %}
 
+  {% if report.added %}
+  <details>
+    <summary><strong>Будуть додані (нових у базі ще немає): {{ report.added|length }}</strong></summary>
+    <ul>
+      {% for index, topic, text in report.added %}<li>№{{ index }} [{{ topic|truncatechars:40 }}]: {{ text|truncatechars:120 }}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
   {% if report.duplicates %}
   <details>
     <summary><strong>Дублікати (вже є в базі або повторюються у файлі, пропускаються): {{ report.duplicates|length }}</strong></summary>
