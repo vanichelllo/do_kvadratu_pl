@@ -272,7 +272,7 @@ TASKS = [
     {
         "type": "CHOICE",
         "difficulty": 2,
-        "text": r"Кут між бісектрисами гострих кутів прямокутного трикутника дорівнює:",
+        "text": r"Тупий кут між бісектрисами гострих кутів прямокутного трикутника дорівнює:",
         "svg_code": "",
         "options": [
             (r"А) $45^\circ$", False),
@@ -330,7 +330,7 @@ TASKS = [
         "difficulty": 3,
         "text": r"На рисунку зображено прямокутний трикутник $ABC$ ($\angle C = 90^\circ$). $CD$ — висота. Знайдіть $AD$, якщо $AC = 6$ см, $AB = 12$ см.",
         "svg_code": r"""
-<svg viewBox="-10 -70 140 80" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="-10 -70 140 90" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
     <path d="M 0 0 L 120 0 L 30 -52 Z" fill="none" stroke="#2c3e50" stroke-width="2"/>
     <line x1="30" y1="-52" x2="30" y2="0" stroke="#e74c3c" stroke-width="2"/>
     <text x="-5" y="15" font-family="sans-serif">A</text>

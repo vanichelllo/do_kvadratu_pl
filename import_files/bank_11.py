@@ -126,7 +126,7 @@ TASKS = [
             </g>
             <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
             <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
-            <path d="M -3 2 C -1.5 2, -1 0, 0 -1 C 1 -2, 2 0, 3 2 C 3.5 3, 4 1.5, 4 1.5" fill="none" stroke="#2980b9" stroke-width="0.1"/>
+            <path d="M -3 -2 C -1.5 -2, -1 0, 0 1 C 1 2, 2 0, 3 -2 C 3.5 -3, 4 -1.5, 4 -1.5" fill="none" stroke="#2980b9" stroke-width="0.1"/>
             <circle cx="-1" cy="0" r="0.15" fill="#e74c3c"/>
             <text x="-1.2" y="-0.3" font-size="0.5" fill="#e74c3c">-1</text>
             <circle cx="2" cy="0" r="0.15" fill="#e74c3c"/>
@@ -164,7 +164,7 @@ TASKS = [
             (r"А) $y = x^2$", False),
             (r"Б) $y = -x^3$", True),
             (r"В) $y = 4x$", False),
-            (r"Г) $y = \frac{-16}{x}$", False),
+            (r"Г) $y = \frac{16}{x}$", False),
             (r"Д) $y = |x| + 4$", False)
         ],
         "topic_tags": ["11. Функції та їх властивості"]
@@ -290,20 +290,20 @@ TASKS = [
         "type": "MATCH",
         "difficulty": 2,
         "text": r"На рисунку зображено графік функції $y = f(x)$. Узгодьте характеристику функції (1–3) із відповідним числовим значенням (А–Д).",
-        "svg_code": r"""<svg viewBox="-5 -4 6 8" width="200" height="250" xmlns="http://www.w3.org/2000/svg">
+        "svg_code": r"""<svg viewBox="-5 -4 10 8" width="250" height="200" xmlns="http://www.w3.org/2000/svg">
             <g stroke="#ecf0f1" stroke-width="0.1">
                 <line x1="-5" y1="-3" x2="5" y2="-3"/><line x1="-5" y1="-2" x2="5" y2="-2"/><line x1="-5" y1="-1" x2="5" y2="-1"/><line x1="-5" y1="1" x2="5" y2="1"/><line x1="-5" y1="2" x2="5" y2="2"/><line x1="-5" y1="3" x2="5" y2="3"/>
                 <line x1="-4" y1="-4" x2="-4" y2="4"/><line x1="-3" y1="-4" x2="-3" y2="4"/><line x1="-2" y1="-4" x2="-2" y2="4"/><line x1="-1" y1="-4" x2="-1" y2="4"/><line x1="1" y1="-4" x2="1" y2="4"/><line x1="2" y1="-4" x2="2" y2="4"/><line x1="3" y1="-4" x2="3" y2="4"/><line x1="4" y1="-4" x2="4" y2="4"/>
             </g>
             <line x1="-5" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
             <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
-            <path d="M -4 -2 C -2 -2, -2 3, 0 3 C 2 3, 2 -3, 4 -3" fill="none" stroke="#e67e22" stroke-width="0.1"/>
-            <circle cx="0" cy="3" r="0.15" fill="#2980b9"/>
-            <circle cx="4" cy="-3" r="0.15" fill="#2980b9"/>
-            <text x="0.3" y="3.3" font-size="0.5" fill="#2980b9">3</text>
+            <path d="M -4 2 C -2 2, -2 -3, 0 -3 C 2 -3, 2 3, 4 3" fill="none" stroke="#e67e22" stroke-width="0.1"/>
+            <circle cx="0" cy="-3" r="0.15" fill="#2980b9"/>
+            <circle cx="4" cy="3" r="0.15" fill="#2980b9"/>
+            <text x="0.3" y="-3.2" font-size="0.5" fill="#2980b9">3</text>
             <text x="-4" y="0.4" font-size="0.5" fill="#333">-4</text>
             <text x="4" y="0.4" font-size="0.5" fill="#333">4</text>
-            <text x="0.2" y="-3.2" font-size="0.5" fill="#2980b9">-3</text>
+            <text x="0.2" y="3.5" font-size="0.5" fill="#2980b9">-3</text>
         </svg>""",
         "options": [
             r"А) $-4$",

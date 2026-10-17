@@ -95,7 +95,7 @@ TASKS = [
             <line x1="-5" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
             <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
             <!-- y = x^2 - 4 -->
-            <path d="M -3 -5 Q 0 5 3 -5" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
+            <path d="M -3 -5 Q 0 13 3 -5" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
             <text x="4.5" y="-0.3" font-size="0.5">x</text>
             <text x="0.3" y="-4.5" font-size="0.5">y</text>
         </svg>""",
@@ -116,7 +116,7 @@ TASKS = [
             <line x1="-5" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
             <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
             <!-- y = -0.5(x-2)^2 + 3 -->
-            <path d="M -2 5 Q 2 -5 6 5" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
+            <path d="M -2 5 Q 2 -11 6 5" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
             <circle cx="0" cy="-1" r="0.2" fill="#e74c3c"/>
             <text x="4.5" y="-0.3" font-size="0.5">x</text>
             <text x="0.3" y="-4.5" font-size="0.5">y</text>
@@ -180,7 +180,7 @@ TASKS = [
             <line x1="-5" y1="0" x2="5" y2="0" stroke="#333" stroke-width="0.05" marker-end="url(#arrDark)"/>
             <line x1="0" y1="-5" x2="0" y2="5" stroke="#333" stroke-width="0.05" marker-start="url(#arrDark)"/>
             <!-- y = x^2 + 4x + 1 (Вершина зліва від Oy) -->
-            <path d="M -5 4 Q -2 -6 1 4" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
+            <path d="M -5 -6 Q -2 12 1 -6" fill="none" stroke="#2c3e50" stroke-width="0.1"/>
             <line x1="-2" y1="-5" x2="-2" y2="5" stroke="#27ae60" stroke-dasharray="0.2,0.2" stroke-width="0.05"/>
             <text x="-2.5" y="4.5" font-size="0.5" fill="#27ae60">x₀</text>
             <text x="4.5" y="-0.3" font-size="0.5">x</text>

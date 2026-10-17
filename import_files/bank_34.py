@@ -218,7 +218,7 @@ TASKS = [
         "options": [
             (r"А) $m_c = \frac{1}{2}\sqrt{a^2 + b^2 - ab\cos\gamma}$", False),
             (r"Б) $m_c = \frac{1}{2}\sqrt{a^2 + b^2 + 2ab\cos\gamma}$", True),
-            (r"В) $m_c = \frac{1}{2}\sqrt{2a^2 + 2b^2 - c^2}$", False),
+            (r"В) $m_c = \frac{1}{2}\sqrt{a^2 + b^2 - 2ab\cos\gamma}$", False),
             (r"Г) $m_c = \sqrt{a^2 + b^2 - 2ab\cos\gamma}$", False),
             (r"Д) $m_c = \frac{1}{2}(a + b)\cos\gamma$", False)
         ],
@@ -299,15 +299,15 @@ TASKS = [
         "difficulty": 3,
         "text": r"На рисунку зображено ромб $ABCD$. $BD = 6$ см, $\angle A = 60^\circ$. Знайдіть сторону ромба.",
         "svg_code": r"""
-<svg viewBox="-50 -50 100 100" width="100%" height="200px" xmlns="http://www.w3.org/2000/svg">
-    <path d="M -40 0 L 0 40 L 40 0 L 0 -40 Z" fill="none" stroke="#2c3e50" stroke-width="2"/>
-    <line x1="0" y1="40" x2="0" y2="-40" stroke="#3498db" stroke-width="2" stroke-dasharray="4,4"/>
-    <text x="-50" y="5" font-family="sans-serif">A</text>
-    <text x="-5" y="-45" font-family="sans-serif">B</text>
-    <text x="45" y="5" font-family="sans-serif">C</text>
-    <text x="-5" y="52" font-family="sans-serif">D</text>
-    <path d="M -25 0 A 15 15 0 0 1 -30 10" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
-    <text x="-25" y="20" font-family="sans-serif" font-size="8" fill="#e74c3c">60°</text>
+<svg viewBox="-55 -40 110 80" width="100%" height="200px" xmlns="http://www.w3.org/2000/svg">
+    <path d="M -40 0 L 0 23 L 40 0 L 0 -23 Z" fill="none" stroke="#2c3e50" stroke-width="2"/>
+    <line x1="0" y1="23" x2="0" y2="-23" stroke="#3498db" stroke-width="2" stroke-dasharray="4,4"/>
+    <text x="-52" y="5" font-family="sans-serif">A</text>
+    <text x="-5" y="-27" font-family="sans-serif">B</text>
+    <text x="44" y="5" font-family="sans-serif">C</text>
+    <text x="-5" y="37" font-family="sans-serif">D</text>
+    <path d="M -29.6 -6 A 12 12 0 0 1 -29.6 6" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+    <text x="-26" y="3" font-family="sans-serif" font-size="7" fill="#e74c3c">60°</text>
 </svg>
         """,
         "options": [

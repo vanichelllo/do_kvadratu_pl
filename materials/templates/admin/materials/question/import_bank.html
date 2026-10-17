@@ -10,7 +10,7 @@
 
 {% block content %}
 <div id="content-main">
-  <p>Файл у форматі <code>import_files/bank_*.py</code> (<code>TOPIC_NAME = …</code> і <code>TASKS = […]</code>).
+  <p>Файл у форматі <code>import_files/bank_*.py</code> (<code>TOPIC_NAME = …</code> і <code>TASKS = […]</code>). У файлі з кількома темами тему можна вказати в кожному завданні: <code>"topic": "21. Показникові рівняння"</code>.
     Файл не виконується, а лише читається як набір значень. Спершу буде пробний звіт, у базу нічого не запишеться;
     імпорт запускається окремою кнопкою.</p>
 
@@ -31,7 +31,7 @@
     <tbody>
       <tr><th>Завдань у файлі</th><td>{{ report.total }}</td></tr>
       <tr><th>Буде додано</th><td>{{ report.to_add|length }}</td></tr>
-      <tr><th>Дублікатів (однаковий текст)</th><td>{{ report.duplicates|length }}</td></tr>
+      <tr><th>Дублікатів (вже є в базі)</th><td>{{ report.duplicates|length }}</td></tr>
       <tr><th>З помилками</th><td>{{ report.errors|length }}</td></tr>
     </tbody>
   </table>
@@ -44,10 +44,12 @@
   {% endif %}
 
   {% if report.duplicates %}
-  <h3>Дублікати (вже є в базі або повторюються у файлі, пропускаються)</h3>
-  <ul>
-    {% for index, text in report.duplicates %}<li>№{{ index }}: {{ text|truncatechars:120 }}</li>{% endfor %}
-  </ul>
+  <details>
+    <summary><strong>Дублікати (вже є в базі або повторюються у файлі, пропускаються): {{ report.duplicates|length }}</strong></summary>
+    <ul>
+      {% for index, text in report.duplicates %}<li>№{{ index }}: {{ text|truncatechars:120 }}</li>{% endfor %}
+    </ul>
+  </details>
   {% endif %}
 
   {% if report.aliased_tags %}

@@ -216,7 +216,7 @@ TASKS = [
     {
         "type": "CHOICE",
         "difficulty": 3,
-        "text": r"Один з кутів рівнобедреного трикутника дорівнює $100^\circ$. Знайдіть кут між висотами, проведеними з вершин кутів при основі.",
+        "text": r"Один з кутів рівнобедреного трикутника дорівнює $100^\circ$. Знайдіть гострий кут між прямими, що містять висоти, проведені з вершин кутів при основі.",
         "svg_code": "",
         "options": [
             (r"А) $100^\circ$", False),
@@ -344,7 +344,7 @@ TASKS = [
         "difficulty": 2,
         "text": r"На рисунку зображено рівнобедрений трикутник $ABC$ з основою $AC$. Вкажіть правильну рівність.",
         "svg_code": r"""
-<svg viewBox="-50 -20 100 120" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="-50 -20 100 135" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
     <path d="M 0 0 L -40 100 L 40 100 Z" fill="none" stroke="#2c3e50" stroke-width="2"/>
     <text x="0" y="-5" font-family="sans-serif" text-anchor="middle">B</text>
     <text x="-45" y="110" font-family="sans-serif">A</text>

@@ -69,6 +69,8 @@ def validate_task(task):
     if q_type not in TYPES: return [f'невідомий тип «{q_type}»']
     if not isinstance(task.get('text'), str) or not task['text'].strip(): problems.append('порожній текст')
     if task.get('difficulty') not in (1, 2, 3): problems.append('складність має бути 1, 2 або 3')
+    if 'topic' in task and (not isinstance(task['topic'], str) or not task['topic'].strip()):
+        problems.append('topic: має бути назвою теми, напр. «21. Показникові рівняння»')
     options = task.get('options')
     if q_type == 'CHOICE':
         if not isinstance(options, (list, tuple)) or len(options) < 2 or not all(_is_pair(o, bool) for o in options):
@@ -143,17 +145,17 @@ def import_tasks(topic_name, tasks):
     if not report.to_add:
         return report, 0
 
-    # === НОВА ЛОГІКА: Шукаємо CurriculumTopic замість DiagnosticTopic ===
-    target_topic = None
-    match = re.match(r'^(\d+)', topic_name)
-    if match:
-        topic_num = int(match.group(1))
-        # Шукаємо тему НМТ з таким самим номером
-        for nt in CurriculumTopic.objects.filter(chapter__grade__subject__name="Підготовка до НМТ / ЗНО"):
-            nt_match = re.match(r'^(\d+)', nt.name)
-            if nt_match and int(nt_match.group(1)) == topic_num:
-                target_topic = nt
-                break
+    # Тема — за номером на початку назви: «21. …» → тема 21 курсу НМТ. У файлі з кількома темами
+    # (наприклад, усі банки разом) тема вказана в самому завданні полем "topic"
+    nmt_topics = {}
+    for nt in CurriculumTopic.objects.filter(chapter__grade__subject__name="Підготовка до НМТ / ЗНО"):
+        nt_match = re.match(r'^(\d+)', nt.name)
+        if nt_match:
+            nmt_topics.setdefault(int(nt_match.group(1)), nt)
+
+    def topic_for(name):
+        match = re.match(r'^(\d+)', name)
+        return nmt_topics.get(int(match.group(1))) if match else None
 
     materials_cache = {}
     for index in report.to_add:
@@ -161,7 +163,7 @@ def import_tasks(topic_name, tasks):
         
         # ЗБЕРІГАЄМО З НОВИМ curriculum_topic
         q = Question.objects.create(
-            curriculum_topic=target_topic,
+            curriculum_topic=topic_for(data.get('topic') or topic_name),
             question_type=data['type'],
             difficulty=data['difficulty'],
             text=data['text'],

@@ -381,7 +381,7 @@ TASKS = [
     {
         "type": "CHOICE",
         "difficulty": 2,
-        "text": r"На рисунку зображено правильну чотирикутну піраміду $SABCD$. Вкажіть лінійний кут двогранного кута при ребрі основи $CD$, якщо $SO$ — висота, $SK$ — апофема.",
+        "text": r"На рисунку зображено правильну чотирикутну піраміду $SABCD$. Вкажіть лінійний кут двогранного кута при ребрі основи $BC$, якщо $SO$ — висота, $SK$ — апофема.",
         "svg_code": r"""
 <svg viewBox="-50 -50 100 120" width="100%" height="200px" xmlns="http://www.w3.org/2000/svg">
     <polygon points="-40,10 20,10 40,-10 -20,-10" fill="none" stroke="#2c3e50" stroke-width="1.5" stroke-dasharray="2,2"/>
@@ -417,7 +417,7 @@ TASKS = [
         "difficulty": 2,
         "text": r"На якому рисунку зображено розгортку правильної трикутної піраміди?",
         "svg_code": r"""
-<svg viewBox="0 0 200 100" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="-15 -5 215 105" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg">
     <!-- 1 -->
     <g transform="translate(30, 50)">
         <polygon points="0,-15 15,10 -15,10" fill="none" stroke="#2c3e50" stroke-width="1.5"/>
@@ -429,8 +429,8 @@ TASKS = [
     <!-- 2 -->
     <g transform="translate(100, 50)">
         <polygon points="0,-15 15,10 -15,10" fill="none" stroke="#2c3e50" stroke-width="1.5"/>
-        <polygon points="-15,10 -40,10 0,-15" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
-        <polygon points="15,10 40,10 0,-15" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+        <polygon points="0,-15 -15,10 -30,-15" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+        <polygon points="0,-15 15,10 30,-15" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
         <polygon points="-15,10 15,10 0,35" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
         <text x="-15" y="-20" font-family="sans-serif" font-size="10" fill="#e74c3c">2</text>
     </g>
@@ -517,13 +517,13 @@ TASKS = [
         "svg_code": "",
         "options": [
             r"А) У точку перетину діагоналей",
-            r"Б) Усередину гіпотенузи",
-            r"В) У точку перетину висот",
+            r"Б) У середину гіпотенузи",
+            r"В) У вершину прямого кута",
             r"Г) У точку перетину медіан, яка є центром вписаного і описаного кіл",
             r"Д) Поза трикутником"
         ],
         "matches": [
-            (r"1. Прямокутний трикутник", r"Б) Усередину гіпотенузи"),
+            (r"1. Прямокутний трикутник", r"Б) У середину гіпотенузи"),
             (r"2. Правильний трикутник", r"Г) У точку перетину медіан, яка є центром вписаного і описаного кіл"),
             (r"3. Прямокутник", r"А) У точку перетину діагоналей")
         ],

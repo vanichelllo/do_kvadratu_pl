@@ -519,14 +519,14 @@ TASKS = [
 
     <path d="M -3 2 Q -2 -2 -1 -1 T 1 1 T 3 -2" fill="none" stroke="#3498db" stroke-width="0.08"/>
 
-    <circle cx="-2.3" cy="0.1" r="0.1" fill="#e74c3c"/>
-    <text x="-2.3" y="0.6" font-size="0.3" font-family="sans-serif" text-anchor="middle">A</text>
+    <circle cx="0" cy="0" r="0.1" fill="#e74c3c"/>
+    <text x="0.3" y="-0.2" font-size="0.3" font-family="sans-serif" text-anchor="middle">A</text>
 
-    <circle cx="-0.1" cy="-1.1" r="0.1" fill="#e74c3c"/>
-    <text x="-0.1" y="-0.5" font-size="0.3" font-family="sans-serif" text-anchor="middle">B</text>
+    <circle cx="1.4" cy="1.2" r="0.1" fill="#e74c3c"/>
+    <text x="1.4" y="1.7" font-size="0.3" font-family="sans-serif" text-anchor="middle">B</text>
 
-    <circle cx="1.6" cy="-0.2" r="0.1" fill="#e74c3c"/>
-    <text x="1.6" y="0.4" font-size="0.3" font-family="sans-serif" text-anchor="middle">C</text>
+    <circle cx="2.2" cy="0.4" r="0.1" fill="#e74c3c"/>
+    <text x="2.55" y="0.5" font-size="0.3" font-family="sans-serif" text-anchor="middle">C</text>
 </svg>
         """,
         "options": [

@@ -352,17 +352,17 @@ TASKS = [
     {
         "type": "SHORT",
         "difficulty": 3,
-        "text": r"Прямокутник зі сторонами $a$ і $b$ має площу $S = 48$. Якщо сторону $a$ збільшити на $2$, а сторону $b$ зменшити на $2$, то площа прямокутника зменшиться на $4$. Знайдіть початкове значення сторони $a$, якщо відомо, що $b - a = 2$.",
-        "svg_code": r"""<svg viewBox="0 0 300 200" width="200" height="150" xmlns="http://www.w3.org/2000/svg">
+        "text": r"Прямокутник зі сторонами $a$ і $b$ має площу $S = 48$. Якщо сторону $a$ збільшити на $2$, а сторону $b$ зменшити на $1$, то площа прямокутника збільшиться на $8$. Знайдіть початкове значення сторони $a$.",
+        "svg_code": r"""<svg viewBox="0 0 300 300" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
             <rect x="20" y="20" width="160" height="100" fill="rgba(41,128,185,0.1)" stroke="#2980b9" stroke-width="2"/>
             <text x="100" y="75" text-anchor="middle" font-weight="bold" fill="#2c3e50">S = 48</text>
             <text x="100" y="15" text-anchor="middle" font-size="14" fill="#344e86" font-style="italic">b</text>
             <text x="10" y="75" text-anchor="middle" font-size="14" fill="#344e86" font-style="italic">a</text>
 
             <rect x="20" y="140" width="120" height="140" fill="rgba(231,76,60,0.1)" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4"/>
-            <text x="80" y="190" text-anchor="middle" font-size="12" font-weight="bold" fill="#e74c3c">S - 4</text>
+            <text x="80" y="190" text-anchor="middle" font-size="12" font-weight="bold" fill="#e74c3c">S + 8</text>
             <text x="160" y="180" text-anchor="start" font-size="12" fill="#c0392b" font-style="italic">a + 2</text>
-            <text x="80" y="130" text-anchor="middle" font-size="12" fill="#c0392b" font-style="italic">b - 2</text>
+            <text x="80" y="130" text-anchor="middle" font-size="12" fill="#c0392b" font-style="italic">b - 1</text>
         </svg>""",
         "answer": "6",
         "topic_tags": ["4. Одночлени, многочлени та формули скороченого множення",
