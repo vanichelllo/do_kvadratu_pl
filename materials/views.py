@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, F, Prefetch, Q, When
+from django.db.models import Case, Count, F, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
@@ -35,7 +35,8 @@ from .games import record_game_answer, short_answer_matches
 from .models import (
     StudyMaterial, Cart, CartItem, Order, OrderItem, Question,
     PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
-    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION
+    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
+    NMT_SUBJECT_NAME,
 )
 
 from rest_framework.decorators import api_view
@@ -190,10 +191,15 @@ def diagnostic_stats(saved_answers):
     return total_score, max_score, topics_stats
 
 
+def weak_topic_stats(topics_stats):
+    """Теми, де менше 50%: найслабші першими, за рівного результату — у порядку курсу."""
+    weak = [s for s in topics_stats.values() if s['topic'] and s['total'] > 0 and s['correct'] / s['total'] < 0.5]
+    return sorted(weak, key=lambda s: (s['correct'] / s['total'], s['topic'].order))
+
+
 def diagnostic_summary(topics_stats):
     """Слабкі теми (менше 50%), матеріали для них і статистика за темами в порядку курсу."""
-    weak_topics = [s['topic'] for s in topics_stats.values() if
-                   s['topic'] and s['total'] > 0 and (s['correct'] / s['total']) * 100 < 50]
+    weak_topics = sorted((s['topic'] for s in weak_topic_stats(topics_stats)), key=lambda t: t.order)
     recommendations = []
     if weak_topics:
         recommendations = sorted(
@@ -216,7 +222,12 @@ def diagnostic_test_view(request):
             'q_choice': {}, 'q_match': {}, 'q_short': {},
             'question_ids': question_ids_str, 'note': 'Вхідна діагностика НМТ'
         }
-        for question in questions_in_order(parse_id_list(question_ids_str)):
+        scope = request.POST.get('scope', 'all')
+        if scope != 'all':
+            scope = ','.join(map(str, sorted(set(parse_id_list(scope))))) or 'all'
+        saved_answers['scope'] = scope
+        questions = list(questions_in_order(parse_id_list(question_ids_str)))
+        for question in questions:
             key = str(question.id)
             if question.question_type == 'MATCH':
                 saved_answers['q_match'][key] = {str(item.id): request.POST.get(f'match_{item.id}')
@@ -225,12 +236,18 @@ def diagnostic_test_view(request):
                 bucket = 'q_choice' if question.question_type == 'CHOICE' else 'q_short'
                 saved_answers[bucket][key] = request.POST.get(f'question_{question.id}')
 
+        # Без жодної відповіді — це не результат: не зберігаємо і не рахуємо «слабкими» всі теми
+        answered = any(saved_answers['q_choice'].values()) or any(saved_answers['q_short'].values()) or any(
+            any(pairs.values()) for pairs in saved_answers['q_match'].values())
+        if not answered:
+            return render(request, 'materials/diagnostic_results.html', {'no_answers': True})
+
         total_score, max_score, topics_stats = diagnostic_stats(saved_answers)
         percent_total = int((total_score / max_score) * 100) if max_score > 0 else 0
 
         previous_percent = None
         if request.user.is_authenticated:
-            previous = user_diagnostics(request.user).first()
+            previous = next((d for d in user_diagnostics(request.user)[:30] if diagnostic_scope(d) == scope), None)
             previous_percent = previous.get_percent() if previous else None
             diag_material, _ = StudyMaterial.objects.get_or_create(
                 title=DIAGNOSTIC_MATERIAL_TITLE,
@@ -249,34 +266,105 @@ def diagnostic_test_view(request):
             'percent_change': None if previous_percent is None else percent_total - previous_percent,
         })
 
-    buckets = {}
+    # Спершу учень обирає теми: кілька або всі теми НМТ
+    nmt_topics = CurriculumTopic.objects.filter(chapter__grade__subject__name=NMT_SUBJECT_NAME)
+    if request.GET.get('topics') == 'all':
+        topic_ids = None
+    else:
+        topic_ids = sorted({int(t) for t in request.GET.getlist('topic') if t.isdigit()}
+                           & set(nmt_topics.values_list('id', flat=True)))
+        if not topic_ids:
+            return diagnostic_choose_topics(request, nmt_topics)
 
-    for q_id, q_type, chapter_order in Question.objects.exclude(curriculum_topic__isnull=True).values_list('id',
-                                                                                                           'question_type',
-                                                                                                           'curriculum_topic__chapter__order'):
-        is_algebra = (chapter_order <= 540)
-        buckets.setdefault((q_type, is_algebra), []).append(q_id)
+    questions = Question.objects.filter(curriculum_topic__in=nmt_topics)
+    if topic_ids is None:
+        selected = pick_all_topics(questions)
+    else:
+        selected = pick_from_topics(questions.filter(curriculum_topic_id__in=topic_ids))
 
-    def pick(q_type, is_algebra, count):
-        ids = buckets.get((q_type, is_algebra), [])
-        return random.sample(ids, min(count, len(ids)))
-
-    sel_choice = pick('CHOICE', True, 10) + pick('CHOICE', False, 5)
-    sel_match = pick('MATCH', True, 2) + pick('MATCH', False, 1)
-    sel_short = pick('SHORT', True, 2) + pick('SHORT', False, 2)
-
-    random.shuffle(sel_choice)
-    random.shuffle(sel_match)
-    random.shuffle(sel_short)
-
-    final_questions = list(questions_in_order(sel_choice + sel_match + sel_short))
+    final_questions = list(questions_in_order(selected))
     question_ids_str = ','.join(str(q.id) for q in final_questions)
 
     return render(request, 'materials/diagnostic_test.html', {
         'questions': final_questions,
         'question_ids_str': question_ids_str,
-        'total_selected': len(final_questions)
+        'total_selected': len(final_questions),
+        'tasks_word': tasks_word(len(final_questions)),
+        'scope': 'all' if topic_ids is None else ','.join(map(str, topic_ids)),
+        'scope_label': scope_label('all' if topic_ids is None else topic_ids),
     })
+
+
+def tasks_word(count):
+    """1–4, 21–24… — «завдання», решта (і 11–14) — «завдань»."""
+    return 'завдання' if count % 10 in (1, 2, 3, 4) and count % 100 not in (11, 12, 13, 14) else 'завдань'
+
+
+# Склад як на НМТ: 15 з вибором відповіді, 3 на відповідність, 4 з короткою відповіддю
+DIAGNOSTIC_COUNTS = {'CHOICE': 15, 'MATCH': 3, 'SHORT': 4}
+
+
+def pick_all_topics(questions):
+    """Усі теми НМТ: дві третини алгебри й третина геометрії, як в екзамені."""
+    buckets = {}
+    for q_id, q_type, chapter_order in questions.values_list('id', 'question_type', 'curriculum_topic__chapter__order'):
+        buckets.setdefault((q_type, chapter_order <= 540), []).append(q_id)
+
+    def pick(q_type, is_algebra, count):
+        ids = buckets.get((q_type, is_algebra), [])
+        return random.sample(ids, min(count, len(ids)))
+
+    selected = []
+    for q_type, (algebra, geometry) in (('CHOICE', (10, 5)), ('MATCH', (2, 1)), ('SHORT', (2, 2))):
+        group = pick(q_type, True, algebra) + pick(q_type, False, geometry)
+        random.shuffle(group)
+        selected += group
+    return selected
+
+
+def pick_from_topics(questions):
+    """Обрані теми: завдань кожного типу порівну з кожної теми (по колу), скільки є в банку."""
+    by_type = {}
+    for q_id, q_type, topic_id in questions.values_list('id', 'question_type', 'curriculum_topic_id'):
+        by_type.setdefault(q_type, {}).setdefault(topic_id, []).append(q_id)
+
+    selected = []
+    for q_type, count in DIAGNOSTIC_COUNTS.items():
+        pools = [random.sample(ids, len(ids)) for ids in by_type.get(q_type, {}).values()]
+        random.shuffle(pools)
+        group = []
+        while len(group) < count and any(pools):
+            for pool in pools:
+                if pool and len(group) < count:
+                    group.append(pool.pop())
+        random.shuffle(group)
+        selected += group
+    return selected
+
+
+def scope_label(scope):
+    """«Усі теми НМТ» або назви обраних тем — щоб у кабінеті було видно, що саме перевіряли."""
+    if scope in ('all', None, ''):
+        return 'Усі теми НМТ'
+    ids = scope if isinstance(scope, list) else parse_id_list(scope)
+    names = list(CurriculumTopic.objects.filter(id__in=ids).values_list('name', flat=True))
+    return ', '.join(names) if len(names) <= 3 else f"{', '.join(names[:3])} та ще {len(names) - 3}"
+
+
+def diagnostic_scope(attempt):
+    # Старі діагностики (до вибору тем) — по всіх темах
+    return (attempt.answers_json or {}).get('scope') or 'all'
+
+
+def diagnostic_choose_topics(request, nmt_topics):
+    with_questions = (nmt_topics.annotate(n=Count('diagnostic_questions'))
+                      .filter(n__gt=0).select_related('chapter'))
+    chapters = []
+    for topic in with_questions:
+        if not chapters or chapters[-1]['chapter'].id != topic.chapter_id:
+            chapters.append({'chapter': topic.chapter, 'topics': []})
+        chapters[-1]['topics'].append(topic)
+    return render(request, 'materials/diagnostic_choose.html', {'chapters': chapters})
 
 
 # ==========================================
@@ -683,18 +771,34 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         context['tutor_request'] = getattr(self.request.user, 'tutor_request', None)
         context['course_choices'] = TutorStudentRequest.COURSE_CHOICES
         context['personal_presentations'] = self.request.user.personal_presentations.all()
+        # Діагностики — в окремому розділі нижче, тут лише практика тем
         context['my_attempts'] = PracticeAttempt.objects.filter(
             user=self.request.user
-        ).select_related('material').defer('material__html_content').order_by('-created_at')[:15]
+        ).exclude(material__title=DIAGNOSTIC_MATERIAL_TITLE).select_related('material').defer(
+            'material__html_content').order_by('-created_at')[:15]
 
         # Діагностики: динаміка від разу до разу і що повторити за останньою
         diagnostics = list(user_diagnostics(self.request.user)[:10])
-        for attempt, previous in zip(diagnostics, diagnostics[1:] + [None]):
+        labels = {}
+        for i, attempt in enumerate(diagnostics):
+            scope = diagnostic_scope(attempt)
+            if scope not in labels:
+                labels[scope] = scope_label(scope)
+            attempt.scope_label = labels[scope]
+            # Зміна — лише відносно попередньої діагностики за тими самими темами
+            previous = next((d for d in diagnostics[i + 1:] if diagnostic_scope(d) == scope), None)
             attempt.change = attempt.get_percent() - previous.get_percent() if previous else None
         context['diagnostics'] = diagnostics
         if diagnostics:
-            context['diagnostic_weak_topics'], context['diagnostic_recommendations'], _ = diagnostic_summary(
-                diagnostic_stats(diagnostics[0].answers_json or {})[2])
+            # Не стіна з усіх слабких тем, а 5 найслабших і матеріали саме до них
+            weak = weak_topic_stats(diagnostic_stats(diagnostics[0].answers_json or {})[2])
+            focus = weak[:5]
+            context['diagnostic_weak_topics'] = focus
+            context['diagnostic_more_weak'] = len(weak) - len(focus)
+            context['diagnostic_recommendations'] = sorted(
+                StudyMaterial.objects.filter(curriculum_topic__in=[s['topic'] for s in focus], is_published=True)
+                .select_related('curriculum_topic').distinct(),
+                key=lambda m: m.curriculum_topic.order)
 
         if is_teacher(self.request.user):
             context['students_attempts'] = PracticeAttempt.objects.filter(

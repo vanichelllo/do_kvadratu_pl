@@ -11,12 +11,14 @@
     <!-- Заголовок -->
     <div style="text-align: center; margin-bottom: 40px;">
         <h1 style="color: var(--brand-blue); font-size: 2.5rem; margin-bottom: 10px;">🔥 ДІАГНОСТИЧНИЙ ТЕСТ НМТ</h1>
-        <p style="color: #666; font-size: 1.1rem; font-weight: 600;">22 завдання. Перевір свій рівень перед екзаменом.</p>
+        <p style="color: #666; font-size: 1.1rem; font-weight: 600;">{{ total_selected }} {{ tasks_word }} · {{ scope_label }}</p>
+        <p style="margin: 6px 0 0;"><a href="{% url 'diagnostic_test' %}" style="color: var(--brand-blue);">← Обрати інші теми</a></p>
     </div>
 
     <form method="POST" action="">
         {% csrf_token %}
         <input type="hidden" name="question_ids" value="{{ question_ids_str }}">
+        <input type="hidden" name="scope" value="{{ scope }}">
 
         {% for question in questions %}
         <div style="background: #ffffff; border: 2px dashed var(--brand-blue); padding: 30px; margin-bottom: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">

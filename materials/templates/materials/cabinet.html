@@ -266,6 +266,12 @@
     .stats-table th { background: var(--brand-blue); color: white; font-size: 0.85rem; text-transform: uppercase; font-weight: 900; }
     .stats-table tr:last-child td { border-bottom: none; }
     .stats-table tr:hover td { background-color: #f8f9fa; }
+    /* Таблиці учня — три колонки, на телефоні вміщаються без прокрутки (бали не ховаються за краєм) */
+    .stats-table.compact { min-width: 0; }
+    @media (max-width: 640px) {
+        .stats-table.compact th, .stats-table.compact td { padding: 10px 8px; font-size: 0.9rem; }
+        .stats-table.compact .score-badge { padding: 3px 6px; font-size: 0.8rem; }
+    }
 
     .score-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 900; font-size: 0.85rem; border: 1px solid transparent; }
     .score-good { background: #e8f8f5; color: #27ae60; border-color: #27ae60; }
@@ -379,7 +385,7 @@
             <summary><h2 class="cab-section-title"><span>📊 Мої результати практики</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
             <div class="cab-section-body">
             <div class="stats-table-wrapper">
-                <table class="stats-table">
+                <table class="stats-table compact">
                     <thead>
                         <tr>
                             <th>Дата</th>
@@ -414,12 +420,12 @@
             <summary><h2 class="cab-section-title"><span>🎯 Мої діагностики НМТ</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
             <div class="cab-section-body">
             <div class="stats-table-wrapper">
-                <table class="stats-table">
+                <table class="stats-table compact">
                     <thead><tr><th>Дата</th><th>Результат</th><th>Зміна</th></tr></thead>
                     <tbody>
                         {% for attempt in diagnostics %}
                         <tr onclick="window.location='{% url 'view_attempt_details' attempt.id %}';" style="cursor: pointer;" title="Натисніть, щоб переглянути відповіді">
-                            <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}</td>
+                            <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}<div style="font-size: 0.8rem; color: var(--brand-blue); font-weight: 700;">{{ attempt.scope_label }}</div></td>
                             <td>
                                 {% with p=attempt.get_percent %}
                                     <span class="score-badge {% if p >= 70 %}score-good{% elif p >= 40 %}score-avg{% else %}score-bad{% endif %}">{{ attempt.score }} з {{ attempt.max_score }} ({{ p }}%)</span>
@@ -435,7 +441,11 @@
             </div>
             {% if diagnostic_weak_topics %}
                 <h3 style="color: var(--brand-blue); margin: 20px 0 8px;">Що повторити за останньою діагностикою</h3>
-                <p style="margin: 0 0 8px;">{% for topic in diagnostic_weak_topics %}{{ topic.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+                <p style="margin: 0 0 8px;">Почни з найслабших тем:</p>
+                <ol style="margin: 0 0 8px; padding-left: 20px; line-height: 1.6;">
+                    {% for stat in diagnostic_weak_topics %}<li>{{ stat.topic.name }} — {{ stat.correct }} з {{ stat.total }}</li>{% endfor %}
+                </ol>
+                {% if diagnostic_more_weak %}<p style="margin: 0 0 8px; color: #666;">І ще {{ diagnostic_more_weak }} {% if diagnostic_more_weak == 1 %}тема{% elif diagnostic_more_weak < 5 %}теми{% else %}тем{% endif %} нижче 50% — до них повернешся після цих.</p>{% endif %}
                 {% if diagnostic_recommendations %}
                 <ul style="margin: 0 0 12px; padding-left: 20px; line-height: 1.7;">
                     {% for mat in diagnostic_recommendations %}<li><a href="{% url 'material_detail' mat.id %}" style="color: var(--brand-blue); font-weight: 700;">{{ mat.title }}</a></li>{% endfor %}

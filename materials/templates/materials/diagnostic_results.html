@@ -3,6 +3,13 @@
 {% block title %}Результати тесту - ДО КВАДРАТУ{% endblock %}
 
 {% block content %}
+{% if no_answers %}
+<div style="max-width: 640px; margin: 40px auto; padding: 30px 20px; text-align: center; background: #fff; border: 2px solid var(--brand-blue); border-radius: 15px;">
+    <h1 style="color: var(--brand-blue); font-size: 1.8rem;">Ти не відповів на жодне завдання</h1>
+    <p style="color: #555; line-height: 1.6;">Без відповідей ми не можемо визначити рівень, тож цю спробу не збережено. Пройди діагностику ще раз — достатньо відповісти на завдання, які знаєш.</p>
+    <a href="{% url 'diagnostic_test' %}" class="btn-brand" style="display: inline-block; text-decoration: none; padding: 14px 28px; margin-top: 10px;">🔄 Пройти діагностику</a>
+</div>
+{% else %}
 <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
 
     <!-- ГОЛОВНИЙ РЕЗУЛЬТАТ -->
@@ -22,7 +29,7 @@
         </div>
         {% if previous_percent is not None %}
         <p style="font-size: 1.05rem; font-weight: 700; margin: -10px 0 20px 0; {% if percent_change > 0 %}color: #28a745;{% elif percent_change < 0 %}color: #dc3545;{% else %}color: #666;{% endif %}">
-            Минулого разу: {{ previous_percent }}% →
+            Минулого разу за цими темами: {{ previous_percent }}% →
             {% if percent_change > 0 %}+{{ percent_change }} п.п. 📈{% elif percent_change < 0 %}{{ percent_change }} п.п.{% else %}без змін{% endif %}
         </p>
         {% endif %}
@@ -137,4 +144,5 @@
 <script>
     window.dkTrack('diagnostic_complete', {score: {{ total_score }}, max_score: {{ max_score }}, percent: {{ percent_total }}});
 </script>
+{% endif %}
 {% endblock %}
