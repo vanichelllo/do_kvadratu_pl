@@ -1603,3 +1603,15 @@ class LibraryAndStorefrontTests(BaseTestCase):
         self.assertNotContains(response, f'/download/{self.bundle.id}/')
         self.assertNotContains(response, f'/download/{self.not_owned.id}/')
         self.assertContains(response, f'/download/{self.nmt.id}/')
+
+
+class NmtCurriculumTests(BaseTestCase):
+    def test_nmt_topics_mirror_material_files(self):
+        # Конспекти й завдання банку прив'язуються до теми НМТ за номером — назви мають збігатися з конспектами
+        import os
+        from django.conf import settings as dj_settings
+        from materials.management.commands.import_curriculum import NMT_CURRICULUM
+        topics = [t['topic_name'] for g in NMT_CURRICULUM['grades'] for c in g['chapters'] for t in c['topics']]
+        files = [f[:-4] for f in os.listdir(os.path.join(dj_settings.BASE_DIR, 'import_files')) if f.endswith('.pdf')]
+        self.assertEqual(sorted(topics), sorted(files))
+        self.assertEqual([int(t.split('.')[0]) for t in topics], list(range(1, 47)))

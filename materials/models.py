@@ -22,6 +22,10 @@ class Category(models.Model):
 
 
 class Tag(models.Model):
+    class Meta:
+        verbose_name = "Тег"
+        verbose_name_plural = "Теги"
+
     name = models.CharField(max_length=50, verbose_name="Назва тегу")
 
     def __str__(self):
@@ -74,7 +78,7 @@ class CurriculumChapter(models.Model):
         verbose_name_plural = "3. Розділи"
 
     def __str__(self):
-        return f"{self.grade.name} - {self.name}"
+        return f"{self.grade.short_label} | {self.name}"
 
 class CurriculumTopic(models.Model):
     chapter = models.ForeignKey(CurriculumChapter, on_delete=models.CASCADE, related_name='topics', verbose_name="Розділ")
@@ -87,7 +91,8 @@ class CurriculumTopic(models.Model):
         verbose_name_plural = "4. Теми (Уроки)"
 
     def __str__(self):
-        return f"{self.chapter.name} -> {self.name}"
+        # Курс і клас на початку: розділи з однаковими назвами є в багатьох класах, і в адмінці їх легко сплутати
+        return f"{self.chapter.grade.short_label} | {self.chapter.name} -> {self.name}"
 
 DEFAULT_MATERIAL_DESCRIPTION = (
     "Авторський конспект від освітнього проєкту «До Квадрату», створений з урахуванням 7-річного досвіду "
@@ -105,6 +110,10 @@ class WithoutHtmlManager(models.Manager):
 
 
 class StudyMaterial(models.Model):
+    class Meta:
+        verbose_name = "Матеріал"
+        verbose_name_plural = "Матеріали"
+
     objects = WithoutHtmlManager()
 
     title = models.CharField(max_length=200, verbose_name="Назва матеріалу")
@@ -195,6 +204,10 @@ class StudyMaterial(models.Model):
 
 
 class Cart(models.Model):
+    class Meta:
+        verbose_name = "Кошик"
+        verbose_name_plural = "Кошики"
+
     PROMO_CODE = 'ВЧИТЕЛЬ'
     PROMO_START = datetime.date(2026, 10, 2)
     PROMO_END = datetime.date(2026, 10, 11)
@@ -240,12 +253,18 @@ class CartItem(models.Model):
 
     class Meta:
         unique_together = ('cart', 'material')
+        verbose_name = "Товар у кошику"
+        verbose_name_plural = "Товари в кошику"
 
     def __str__(self):
         return f"{self.material.title} у кошику"
 
 
 class Order(models.Model):
+    class Meta:
+        verbose_name = "Замовлення"
+        verbose_name_plural = "Замовлення"
+
     STATUS_CHOICES = (
         ('pending', 'Очікує оплати'),
         ('paid', 'Успішно оплачено'),
@@ -290,6 +309,10 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    class Meta:
+        verbose_name = "Позиція замовлення"
+        verbose_name_plural = "Позиції замовлення"
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     material = models.ForeignKey('StudyMaterial', on_delete=models.SET_NULL, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -307,6 +330,10 @@ class DiagnosticTopic(models.Model):
 
 
 class Question(models.Model):
+    class Meta:
+        verbose_name = "Завдання"
+        verbose_name_plural = "Завдання"
+
     TYPE_CHOICES = (
         ('CHOICE', 'Один з п\'яти (1 бал)'),
         ('MATCH', 'Відповідність (до 3 балів)'),
@@ -349,6 +376,10 @@ class Question(models.Model):
 
 
 class AnswerOption(models.Model):
+    class Meta:
+        verbose_name = "Варіант відповіді"
+        verbose_name_plural = "Варіанти відповіді"
+
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
     text = models.CharField(max_length=255, verbose_name="Текст варіанту (напр. '5 см' або 'А')")
     is_correct = models.BooleanField(default=False, verbose_name="Це правильна відповідь? (тільки для CHOICE)")
@@ -358,6 +389,10 @@ class AnswerOption(models.Model):
 
 
 class MatchItem(models.Model):
+    class Meta:
+        verbose_name = "Пара відповідності"
+        verbose_name_plural = "Пари відповідності"
+
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='match_items',
                                  verbose_name="Завдання")
     text = models.CharField(max_length=255, verbose_name="Умова (ліва колонка, напр. '1. Функція парна')")

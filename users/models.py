@@ -55,6 +55,10 @@ class CustomUser(AbstractUser):
 
 
 class PurchaseHistory(models.Model):
+    class Meta:
+        verbose_name = "Покупка (архів)"
+        verbose_name_plural = "Архів покупок"
+
     # Архів покупок старим способом (/buy/, прибрано); поточні покупки — Order/OrderItem
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='history')
     material = models.ForeignKey('materials.StudyMaterial', on_delete=models.SET_NULL, null=True)
