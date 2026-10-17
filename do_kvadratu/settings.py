@@ -202,6 +202,11 @@ SITE_ID = 1
 # Основна адреса сайту: канонічні посилання й карта сайту для Google завжди ведуть сюди
 SITE_URL = 'https://dokvadratu.com.ua'
 
+# Дата основної сесії НМТ для відліку на сайті. Поки офіційної дати немає — орієнтовна, і сайт пише «орієнтовно»;
+# коли УЦОЯО оголосить дату, задайте NMT_DATE=РРРР-ММ-ДД у змінних оточення Render
+NMT_DATE = os.getenv('NMT_DATE', '2027-05-20')
+NMT_DATE_EXACT = bool(os.getenv('NMT_DATE'))
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',

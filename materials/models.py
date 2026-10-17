@@ -232,13 +232,31 @@ class Cart(models.Model):
         """Рахує суму без знижки"""
         return sum(item.material.price for item in self.cached_items())
 
+    def promo_applies(self):
+        return bool(self.promo_code) and self.promo_code.upper() == self.PROMO_CODE and self.promo_is_active()
+
+    def diagnostic_offer(self):
+        """Чинна пропозиція після діагностики (знижка на уроки слабких тем), або None."""
+        if not hasattr(self, '_offer_cache'):
+            self._offer_cache = (DiagnosticOffer.objects.filter(user_id=self.user_id, expires_at__gt=timezone.now())
+                                 .prefetch_related('materials').first())
+        return self._offer_cache
+
+    def get_offer_discount(self):
+        """Знижка за діагностикою — лише на уроки з пропозиції, що лежать у кошику."""
+        offer = self.diagnostic_offer()
+        if not offer:
+            return 0
+        offer_ids = {m.id for m in offer.materials.all()}
+        offer_sum = sum(item.material.price for item in self.cached_items() if item.material_id in offer_ids)
+        return int(round(offer_sum * offer.discount_percent / 100))
+
     def get_total_price(self):
-        """Рахує фінальну суму зі знижкою 40% для промокоду ВЧИТЕЛЬ"""
+        """Фінальна сума: промокод ВЧИТЕЛЬ (−40% на все) або знижка за діагностикою — не разом, а краща з них"""
         base_price = self.get_original_price()
-        if self.promo_code and self.promo_code.upper() == self.PROMO_CODE:
-            if self.promo_is_active():
-                return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
-        return base_price
+        if self.promo_applies():
+            return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
+        return base_price - self.get_offer_discount()
 
     def get_discount_amount(self):
         """Повертає, скільки гривень зекономив учень"""
@@ -246,6 +264,46 @@ class Cart(models.Model):
 
     def __str__(self):
         return f"Кошик користувача {self.user.email}"
+
+class DiagnosticOffer(models.Model):
+    """Пропозиція на сторінці результату діагностики: уроки слабких тем зі знижкою на обмежений час.
+    Нову дають не частіше, ніж раз на REPEAT_AFTER, — інакше діагностику перепроходили б заради нової знижки."""
+    DISCOUNT_PERCENT = 15
+    DURATION = datetime.timedelta(hours=48)
+    REPEAT_AFTER = datetime.timedelta(days=30)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='diagnostic_offers',
+                             verbose_name="Учень")
+    materials = models.ManyToManyField('StudyMaterial', related_name='diagnostic_offers', verbose_name="Уроки")
+    discount_percent = models.PositiveSmallIntegerField(default=DISCOUNT_PERCENT, verbose_name="Знижка, %")
+    expires_at = models.DateTimeField(verbose_name="Діє до")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Створено")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Пропозиція після діагностики"
+        verbose_name_plural = "Пропозиції після діагностики"
+
+    def __str__(self):
+        return f"−{self.discount_percent}% для {self.user} до {self.expires_at:%d.%m %H:%M}"
+
+    @property
+    def is_active(self):
+        return self.expires_at > timezone.now()
+
+    @classmethod
+    def offer_for(cls, user, materials):
+        """Чинна пропозиція користувача, або нова — якщо за REPEAT_AFTER нової ще не було."""
+        now = timezone.now()
+        recent = cls.objects.filter(user=user, created_at__gte=now - cls.REPEAT_AFTER).first()
+        if recent:
+            return recent if recent.is_active else None
+        if not materials:
+            return None
+        offer = cls.objects.create(user=user, expires_at=now + cls.DURATION)
+        offer.materials.set(materials)
+        return offer
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')

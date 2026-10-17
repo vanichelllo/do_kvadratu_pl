@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
-from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, CurriculumGrade, CurriculumSubject,
+from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, DiagnosticOffer, CurriculumGrade, CurriculumSubject,
                      CurriculumTopic, GameMistake, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review, StudentReport,
                      StudyMaterial, TutorStudentRequest)
 
@@ -1984,3 +1984,78 @@ class DiagnosticTopicChoiceTests(BaseTestCase):
         cabinet = self.client.get('/cabinet/')
         labels = [(a.scope_label, a.change) for a in cabinet.context['diagnostics']]
         self.assertEqual(labels, [('1. Тема 1', 0), ('Усі теми НМТ', None), ('1. Тема 1', None)])
+
+
+class DiagnosticOfferTests(BaseTestCase):
+    def setUp(self):
+        self.topic = make_nmt_topic('21. Показникові рівняння')
+        self.paid = StudyMaterial.objects.create(title='21. Показникові рівняння', price=200, is_published=True,
+                                                 curriculum_topic=self.topic)
+        self.free = StudyMaterial.objects.create(title='21. Безкоштовний конспект', price=0, is_free=True,
+                                                 is_published=True, curriculum_topic=self.topic)
+        self.other = StudyMaterial.objects.create(title='30. Інша тема', price=100, is_published=True)
+        self.q = Question.objects.create(text='2^x = 8', question_type='CHOICE', curriculum_topic=self.topic)
+        AnswerOption.objects.create(question=self.q, text='А) 3', is_correct=True)
+        self.wrong = AnswerOption.objects.create(question=self.q, text='Б) 4', is_correct=False)
+        self.kid = self.make_user('kid@example.com', balance=1000)
+
+    def take(self):
+        return self.client.post('/diagnostic/', {'question_ids': str(self.q.id), f'question_{self.q.id}': str(self.wrong.id)})
+
+    def test_offer_bundle_of_paid_weak_lessons_with_discount_and_timer(self):
+        self.client.force_login(self.kid)
+        response = self.take()
+        offer = DiagnosticOffer.objects.get(user=self.kid)
+        self.assertEqual(list(offer.materials.all()), [self.paid])  # без безкоштовного
+        self.assertEqual((response.context['offer_full'], response.context['offer_price']), (200, 170))
+        self.assertContains(response, 'Купити пакет зі знижкою')
+        self.assertContains(response, 'id="offer-timer"')
+        self.assertContains(response, 'До НМТ')
+
+    def test_buying_bundle_applies_discount_only_to_offer_lessons_and_charges_it(self):
+        self.client.force_login(self.kid)
+        self.take()
+        self.client.post('/diagnostic/offer/')
+        cart = Cart.objects.get(user=self.kid)
+        CartItem.objects.create(cart=cart, material=self.other)
+        self.assertEqual(cart.get_total_price(), 170 + 100)
+        self.assertContains(self.client.get('/cart/'), 'Знижка за діагностикою −15%')
+        self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        self.kid.refresh_from_db()
+        self.assertEqual(self.kid.balance, 1000 - 270)
+        self.assertTrue(self.kid.purchased_materials.filter(id=self.paid.id).exists())
+
+    def test_one_offer_per_30_days_and_no_discount_after_expiry(self):
+        self.client.force_login(self.kid)
+        self.take()
+        self.take()
+        self.assertEqual(DiagnosticOffer.objects.filter(user=self.kid).count(), 1)
+        DiagnosticOffer.objects.update(expires_at=timezone.now() - datetime.timedelta(minutes=1))
+        response = self.take()
+        self.assertEqual(DiagnosticOffer.objects.filter(user=self.kid).count(), 1)
+        self.assertIsNone(response.context['offer'])
+        self.assertContains(response, 'раз на 30 днів')
+        cart, _ = Cart.objects.get_or_create(user=self.kid)
+        CartItem.objects.create(cart=cart, material=self.paid)
+        self.assertEqual(cart.get_total_price(), 200)
+
+    def test_guest_sees_offer_and_gets_it_after_login(self):
+        response = self.take()
+        self.assertContains(response, 'Зареєструватися й отримати знижку')
+        self.assertFalse(DiagnosticOffer.objects.exists())
+        self.client.force_login(self.kid)  # сесія гостя зберігається після входу
+        page = self.client.get('/diagnostic/offer/')
+        self.assertContains(page, 'Купити пакет зі знижкою')
+        self.assertEqual(list(DiagnosticOffer.objects.get(user=self.kid).materials.all()), [self.paid])
+
+    def test_owned_lessons_are_not_offered(self):
+        self.kid.purchased_materials.add(self.paid)
+        self.client.force_login(self.kid)
+        self.assertNotIn('offer_materials', self.take().context)
+        self.assertFalse(DiagnosticOffer.objects.exists())
+
+    def test_countdown_words_and_storefront_banner(self):
+        from .views import uk_plural
+        self.assertEqual([uk_plural(n, 'день', 'дні', 'днів') for n in (1, 2, 5, 11, 21, 22, 112, 213)],
+                         ['день', 'дні', 'днів', 'днів', 'день', 'дні', 'днів', 'днів'])
+        self.assertContains(self.client.get('/materials/'), 'Пройди безкоштовну діагностику')

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}Пакет слабких тем зі знижкою — ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    {% include 'materials/_diagnostic_offer.html' %}
+    <p style="text-align: center;"><a href="{% url 'cabinet' %}" style="color: var(--brand-blue); font-weight: 700;">До кабінету</a></p>
+</div>
+{% endblock %}

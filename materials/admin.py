@@ -18,7 +18,7 @@ from django.contrib.auth import get_user_model
 from users.models import PurchaseHistory
 from .bank_import import MAX_FILE_BYTES, BankFormatError, build_report, import_tasks, parse_bank_source
 from .models import (
-    StudyMaterial, Tag, Cart, CartItem, Order, OrderItem,
+    StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic
@@ -548,6 +548,16 @@ class CartItemInline(admin.TabularInline):
 class CartAdmin(admin.ModelAdmin):
     list_display = ['user', 'created_at']
     inlines = [CartItemInline]
+
+
+@admin.register(DiagnosticOffer)
+class DiagnosticOfferAdmin(admin.ModelAdmin):
+    """Хто отримав знижку на пакет слабких тем після діагностики і до коли вона діє."""
+    list_display = ['user', 'discount_percent', 'created_at', 'expires_at']
+    list_select_related = ['user']
+    search_fields = ['user__email']
+    autocomplete_fields = ['user']
+    filter_horizontal = ['materials']
 
 
 class OrderItemInline(admin.TabularInline):
