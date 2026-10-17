@@ -853,6 +853,15 @@ class HalloweenDecorTests(BaseTestCase):
         for day in (datetime.date(2026, 10, 16), datetime.date(2026, 11, 2), datetime.date(2027, 3, 1)):
             self.assertNotIn('Математичні страшилки', self.home(day), day)
 
+    def test_site_wide_decor_on_other_pages(self):
+        with mock.patch('materials.context_processors.timezone.localdate', return_value=datetime.date(2026, 10, 31)):
+            for url in ('/materials/', '/booking/', '/diagnostic/'):
+                page = self.client.get(url).content.decode()
+                self.assertIn('hw-site-bat', page, url)
+                self.assertIn('щасливого Хелловіну', page, url)
+        with mock.patch('materials.context_processors.timezone.localdate', return_value=datetime.date(2026, 11, 2)):
+            self.assertNotIn('hw-site-bat', self.client.get('/materials/').content.decode())
+
 
 class DangerousAdminActionsTests(BaseTestCase):
     def test_data_wiping_actions_removed(self):

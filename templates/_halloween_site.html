@@ -1,0 +1,22 @@
+{# Хелловін на всіх сторінках сайту: помаранчева навігація, гарбуз біля логотипу, павутина й кажан. Лише в дати з context_processors.seasonal #}
+<style>
+    .navbar { border-bottom-color: #ff7a00 !important; }
+    .nav-logo { position: relative; }
+    .nav-logo::after { content: '🎃'; position: absolute; left: -8px; top: -10px; font-size: 18px; transform: rotate(-15deg); pointer-events: none; }
+    .hw-site-web { position: absolute; top: calc(100% + 2px); right: 0; width: 110px; height: 110px; opacity: 0.35; pointer-events: none; z-index: -1; }  /* під відкритим мобільним меню */
+    .hw-site-bat { position: fixed; top: 22%; left: -60px; width: 40px; z-index: 900; pointer-events: none; animation: hw-site-fly 28s linear infinite; animation-delay: 3s; }
+    .hw-site-bat path { fill: #2b1d3f; }
+    @keyframes hw-site-fly {
+        0% { transform: translate(0, 0); }
+        8% { transform: translate(30vw, -40px); }
+        16% { transform: translate(60vw, 30px); }
+        24% { transform: translate(90vw, -20px); }
+        30%, 100% { transform: translate(calc(100vw + 120px), 0); }
+    }
+    .hw-site-footer { color: #ffb347; font-weight: 800; margin-bottom: 10px; }
+    @media (max-width: 600px) { .hw-site-web { width: 70px; height: 70px; } .hw-site-bat { width: 30px; } }
+    @media (prefers-reduced-motion: reduce) { .hw-site-bat { display: none; } }
+</style>
+<svg class="hw-site-bat" viewBox="0 0 64 32" aria-hidden="true">
+    <path d="M32 10 C29 4 27 6 26 9 C20 2 10 2 0 8 C6 10 8 14 8 18 C12 15 17 15 20 19 C23 15 27 16 29 20 L32 26 L35 20 C37 16 41 15 44 19 C47 15 52 15 56 18 C56 14 58 10 64 8 C54 2 44 2 38 9 C37 6 35 4 32 10 Z"/>
+</svg>
