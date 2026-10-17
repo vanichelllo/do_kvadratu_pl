@@ -123,6 +123,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'materials.context_processors.promo',
+                'materials.context_processors.seasonal',
                 'materials.context_processors.seo',
             ],
         },
