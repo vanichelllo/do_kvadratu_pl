@@ -1720,6 +1720,35 @@ class ShuffledOptionsTests(BaseTestCase):
 
 
 class MathSprintTests(BaseTestCase):
+    def make_questions(self, material, count, **extra):
+        for i in range(count):
+            q = Question.objects.create(text=f'{material.title} {i} {extra}', question_type='CHOICE',
+                                        difficulty=extra.get('difficulty', 1), svg_code=extra.get('svg_code', ''))
+            AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+            AnswerOption.objects.create(question=q, text='Б) 2', is_correct=False)
+            q.materials.add(material)
+
+    def test_guest_without_free_topics_gets_no_bank_questions(self):
+        self.make_questions(StudyMaterial.objects.create(title='Платна', price=10), 5)
+        response = self.client.get('/game/sprint/')
+        self.assertEqual(response.context['questions_list'], [])
+        self.assertEqual(response.context['available_materials'], [])
+
+    def test_only_easy_questions_without_picture_and_topics_with_enough_of_them(self):
+        free = StudyMaterial.objects.create(title='Безкоштовна', price=0, is_free=True)
+        thin = StudyMaterial.objects.create(title='Мало завдань', price=0, is_free=True)
+        self.make_questions(free, 4)
+        self.make_questions(free, 3, difficulty=3)
+        self.make_questions(free, 3, svg_code='<svg></svg>')
+        self.make_questions(thin, 3)
+        response = self.client.get('/game/sprint/')
+        self.assertEqual(response.context['available_materials'], [free])
+        self.assertEqual(len(response.context['questions_list']), 4)
+        self.assertEqual(response.context['questions_list'][0]['lesson_url'], f'/material/{free.id}/')
+        # Тему, де завдань замало, не можна обрати навіть через URL
+        response = self.client.get(f'/game/sprint/?material_id={thin.id}')
+        self.assertIsNone(response.context['selected_material'])
+
     def test_sprint_gives_no_balance_bonus(self):
         user = self.make_user('kid@example.com')
         self.client.force_login(user)

@@ -43,6 +43,7 @@
         border-radius: 12px;
         padding: 10px 12px;
         text-align: center;
+        min-width: 0;
     }
     .hud-label {
         font-size: 0.75rem;
@@ -163,6 +164,8 @@
         .options-grid { grid-template-columns: 1fr; }
         .sprint-card { padding: 16px; }
         .hud-val { font-size: 1.25rem; }
+        .hud-box { padding: 8px 6px; }
+        .hud-label { font-size: 0.62rem; letter-spacing: 0; overflow-wrap: anywhere; }
     }
 </style>
 
@@ -177,8 +180,10 @@
             </span>
             <h1 style="color: #344E86; margin: 12px 0 8px 0; font-size: 1.8rem;">⚡ Математичний Спринт (60 секунд)</h1>
             <p style="color: #475569; max-width: 540px; margin: 0 auto 20px auto; line-height: 1.5;">
-                Розв'яжи якомога більше завдань за 1 хвилину! За 3 правильні відповіді поспіль вмикається <strong>комбо-множник балів ×2 та ×3</strong>.
+                Розв'яжи якомога більше простих завдань за 1 хвилину! 3 правильні відповіді поспіль вмикають <strong>комбо ×2</strong>, 6 — <strong>×3</strong>.
+                Неправильна відповідь забирає <strong>3 секунди</strong>, а гра покаже правильну — тож вгадувати невигідно.
             </p>
+            <p id="best-line" style="color:#64748B; margin: -8px 0 16px 0; display:none;"></p>
 
             {% if available_materials %}
             <div style="margin-bottom: 12px;">
@@ -192,6 +197,8 @@
                     {% endfor %}
                 </select>
             </div>
+            {% else %}
+            <p style="color:#64748B; max-width: 540px; margin: 0 auto 16px auto;">Відкритих тем із завданнями для спринту поки немає, тож тренуємо усний рахунок: таблицю множення.</p>
             {% endif %}
 
             <button class="sprint-btn-main" onclick="startSprintGame()">🚀 Почати Спринт</button>
@@ -220,7 +227,6 @@
 
             <div class="question-stage" id="q-stage">
                 <div id="q-text">Завантаження завдання...</div>
-                <div id="q-svg" style="margin-top:10px; max-width:260px;"></div>
             </div>
 
             <div class="options-grid" id="q-options"></div>
@@ -239,6 +245,7 @@
                 <div class="hud-box">
                     <div class="hud-label">Правильних</div>
                     <div class="hud-val" id="end-correct" style="color:#10B981;">0</div>
+                    <div class="hud-label" id="end-accuracy" style="text-transform:none; margin-top:2px;"></div>
                 </div>
                 <div class="hud-box">
                     <div class="hud-label">Макс. серія</div>
@@ -246,8 +253,15 @@
                 </div>
             </div>
 
+            <p id="end-best" style="color:#475569; font-weight:700;"></p>
+
+            <div id="mistakes" style="display:none; text-align:left; max-width:620px; margin: 0 auto 18px auto;">
+                <h3 style="color:#344E86; font-size:1.1rem;">Розбір помилок</h3>
+                <ol id="mistakes-list" style="padding-left:20px; line-height:1.5; color:#1E293B;"></ol>
+            </div>
+
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <button class="sprint-btn-main" onclick="startSprintGame()">🔄 Грати ще раз</button>
+                <button class="sprint-btn-main" onclick="playAgain()">🔄 Грати ще раз</button>
                 <a href="{% url 'materials_list' %}" class="sprint-btn-main" style="background: #64748B; text-decoration: none;">📚 До матеріалів</a>
             </div>
         </div>
@@ -258,22 +272,25 @@
     const rawDataEl = document.getElementById('sprint-questions-data');
     const DB_QUESTIONS = rawDataEl ? JSON.parse(rawDataEl.textContent) : [];
 
+    const AUTOSTART = {{ autostart|yesno:"true,false" }};
+    const BEST_KEY = 'sprint-best-' + (new URL(window.location.href).searchParams.get('material_id') || 'mix');
+    const WRONG_PENALTY = 3;
+
     function generateFallbackQuestions() {
         const list = [];
-        for (let i = 0; i < 20; i++) {
-            const a = Math.floor(Math.random() * 11) + 2;
-            const b = Math.floor(Math.random() * 11) + 2;
+        for (let i = 0; i < 30; i++) {
+            const a = Math.floor(Math.random() * 8) + 2;
+            const b = Math.floor(Math.random() * 8) + 2;
             const ans = a * b;
-            const opts = [
-                { text: `$${ans}$`, is_correct: true },
-                { text: `$${ans + a}$`, is_correct: false },
-                { text: `$${ans - b}$`, is_correct: false },
-                { text: `$${ans + 2}$`, is_correct: false }
-            ].sort(() => Math.random() - 0.5);
+            // Типові помилки: сусідній рядок таблиці (±a, ±b); значення не повторюються
+            const values = [ans];
+            for (const v of [ans + a, ans - b, ans + b, ans - a, ans + 1, ans - 1]) {
+                if (values.length < 4 && v > 0 && !values.includes(v)) values.push(v);
+            }
             list.push({
                 text: `Обчисліть усно: $${a} \\cdot ${b}$`,
-                svg_code: "",
-                options: opts
+                options: values.map(v => ({ text: `$${v}$`, is_correct: v === ans })),
+                lesson_title: '', lesson_url: ''
             });
         }
         return list;
@@ -285,14 +302,41 @@
     let streak = 0;
     let maxStreak = 0;
     let correctCount = 0;
+    let answered = 0;
+    let mistakes = [];
     let timeLeft = 60;
     let timerId = null;
     let locked = false;
+
+    function readBest() {
+        try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch (e) { return 0; }
+    }
+
+    function saveBest(value) {
+        try { localStorage.setItem(BEST_KEY, String(value)); } catch (e) {}
+    }
+
+    function showBest() {
+        const best = readBest();
+        const line = document.getElementById('best-line');
+        if (best > 0) {
+            line.innerText = `Твій рекорд у цьому режимі: ${best}`;
+            line.style.display = 'block';
+        }
+    }
 
     function changeMaterial(matId) {
         const url = new URL(window.location.href);
         if (matId) url.searchParams.set('material_id', matId);
         else url.searchParams.delete('material_id');
+        url.searchParams.delete('autostart');
+        window.location.href = url.toString();
+    }
+
+    function playAgain() {
+        // Нова гра — новий набір завдань із сервера, а не ті самі 40
+        const url = new URL(window.location.href);
+        url.searchParams.set('autostart', '1');
         window.location.href = url.toString();
     }
 
@@ -303,14 +347,23 @@
         }
     }
 
+    function shuffle(list) {
+        for (let i = list.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [list[i], list[j]] = [list[j], list[i]];
+        }
+        return list;
+    }
+
     function startSprintGame() {
-        pool = (DB_QUESTIONS && DB_QUESTIONS.length >= 4 ? [...DB_QUESTIONS] : generateFallbackQuestions())
-            .sort(() => Math.random() - 0.5);
+        pool = shuffle(DB_QUESTIONS.length >= 4 ? [...DB_QUESTIONS] : generateFallbackQuestions());
         curIdx = 0;
         score = 0;
         streak = 0;
         maxStreak = 0;
         correctCount = 0;
+        answered = 0;
+        mistakes = [];
         timeLeft = 60;
         locked = false;
 
@@ -325,10 +378,7 @@
         timerId = setInterval(() => {
             timeLeft--;
             updateHud();
-            if (timeLeft <= 0) {
-                clearInterval(timerId);
-                finishSprintGame();
-            }
+            if (timeLeft <= 0) finishSprintGame();
         }, 1000);
     }
 
@@ -340,7 +390,7 @@
 
     function updateHud() {
         const timerEl = document.getElementById('hud-timer');
-        timerEl.innerText = `${timeLeft}с`;
+        timerEl.innerText = `${Math.max(timeLeft, 0)}с`;
         timerEl.className = 'hud-val' + (timeLeft <= 10 ? ' timer-warn' : '');
 
         document.getElementById('hud-score').innerText = score;
@@ -350,64 +400,110 @@
         comboEl.innerText = `×${mult}`;
         comboEl.className = 'hud-val' + (mult > 1 ? ' combo-active' : '');
 
-        document.getElementById('timer-bar').style.width = `${(timeLeft / 60) * 100}%`;
+        document.getElementById('timer-bar').style.width = `${(Math.max(timeLeft, 0) / 60) * 100}%`;
     }
 
     function renderNextQuestion() {
         if (curIdx >= pool.length) {
-            pool.sort(() => Math.random() - 0.5);
+            shuffle(pool);
             curIdx = 0;
         }
         const q = pool[curIdx++];
         locked = false;
 
-        const qText = document.getElementById('q-text');
-        const qSvg = document.getElementById('q-svg');
         const qOpts = document.getElementById('q-options');
-
-        qText.innerHTML = q.text;
-        qSvg.innerHTML = q.svg_code || '';
+        document.getElementById('q-text').innerHTML = q.text;
         qOpts.innerHTML = '';
 
-        const shuffledOpts = [...q.options].sort(() => Math.random() - 0.5);
-        shuffledOpts.forEach(opt => {
+        shuffle([...q.options]).forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'opt-btn';
             btn.innerHTML = opt.text;
-            btn.onclick = () => selectOption(btn, opt.is_correct);
+            btn.dataset.correct = opt.is_correct ? '1' : '';
+            btn.onclick = () => selectOption(btn, q, opt);
             qOpts.appendChild(btn);
         });
 
         typesetEl(document.getElementById('screen-play'));
     }
 
-    function selectOption(btn, isCorrect) {
-        if (locked) return;
+    function selectOption(btn, q, opt) {
+        if (locked || timeLeft <= 0) return;
         locked = true;
+        answered++;
 
-        if (isCorrect) {
+        let pause = 400;
+        if (opt.is_correct) {
             btn.classList.add('correct');
             streak++;
             if (streak > maxStreak) maxStreak = streak;
             correctCount++;
             score += 10 * getMultiplier();
         } else {
+            // Показуємо правильну відповідь і даємо час її побачити; помилка коштує 3 секунди
             btn.classList.add('wrong');
+            document.querySelectorAll('#q-options .opt-btn').forEach(b => {
+                if (b.dataset.correct) b.classList.add('correct');
+            });
             streak = 0;
+            timeLeft -= WRONG_PENALTY;
+            pause = 1500;
+            mistakes.push({ q, chosen: opt.text, correct: q.options.find(o => o.is_correct).text });
         }
         updateHud();
+        if (timeLeft <= 0) {
+            finishSprintGame();
+            return;
+        }
 
         setTimeout(() => {
             if (timeLeft > 0) renderNextQuestion();
-        }, 320);
+        }, pause);
     }
 
     function finishSprintGame() {
+        if (timerId) clearInterval(timerId);
+        timerId = null;
+        locked = true;
         document.getElementById('screen-play').style.display = 'none';
         document.getElementById('screen-end').style.display = 'block';
         document.getElementById('end-score').innerText = score;
-        document.getElementById('end-correct').innerText = correctCount;
+        document.getElementById('end-correct').innerText = `${correctCount} з ${answered}`;
+        document.getElementById('end-accuracy').innerText =
+            answered ? `точність ${Math.round(100 * correctCount / answered)}%` : '';
         document.getElementById('end-streak').innerText = maxStreak;
+
+        const best = readBest();
+        const bestEl = document.getElementById('end-best');
+        if (score > best) {
+            saveBest(score);
+            bestEl.innerText = best > 0 ? `🏆 Новий рекорд! Попередній: ${best}` : '';
+        } else {
+            bestEl.innerText = `Твій рекорд: ${best}`;
+        }
+
+        const box = document.getElementById('mistakes');
+        const list = document.getElementById('mistakes-list');
+        list.innerHTML = '';
+        mistakes.forEach(m => {
+            const li = document.createElement('li');
+            li.style.marginBottom = '10px';
+            li.innerHTML = `<div>${m.q.text}</div>`
+                + `<div style="color:#991B1B;">Твоя відповідь: ${m.chosen}</div>`
+                + `<div style="color:#065F46;">Правильна: ${m.correct}</div>`;
+            if (m.q.lesson_url) {
+                const a = document.createElement('a');
+                a.href = m.q.lesson_url;
+                a.innerText = `Повторити тему: ${m.q.lesson_title}`;
+                li.appendChild(a);
+            }
+            list.appendChild(li);
+        });
+        box.style.display = mistakes.length ? 'block' : 'none';
+        if (mistakes.length) typesetEl(box);
     }
+
+    showBest();
+    if (AUTOSTART) startSprintGame();
 </script>
 {% endblock %}
