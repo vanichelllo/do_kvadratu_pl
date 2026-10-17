@@ -12,10 +12,20 @@ from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
-from .models import (AnswerOption, Cart, CartItem, DiagnosticTopic, MatchItem, Order, OrderItem, PracticeAttempt,
-                     Question, Review, StudentReport, StudyMaterial, TutorStudentRequest)
+from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, CurriculumGrade, CurriculumSubject,
+                     CurriculumTopic, MatchItem, Order, OrderItem, PracticeAttempt, Question, Review, StudentReport,
+                     StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
+
+
+def make_nmt_topic(name, chapter_order=1):
+    """Тема з курсу НМТ (класифікатор: курс → клас → розділ → тема)."""
+    subject, _ = CurriculumSubject.objects.get_or_create(name='Підготовка до НМТ / ЗНО')
+    grade, _ = CurriculumGrade.objects.get_or_create(subject=subject, name='НМТ')
+    chapter, _ = CurriculumChapter.objects.get_or_create(grade=grade, name=f'Розділ {chapter_order}',
+                                                         order=chapter_order)
+    return CurriculumTopic.objects.create(chapter=chapter, name=name)
 
 # У тестах не ходимо в Cloudinary і не потребуємо collectstatic
 TEST_STORAGES = {
@@ -412,13 +422,12 @@ class ParentDashboardTests(BaseTestCase):
     def test_revoke_access_keeps_materials_student_paid_for(self):
         from django.contrib import admin
         from django.test import RequestFactory
-        from materials.models import Category
-        nmt = Category.objects.create(name='Підготовка до НМТ')
-        bought = StudyMaterial.objects.create(title='Куплена тема', price=25, category=nmt, is_published=True)
-        in_bundle = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
-        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True, is_published=True)
+        nmt = make_nmt_topic('1. Числа')
+        bought = StudyMaterial.objects.create(title='Куплена тема', price=25, curriculum_topic=nmt, is_published=True)
+        in_bundle = StudyMaterial.objects.create(title='Тема з пакета', price=25, curriculum_topic=nmt, is_published=True)
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, curriculum_topic=nmt, is_bundle=True, is_published=True)
         bundle.included_materials.add(in_bundle)
-        given = StudyMaterial.objects.create(title='Видана тема', price=25, category=nmt, is_published=True)
+        given = StudyMaterial.objects.create(title='Видана тема', price=25, curriculum_topic=nmt, is_published=True)
         kid = self.make_user('kid@example.com')
         kid.purchased_materials.add(bought, in_bundle, given)
         order = Order.objects.create(user=kid, total_amount=125, status='paid')
@@ -437,10 +446,9 @@ class ParentDashboardTests(BaseTestCase):
     def test_revoke_access_keeps_everything_if_a_paid_bundle_was_deleted(self):
         from django.contrib import admin
         from django.test import RequestFactory
-        from materials.models import Category
-        nmt = Category.objects.create(name='Підготовка до НМТ')
-        bundle = StudyMaterial.objects.create(title='Пакет', price=100, category=nmt, is_bundle=True)
-        topic = StudyMaterial.objects.create(title='Тема з пакета', price=25, category=nmt, is_published=True)
+        nmt = make_nmt_topic('1. Числа')
+        bundle = StudyMaterial.objects.create(title='Пакет', price=100, curriculum_topic=nmt, is_bundle=True)
+        topic = StudyMaterial.objects.create(title='Тема з пакета', price=25, curriculum_topic=nmt, is_published=True)
         bundle.included_materials.add(topic)
         kid = self.make_user('kid2@example.com')
         kid.purchased_materials.add(topic)
@@ -717,14 +725,14 @@ class AnswerCheckingTests(BaseTestCase):
 
 class DiagnosticResultsTests(BaseTestCase):
     def setUp(self):
-        self.topic = DiagnosticTopic.objects.create(name='12. Відсотки')
-        self.question = Question.objects.create(text='q', question_type='CHOICE', topic=self.topic)
+        self.topic = make_nmt_topic('12. Відсотки')
+        self.question = Question.objects.create(text='q', question_type='CHOICE', curriculum_topic=self.topic)
         AnswerOption.objects.create(question=self.question, text='A', is_correct=True)
-        self.linked = StudyMaterial.objects.create(title='Пакет: вся алгебра', is_published=True)
-        self.hidden = StudyMaterial.objects.create(title='Чернетка', is_published=False)
-        self.topic.recommended_materials.add(self.linked, self.hidden)
+        self.linked = StudyMaterial.objects.create(title='12. Відсотки', is_published=True,
+                                                   curriculum_topic=self.topic)
+        self.hidden = StudyMaterial.objects.create(title='Чернетка', is_published=False, curriculum_topic=self.topic)
 
-    def test_weak_topic_recommends_materials_linked_in_admin(self):
+    def test_weak_topic_recommends_published_materials_of_that_topic(self):
         response = self.client.post('/diagnostic/', {'question_ids': str(self.question.id)})
         self.assertIn(self.linked, response.context['recommendations'])
         self.assertNotIn(self.hidden, response.context['recommendations'])
@@ -766,10 +774,11 @@ class TeacherFormsTests(BaseTestCase):
         self.student = TutorStudentRequest.objects.create(user=self.make_user('kid2@example.com'),
                                                           real_name='Учень', course='grade_7', status='approved')
         self.material = StudyMaterial.objects.create(title='1. Тема')
+        self.topic = make_nmt_topic('Дроби')
         self.client.force_login(self.teacher)
 
     def report_data(self, **overrides):
-        data = {'student_id': self.student.id, 'topic': 'Дроби', 'nush_modeling': 10, 'nush_solving': 9,
+        data = {'student_id': self.student.id, 'curriculum_topic': self.topic.id, 'nush_modeling': 10, 'nush_solving': 9,
                 'nush_analysis': 8, 'homework_status': 'completed', 'teacher_comment': ''}
         data.update(overrides)
         return data
@@ -779,7 +788,7 @@ class TeacherFormsTests(BaseTestCase):
         self.assertEqual(StudentReport.objects.get().nush_solving, 9)
 
     def test_bad_report_shows_error_instead_of_500(self):
-        for bad in ({'nush_modeling': ''}, {'nush_modeling': 13}, {'topic': ''}, {'homework_status': 'hack'}):
+        for bad in ({'nush_modeling': ''}, {'nush_modeling': 13}, {'curriculum_topic': ''}, {'homework_status': 'hack'}):
             response = self.client.post('/cabinet/add-report/', self.report_data(**bad))
             self.assertEqual(response.status_code, 302)
         self.assertFalse(StudentReport.objects.exists())
@@ -829,10 +838,9 @@ class DangerousAdminActionsTests(BaseTestCase):
     def test_data_wiping_actions_removed(self):
         from django.contrib import admin
         from django.test import RequestFactory
-        from .models import DiagnosticTopic
         request = RequestFactory().get('/')
         request.user = self.make_user('boss2@example.com', is_staff=True, is_superuser=True)
-        for model in (DiagnosticTopic, StudyMaterial):
+        for model in (Question, StudyMaterial):
             names = set(admin.site._registry[model].get_actions(request))
             self.assertFalse(names & {'populate_nmt_test', 'import_materials_from_excel'}, model.__name__)
 
@@ -1302,12 +1310,11 @@ class QueryCountTests(BaseTestCase):
         self.assertNotContains(page, 'ЧУЖИЙ-ВАРІАНТ')
 
     def test_diagnostic_picks_22_without_loading_whole_bank(self):
-        from .models import DiagnosticTopic
-        algebra, geometry = DiagnosticTopic.objects.create(name='1. Числа'), DiagnosticTopic.objects.create(name='30. Трикутники')
+        algebra, geometry = make_nmt_topic('1. Числа', chapter_order=10), make_nmt_topic('30. Трикутники', chapter_order=600)
         for i in range(20):
             for topic in (algebra, geometry):
                 for q_type in ('CHOICE', 'MATCH', 'SHORT'):
-                    q = Question.objects.create(text=f'{q_type}{i}', question_type=q_type, topic=topic,
+                    q = Question.objects.create(text=f'{q_type}{i}', question_type=q_type, curriculum_topic=topic,
                                                 correct_short_answer='1')
                     AnswerOption.objects.create(question=q, text='a', is_correct=True)
         response = Client().get('/diagnostic/')
@@ -1323,10 +1330,8 @@ class DeferredPresentationSafetyTests(BaseTestCase):
     """HTML-презентація не завантажується за замовчуванням — переконуємось, що збереження її не стирає."""
 
     def setUp(self):
-        from .models import Category
-        self.category = Category.objects.create(name='Підготовка до НМТ')
         self.material = StudyMaterial.objects.create(title='1. Тема', price=25, html_content='<p>СЛАЙДИ</p>',
-                                                     category=self.category)
+                                                     curriculum_topic=make_nmt_topic('1. Тема'))
 
     def test_saving_deferred_instance_keeps_presentation(self):
         material = StudyMaterial.objects.get(id=self.material.id)
@@ -1343,7 +1348,7 @@ class DeferredPresentationSafetyTests(BaseTestCase):
         form = page.context['adminform'].form
         data = {name: ('' if value is None else value) for name, value in form.initial.items()
                 if name not in ('file', 'image', 'tags', 'included_materials')}
-        data.update({'price': 35, 'category': self.category.id, 'description': data.get('description') or ''})
+        data.update({'price': 35, 'description': data.get('description') or ''})
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 302, getattr(response, 'context', None) and
                          response.context['adminform'].form.errors)
@@ -1398,12 +1403,13 @@ class PracticePoolTests(BaseTestCase):
     def setUp(self):
         self.user = self.make_user('practice@example.com')
         self.client.force_login(self.user)
-        self.lesson3 = StudyMaterial.objects.create(title='3. Степені', price=0, is_free=True, is_published=True)
+        self.topic3 = make_nmt_topic('3. Степені')
+        self.lesson3 = StudyMaterial.objects.create(title='3. Степені', price=0, is_free=True, is_published=True,
+                                                    curriculum_topic=self.topic3)
         self.lesson5 = StudyMaterial.objects.create(title='5. Дроби', price=0, is_free=True, is_published=True)
-        self.topic3 = DiagnosticTopic.objects.create(name='3. Степені')
 
     def make_short(self, text, *materials, topic=None):
-        q = Question.objects.create(text=text, question_type='SHORT', correct_short_answer='1', topic=topic)
+        q = Question.objects.create(text=text, question_type='SHORT', correct_short_answer='1', curriculum_topic=topic)
         q.materials.add(*materials)
         return q
 
@@ -1422,12 +1428,6 @@ class PracticePoolTests(BaseTestCase):
         self.make_short('mixed', self.lesson3, self.lesson5)
         response = self.client.get(f'/practice/{self.lesson3.id}/')
         self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
-
-    def test_own_by_recommended_material(self):
-        topic = DiagnosticTopic.objects.create(name='Степені (тема)')
-        topic.recommended_materials.add(self.lesson3)
-        own = self.make_short('rec', self.lesson3, self.lesson5, topic=topic)
-        self.assertEqual({q.id for q in self.shown_ids()}, {own.id})
 
     def test_unseen_questions_come_first(self):
         old = [self.make_short(f'old{i}', self.lesson3) for i in range(3)]
@@ -1484,6 +1484,7 @@ class BankImportTests(BaseTestCase):
         self.admin = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
         self.client.force_login(self.admin)
         self.lesson34 = StudyMaterial.objects.create(title='34. Теорема косинусів та теорема синусів', price=10)
+        self.topic34 = make_nmt_topic('34. Теорема косинусів та теорема синусів')
         Question.objects.create(text='Уже є в базі', question_type='SHORT', correct_short_answer='5')
 
     def upload(self, source, action='preview'):
@@ -1512,7 +1513,7 @@ class BankImportTests(BaseTestCase):
         self.assertEqual(Question.objects.count(), 3)
         choice = Question.objects.get(text__startswith='Нове завдання')
         self.assertEqual(list(choice.materials.all()), [self.lesson34])
-        self.assertEqual(choice.topic.name, '34. Теорема косинусів та теорема синусів')
+        self.assertEqual(choice.curriculum_topic, self.topic34)
         self.assertEqual(choice.options.filter(is_correct=True).get().text, 'Б) 2')
         match = Question.objects.get(text='Відповідність')
         self.assertEqual({(m.text, m.correct_option.text) for m in match.match_items.all()},

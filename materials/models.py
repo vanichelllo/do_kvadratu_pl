@@ -58,7 +58,7 @@ class CurriculumChapter(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
 
     class Meta:
-        ordering = ['grade__order', 'order']
+        ordering = ['grade__subject__order', 'grade__order', 'order']
         verbose_name = "Розділ"
         verbose_name_plural = "3. Розділи"
 
@@ -71,7 +71,7 @@ class CurriculumTopic(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
 
     class Meta:
-        ordering = ['chapter__order', 'order']
+        ordering = ['chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order']
         verbose_name = "Тема"
         verbose_name_plural = "4. Теми (Уроки)"
 
@@ -495,17 +495,6 @@ class StudentReport(models.Model):
         null=True,
         verbose_name="Тема уроку (з програми)"
     )
-    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
-    # але робимо його необов'язковим:
-    # Змінено: тепер тема вибирається з нашого нового дерева
-    curriculum_topic = models.ForeignKey(
-        'CurriculumTopic',
-        on_delete=models.SET_NULL,
-        null=True,
-        verbose_name="Тема уроку (з програми)"
-    )
-    # Залишаємо старе поле тимчасово (або для збереження історії старих звітів),
-    # але робимо його необов'язковим:
     # Оцінки за критеріями НУШ (від 1 до 12)
     nush_modeling = models.PositiveIntegerField(default=0, verbose_name="Моделювання (1-12)")
     nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")
@@ -520,4 +509,4 @@ class StudentReport(models.Model):
         verbose_name_plural = "Звіти"
 
     def __str__(self):
-        return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.topic})"
+        return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.curriculum_topic})"

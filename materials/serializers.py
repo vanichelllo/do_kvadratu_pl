@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import StudyMaterial, Category
+from .models import StudyMaterial
 
 class StudyMaterialSerializer(serializers.ModelSerializer):
-    # Додаємо поле, щоб замість ID категорії бот отримував її назву
-    category_name = serializers.CharField(source='category.name', read_only=True)
+    # Назва теми з класифікатора; ім'я поля лишаємо, бо бот уже на нього розрахований
+    category_name = serializers.CharField(source='curriculum_topic.name', read_only=True, default=None)
 
     class Meta:
         model = StudyMaterial
