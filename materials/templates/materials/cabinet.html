@@ -408,6 +408,47 @@
         </details>
         {% endif %}
 
+        <!-- ДІАГНОСТИКИ НМТ: ДИНАМІКА І ЩО ПОВТОРИТИ -->
+        {% if diagnostics %}
+        <details class="cab-section" data-section="diagnostics">
+            <summary><h2 class="cab-section-title"><span>🎯 Мої діагностики НМТ</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            <div class="stats-table-wrapper">
+                <table class="stats-table">
+                    <thead><tr><th>Дата</th><th>Результат</th><th>Зміна</th></tr></thead>
+                    <tbody>
+                        {% for attempt in diagnostics %}
+                        <tr onclick="window.location='{% url 'view_attempt_details' attempt.id %}';" style="cursor: pointer;" title="Натисніть, щоб переглянути відповіді">
+                            <td style="font-size: 0.9rem; color: #666;">{{ attempt.created_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% with p=attempt.get_percent %}
+                                    <span class="score-badge {% if p >= 70 %}score-good{% elif p >= 40 %}score-avg{% else %}score-bad{% endif %}">{{ attempt.score }} з {{ attempt.max_score }} ({{ p }}%)</span>
+                                {% endwith %}
+                            </td>
+                            <td style="font-weight: bold;">
+                                {% if attempt.change is None %}—{% elif attempt.change > 0 %}<span style="color:#28a745;">+{{ attempt.change }} п.п.</span>{% elif attempt.change < 0 %}<span style="color:#dc3545;">{{ attempt.change }} п.п.</span>{% else %}0{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if diagnostic_weak_topics %}
+                <h3 style="color: var(--brand-blue); margin: 20px 0 8px;">Що повторити за останньою діагностикою</h3>
+                <p style="margin: 0 0 8px;">{% for topic in diagnostic_weak_topics %}{{ topic.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+                {% if diagnostic_recommendations %}
+                <ul style="margin: 0 0 12px; padding-left: 20px; line-height: 1.7;">
+                    {% for mat in diagnostic_recommendations %}<li><a href="{% url 'material_detail' mat.id %}" style="color: var(--brand-blue); font-weight: 700;">{{ mat.title }}</a></li>{% endfor %}
+                </ul>
+                {% endif %}
+            {% elif diagnostics %}
+                <p style="margin: 16px 0 8px; color: #28a745; font-weight: 700;">За останньою діагностикою слабких тем немає. 💪</p>
+            {% endif %}
+            <a href="{% url 'diagnostic_test' %}" class="btn-brand" style="display: inline-block; text-decoration: none; padding: 10px 20px; margin-top: 8px;">🔄 Пройти діагностику ще раз</a>
+            </div>
+        </details>
+        {% endif %}
+
         <!-- 3. ІНДИВІДУАЛЬНІ УРОКИ -->
         {% if personal_presentations %}
         <details class="cab-section" data-section="lessons">

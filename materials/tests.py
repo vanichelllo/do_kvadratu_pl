@@ -1859,3 +1859,35 @@ class PlatformHardeningTests(BaseTestCase):
         importlib.import_module('materials.migrations.0039_pin_mathjax_in_lessons').forwards(apps, None)
         material.refresh_from_db()
         self.assertIn('npm/mathjax@3.2.2/es5', material.html_content)
+
+
+class DiagnosticHistoryTests(BaseTestCase):
+    def setUp(self):
+        self.topic = make_nmt_topic('21. Показникові рівняння')
+        self.lesson = StudyMaterial.objects.create(title='21. Показникові рівняння', price=10, is_published=True,
+                                                   curriculum_topic=self.topic)
+        self.q = Question.objects.create(text='2^x = 8', question_type='CHOICE', curriculum_topic=self.topic)
+        self.right = AnswerOption.objects.create(question=self.q, text='А) 3', is_correct=True)
+        self.wrong = AnswerOption.objects.create(question=self.q, text='Б) 4', is_correct=False)
+        self.kid = self.make_user('kid@example.com')
+        self.client.force_login(self.kid)
+
+    def take(self, option):
+        return self.client.post('/diagnostic/', {'question_ids': str(self.q.id), f'question_{self.q.id}': str(option.id)})
+
+    def test_progress_and_weak_topics_are_shown(self):
+        first = self.take(self.wrong)
+        self.assertIsNone(first.context['previous_percent'])
+        self.assertEqual(first.context['recommendations'], [self.lesson])
+
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('data-section="diagnostics"', html)
+        self.assertIn('Що повторити за останньою діагностикою', html)
+        self.assertIn(f'/material/{self.lesson.id}/', html)
+
+        second = self.take(self.right)
+        self.assertEqual((second.context['previous_percent'], second.context['percent_change']), (0, 100))
+        self.assertContains(second, 'Минулого разу: 0%')
+        cabinet = self.client.get('/cabinet/')
+        self.assertEqual([a.change for a in cabinet.context['diagnostics']], [100, None])
+        self.assertContains(cabinet, 'слабких тем немає')
