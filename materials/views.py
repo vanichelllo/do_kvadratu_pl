@@ -356,14 +356,24 @@ def diagnostic_scope(attempt):
     return (attempt.answers_json or {}).get('scope') or 'all'
 
 
+def number_in_name(name):
+    """«Розділ 3. …» → 3, «15. Системи рівнянь» → 15; без номера — у кінець."""
+    match = re.search(r'\d+', name or '')
+    return int(match.group()) if match else 10 ** 6
+
+
 def diagnostic_choose_topics(request, nmt_topics):
+    # Запит із Count групує рядки, і Django тоді не застосовує сортування з Meta моделі —
+    # тож розділи збираємо словником, а порядок задаємо самі: за номером у назві, як бачить учень
     with_questions = (nmt_topics.annotate(n=Count('diagnostic_questions'))
                       .filter(n__gt=0).select_related('chapter'))
-    chapters = []
+    by_chapter = {}
     for topic in with_questions:
-        if not chapters or chapters[-1]['chapter'].id != topic.chapter_id:
-            chapters.append({'chapter': topic.chapter, 'topics': []})
-        chapters[-1]['topics'].append(topic)
+        by_chapter.setdefault(topic.chapter_id, {'chapter': topic.chapter, 'topics': []})['topics'].append(topic)
+    chapters = sorted(by_chapter.values(),
+                      key=lambda g: (number_in_name(g['chapter'].name), g['chapter'].order, g['chapter'].id))
+    for group in chapters:
+        group['topics'].sort(key=lambda t: (number_in_name(t.name), t.order, t.id))
     return render(request, 'materials/diagnostic_choose.html', {'chapters': chapters})
 
 
