@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% load question_tags %}<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
@@ -105,10 +105,11 @@
                 {% endif %}
 
                 <div class="options-container">
-                    {% for opt in q.options.all %}
+                    {% shuffled_options q as choice_options %}
+                    {% for opt in choice_options %}
                     <label class="option-label">
                         <input type="radio" name="q_{{ q.id }}" value="{{ opt.id }}" required>
-                        <span>{{ opt.text|safe }}</span>
+                        <span>{{ opt.display_text|safe }}</span>
                     </label>
                     {% endfor %}
                 </div>

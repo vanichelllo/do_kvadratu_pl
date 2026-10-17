@@ -32,6 +32,7 @@ class Tag(models.Model):
         return self.name
 
 NMT_SUBJECT_NAME = "Підготовка до НМТ / ЗНО"
+OPTION_LABEL = re.compile(r'^\s*[А-ДA-E]\)\s*')
 
 
 class CurriculumSubject(models.Model):
@@ -385,6 +386,11 @@ class AnswerOption(models.Model):
 
     def __str__(self):
         return self.text
+
+    @property
+    def body(self):
+        """Текст без літери «А) … Д)» на початку — літери учневі ставимо самі після перемішування."""
+        return OPTION_LABEL.sub('', self.text, count=1)
 
 
 class MatchItem(models.Model):

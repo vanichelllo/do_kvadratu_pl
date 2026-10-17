@@ -1476,7 +1476,8 @@ TASKS = [
         "topic_tags": ["34. Теорема косинусів та теорема синусів"]
     },
     {"type": "SHORT", "difficulty": 2, "text": "Без відповіді", "topic_tags": []},
-    {"type": "CHOICE", "difficulty": 1, "text": "Нове завдання $a^2$", "options": [("А", True), ("Б", False)]},
+    {"type": "CHOICE", "difficulty": 1, "text": "Нове  завдання $a^2$", "svg_code": "",
+     "options": [(r"А) 1", False), (r"Б) 2", True)]},
 ]
 '''
 
@@ -1502,12 +1503,19 @@ class BankImportTests(BaseTestCase):
         report = response.context['report']
         self.assertEqual(report.total, 5)
         self.assertEqual(report.to_add, [1, 3])
-        self.assertEqual([i for i, _ in report.duplicates], [2, 5])  # 5-те — повтор тексту з цього ж файлу
+        self.assertEqual([i for i, _ in report.duplicates], [2, 5])  # 5-те — повтор 1-го з цього ж файлу
         self.assertEqual([i for i, _ in report.errors], [4])
         self.assertEqual(report.aliased_tags,
                          {'34. Теореми косинусів та теорема синусів': '34. Теорема косинусів та теорема синусів'})
         self.assertEqual(report.unknown_tags, {'99. Нема такого': 1})
         self.assertEqual(Question.objects.count(), 1)
+
+    def test_same_text_with_other_options_is_not_a_duplicate(self):
+        # Загальні умови («Узгодьте вираз (1–3) із …») повторюються в завданнях з різним змістом
+        source = BANK_SAMPLE.replace('(r"А) 1", False), (r"Б) 2", True)]},\n]', '(r"А) 3", True), (r"Б) 4", False)]},\n]')
+        report = self.upload(source).context['report']
+        self.assertEqual(report.to_add, [1, 3, 5])
+        self.assertEqual([i for i, _ in report.duplicates], [2])
 
     def test_import_adds_tasks_and_binds_typo_tag_to_lesson_34(self):
         self.upload(BANK_SAMPLE)
@@ -1672,3 +1680,16 @@ class QuestionAdminTests(BaseTestCase):
                                     'curriculum_topic': self.t21.id, 'difficulty': '3', 'add_material': lesson.id})
         self.assertEqual(set(Question.objects.values_list('curriculum_topic', 'difficulty')), {(self.t21.id, 3)})
         self.assertEqual(lesson.practice_questions.count(), 2)
+
+
+class ShuffledOptionsTests(BaseTestCase):
+    def test_choice_options_are_relabelled_after_shuffle_and_results_show_them_without_letters(self):
+        from materials.templatetags.question_tags import shuffled_options
+        q = Question.objects.create(text='q', question_type='CHOICE')
+        for i, letter in enumerate('АБВГД'):
+            AnswerOption.objects.create(question=q, text=f'{letter}) варіант {i}', is_correct=(i == 1))
+        with mock.patch('materials.templatetags.question_tags.random.shuffle', side_effect=lambda items: items.reverse()):
+            options = shuffled_options(q)
+        self.assertEqual([o.display_text for o in options],
+                         ['А) варіант 4', 'Б) варіант 3', 'В) варіант 2', 'Г) варіант 1', 'Д) варіант 0'])
+        self.assertEqual(AnswerOption.objects.get(is_correct=True).body, 'варіант 1')
