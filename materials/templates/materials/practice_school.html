@@ -104,6 +104,7 @@
         .feedback.bad { display: block; border-color: var(--red); background: rgba(231,76,60,0.07); }
         .feedback .solution, .feedback .level-msg { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); }
         .level-msg { font-weight: 700; }
+        .resume-note { font-weight: 700; color: var(--brand-blue); margin-bottom: 4px; }
         .form-msg { color: var(--red); font-weight: 700; margin-top: 8px; min-height: 1.2em; }
 
         .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
@@ -115,6 +116,11 @@
 
         .end-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 26px; text-align: center; }
         .end-card h2 { color: var(--brand-blue); margin-top: 0; }
+        .question-card.boss { border: 3px solid #8e44ad; box-shadow: 0 0 0 4px rgba(142,68,173,0.15); }
+        .boss-banner { background: #8e44ad; color: #fff; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-weight: 700; }
+        .boss-banner small { display: block; font-weight: 500; opacity: 0.9; margin-top: 2px; }
+        .btn-boss { background: #8e44ad; color: #fff; }
+        .trophy { font-size: 1.15rem; font-weight: 800; color: #8e44ad; }
 
         /* Режим уроку: вчитель показує екран — усе крупніше */
         body.lesson .container { max-width: 1000px; }
@@ -177,6 +183,7 @@
             </div>
             <div class="streak">
                 {% if kind == 'summary' %}Узагальнення: завдання з усіх тем розділу по черзі. {% endif %}
+                {% if state.start_level > 1 and state.history|length <= 1 %}<div class="resume-note">Продовжуємо зі сходинки {{ state.start_level }} — там, де {% if actor.lesson %}учень зупинився{% else %}ти зупинився{% endif %} минулого разу.</div>{% endif %}
                 {% if state.status == 'active' %}
                     Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}{% if actor.lesson %}вище{% else %}ти вище{% endif %}{% else %}{% if kind == 'summary' %}розділ опановано{% else %}тему опановано{% endif %}{% endif %}:
                     <span class="dot {% if state.ok >= 1 %}on{% endif %}"></span><span class="dot {% if state.ok >= 2 %}on{% endif %}"></span>
@@ -186,7 +193,12 @@
         </div>
 
         {% if question %}
-        <div class="question-card" id="card" data-qid="{{ question.id }}" data-type="{{ question.question_type }}">
+        <div class="question-card{% if boss_name %} boss{% endif %}" id="card" data-qid="{{ question.id }}" data-type="{{ question.question_type }}">
+            {% if boss_name %}
+            <div class="boss-banner">{{ boss_name }}
+                <small>Необов'язковий виклик для тих, хто опанував тему: на оцінку не впливає. Спроб: {{ boss_tries }}, підказок немає.</small>
+            </div>
+            {% endif %}
             <div class="q-head">
                 <div class="q-number">Завдання {{ task_number }}</div>
                 <span class="chip">{{ question.get_nush_skill_display }}</span>
@@ -236,9 +248,10 @@
             <div class="actions">
                 <button type="button" class="btn btn-check" id="btn-check">Перевірити</button>
                 <a href="{{ next_query }}" class="btn btn-next hidden" id="btn-next">Далі →</a>
+                <a href="{{ boss_url }}" class="btn btn-boss hidden" id="btn-boss">⚔️ Бос</a>
                 <button type="button" class="btn btn-next hidden" id="btn-result" onclick="finishPractice(false)">{% if kind == 'diagnostic' %}Побачити карту тем 🗺{% else %}Побачити оцінку 🏁{% endif %}</button>
             </div>
-            {% if actor.lesson %}<label class="assist"><input type="checkbox" id="assisted"> 🤝 Розв'язано з підказкою вчителя — не враховувати в оцінку і сходинки</label>{% endif %}
+            {% if actor.lesson and not boss_name %}<label class="assist"><input type="checkbox" id="assisted"> 🤝 Розв'язано з підказкою вчителя — не враховувати в оцінку і сходинки</label>{% endif %}
             {% if actor.lesson %}<div class="keys">Клавіші: 1–9 — варіант · Enter — перевірити / далі</div>{% endif %}
         </div>
         {% else %}
@@ -249,6 +262,12 @@
                 <a href="{{ next_query }}" class="btn btn-next">Наступний учень →</a>
             {% elif state.status == 'mastered' %}
                 <h2>🏆 Тему опановано!</h2><p>{% if actor.lesson %}Усі три сходинки пройдено.{% else %}Ти пройшов усі три сходинки.{% endif %}</p>
+                {% if trophy_name %}<p class="trophy">Трофей: {{ trophy_name }} переможений!</p>
+                {% elif boss_lost %}<p>Цього разу бос виявився сильнішим — оцінку це не знижує. Наступна спроба — після наступного опанування теми.</p>{% endif %}
+                {% if boss_next_name %}
+                    <p>{% if trophy_name %}Залишився найскладніший виклик.{% else %}Хочеш перевірити себе на справжньому виклику? Це необов'язково й не впливає на оцінку.{% endif %}</p>
+                    <p><a href="{{ boss_url }}" class="btn btn-boss">{{ boss_next_name }} — прийняти виклик</a></p>
+                {% endif %}
             {% elif state.status == 'limit' %}
                 <h2>💪 На сьогодні досить</h2><p>Розв'язано {{ max_tasks }} завдань. Далі — оцінка, а потім можна спробувати ще раз.</p>
             {% else %}
@@ -671,6 +690,10 @@
             if (data.correct) {
                 feedback.classList.add('ok');
                 feedback.innerHTML = '<b>Правильно! 🎉</b>';
+            } else if (!data.finished && data.boss) {
+                feedback.classList.add('hint');
+                feedback.innerHTML = '<b>Бос ще стоїть! ⚔️</b><div></div>';
+                feedback.children[1].textContent = data.hint;
             } else if (!data.finished) {
                 feedback.classList.add('hint');
                 feedback.innerHTML = '<b>Майже! Підказка 💡</b><div></div><div><i>' + T('Спробуй ще раз.', 'Ще одна спроба.') + '</i></div>';
@@ -688,11 +711,19 @@
                 }
                 if (data.level_change > 0) feedback.appendChild(el('div', 'level-msg', `⬆️ Нова сходинка: ${data.level}!`));
                 if (data.level_change < 0) feedback.appendChild(el('div', 'level-msg', `⬇️ Повернімося на сходинку ${data.level} і потренуймося ще.`));
-                if (data.status === 'mastered') feedback.appendChild(el('div', 'level-msg', '🏆 Тему опановано — усі три сходинки пройдено!'));
+                if (data.boss) feedback.appendChild(el('div', 'level-msg', data.boss_won
+                    ? (data.boss === 5 ? '👑 Ультра-боса переможено! Це рівень найсильніших.' : '🏅 Боса переможено!')
+                    : 'Цього разу бос сильніший. Оцінку це не знижує — тему все одно опановано 🏆'));
+                else if (data.status === 'mastered') feedback.appendChild(el('div', 'level-msg', '🏆 Тему опановано — усі три сходинки пройдено!'));
                 if (data.status === 'limit') feedback.appendChild(el('div', 'level-msg', '💪 На сьогодні досить — подивись оцінку.'));
                 if (data.status === 'done') feedback.appendChild(el('div', 'level-msg', '📋 Діагностику завершено.'));
                 lock();
                 document.getElementById(data.status === 'active' || GROUP ? 'btn-next' : 'btn-result').classList.remove('hidden');
+                if (data.boss_next) {
+                    const bossButton = document.getElementById('btn-boss');
+                    bossButton.textContent = data.boss_next + ' — прийняти виклик';
+                    bossButton.classList.remove('hidden');
+                }
             }
             typeset(card);
         }

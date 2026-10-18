@@ -432,6 +432,8 @@ class Question(models.Model):
         (1, 'Базовий (Легкий)'),
         (2, 'Стандартний (Середній)'),
         (3, 'Профільний (Складний)'),
+        (4, 'Бос (виклик після опанування теми)'),
+        (5, 'Ультра-бос'),
     )
 
 
@@ -639,6 +641,12 @@ class PracticeAttempt(models.Model):
 
     def get_percent(self):
         return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
+
+    @property
+    def boss_trophy(self):
+        """«👑 Ультра-бос» / «⚔️ Бос», якщо в цій спробі переможено боса; інакше порожній рядок."""
+        from .practice import BOSS_NAMES, boss_trophy
+        return BOSS_NAMES.get(boss_trophy((self.answers_json or {}).get('bosses')), '')
 
     @property
     def nush_grades(self):

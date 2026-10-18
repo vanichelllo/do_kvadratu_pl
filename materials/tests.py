@@ -2227,8 +2227,100 @@ class SchoolPracticeTests(BaseTestCase):
         self.assertEqual((attempt.score, attempt.max_score), (14, 14))
         details = self.client.get(f'/attempt/{attempt.id}/')
         self.assertContains(details, 'Тему опановано')
-        # Наступний вхід — нова практика з першої сходинки
+        # Наступний вхід (другий урок, ДЗ) — нова практика одразу з третьої сходинки: тему вже опановано
+        self.assertEqual(self.current(lesson).difficulty, 3)
+        self.assertContains(self.client.get(f'/practice/{lesson.id}/'), 'Продовжуємо зі сходинки 3')
+
+    def test_next_practice_resumes_from_the_level_reached(self):
+        topic, lesson = self.algebra8()
+        self.fill_bank(topic)
+        self.answer(lesson)
+        self.answer(lesson)                      # піднявся на сходинку 2
+        self.client.post(f'/practice/{lesson.id}/')   # завершив, не дійшовши до кінця
+        self.assertEqual(self.current(lesson).difficulty, 2)
+        state = self.run_state(lesson)
+        self.assertEqual((state['level'], state['start_level']), (2, 2))
+        self.answer(lesson, correct=False)
+        _, data = self.answer(lesson, correct=False)
+        self.assertEqual(data['level'], 1)       # сходинки працюють як звичайно
+
+    def test_summary_and_first_practice_start_from_the_first_level(self):
+        from .practice import resume_level
+        self.assertEqual(resume_level(None), 1)
+        self.assertEqual(resume_level({'kind': 'summary', 'level': 3, 'history': [{}]}), 1)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 2, 'history': []}), 1)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 2, 'history': [{}]}), 2)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 3, 'status': 'mastered', 'history': [{}]}), 3)
+
+    def master_with_bosses(self):
+        topic, lesson = self.algebra8()
+        self.fill_bank(topic)
+        self.boss = self.make_choice('Бос', topic, difficulty=4)
+        self.ultra = self.make_choice('Ультра', topic, difficulty=5)
+        statuses = [self.answer(lesson)[1]['status'] for _ in range(7)]
+        self.assertEqual(statuses[-1], 'mastered')
+        return lesson
+
+    def test_boss_and_ultra_boss_give_trophies_without_touching_grades(self):
+        lesson = self.master_with_bosses()
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertContains(page, '⚔️ Бос — прийняти виклик')
+        self.assertRedirects(self.client.get(f'/practice/{lesson.id}/?boss=1'), f'/practice/{lesson.id}/',
+                             fetch_redirect_response=False)
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertEqual(page.context['question'], self.boss)
+        self.assertContains(page, 'Спроб: 2, підказок немає')
+        q, data = self.answer(lesson, correct=False)          # перша спроба — без підказки, друга лишається
+        from .practice import BOSS_HINT
+        self.assertEqual((data['finished'], data['hint']), (False, BOSS_HINT))
+        data = self.check(q, str(q.options.get(is_correct=True).id), lesson).json()
+        self.assertTrue(data['boss_won'])
+        self.assertEqual((data['status'], data['boss_next']), ('mastered', '👑 Ультра-бос'))
+
+        self.client.get(f'/practice/{lesson.id}/?boss=1')
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertEqual(page.context['question'], self.ultra)
+        self.assertContains(page, 'Спроб: 1')
+        _, data = self.answer(lesson)
+        self.assertTrue(data['boss_won'])
+        self.assertIsNone(data['boss_next'])
+        self.assertNotContains(self.client.get(f'/practice/{lesson.id}/'), 'прийняти виклик</a>')
+
+        self.client.post(f'/practice/{lesson.id}/')
+        attempt = PracticeAttempt.objects.get(user=self.user)
+        self.assertEqual((attempt.nush_modeling, attempt.nush_solving, attempt.nush_analysis), (12, 12, 12))
+        self.assertEqual((attempt.score, attempt.max_score), (14, 14))     # боси — не в балах
+        self.assertNotIn(str(self.boss.id), attempt.answers_json['question_ids'].split(','))
+        self.assertEqual(attempt.boss_trophy, '👑 Ультра-бос')
+        self.assertContains(self.client.get(f'/attempt/{attempt.id}/'), '👑 Ультра-бос переможений')
+        self.assertFalse(GameMistake.objects.filter(user=self.user, question=self.boss).exists())
+
+    def test_lost_boss_changes_nothing_and_closes_ultra(self):
+        lesson = self.master_with_bosses()
+        self.client.get(f'/practice/{lesson.id}/?boss=1')
+        self.answer(lesson, correct=False)
+        _, data = self.answer(lesson, correct=False)
+        self.assertFalse(data['boss_won'])
+        self.assertIsNone(data['boss_next'])
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertContains(page, 'бос виявився сильнішим')
+        self.client.get(f'/practice/{lesson.id}/?boss=1')   # повторний виклик у цій практиці не дає боса
+        self.assertIsNone(self.client.get(f'/practice/{lesson.id}/').context['question'])
+        self.client.post(f'/practice/{lesson.id}/')
+        attempt = PracticeAttempt.objects.get(user=self.user)
+        self.assertEqual((attempt.nush_modeling, attempt.nush_solving, attempt.nush_analysis), (12, 12, 12))
+        self.assertEqual(attempt.boss_trophy, '')
+
+    def test_bosses_never_appear_on_the_ladder_and_need_mastery(self):
+        topic, lesson = self.algebra8()
+        self.make_choice('Легке', topic, difficulty=1)
+        self.make_choice('Бос', topic, difficulty=4)
         self.assertEqual(self.current(lesson).difficulty, 1)
+        self.client.get(f'/practice/{lesson.id}/?boss=1')    # тему ще не опановано — бос не відкривається
+        self.answer(lesson)
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertIsNone(page.context['question'])          # завдання скінчились, боса не підсунуто
+        self.assertEqual(self.run_state(lesson)['status'], 'empty')
 
     def test_slow_pupil_gets_grade_of_the_level_reached(self):
         topic, lesson = self.algebra8()
@@ -3223,3 +3315,71 @@ class TutorPlansTests(BaseTestCase):
         self.assertContains(response, 'Старт')
         self.assertNotContains(response, 'Прихований')
         self.assertContains(response, 'Увійти, щоб оформити')
+
+
+class CurriculumTreeUpdateTests(BaseTestCase):
+    """Доповнення дерева тем: нові теми й перенумерування наявних без втрати прив'язаних уроків."""
+
+    def old_chapter(self, subject, grade_name, number, chapter_name, topics):
+        subject_obj, _ = CurriculumSubject.objects.get_or_create(name=subject)
+        grade, _ = CurriculumGrade.objects.get_or_create(subject=subject_obj, name=grade_name, defaults={'number': number})
+        chapter = CurriculumChapter.objects.create(grade=grade, name=chapter_name, order=10)
+        for order, name in enumerate(topics, start=1):
+            CurriculumTopic.objects.create(chapter=chapter, name=name, order=order)
+        return chapter
+
+    def test_renumbers_existing_topics_keeps_lessons_and_adds_new_ones(self):
+        from .curriculum import apply_tree_update, ensure_special_topics
+        geo = self.old_chapter('Геометрія (7-9 класи)', '8 клас', 8, 'Розділ 1. Чотирикутники', [
+            '1.1. Чотирикутник та його елементи. Сума кутів', '1.2. Паралелограм. Означення, властивості та ознаки',
+            '1.3. Прямокутник, ромб, квадрат', '1.4. Трапеція. Середня лінія трапеції',
+            '1.5. Вписані та описані чотирикутники'])
+        alg = self.old_chapter('Алгебра (7-9 класи)', '9 клас', 9,
+                               'Розділ 4. Основи комбінаторики, теорії ймовірностей та статистики', [
+                                   '4.1. Комбінаторні правила суми та добутку', '4.2. Ймовірність випадкової події',
+                                   '4.3. Початкові відомості про статистику'])
+        ensure_special_topics(CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial)
+        trapezoid = CurriculumTopic.objects.get(chapter=geo, name='1.4. Трапеція. Середня лінія трапеції')
+        lesson = StudyMaterial.objects.create(title=trapezoid.name, price=0, is_free=True, curriculum_topic=trapezoid)
+
+        args = (CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial)
+        self.assertGreater(apply_tree_update(*args), 0)
+        self.assertEqual(apply_tree_update(*args), 0)   # повторний запуск нічого не змінює
+
+        names = list(CurriculumTopic.objects.filter(chapter=geo, kind='lesson').order_by('order').values_list('name', flat=True))
+        self.assertEqual(names, ['1.1. Чотирикутник та його елементи. Сума кутів',
+                                 '1.2. Паралелограм. Означення, властивості та ознаки', '1.3. Прямокутник, ромб, квадрат',
+                                 '1.4. Середня лінія трикутника', '1.5. Трапеція. Середня лінія трапеції',
+                                 '1.6. Центральні та вписані кути', '1.7. Вписані та описані чотирикутники'])
+        lesson.refresh_from_db()
+        self.assertEqual(lesson.curriculum_topic_id, trapezoid.id)   # той самий запис теми — урок не загубився
+        self.assertEqual(lesson.title, '1.5. Трапеція. Середня лінія трапеції')
+
+        alg.refresh_from_db()
+        self.assertEqual(alg.name, 'Розділ 4. Елементи прикладної математики')
+        summary = CurriculumTopic.objects.get(chapter=alg, kind='summary')
+        self.assertEqual(summary.name, 'Узагальнення: Розділ 4. Елементи прикладної математики')
+        self.assertEqual(StudyMaterial.objects.get(curriculum_topic=summary).title, summary.name)
+        self.assertEqual(CurriculumTopic.objects.filter(chapter=alg, kind='lesson').count(), 6)
+
+    def test_prompt_tree_matches_site_classifier(self):
+        """Дерево тем у промпті — дослівно те, що створює import_curriculum (інакше банк не знайде тему)."""
+        import re
+        from pathlib import Path
+        from materials.management.commands.import_curriculum import ALL_CURRICULUMS
+        expected = [t['topic_name'] for course in ALL_CURRICULUMS for grade in course['grades']
+                    for chapter in grade['chapters'] for t in chapter['topics']]
+        tree = (Path(settings.BASE_DIR) / 'docs' / 'html_prompt.md').read_text().split('## 7. ДЕРЕВО')[1]
+        self.assertEqual(re.findall(r'^  - (.+)$', tree, flags=re.M), expected)
+        chapters = [c['chapter_name'] for course in ALL_CURRICULUMS for g in course['grades'] for c in g['chapters']]
+        self.assertEqual(re.findall(r'^- \*\*(.+)\*\*$', tree, flags=re.M), chapters)
+
+    def test_lesson_prompt_is_built_from_sources(self):
+        import importlib.util
+        from pathlib import Path
+        path = Path(settings.BASE_DIR) / 'docs' / 'build_lesson_prompt.py'
+        spec = importlib.util.spec_from_file_location('build_lesson_prompt', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual((path.parent / 'lesson_prompt.md').read_text(), module.OUT,
+                         'запустіть python docs/build_lesson_prompt.py')

@@ -49,6 +49,13 @@ SKILL_FIELDS = {'MODEL': 'nush_modeling', 'SOLVE': 'nush_solving', 'ANALYZE': 'n
 LEVEL_BASE = {1: 4, 2: 7, 3: 10}   # нижня межа рівня НУШ для сходинки: середній, достатній, високий
 DEFAULT_HINT = 'Перечитай умову ще раз і перевір обчислення. Спробуй ще раз!'
 
+# Боси — необов'язковий виклик після «Тему опановано»: складність 4 — «Бос», 5 — «Ультра-бос» (лише після перемоги
+# над босом). На оцінку й сходинки не впливають, поразка нічого не знижує; перемога дає трофей.
+BOSS, ULTRA = 4, 5
+BOSS_TRIES = {BOSS: 2, ULTRA: 1}
+BOSS_NAMES = {BOSS: '⚔️ Бос', ULTRA: '👑 Ультра-бос'}
+BOSS_HINT = 'Бос ще стоїть! Підказок не буде — перевір міркування й спробуй ще раз.'
+
 
 def practice_profile(material):
     """'A', 'B' або 'C' для шкільної теми; None — практика НМТ."""
@@ -79,15 +86,28 @@ def practice_button_label(material):
 
 # ---------- Сходинки ----------
 
-def new_state(top_skills=(), kind='lesson'):
+def new_state(top_skills=(), kind='lesson', level=1):
     """top_skills — критерії, для яких у банку є завдання третьої сходинки: тему опановано, лише коли кожен
-    з них розв'язано на третій сходинці (інакше сильний учень мав би оцінку лише за два критерії)."""
-    return {'level': 1, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active', 'top_skills': sorted(top_skills),
-            'kind': kind}
+    з них розв'язано на третій сходинці (інакше сильний учень мав би оцінку лише за два критерії).
+    level — сходинка, з якої почати (див. resume_level)."""
+    return {'level': level, 'start_level': level, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active',
+            'top_skills': sorted(top_skills), 'kind': kind}
 
 
-def max_tries(state, profile):
-    """Діагностика міряє, а не вчить: одна спроба навіть у тренажері 5–6 класів."""
+def resume_level(previous_state):
+    """Тема йде кілька уроків і ДЗ: нова практика з тієї ж теми починається зі сходинки, на якій учень зупинився
+    минулого разу (тему опановано — з третьої). Узагальнення й діагностика завжди починаються з початку."""
+    if not previous_state or previous_state.get('kind', 'lesson') != 'lesson' or not previous_state.get('history'):
+        return LEVELS[0]
+    if previous_state.get('status') == 'mastered':
+        return LEVELS[-1]
+    return min(max(int(previous_state.get('level') or LEVELS[0]), LEVELS[0]), LEVELS[-1])
+
+
+def max_tries(state, profile, entry=None):
+    """Діагностика міряє, а не вчить: одна спроба навіть у тренажері 5–6 класів. Бос — 2 спроби, ультра-бос — 1."""
+    if entry and entry.get('boss'):
+        return BOSS_TRIES[entry['boss']]
     return 1 if state.get('kind') == 'diagnostic' else PROFILES[profile]['tries']
 
 
@@ -150,7 +170,7 @@ def next_question(state, own, review, seen_ids):
         old = [q for q in review if q.id not in used and q.difficulty <= level]
         if old:
             return pick(old, state['history'], seen_ids, level), True
-    fresh = [q for q in own if q.id not in used]
+    fresh = [q for q in own if q.id not in used and q.difficulty in LEVELS]   # боси — лише за викликом
     # Сходинка без нових завдань — беремо найближчу за складністю
     for distance in range(len(LEVELS)):
         for wanted in (level - distance, level + distance):
@@ -209,6 +229,47 @@ def finish_task(state, question, entry):
     if state['status'] == 'active' and len(state['history']) >= MAX_TASKS:
         state['status'] = 'limit'
     return first_ok
+
+
+# ---------- Боси ----------
+
+def next_boss(state):
+    """Який бос зараз доступний: BOSS після опанування теми, ULTRA — після перемоги над босом; None — жодного."""
+    if state.get('status') != 'mastered' or state.get('kind') == 'diagnostic' or current_entry(state):
+        return None
+    bosses = state.get('bosses') or {}
+    if str(BOSS) not in bosses:
+        return BOSS
+    if bosses[str(BOSS)] == 'won' and str(ULTRA) not in bosses:
+        return ULTRA
+    return None
+
+
+def boss_question(state, own, seen_ids, stage):
+    used = {entry['qid'] for entry in state['history']}
+    pool = [q for q in own if q.difficulty == stage and q.id not in used]
+    return min(pool, key=lambda q: (q.id in seen_ids, random.random()), default=None)
+
+
+def start_boss(state, question, stage):
+    entry = start_task(state, question)
+    entry['boss'] = stage
+    return entry
+
+
+def finish_boss(state, question, entry):
+    """Бос завершений: перемога — якщо хоч одна спроба правильна. Сходинки й оцінка не змінюються."""
+    entry['done'] = True
+    won = any(is_correct(question, answer) for answer in entry['tries'])
+    entry['first_ok'] = is_correct(question, entry['tries'][0])
+    state.setdefault('bosses', {})[str(entry['boss'])] = 'won' if won else 'lost'
+    return won
+
+
+def boss_trophy(bosses):
+    """Найвищий трофей за словником {'4': 'won'|'lost', '5': …}: ULTRA, BOSS або None."""
+    bosses = bosses or {}
+    return next((stage for stage in (ULTRA, BOSS) if bosses.get(str(stage)) == 'won'), None)
 
 
 # ---------- Типи завдань ----------
@@ -545,6 +606,7 @@ def topic_progress(attempts):
             'fell': level_band(last_grade) < level_band(first_grade),
             'criteria': [(name, level_name(g)) for name, g in last.nush_grades if g],
             'mastered': any((a.answers_json or {}).get('status') == 'mastered' for a in items),
+            'trophy': BOSS_NAMES.get(max((boss_trophy((a.answers_json or {}).get('bosses')) or 0 for a in items))),
         })
     rows.sort(key=lambda row: row['date'], reverse=True)
     return rows

@@ -116,6 +116,7 @@
                                 <span>Оцінки НУШ:</span>
                                 <strong>{% for name, grade in attempt.nush_grades %}{{ name }} {{ grade|default:"—" }}{% if not forloop.last %} · {% endif %}{% endfor %}</strong>
                             </div>
+                            {% if attempt.boss_trophy %}<div class="stat-row"><span>Виклик:</span><strong>{{ attempt.boss_trophy }} переможений</strong></div>{% endif %}
                             {% endif %}
                         </div>
                     </div>
@@ -158,6 +159,7 @@
                         Рівень: {% if row.count > 1 and row.first != row.last %}{{ row.first }} → {% endif %}<strong>{{ row.last }}</strong>
                         {% if row.grew %} 📈{% elif row.fell %} — було краще, варто повторити{% endif %}
                         {% if row.mastered %} · 🏆 тему опановано{% endif %}
+                        {% if row.trophy %} · {{ row.trophy }} переможений{% endif %}
                     </div>
                     <small class="text-muted">Тренувань: {{ row.count }}{% if row.criteria %} · {% for name, level in row.criteria %}{{ name|lower }} — {{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</small>
                 </div>

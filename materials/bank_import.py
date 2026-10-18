@@ -88,7 +88,8 @@ def validate_task(task):
     q_type = task.get('type')
     if q_type not in TYPES: return [f'невідомий тип «{q_type}»']
     if not isinstance(task.get('text'), str) or not task['text'].strip(): problems.append('порожній текст')
-    if task.get('difficulty') not in (1, 2, 3): problems.append('складність має бути 1, 2 або 3')
+    if task.get('difficulty') not in (1, 2, 3, 4, 5):
+        problems.append('складність має бути 1, 2, 3 (сходинки), 4 (бос) або 5 (ультра-бос)')
     if 'topic' in task and (not isinstance(task['topic'], str) or not task['topic'].strip()):
         problems.append('topic: має бути назвою теми, напр. «21. Показникові рівняння»')
     if task.get('skill', 'SOLVE') not in SKILLS:
