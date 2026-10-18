@@ -1191,6 +1191,15 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['general_reviews'] = Review.objects.filter(material__isnull=True, is_approved=True)
+        # Класи, де вже є опубліковані уроки, — щоб головна показувала реальний стан, а не обіцянки
+        context['school_grades'] = list(
+            CurriculumGrade.objects.exclude(subject__name=NMT_SUBJECT_NAME).exclude(number__isnull=True)
+            .annotate(lessons=Count('chapters__topics__studymaterial',
+                                    filter=Q(chapters__topics__studymaterial__is_published=True)))
+            .filter(lessons__gt=0).select_related('subject').order_by('number', 'subject__order'))
+        for grade in context['school_grades']:
+            grade.lessons_word = uk_plural(grade.lessons, 'урок', 'уроки', 'уроків')
+        context['nmt_countdown'] = nmt_countdown(0)
         return context
 
 

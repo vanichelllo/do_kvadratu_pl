@@ -2105,6 +2105,19 @@ class DiagnosticOfferTests(BaseTestCase):
         self.assertNotIn('offer_materials', self.take().context)
         self.assertFalse(DiagnosticOffer.objects.exists())
 
+    def test_home_shows_audiences_and_grades_with_published_lessons(self):
+        topic = make_school_topic('1.1. Натуральні числа', 5, 101)
+        StudyMaterial.objects.create(title='1.1. Натуральні числа', price=0, is_free=True, is_published=True,
+                                     curriculum_topic=topic)
+        StudyMaterial.objects.create(title='1.2. Чернетка', price=0, is_free=True, curriculum_topic=topic)
+        empty = make_school_topic('1.1. Подільність', 6, 201)
+        page = self.client.get('/')
+        self.assertContains(page, 'Репетиторам і вчителям')
+        self.assertContains(page, 'Практика, що підлаштовується під учня')
+        self.assertContains(page, f'?grade={topic.chapter.grade_id}')
+        self.assertContains(page, '5 клас · Математика (5-6 класи) · 1 урок<')
+        self.assertNotContains(page, f'?grade={empty.chapter.grade_id}')
+
     def test_countdown_words_and_storefront_banner(self):
         from .views import uk_plural
         self.assertEqual([uk_plural(n, 'день', 'дні', 'днів') for n in (1, 2, 5, 11, 21, 22, 112, 213)],
