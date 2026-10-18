@@ -1413,13 +1413,16 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 10.10.2026')
+        self.assertContains(offer, 'Редакція від 18.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
+        self.assertContains(offer, '16. Підписка для викладачів')
+        self.assertContains(offer, '25. Реквізити Продавця')
+        self.assertContains(offer, 'на умовах розділу 17;')
         self.assertNotContains(offer, '{%')
         privacy = self.client.get('/privacy/')
-        self.assertContains(privacy, 'Редакція від 10.10.2026')
+        self.assertContains(privacy, 'Редакція від 18.10.2026')
         self.assertContains(privacy, 'Google Analytics')
         self.assertContains(privacy, 'href="/offer/"')
 

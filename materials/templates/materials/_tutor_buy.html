@@ -1,13 +1,13 @@
 {% if user.is_authenticated %}
     {% if plan.price_month %}
     <form method="post" action="{% url 'tutor_buy' plan.id 'month' %}">{% csrf_token %}
-        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}" target="_blank">умовами</a></label>
+        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}#subscription" target="_blank">умовами оферти</a> і прошу, щоб підписка почала діяти одразу після оплати</label>
         <button type="submit" class="btn-month">Оформити на місяць</button>
     </form>
     {% endif %}
     {% if plan.price_year %}
     <form method="post" action="{% url 'tutor_buy' plan.id 'year' %}">{% csrf_token %}
-        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}" target="_blank">умовами</a></label>
+        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}#subscription" target="_blank">умовами оферти</a> і прошу, щоб підписка почала діяти одразу після оплати</label>
         <button type="submit" class="btn-year">Оформити на навчальний рік</button>
     </form>
     {% endif %}
