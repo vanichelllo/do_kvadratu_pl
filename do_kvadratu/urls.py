@@ -51,6 +51,7 @@ from materials.views import (
     homework_assign,
     homework_credit,
     attempt_manage,
+    practice_start,
     remove_from_cart,
     report_question_error,
     request_tutor_student_status,
@@ -87,6 +88,7 @@ urlpatterns = [
 
     path('download/<int:material_id>/', download_material_view, name='download_material'),
     path('practice/<int:material_id>/', practice_session_view, name='practice_session'),
+    path('practice/start/', practice_start, name='practice_start'),
     path('practice/<int:material_id>/check/', practice_check_view, name='practice_check'),
     path('homework/assign/', homework_assign, name='homework_assign'),
     path('attempt/<int:attempt_id>/manage/', attempt_manage, name='attempt_manage'),

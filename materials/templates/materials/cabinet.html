@@ -358,6 +358,22 @@
         </details>
         {% endif %}
 
+        <!-- УЗАГАЛЬНЕННЯ Й ДІАГНОСТИКА (ДЛЯ ВЧИТЕЛЯ) -->
+        {% if special_materials %}
+        <details class="cab-section" data-section="special">
+            <summary><h2 class="cab-section-title"><span>🧩 Узагальнення й діагностика</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            <p style="font-size: 0.9rem; color: #666; margin-top: 0;">Узагальнення — практика сходинками за всіма темами розділу. Діагностика за клас — по 1–2 базових завдання з кожної теми: карта прогалин без оцінки. Задати додому — у «Домашніх завданнях».</p>
+            <form method="GET" action="{% url 'practice_start' %}" class="hw-form">
+                <select name="material_id" required aria-label="Узагальнення або діагностика">
+                    {% for m in special_materials %}<option value="{{ m.id }}">{{ m.curriculum_grade.short_label }} — {{ m.curriculum_topic.name }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="hw-btn">Почати на уроці</button>
+            </form>
+            </div>
+        </details>
+        {% endif %}
+
         <!-- ДОМАШНІ ЗАВДАННЯ (ДЛЯ ВЧИТЕЛЯ) -->
         {% if my_students %}
         <details class="cab-section" data-section="homework">

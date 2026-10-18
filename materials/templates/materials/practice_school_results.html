@@ -55,6 +55,10 @@
         .next-steps h2 { color: var(--brand-blue); font-size: 1.15rem; margin: 0 0 8px; }
         .next-steps ul { margin: 6px 0; padding-left: 20px; line-height: 1.7; }
         .next-steps a:not(.btn) { color: var(--brand-blue); font-weight: 600; }
+        .topic-map { list-style: none; padding: 0; margin: 0; }
+        .topic-map li { display: flex; gap: 8px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--bg-light); flex-wrap: wrap; }
+        .topic-map small { color: var(--text-muted); }
+        .topic-map li.repeat small { color: var(--red); font-weight: 600; }
         .who { color: var(--brand-blue); font-weight: 700; margin-bottom: 6px; }
         .report h2 { color: var(--brand-blue); font-size: 1.15rem; margin: 0 0 4px; }
         .report .grade input { width: 70px; font-size: 1.5rem; font-weight: 800; text-align: center; color: var(--brand-blue); border: 2px solid var(--border-color); border-radius: 8px; margin-top: 4px; }
@@ -80,11 +84,16 @@
             <h1>{{ material.title }}</h1>
             {% if not attempt.pk %}<div class="who">👀 Демонстрація — результат не збережено</div>
             {% elif attempt.conducted_by_id %}<div class="who">👤 {% if report_student %}{{ report_student.real_name }} · {% endif %}практика на уроці {{ attempt.created_at|date:"d.m.Y" }}</div>{% endif %}
+            {% if kind != 'diagnostic' %}
             <div class="reached">
                 {% if status == 'mastered' %}🏆 Тему опановано: пройдено всі три сходинки
                 {% elif level %}Найвища сходинка з правильною відповіддю: {{ level }} з {{ levels|length }}{% endif %}
             </div>
             <div class="score">Розв'язано завдань: {{ results|length }} · набрано {{ attempt.score }} з {{ attempt.max_score }} балів</div>
+            {% else %}
+            <div class="score">Завдань: {{ results|length }}, правильно з першої спроби: {{ attempt.get_percent }}%</div>
+            {% endif %}
+            {% if kind != 'diagnostic' %}
             <div class="grades">
                 {% for name, grade in attempt.nush_grades %}
                 <div class="grade {% if grade and grade >= 10 %}high{% elif grade and grade <= 3 %}low{% endif %}">
@@ -95,16 +104,34 @@
             </div>
             <div class="grade-note">Оцінка залежить від того, на якій сходинці вдалося впоратися: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було. Це тренування: оцінку за тему ставить вчитель.</div>
             {% if not attempt.nush_grades %}<p class="score">Оцінки за критеріями для цієї спроби не збережено.</p>{% endif %}
+            {% else %}
+            <p class="score">Діагностика без оцінки: карта нижче показує, що вже знаємо і що варто повторити.</p>
+            {% endif %}
             {% with p=attempt.get_percent %}
-            <div class="praise">
+            {% if kind != 'diagnostic' %}<div class="praise">
                 {% if status == 'mastered' %}Блискуче! 🏆{% elif p >= 70 %}Дуже добре! 💪 Наступного разу спробуй дійти до вершини.{% elif p >= 40 %}Непогано — переглянь розбір помилок нижче.{% else %}Повтори урок і спробуй ще раз — у тебе вийде!{% endif %}
-            </div>
+            </div>{% endif %}
             {% endwith %}
             <div class="actions">
                 <a href="{{ again_url }}" class="btn btn-primary">🔁 Ще раз</a>
                 <a href="{% url 'cabinet' %}" class="btn btn-secondary">До кабінету</a>
             </div>
         </div>
+
+        {% if topic_rows %}
+        <div class="summary next-steps">
+            <h2>{% if kind == 'diagnostic' %}🗺 Карта тем{% else %}📚 По темах розділу{% endif %}</h2>
+            <ul class="topic-map">
+            {% for row in topic_rows %}
+                <li class="{{ row.state }}">
+                    <span>{% if row.state == 'ok' %}✅{% elif row.state == 'partial' %}🟡{% else %}❌{% endif %}</span>
+                    {% if row.lesson %}<a href="{% url 'material_detail' row.lesson.id %}">{{ row.topic.name }}</a>{% else %}{{ row.topic.name }}{% endif %}
+                    <small>{{ row.right }} з {{ row.total }}{% if row.state == 'repeat' %} — повторити{% elif row.state == 'partial' %} — підтягнути{% endif %}</small>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
         {% if stuck or gaps or next_material %}
         <div class="summary next-steps">
@@ -124,7 +151,7 @@
         </div>
         {% endif %}
 
-        {% if report_student %}
+        {% if report_student and kind != 'diagnostic' %}
         <form class="summary report" method="POST" action="{% url 'add_quick_report' %}">
             {% csrf_token %}
             <h2>📝 Додати в звіт заняття</h2>
@@ -146,6 +173,8 @@
             </div>
             <button type="submit" class="btn btn-primary">Зберегти звіт</button>
         </form>
+        {% endif %}
+        {% if report_student %}
         <form class="summary report" method="POST" action="{% url 'homework_assign' %}">
             {% csrf_token %}
             <h2>🏠 Задати цю практику додому</h2>

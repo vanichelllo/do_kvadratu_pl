@@ -128,6 +128,8 @@
         .group-tabs { max-width: 1000px; margin: 12px auto 0; padding: 0 15px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-weight: 700; color: var(--text-muted); }
         .group-tabs a { text-decoration: none; padding: 6px 14px; border-radius: 20px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); }
         .group-tabs a.current { background: var(--brand-green); border-color: var(--brand-green); color: #fff; }
+        .diag-bar { height: 12px; background: var(--bg-light); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+        .diag-bar div { height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); }
         .assist { display: block; text-align: right; margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
         .assist input { margin-right: 6px; }
         .keys { font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 8px; }
@@ -162,19 +164,25 @@
         <div class="ladder-block">
             <div class="ladder-title">
                 <span>{{ material.title }}</span>
-                <small>Завдання {{ task_number }} · не більше {{ max_tasks }}</small>
+                <small>Завдання {{ task_number }} {% if kind == 'diagnostic' %}з {{ max_tasks }}{% else %}· не більше {{ max_tasks }}{% endif %}</small>
             </div>
+            {% if kind == 'diagnostic' %}
+            <div class="diag-bar"><div style="width: {% widthratio task_number max_tasks 100 %}%;"></div></div>
+            <div class="streak">Діагностика: по одному-два завдання з кожної теми класу. Мета — побачити, що повторити, а не поставити оцінку.</div>
+            {% else %}
             <div class="ladder" aria-label="Сходинки складності">
                 {% for lvl in levels %}
                 <div class="step s{{ lvl }} {% if state.status == 'mastered' or lvl < state.level %}passed{% elif lvl == state.level %}current{% endif %}">{{ lvl }}</div>
                 {% endfor %}
             </div>
             <div class="streak">
+                {% if kind == 'summary' %}Узагальнення: завдання з усіх тем розділу по черзі. {% endif %}
                 {% if state.status == 'active' %}
-                    Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}{% if actor.lesson %}вище{% else %}ти вище{% endif %}{% else %}тему опановано{% endif %}:
+                    Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}{% if actor.lesson %}вище{% else %}ти вище{% endif %}{% else %}{% if kind == 'summary' %}розділ опановано{% else %}тему опановано{% endif %}{% endif %}:
                     <span class="dot {% if state.ok >= 1 %}on{% endif %}"></span><span class="dot {% if state.ok >= 2 %}on{% endif %}"></span>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
 
         {% if question %}
@@ -228,7 +236,7 @@
             <div class="actions">
                 <button type="button" class="btn btn-check" id="btn-check">Перевірити</button>
                 <a href="{{ next_query }}" class="btn btn-next hidden" id="btn-next">Далі →</a>
-                <button type="button" class="btn btn-next hidden" id="btn-result" onclick="finishPractice(false)">Побачити оцінку 🏁</button>
+                <button type="button" class="btn btn-next hidden" id="btn-result" onclick="finishPractice(false)">{% if kind == 'diagnostic' %}Побачити карту тем 🗺{% else %}Побачити оцінку 🏁{% endif %}</button>
             </div>
             {% if actor.lesson %}<label class="assist"><input type="checkbox" id="assisted"> 🤝 Розв'язано з підказкою вчителя — не враховувати в оцінку і сходинки</label>{% endif %}
             {% if actor.lesson %}<div class="keys">Клавіші: 1–9 — варіант · Enter — перевірити / далі</div>{% endif %}
@@ -244,9 +252,10 @@
             {% elif state.status == 'limit' %}
                 <h2>💪 На сьогодні досить</h2><p>Розв'язано {{ max_tasks }} завдань. Далі — оцінка, а потім можна спробувати ще раз.</p>
             {% else %}
-                <h2>👏 Завдання цієї теми закінчились</h2><p>Подивись оцінку і розбір.</p>
+                {% if state.status == 'done' %}<h2>📋 Діагностику завершено</h2><p>Далі — карта тем: що вже знаємо і що варто повторити.</p>
+                {% else %}<h2>👏 Завдання цієї теми закінчились</h2><p>Подивись оцінку і розбір.</p>{% endif %}
             {% endif %}
-            {% if not actor.group %}<button type="button" class="btn btn-next" onclick="finishPractice(false)">Побачити оцінку 🏁</button>{% endif %}
+            {% if not actor.group %}<button type="button" class="btn btn-next" onclick="finishPractice(false)">{% if kind == 'diagnostic' %}Побачити карту тем 🗺{% else %}Побачити оцінку 🏁{% endif %}</button>{% endif %}
         </div>
         {% endif %}
     </div>
@@ -681,6 +690,7 @@
                 if (data.level_change < 0) feedback.appendChild(el('div', 'level-msg', `⬇️ Повернімося на сходинку ${data.level} і потренуймося ще.`));
                 if (data.status === 'mastered') feedback.appendChild(el('div', 'level-msg', '🏆 Тему опановано — усі три сходинки пройдено!'));
                 if (data.status === 'limit') feedback.appendChild(el('div', 'level-msg', '💪 На сьогодні досить — подивись оцінку.'));
+                if (data.status === 'done') feedback.appendChild(el('div', 'level-msg', '📋 Діагностику завершено.'));
                 lock();
                 document.getElementById(data.status === 'active' || GROUP ? 'btn-next' : 'btn-result').classList.remove('hidden');
             }

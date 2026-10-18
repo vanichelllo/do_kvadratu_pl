@@ -2684,3 +2684,81 @@ class LearningSituationsTests(BaseTestCase):
         top = sorted(e['skill'] for e in history if e['difficulty'] == 3)
         self.assertEqual(top, ['ANALYZE', 'MODEL', 'SOLVE'])
 
+
+
+class SummaryAndDiagnosticTests(BaseTestCase):
+    """Узагальнення розділу — сходинки за всіма темами розділу; діагностика за клас — карта прогалин без оцінки."""
+
+    def setUp(self):
+        from .curriculum import ensure_special_topics
+        self.teacher = self.make_user('t5@example.com', is_staff=True)
+        self.pupil = self.make_user('p5@example.com')
+        self.request = TutorStudentRequest.objects.create(user=self.pupil, real_name='Оля', course='grade_6',
+                                                          status='approved')
+        self.topics = [make_school_topic(f'1.{i}. Тема {i}', 5, 100 + i) for i in range(1, 4)]
+        self.other_chapter = make_school_topic('2.1. Відрізок', 5, 201, chapter_order=20)
+        for topic in self.topics + [self.other_chapter]:
+            for level in (1, 2, 3):
+                for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+                    q = Question.objects.create(text=f'{topic.name}-{skill}{level}', question_type='CHOICE',
+                                                curriculum_topic=topic, difficulty=level, nush_skill=skill)
+                    AnswerOption.objects.create(question=q, text='А) 1', is_correct=False)
+                    AnswerOption.objects.create(question=q, text='Б) 2', is_correct=True)
+        self.assertEqual(ensure_special_topics(CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial), 3)
+        self.assertEqual(ensure_special_topics(CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial), 0)
+        self.summary = StudyMaterial.objects.get(curriculum_topic__kind='summary',
+                                                 curriculum_topic__chapter=self.topics[0].chapter)
+        self.diagnostic = StudyMaterial.objects.get(curriculum_topic__kind='diagnostic')
+        self.client.force_login(self.teacher)
+        self.query = f'?student={self.request.id}'
+
+    def answer(self, material, correct=True):
+        q = self.client.get(f'/practice/{material.id}/{self.query}').context['question']
+        data = self.client.post(f'/practice/{material.id}/check/{self.query}', json.dumps(
+            {'question_id': q.id, 'answer': str(q.options.get(is_correct=correct).id)}),
+            content_type='application/json').json()
+        return q, data
+
+    def test_special_materials_are_hidden_but_ready(self):
+        self.assertFalse(self.summary.is_published)
+        self.assertTrue(self.summary.is_free)
+        self.assertEqual(self.summary.title, 'Узагальнення: Розділ 10')
+        self.assertIn(self.summary, self.client.get('/cabinet/').context['special_materials'])
+        response = self.client.get(f'/practice/start/?material_id={self.summary.id}')
+        self.assertRedirects(response, f'/practice/{self.summary.id}/', fetch_redirect_response=False)
+
+    def test_summary_rotates_topics_of_the_chapter_only(self):
+        shown = [self.answer(self.summary)[0] for _ in range(3)]
+        self.assertEqual({q.curriculum_topic for q in shown}, set(self.topics))
+        self.client.post(f'/practice/{self.summary.id}/{self.query}')
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual(attempt.answers_json['kind'], 'summary')
+        self.assertEqual(len(attempt.answers_json['topic_map']), 3)
+        self.assertIsNotNone(attempt.nush_solving or attempt.nush_modeling or attempt.nush_analysis)
+        self.assertContains(self.client.get(f'/attempt/{attempt.id}/'), 'По темах розділу')
+
+    def test_diagnostic_is_one_try_per_task_across_the_grade_without_grades(self):
+        q, data = self.answer(self.diagnostic, correct=False)
+        self.assertTrue(data['finished'])   # навіть у тренажері 5 кл. — одна спроба
+        plan = PracticeRun.objects.get().state['plan']
+        self.assertEqual(len(plan), 8)   # 4 теми × 2 базові завдання
+        self.assertTrue(all(Question.objects.get(id=i).difficulty <= 2 for i in plan))
+        for _ in range(7):
+            data = self.answer(self.diagnostic)[1]
+        self.assertEqual(data['status'], 'done')
+        self.client.post(f'/practice/{self.diagnostic.id}/{self.query}')
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual(attempt.nush_grades, [])
+        self.assertFalse(attempt.answers_json['stuck'])
+        details = self.client.get(f'/attempt/{attempt.id}/')
+        self.assertContains(details, 'Карта тем')
+        self.assertNotContains(details, 'Додати в звіт заняття')
+        parents = self.client.get(f'/parents/{self.request.parent_token}/')
+        self.assertContains(parents, 'Діагностика: з чого починаємо')
+        self.assertContains(parents, self.topics[0].name)
+
+    def test_diagnostic_can_be_homework_although_unpublished(self):
+        Homework.objects.create(teacher=self.teacher, student=self.request, material=self.diagnostic,
+                                due_date=timezone.localdate())
+        self.client.force_login(self.pupil)
+        self.assertEqual(self.client.get(f'/practice/{self.diagnostic.id}/').status_code, 200)

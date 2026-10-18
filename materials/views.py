@@ -691,7 +691,7 @@ def school_practice(request, material, profile):
     run = active_run(actor, material)
     if run is None or run.profile != profile:
         run = PracticeRun.objects.create(user=actor.user, teacher=actor.teacher, material=material, profile=profile,
-                                         state=practice.new_state())
+                                         state=practice.new_state(kind=practice.topic_kind(material)))
     if request.method == 'POST':
         if actor.group and request.POST.get('scope') == 'group':
             return finish_group(request, material, actor)
@@ -701,9 +701,12 @@ def school_practice(request, material, profile):
     entry = practice.current_entry(state)
     if entry is None and state['status'] == 'active':
         own, review = practice.question_pools(material, profile)
+        seen = seen_question_ids(actor.user)
         if not state['history']:
             state['top_skills'] = sorted(practice.top_skills(own))
-        question, is_review = practice.next_question(state, own, review, seen_question_ids(actor.user))
+            if state.get('kind') == 'diagnostic':
+                state['plan'] = practice.diagnostic_plan(own, seen)
+        question, is_review = practice.next_question(state, own, review, seen)
         if question is None and not state['history']:
             run.delete()
             messages.info(request, "Для цієї теми ще не додано практичних завдань.")
@@ -721,7 +724,9 @@ def school_practice(request, material, profile):
     return render(request, 'materials/practice_school.html', {
         'material': material, 'profile': profile, 'cfg': practice.PROFILES[profile], 'state': state,
         'question': question, 'spec': practice.public_spec(question, entry) if question else {},
-        'task_number': len(state['history']), 'max_tasks': practice.MAX_TASKS, 'levels': practice.LEVELS,
+        'task_number': len(state['history']), 'levels': practice.LEVELS,
+        'max_tasks': len(state['plan']) if state.get('plan') is not None else practice.MAX_TASKS,
+        'kind': state.get('kind', 'lesson'),
         'solved_count': sum(1 for e in state['history'] if e.get('tries')),
         'check_url': reverse('practice_check', args=[material.id]) + actor.query,
         'actor': actor, 'next_query': actor.next_query,
@@ -737,11 +742,15 @@ def build_attempt(run, actor):
         return None, []
     questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
     results, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
+    diagnostic = state.get('kind') == 'diagnostic'
+    if diagnostic:   # діагностика — карта прогалин, а не оцінка
+        grades = {field: None for field in grades}
     attempt = PracticeAttempt(
         user=actor.user, conducted_by=actor.teacher, material=run.material, score=total, max_score=maximum, **grades,
         answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
                       'history': history, 'level': state['level'], 'status': state['status'],
-                      'stuck': practice.is_stuck(history), 'gaps': practice.gap_topics(history)})
+                      'stuck': not diagnostic and practice.is_stuck(history), 'gaps': practice.gap_topics(history),
+                      'kind': state.get('kind', 'lesson'), 'topic_map': practice.topic_map(history)})
     return attempt, results
 
 
@@ -804,6 +813,15 @@ def attempt_manage(request, attempt_id):
         homework.link_attempt(attempt)
     messages.success(request, f"↪ Спробу перенесено: {student.real_name}.")
     return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+@login_required
+def practice_start(request):
+    """Кабінет вчителя: почати узагальнення розділу чи діагностику за клас (обрано зі списку)."""
+    material = get_object_or_404(StudyMaterial, id=to_int(request.GET.get('material_id')))
+    if not is_teacher(request.user) or practice.practice_profile(material) is None:
+        return redirect('cabinet')
+    return redirect('practice_session', material_id=material.id)
 
 
 @login_required
@@ -889,7 +907,7 @@ def practice_check_view(request, material_id):
         entry['assisted'] = True
     state = run.state
     response = {'correct': practice.is_correct(question, answer),
-                'finished': practice.is_finished(question, entry['tries'], profile)}
+                'finished': practice.is_finished(question, entry['tries'], practice.max_tries(state, profile))}
     if response['finished']:
         level_before = state['level']
         first_ok = practice.finish_task(state, question, entry)
@@ -916,12 +934,24 @@ def next_material(material):
 
 def gap_materials(topic_ids):
     """[(тема, урок або None)] — що повторити за помилками в завданнях на повторення."""
-    topics = {t.id: t for t in CurriculumTopic.objects.filter(id__in=topic_ids)}
+    topics = {t.id: t for t in CurriculumTopic.objects.filter(id__in=topic_ids).select_related('chapter')}
     lessons = {}
     for m in StudyMaterial.objects.filter(curriculum_topic_id__in=topic_ids, is_published=True, is_bundle=False) \
             .defer('html_content'):
         lessons.setdefault(m.curriculum_topic_id, m)
     return [(topics[t], lessons.get(t)) for t in topic_ids if t in topics]
+
+
+def topic_rows(topic_map):
+    """Розклад по темах для узагальнення й діагностики: [(тема, урок, правильно, усього, стан)] у порядку програми."""
+    ids = [int(t) for t in topic_map]
+    rows = []
+    for topic, lesson in gap_materials(ids):
+        right, total = topic_map[str(topic.id)]
+        state = 'ok' if right == total else ('partial' if right else 'repeat')
+        rows.append({'topic': topic, 'lesson': lesson, 'right': right, 'total': total, 'state': state})
+    rows.sort(key=lambda r: (r['topic'].chapter.order, r['topic'].order))
+    return rows
 
 
 def attention_list(since_days=30):
@@ -950,6 +980,7 @@ def school_results_context(request, attempt, results):
         'status': saved.get('status'), 'levels': practice.LEVELS,
         'again_url': reverse('practice_session', args=[attempt.material.id]),
         'stuck': saved.get('stuck'), 'gaps': gap_materials(saved.get('gaps') or []),
+        'kind': saved.get('kind', 'lesson'), 'topic_rows': topic_rows(saved.get('topic_map') or {}),
         'next_material': next_material(attempt.material) if saved.get('status') == 'mastered' else None,
     }
     # Вчитель після уроку: оцінки одразу в звіт заняття учня
@@ -1267,6 +1298,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 key=lambda m: (m.curriculum_grade.subject.order, m.curriculum_grade.order,
                                m.curriculum_topic.chapter.order, m.curriculum_topic.order))
             context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
+            context['special_materials'] = [m for m in context['school_materials']
+                                            if m.curriculum_topic.kind in ('summary', 'diagnostic')]
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
             ).select_related('user', 'user__tutor_request', 'material').defer(
@@ -1915,6 +1948,12 @@ def parent_dashboard_view(request, parent_token):
         context['training'] = practice.topic_progress(
             PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
             .defer('material__html_content'))
+        diagnostic = next((a for a in PracticeAttempt.objects.filter(user=student_request.user)
+                           .select_related('material').defer('material__html_content').order_by('-created_at')
+                           if (a.answers_json or {}).get('kind') == 'diagnostic'), None)
+        if diagnostic:
+            context['diagnostic'] = diagnostic
+            context['diagnostic_rows'] = topic_rows(diagnostic.answers_json.get('topic_map') or {})
 
     return render(request, 'materials/parent_dashboard.html', context)
 

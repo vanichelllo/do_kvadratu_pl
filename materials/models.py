@@ -82,9 +82,17 @@ class CurriculumChapter(models.Model):
         return f"{self.grade.short_label} | {self.name}"
 
 class CurriculumTopic(models.Model):
+    # Узагальнення розділу — практика за всіма темами розділу; діагностика — повторення всього класу (карта прогалин)
+    KIND_CHOICES = (
+        ('lesson', 'Урок'),
+        ('summary', 'Узагальнення розділу'),
+        ('diagnostic', 'Діагностика за клас'),
+    )
+
     chapter = models.ForeignKey(CurriculumChapter, on_delete=models.CASCADE, related_name='topics', verbose_name="Розділ")
     name = models.CharField(max_length=255, verbose_name="Тема уроку")
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default='lesson', verbose_name="Тип")
 
     class Meta:
         ordering = ['chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order']

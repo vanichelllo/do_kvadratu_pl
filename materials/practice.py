@@ -64,6 +64,14 @@ def practice_profile(material):
     return None
 
 
+def topic_kind(material):
+    """'lesson', 'summary' (узагальнення розділу) або 'diagnostic' (діагностика за клас)."""
+    return material.curriculum_topic.kind if material.curriculum_topic_id else 'lesson'
+
+
+DIAGNOSTIC_MAX = 30   # завдань у діагностиці за клас
+
+
 def practice_button_label(material):
     profile = practice_profile(material)
     return PROFILES[profile]['button'] if profile else NMT_BUTTON
@@ -71,10 +79,16 @@ def practice_button_label(material):
 
 # ---------- Сходинки ----------
 
-def new_state(top_skills=()):
+def new_state(top_skills=(), kind='lesson'):
     """top_skills — критерії, для яких у банку є завдання третьої сходинки: тему опановано, лише коли кожен
     з них розв'язано на третій сходинці (інакше сильний учень мав би оцінку лише за два критерії)."""
-    return {'level': 1, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active', 'top_skills': sorted(top_skills)}
+    return {'level': 1, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active', 'top_skills': sorted(top_skills),
+            'kind': kind}
+
+
+def max_tries(state, profile):
+    """Діагностика міряє, а не вчить: одна спроба навіть у тренажері 5–6 класів."""
+    return 1 if state.get('kind') == 'diagnostic' else PROFILES[profile]['tries']
 
 
 def current_entry(state):
@@ -83,11 +97,19 @@ def current_entry(state):
 
 
 def question_pools(material, profile):
-    """(завдання теми, завдання попередніх тем цього класу для повторення)."""
+    """(завдання теми, завдання попередніх тем цього класу для повторення).
+    Узагальнення бере завдання всіх тем розділу, діагностика — базові завдання всіх тем класу (без повторення)."""
     topic = material.curriculum_topic
     chapter = topic.chapter
     base = Question.objects.filter(question_type__in=PROFILES[profile]['types']).prefetch_related('options', 'match_items')
-    own = list(base.filter(Q(curriculum_topic=topic) | Q(materials=material)).distinct())
+    if topic.kind == 'diagnostic':
+        own = list(base.filter(curriculum_topic__chapter__grade=chapter.grade, curriculum_topic__kind='lesson',
+                               difficulty__lte=2).select_related('curriculum_topic__chapter'))
+        return own, []
+    if topic.kind == 'summary':
+        own = list(base.filter(Q(curriculum_topic__chapter=chapter) | Q(materials=material)).distinct())
+    else:
+        own = list(base.filter(Q(curriculum_topic=topic) | Q(materials=material)).distinct())
     own_ids = {q.id for q in own}
     earlier = (Q(curriculum_topic__chapter__order__lt=chapter.order)
                | Q(curriculum_topic__chapter__order=chapter.order, curriculum_topic__order__lt=topic.order))
@@ -103,6 +125,12 @@ def pick(pool, history, seen_ids, level):
                 sum(1 for e in history if e['skill'] == skill))
     fewest = min(used(q.nush_skill) for q in pool)
     pool = [q for q in pool if used(q.nush_skill) == fewest]
+    # В узагальненні розділу — ще й теми по черзі
+    topic_used = {}
+    for e in history:
+        topic_used[e.get('topic')] = topic_used.get(e.get('topic'), 0) + 1
+    rarest = min(topic_used.get(q.curriculum_topic_id, 0) for q in pool)
+    pool = [q for q in pool if topic_used.get(q.curriculum_topic_id, 0) == rarest]
     unseen = [q for q in pool if q.id not in seen_ids]
     return random.choice(unseen or pool)
 
@@ -114,6 +142,9 @@ def top_skills(own):
 def next_question(state, own, review, seen_ids):
     """(завдання, чи це повторення попередньої теми) або (None, False), якщо завдань не лишилось."""
     used = {entry['qid'] for entry in state['history']}
+    if state.get('plan') is not None:
+        by_id = {q.id: q for q in own}
+        return next(((by_id[i], False) for i in state['plan'] if i not in used and i in by_id), (None, False))
     level = state['level']
     if len(state['history']) % REVIEW_EVERY == REVIEW_EVERY - 1:
         old = [q for q in review if q.id not in used and q.difficulty <= level]
@@ -132,7 +163,7 @@ def next_question(state, own, review, seen_ids):
 def start_task(state, question, review=False):
     # level — сходинка учня, difficulty — складність самого завдання (різняться, коли на сходинці скінчились завдання)
     entry = {'qid': question.id, 'level': state['level'], 'difficulty': question.difficulty,
-             'skill': question.nush_skill, 'tries': [], 'done': False}
+             'skill': question.nush_skill, 'topic': question.curriculum_topic_id, 'tries': [], 'done': False}
     if review:
         entry['review_topic'] = question.curriculum_topic_id   # повторення попередньої теми
     if question.question_type == 'ORDER':
@@ -148,6 +179,11 @@ def finish_task(state, question, entry):
     """Завдання завершене: рухаємо учня сходинками. Повертає, чи була перша спроба правильною.
     Завдання, розв'язане з підказкою вчителя на уроці, сходинок не рухає і в оцінку не йде."""
     entry['done'] = True
+    if state.get('plan') is not None:   # діагностика: без сходинок, до кінця плану
+        entry['first_ok'] = is_correct(question, entry['tries'][0])
+        if len(state['history']) >= len(state['plan']):
+            state['status'] = 'done'
+        return entry['first_ok']
     if entry.get('assisted'):
         entry['first_ok'] = False
         if state['status'] == 'active' and len(state['history']) >= MAX_TASKS:
@@ -289,8 +325,8 @@ def answer_points(question, answer):
     return 2 if is_correct(question, answer) else 0
 
 
-def is_finished(question, tries, profile):
-    return bool(tries) and (len(tries) >= PROFILES[profile]['tries'] or is_correct(question, tries[-1]))
+def is_finished(question, tries, tries_allowed):
+    return bool(tries) and (len(tries) >= tries_allowed or is_correct(question, tries[-1]))
 
 
 def earned_points(question, tries, profile):
@@ -558,4 +594,31 @@ def recalculate_attempts(question):
         attempt.save(update_fields=['score', 'max_score', 'answers_json', *grades])
         changed += 1
     return changed
+
+
+# ---------- Діагностика за клас ----------
+
+def diagnostic_plan(own, seen_ids):
+    """По одному-два базових завдання з кожної теми класу в порядку програми (не більше DIAGNOSTIC_MAX)."""
+    by_topic = {}
+    for q in own:
+        by_topic.setdefault(q.curriculum_topic, []).append(q)
+    topics = sorted(by_topic, key=lambda t: (t.chapter.order, t.order))
+    per_topic = 2 if len(topics) * 2 <= DIAGNOSTIC_MAX else 1
+    plan = []
+    for topic in topics[:DIAGNOSTIC_MAX]:
+        pool = sorted(by_topic[topic], key=lambda q: (q.id in seen_ids, q.difficulty, random.random()))
+        plan += [q.id for q in pool[:per_topic]]
+    return plan[:DIAGNOSTIC_MAX]
+
+
+def topic_map(history):
+    """{тема: [правильно з першої спроби, усього]} — розклад узагальнення чи діагностики по темах."""
+    result = {}
+    for e in history:
+        if e.get('tries') and not e.get('assisted') and e.get('topic'):
+            row = result.setdefault(str(e['topic']), [0, 0])
+            row[0] += 1 if e.get('first_ok') else 0
+            row[1] += 1
+    return result
 
