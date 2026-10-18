@@ -100,7 +100,7 @@
                     <span class="badge bg-primary rounded-pill">{{ attempt.get_percent }}%</span>
                 </div>
                 <div class="report-card-body">
-                    <h5 class="fw-bold text-dark mb-3">{{ attempt.material.title }}</h5>
+                    <h5 class="fw-bold text-dark mb-3">{{ attempt.material.title }}{% if attempt.conducted_by_id %} <span class="badge bg-success">на уроці</span>{% endif %}</h5>
 
                     <div class="d-flex align-items-center mb-2">
                         <div class="flex-grow-1">

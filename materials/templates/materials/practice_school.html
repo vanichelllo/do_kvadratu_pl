@@ -116,6 +116,18 @@
         .end-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 26px; text-align: center; }
         .end-card h2 { color: var(--brand-blue); margin-top: 0; }
 
+        /* Режим уроку: вчитель показує екран — усе крупніше */
+        body.lesson .container { max-width: 1000px; }
+        body.lesson .q-text { font-size: 1.45rem; }
+        body.lesson .option-label, body.lesson .row-box, body.lesson .chip-btn, body.lesson .field, body.lesson .yn button { font-size: 1.25rem; }
+        body.lesson .text-input { font-size: 1.35rem; }
+        body.lesson .feedback { font-size: 1.15rem; }
+        body.lesson .plot { max-width: 760px; }
+        body.lesson .how { font-size: 1rem; }
+        .lesson-who { font-weight: 700; color: var(--brand-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .keys { font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 8px; }
+        .key-num { display: inline-block; min-width: 1.4em; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
+
         @media (max-width: 600px) {
             .question-card { padding: 15px; }
             .actions .btn { flex: 1; }
@@ -123,10 +135,11 @@
         }
     </style>
 </head>
-<body>
+<body class="{% if actor.lesson %}lesson{% endif %}">
     <header class="navbar">
         <div class="brand-logo">ДО КВАДРАТУ | {{ cfg.title }}</div>
-        {% if solved_count %}<button type="button" class="btn-finish" onclick="finishPractice(true)">Завершити й отримати оцінку</button>{% endif %}
+        {% if actor.demo %}<div class="lesson-who">👀 Демонстрація</div>{% elif actor.lesson %}<div class="lesson-who">👤 {{ actor.student.real_name }}</div>{% endif %}
+        <button type="button" class="btn-finish{% if not solved_count %} hidden{% endif %}" id="btn-finish" onclick="finishPractice(true)">Завершити й отримати оцінку</button>
     </header>
     <form method="POST" id="finish-form">{% csrf_token %}</form>
 
@@ -143,7 +156,7 @@
             </div>
             <div class="streak">
                 {% if state.status == 'active' %}
-                    Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}ти вище{% else %}тему опановано{% endif %}:
+                    Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}{% if actor.lesson %}вище{% else %}ти вище{% endif %}{% else %}тему опановано{% endif %}:
                     <span class="dot {% if state.ok >= 1 %}on{% endif %}"></span><span class="dot {% if state.ok >= 2 %}on{% endif %}"></span>
                 {% endif %}
             </div>
@@ -188,7 +201,7 @@
                 </div>
             {% elif question.question_type == 'SHORT' %}
                 <div class="short-wrap">
-                    <div class="how">Впиши відповідь (число; дріб — через кому):</div>
+                    <div class="how">{% if actor.lesson %}Відповідь — число (дріб через кому):{% else %}Впиши відповідь (число; дріб — через кому):{% endif %}</div>
                     <input type="text" id="short-input" class="text-input" autocomplete="off" inputmode="decimal">
                 </div>
             {% else %}
@@ -202,13 +215,14 @@
                 <a href="" class="btn btn-next hidden" id="btn-next">Далі →</a>
                 <button type="button" class="btn btn-next hidden" id="btn-result" onclick="finishPractice(false)">Побачити оцінку 🏁</button>
             </div>
+            {% if actor.lesson %}<div class="keys">Клавіші: 1–9 — варіант · Enter — перевірити / далі</div>{% endif %}
         </div>
         {% else %}
         <div class="end-card">
             {% if state.status == 'mastered' %}
-                <h2>🏆 Тему опановано!</h2><p>Ти пройшов усі три сходинки.</p>
+                <h2>🏆 Тему опановано!</h2><p>{% if actor.lesson %}Усі три сходинки пройдено.{% else %}Ти пройшов усі три сходинки.{% endif %}</p>
             {% elif state.status == 'limit' %}
-                <h2>💪 На сьогодні досить</h2><p>Ти розв'язав {{ max_tasks }} завдань. Подивись оцінку, а потім можна спробувати ще раз.</p>
+                <h2>💪 На сьогодні досить</h2><p>Розв'язано {{ max_tasks }} завдань. Далі — оцінка, а потім можна спробувати ще раз.</p>
             {% else %}
                 <h2>👏 Завдання цієї теми закінчились</h2><p>Подивись оцінку і розбір.</p>
             {% endif %}
@@ -234,6 +248,9 @@
     {{ spec|json_script:"spec-data" }}
     <script>
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        // На уроці вчитель показує екран і сам натискає — тексти без звертань «натисни», «впиши»
+        const LESSON = {{ actor.lesson|yesno:"true,false" }};
+        const T = (pupil, lesson) => LESSON ? lesson : pupil;
         const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined); };
 
         function finishPractice(ask) {
@@ -252,7 +269,7 @@
 
         W.MULTI = {
             render() {
-                widget.appendChild(el('div', 'how', 'Обери всі правильні відповіді.'));
+                widget.appendChild(el('div', 'how', T('Обери всі правильні відповіді.', 'Правильних відповідей може бути кілька.')));
                 spec.options.forEach(([idx, text]) => {
                     const label = el('label', 'option-label');
                     label.dataset.idx = idx;
@@ -278,7 +295,7 @@
 
         W.TF = {
             render() {
-                widget.appendChild(el('div', 'how', 'Для кожного твердження обери «Так» або «Ні».'));
+                widget.appendChild(el('div', 'how', T('Для кожного твердження обери «Так» або «Ні».', 'Для кожного твердження: так чи ні?')));
                 spec.statements.forEach((text, i) => {
                     const row = el('div', 'row-box');
                     row.innerHTML = '<span></span><div class="yn"><button type="button" data-v="1">Так</button><button type="button" data-v="0">Ні</button></div>';
@@ -330,7 +347,7 @@
 
         W.ERROR = {
             render() {
-                widget.appendChild(el('div', 'how', 'Натисни на крок, у якому зроблено помилку.'));
+                widget.appendChild(el('div', 'how', T('Натисни на крок, у якому зроблено помилку.', 'У якому кроці помилка?')));
                 spec.steps.forEach((text, i) => {
                     const label = el('label', 'option-label step-option');
                     label.dataset.idx = i;
@@ -353,7 +370,7 @@
 
         W.ORDER = {
             render() {
-                widget.appendChild(el('div', 'how', 'Натискай на елементи в правильному порядку. Натисни ще раз, щоб прибрати.'));
+                widget.appendChild(el('div', 'how', T('Натискай на елементи в правильному порядку. Натисни ще раз, щоб прибрати.', 'Правильний порядок — елементи по черзі.')));
                 this.pool = el('div', 'zone'); this.line = el('div', 'zone');
                 this.pool.appendChild(el('div', 'zone-title', 'Елементи'));
                 this.line.appendChild(el('div', 'zone-title', 'Твій порядок'));
@@ -391,7 +408,7 @@
 
         W.GROUP = {
             render() {
-                widget.appendChild(el('div', 'how', 'Натисни на елемент, а потім — на групу, куди його покласти.'));
+                widget.appendChild(el('div', 'how', T('Натисни на елемент, а потім — на групу, куди його покласти.', 'До якої групи належить кожен елемент?')));
                 this.pool = el('div', 'zone');
                 this.pool.appendChild(el('div', 'zone-title', 'Елементи'));
                 this.selected = null;
@@ -443,7 +460,7 @@
         W.EXPR = {
             render() {
                 const vars = spec.vars.length ? `Змінні: ${spec.vars.join(', ')}. ` : '';
-                widget.appendChild(el('div', 'how', `${vars}Пиши, наприклад: 2(a+b), a^2, 3a/4, sqrt(x).`));
+                widget.appendChild(el('div', 'how', `${vars}${T('Пиши', 'Запис')}, наприклад: 2(a+b), a^2, 3a/4, sqrt(x).`));
                 const input = el('input', 'text-input wide');
                 input.type = 'text'; input.autocomplete = 'off'; input.spellcheck = false;
                 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
@@ -459,7 +476,7 @@
         W.POINT = {
             render() {
                 this.min = +spec.min; this.max = +spec.max; this.step = +spec.step || 1; this.value = null;
-                widget.appendChild(el('div', 'how', 'Натисни на пряму, щоб поставити точку.'));
+                widget.appendChild(el('div', 'how', T('Натисни на пряму, щоб поставити точку.', 'Де на прямій ця точка?')));
                 this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 this.svg.setAttribute('viewBox', '0 0 560 90'); this.svg.classList.add('plot', 'line');
                 widget.appendChild(this.svg);
@@ -487,7 +504,7 @@
                 if (answer !== undefined) s += `<circle cx="${this.px(answer)}" cy="45" r="9" class="ok"/>`;
                 if (this.value !== null) s += `<circle cx="${this.px(this.value)}" cy="45" r="7" class="mine"/>`;
                 this.svg.innerHTML = s;
-                this.out.textContent = this.value === null ? '' : `Твоя точка: ${fmt(this.value)}`;
+                this.out.textContent = this.value === null ? '' : `${T('Твоя точка', 'Точка')}: ${fmt(this.value)}`;
             },
             read() { return this.value; },
             mark() {},
@@ -499,7 +516,7 @@
         W.COORD = {
             render() {
                 Object.assign(this, { x0: +spec.xmin, x1: +spec.xmax, y0: +spec.ymin, y1: +spec.ymax, step: +spec.step || 1, value: null });
-                widget.appendChild(el('div', 'how', 'Натисни на площину, щоб поставити точку.'));
+                widget.appendChild(el('div', 'how', T('Натисни на площину, щоб поставити точку.', 'Де на площині ця точка?')));
                 this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 this.svg.setAttribute('viewBox', '0 0 480 480'); this.svg.classList.add('plot');
                 widget.appendChild(this.svg);
@@ -527,7 +544,7 @@
                 if (answer) s += `<circle cx="${this.X(answer[0])}" cy="${this.Y(answer[1])}" r="9" class="ok"/>`;
                 if (this.value) s += `<circle cx="${this.X(this.value[0])}" cy="${this.Y(this.value[1])}" r="7" class="mine"/>`;
                 this.svg.innerHTML = s;
-                this.out.textContent = this.value ? `Твоя точка: (${fmt(this.value[0])}; ${fmt(this.value[1])})` : '';
+                this.out.textContent = this.value ? `${T('Твоя точка', 'Точка')}: (${fmt(this.value[0])}; ${fmt(this.value[1])})` : '';
             },
             read() { return this.value; },
             mark() {},
@@ -592,7 +609,7 @@
         async function checkAnswer() {
             const msg = document.getElementById('form-msg');
             const answer = kind.read();
-            if (answer === null) { msg.textContent = 'Спершу дай відповідь на все завдання.'; return; }
+            if (answer === null) { msg.textContent = T('Спершу дай відповідь на все завдання.', 'Спершу потрібна відповідь на все завдання.'); return; }
             msg.textContent = '';
             const button = document.getElementById('btn-check');
             button.disabled = true;
@@ -612,6 +629,7 @@
                 return;
             }
             button.disabled = false;
+            document.getElementById('btn-finish').classList.remove('hidden');
 
             const feedback = document.getElementById('feedback');
             feedback.className = 'feedback';
@@ -622,7 +640,7 @@
                 feedback.innerHTML = '<b>Правильно! 🎉</b>';
             } else if (!data.finished) {
                 feedback.classList.add('hint');
-                feedback.innerHTML = '<b>Майже! Підказка 💡</b><div></div><div><i>Спробуй ще раз.</i></div>';
+                feedback.innerHTML = '<b>Майже! Підказка 💡</b><div></div><div><i>' + T('Спробуй ще раз.', 'Ще одна спроба.') + '</i></div>';
                 feedback.children[1].innerHTML = data.hint;
             } else {
                 feedback.classList.add('bad');
@@ -650,6 +668,23 @@
             document.getElementById('btn-check').addEventListener('click', checkAnswer);
             typeset(card);
         }
+
+        // Гарячі клавіші — щоб вчителю на уроці не «полювати» мишкою: 1–9 — варіант, Enter — перевірити / далі
+        document.addEventListener('keydown', (e) => {
+            const target = e.target;
+            if ((target.tagName === 'INPUT' && target.type === 'text') || target.tagName === 'TEXTAREA') return;
+            if (document.getElementById('errorModal').style.display === 'flex') return;
+            const visible = (id) => { const b = document.getElementById(id); return b && !b.classList.contains('hidden') ? b : null; };
+            if (e.key === 'Enter' || e.key === 'ArrowRight') {
+                const button = visible('btn-next') || visible('btn-result') || (e.key === 'Enter' && visible('btn-check'));
+                if (button) { e.preventDefault(); button.click(); }
+                return;
+            }
+            if (card && /^[1-9]$/.test(e.key)) {
+                const option = card.querySelectorAll('.option-label')[+e.key - 1];
+                if (option && !option.classList.contains('disabled')) option.querySelector('input').click();
+            }
+        });
 
         function openErrorModal(qId) {
             document.getElementById('errorQuestionId').value = qId;

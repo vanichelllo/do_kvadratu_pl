@@ -607,6 +607,8 @@ class PracticeAttempt(models.Model):
     nush_modeling = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Моделювання (1-12)")
     nush_solving = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Розв'язування (1-12)")
     nush_analysis = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Аналіз результатів (1-12)")
+    conducted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='conducted_attempts', verbose_name="Провів на уроці (вчитель)")
 
     class Meta:
         ordering = ['-created_at']
@@ -631,6 +633,10 @@ class PracticeRun(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_runs')
     material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='practice_runs')
     profile = models.CharField(max_length=1, verbose_name="Профіль (A/B/C)")
+    # Вчитель, який веде практику на уроці (показує екран і сам натискає): user — учень, якому вона зараховується.
+    # У демонстрації без збереження user і teacher — сам вчитель
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='conducted_runs', verbose_name="Провів на уроці")
     state = models.JSONField(default=dict, verbose_name="Стан (сходинка, історія завдань)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -2369,3 +2369,96 @@ class SchoolBankImportTests(BaseTestCase):
         from .bank_import import BankFormatError, parse_bank_source
         with self.assertRaises(BankFormatError):
             parse_bank_source('TOPIC_NAME = "x"\nCOURSE = "y"\nTASKS = []\n')
+
+
+class LessonPracticeTests(BaseTestCase):
+    """Вчитель на уроці показує екран і сам натискає; практика зараховується обраному учню."""
+
+    def setUp(self):
+        self.teacher = self.make_user('teacher@example.com', is_staff=True)
+        self.pupil = self.make_user('kid@example.com')
+        self.request = TutorStudentRequest.objects.create(user=self.pupil, real_name='Петренко Оля', course='grade_5',
+                                                          status='approved')
+        other = self.make_user('pending@example.com')
+        TutorStudentRequest.objects.create(user=other, real_name='Ще не підтверджений', status='pending')
+        topic = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.lesson = StudyMaterial.objects.create(title='1.1', price=100, is_published=True, curriculum_topic=topic)
+        for i in range(4):
+            q = Question.objects.create(text=f'q{i}', question_type='CHOICE', curriculum_topic=topic, difficulty=1)
+            AnswerOption.objects.create(question=q, text='А) 1', is_correct=False)
+            AnswerOption.objects.create(question=q, text='Б) 2', is_correct=True)
+        self.client.force_login(self.teacher)
+
+    def url(self, query=''):
+        return f'/practice/{self.lesson.id}/{query}'
+
+    def answer(self, query, correct=False):
+        q = self.client.get(self.url(query)).context['question']
+        option = q.options.get(is_correct=correct)
+        return self.client.post(f'/practice/{self.lesson.id}/check/{query}', json.dumps(
+            {'question_id': q.id, 'answer': str(option.id)}), content_type='application/json')
+
+    def test_teacher_first_chooses_the_pupil(self):
+        response = self.client.get(self.url())
+        self.assertTemplateUsed(response, 'materials/practice_choose_student.html')
+        self.assertContains(response, 'Петренко Оля')
+        self.assertNotContains(response, 'Ще не підтверджений')
+        self.assertContains(response, '?demo=1')
+
+    def test_lesson_practice_is_credited_to_the_pupil(self):
+        query = f'?student={self.request.id}'
+        page = self.client.get(self.url(query))
+        self.assertContains(page, 'class="lesson"')
+        self.assertContains(page, 'Петренко Оля')
+        self.assertContains(page, f'/practice/{self.lesson.id}/check/{query}')
+        self.answer(query, correct=False)
+        self.answer(query, correct=False)   # тренажер: друга спроба
+        response = self.client.post(self.url(query))
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual((attempt.user, attempt.conducted_by), (self.pupil, self.teacher))
+        self.assertRedirects(response, f'/attempt/{attempt.id}/', fetch_redirect_response=False)
+        self.assertTrue(GameMistake.objects.filter(user=self.pupil).exists())
+        self.assertFalse(GameMistake.objects.filter(user=self.teacher).exists())
+
+        details = self.client.get(f'/attempt/{attempt.id}/')
+        self.assertEqual(details.context['report_student'], self.request)
+        self.assertContains(details, 'Додати в звіт заняття')
+        self.assertContains(details, f'?student={self.request.id}')   # «Ще раз» — з тим самим учнем
+
+        # Учень бачить свою спробу, позначену «на уроці»
+        self.client.force_login(self.pupil)
+        self.assertContains(self.client.get('/cabinet/'), 'на уроці')
+
+    def test_report_from_results_reaches_the_dashboard(self):
+        response = self.client.post('/cabinet/add-report/', {
+            'student_id': self.request.id, 'curriculum_topic': self.lesson.curriculum_topic_id,
+            'nush_modeling': 7, 'nush_solving': 8, 'nush_analysis': 6, 'homework_status': 'not_assigned',
+            'teacher_comment': ''})
+        self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
+        self.assertEqual(StudentReport.objects.get().nush_solving, 8)
+
+    def test_demo_saves_nothing(self):
+        self.answer('?demo=1', correct=True)
+        response = self.client.post(self.url('?demo=1'))
+        self.assertTemplateUsed(response, 'materials/practice_school_results.html')
+        self.assertContains(response, 'Демонстрація')
+        self.assertFalse(PracticeAttempt.objects.exists())
+        self.assertFalse(PracticeRun.objects.exists())
+        self.assertFalse(GameMistake.objects.exists())
+
+    def test_check_without_choice_is_refused(self):
+        q = Question.objects.first()
+        response = self.client.post(f'/practice/{self.lesson.id}/check/', json.dumps(
+            {'question_id': q.id, 'answer': '1'}), content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_lesson_and_homework_runs_do_not_mix(self):
+        query = f'?student={self.request.id}'
+        lesson_question = self.client.get(self.url(query)).context['question']
+        self.lesson.is_free = True
+        self.lesson.save()
+        self.client.force_login(self.pupil)
+        self.client.get(self.url('?student=999'))   # параметр учня для учня нічого не змінює
+        runs = PracticeRun.objects.filter(user=self.pupil)
+        self.assertEqual(sorted(r.teacher_id is None for r in runs), [False, True])
+        self.assertEqual(runs.get(teacher=self.teacher).state['history'][0]['qid'], lesson_question.id)

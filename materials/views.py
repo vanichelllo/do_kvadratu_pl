@@ -613,19 +613,66 @@ def practice_access(request, material):
     return (material.is_published or has_access) and (material.is_free or has_access)
 
 
-def active_run(user, material):
-    return (PracticeRun.objects.filter(user=user, material=material, finished_at__isnull=True)
+class PracticeActor:
+    """Для кого йде практика. Учень практикується сам (домашнє завдання). Вчитель на уроці показує екран і сам
+    натискає: обирає учня (?student=<id заявки>) — спроба й оцінки зараховуються учневі, — або демонстрацію
+    без збереження (?demo=1)."""
+
+    def __init__(self, user, teacher=None, student=None, demo=False):
+        self.user, self.teacher, self.student, self.demo = user, teacher, student, demo
+
+    @property
+    def lesson(self):
+        return self.teacher is not None
+
+    @property
+    def query(self):
+        if self.demo:
+            return '?demo=1'
+        return f'?student={self.student.id}' if self.student else ''
+
+    @classmethod
+    def from_request(cls, request):
+        """None — вчитель ще не обрав, для кого практика."""
+        if not is_teacher(request.user):
+            return cls(request.user)
+        if request.GET.get('demo') == '1':
+            return cls(request.user, teacher=request.user, demo=True)
+        student = (TutorStudentRequest.objects.filter(id=to_int(request.GET.get('student')), status='approved')
+                   .select_related('user').first())
+        return cls(student.user, teacher=request.user, student=student) if student else None
+
+
+def active_run(actor, material):
+    return (PracticeRun.objects.filter(user=actor.user, teacher=actor.teacher, material=material,
+                                       finished_at__isnull=True)
             .order_by('-id').first())
+
+
+def choose_student_page(request, material):
+    """Вчитель відкрив практику: для кого вона? Спершу учні того класу, що й тема."""
+    grade_number = material.curriculum_grade.number if material.curriculum_grade else None
+    students = list(TutorStudentRequest.objects.filter(status='approved').order_by('real_name'))
+    students.sort(key=lambda s: s.course != f'grade_{grade_number}')
+    in_progress = set(PracticeRun.objects.filter(teacher=request.user, material=material, finished_at__isnull=True)
+                      .values_list('user_id', flat=True))
+    return render(request, 'materials/practice_choose_student.html', {
+        'material': material, 'students': students, 'in_progress': in_progress,
+        'grade_course': f'grade_{grade_number}',
+    })
 
 
 def school_practice(request, material, profile):
     """Практика «сходинками»: сторінка показує одне поточне завдання; відповіді перевіряє practice_check_view."""
-    run = active_run(request.user, material)
+    actor = PracticeActor.from_request(request)
+    if actor is None:
+        return choose_student_page(request, material)
+    run = active_run(actor, material)
     if run is None or run.profile != profile:
-        run = PracticeRun.objects.create(user=request.user, material=material, profile=profile,
+        run = PracticeRun.objects.create(user=actor.user, teacher=actor.teacher, material=material, profile=profile,
                                          state=practice.new_state())
     if request.method == 'POST':
-        return finish_run(request, run)
+        return finish_run(request, run, actor)
 
     state = run.state
     entry = practice.current_entry(state)
@@ -633,7 +680,7 @@ def school_practice(request, material, profile):
         own, review = practice.question_pools(material, profile)
         if not state['history']:
             state['top_skills'] = sorted(practice.top_skills(own))
-        question = practice.next_question(state, own, review, seen_question_ids(request.user))
+        question = practice.next_question(state, own, review, seen_question_ids(actor.user))
         if question is None and not state['history']:
             run.delete()
             messages.info(request, "Для цієї теми ще не додано практичних завдань.")
@@ -653,12 +700,14 @@ def school_practice(request, material, profile):
         'question': question, 'spec': practice.public_spec(question, entry) if question else {},
         'task_number': len(state['history']), 'max_tasks': practice.MAX_TASKS, 'levels': practice.LEVELS,
         'solved_count': sum(1 for e in state['history'] if e.get('tries')),
-        'check_url': reverse('practice_check', args=[material.id]),
+        'check_url': reverse('practice_check', args=[material.id]) + actor.query,
+        'actor': actor,
     })
 
 
-def finish_run(request, run):
-    """Завершити практику: зберегти спробу з оцінками й показати розбір (через redirect — без повторної відправки)."""
+def finish_run(request, run, actor):
+    """Завершити практику: зберегти спробу з оцінками й показати розбір (через redirect — без повторної відправки).
+    Демонстрацію не зберігаємо — розбір показуємо одразу."""
     material, state = run.material, run.state
     history = [entry for entry in state['history'] if entry.get('tries')]
     if not history:
@@ -666,11 +715,17 @@ def finish_run(request, run):
         messages.info(request, "Ще немає жодної відповіді — практику не збережено.")
         return redirect('cabinet')
     questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
-    _, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
-    attempt = PracticeAttempt.objects.create(
-        user=request.user, material=material, score=total, max_score=maximum, **grades,
+    results, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
+    attempt = PracticeAttempt(
+        user=actor.user, conducted_by=actor.teacher, material=material, score=total, max_score=maximum, **grades,
         answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
                       'history': history, 'level': state['level'], 'status': state['status']})
+    if actor.demo:
+        run.delete()
+        context = school_results_context(request, attempt, results)
+        context['again_url'] = reverse('practice_session', args=[material.id]) + actor.query
+        return render(request, 'materials/practice_school_results.html', context)
+    attempt.save()
     run.finished_at = timezone.now()
     run.save(update_fields=['finished_at', 'updated_at'])
     return redirect('view_attempt_details', attempt_id=attempt.id)
@@ -702,7 +757,10 @@ def practice_check_view(request, material_id):
     except (ValueError, TypeError, AttributeError, json.JSONDecodeError):
         return JsonResponse({'error': 'bad request'}, status=400)
 
-    run = active_run(request.user, material)
+    actor = PracticeActor.from_request(request)
+    if actor is None:
+        raise Http404
+    run = active_run(actor, material)
     entry = practice.current_entry(run.state) if run else None
     if entry is None or entry['qid'] != question_id:
         return JsonResponse({'error': 'stale'}, status=409)
@@ -718,7 +776,8 @@ def practice_check_view(request, material_id):
     if response['finished']:
         level_before = state['level']
         first_ok = practice.finish_task(state, question, entry)
-        practice.record_mistake(request.user, question, first_ok)
+        if not actor.demo:
+            practice.record_mistake(actor.user, question, first_ok)
         response.update(practice.reveal(question, entry), solution=question.solution, level=state['level'],
                         level_change=state['level'] - level_before, status=state['status'])
     else:
@@ -727,14 +786,23 @@ def practice_check_view(request, material_id):
     return JsonResponse(response)
 
 
-def school_results_context(attempt, results):
+def school_results_context(request, attempt, results):
     saved = attempt.answers_json or {}
-    return {
+    context = {
         'material': attempt.material, 'attempt': attempt, 'results': results, 'profile': saved.get('mode'),
         # Найвища складність, на якій учень розв'язав завдання (сходинка учня може бути вищою, якщо банк неповний)
         'level': max((r['level'] for r in results if r['earned']), default=0),
         'status': saved.get('status'), 'levels': practice.LEVELS,
+        'again_url': reverse('practice_session', args=[attempt.material.id]),
     }
+    # Вчитель після уроку: оцінки одразу в звіт заняття учня
+    if is_teacher(request.user) and attempt.pk and attempt.user_id != request.user.id:
+        student = TutorStudentRequest.objects.filter(user_id=attempt.user_id).first()
+        if student:
+            context['report_student'] = student
+            context['hw_choices'] = StudentReport.HW_CHOICES
+            context['again_url'] += f'?student={student.id}'
+    return context
 
 
 # ==========================================
@@ -1538,7 +1606,8 @@ def view_attempt_details(request, attempt_id):
     if mode in practice.PROFILES:
         questions_by_id = {q.id: q for q in questions}
         results = practice.build_results(questions_by_id, saved_answers.get('history') or [], mode)[0]
-        return render(request, 'materials/practice_school_results.html', school_results_context(attempt, results))
+        return render(request, 'materials/practice_school_results.html',
+                      school_results_context(request, attempt, results))
 
     results_data = []
     for q in questions:

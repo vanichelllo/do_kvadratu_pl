@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практика на уроці: {{ material.title }} | ДО КВАДРАТУ</title>
+    {% include "_favicons.html" %}
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --text-dark: #2c3e50; --text-muted: #7f8c8d; --font-main: 'Segoe UI', system-ui, sans-serif; }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); margin: 0; }
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 16px; display: flex; align-items: center; height: 60px; font-weight: 800; color: var(--brand-blue); }
+        .container { max-width: 720px; margin: 24px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+        h1 { color: var(--brand-blue); font-size: 1.35rem; margin: 0 0 6px; }
+        .muted { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+        .filter { width: 100%; padding: 10px 12px; font-size: 1rem; border: 2px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; }
+        .student { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 8px; text-decoration: none; color: var(--text-dark); background: var(--bg-light); }
+        .student:hover { border-color: var(--brand-blue); }
+        .student.match { border-color: rgba(39,174,96,0.5); }
+        .student b { font-size: 1.05rem; }
+        .tag { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+        .tag.go { color: var(--brand-green); font-weight: 700; }
+        .demo { display: block; text-align: center; padding: 12px; border-radius: 10px; border: 1.5px dashed var(--brand-blue); color: var(--brand-blue); font-weight: 700; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header class="navbar">ДО КВАДРАТУ | Практика на уроці</header>
+    <div class="container">
+        <div class="card">
+            <h1>{{ material.title }}</h1>
+            <p class="muted">Для кого ця практика? Спроба й оцінки НУШ збережуться в акаунті учня — їх побачать він і батьки, а після практики оцінки можна одразу додати в звіт заняття.</p>
+        </div>
+        <div class="card">
+            {% if students %}
+                <input type="search" class="filter" placeholder="Пошук учня…" oninput="filterStudents(this.value)" aria-label="Пошук учня">
+                {% for s in students %}
+                <a class="student{% if s.course == grade_course %} match{% endif %}" href="?student={{ s.id }}" data-name="{{ s.real_name|lower }}">
+                    <b>{{ s.real_name }}</b>
+                    <span class="tag{% if s.user_id in in_progress %} go{% endif %}">
+                        {% if s.user_id in in_progress %}▶ продовжити{% else %}{{ s.get_course_display }}{% endif %}
+                    </span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="muted">Підтверджених учнів ще немає.</p>
+            {% endif %}
+        </div>
+        <a class="demo" href="?demo=1">👀 Демонстрація без збереження</a>
+    </div>
+    <script>
+        function filterStudents(text) {
+            const needle = text.trim().toLowerCase();
+            document.querySelectorAll('.student').forEach(a => a.style.display = a.dataset.name.includes(needle) ? '' : 'none');
+        }
+    </script>
+</body>
+</html>

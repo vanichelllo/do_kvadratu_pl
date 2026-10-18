@@ -49,6 +49,14 @@
         .r-line span { color: var(--text-muted); font-weight: 600; }
         .solution { margin-top: 10px; padding: 10px 12px; background: var(--bg-light); border-radius: 8px; line-height: 1.55; overflow-x: auto; }
         @media (max-width: 500px) { .grade b { font-size: 1.6rem; } }
+        .who { color: var(--brand-blue); font-weight: 700; margin-bottom: 6px; }
+        .report h2 { color: var(--brand-blue); font-size: 1.15rem; margin: 0 0 4px; }
+        .report .grade input { width: 70px; font-size: 1.5rem; font-weight: 800; text-align: center; color: var(--brand-blue); border: 2px solid var(--border-color); border-radius: 8px; margin-top: 4px; }
+        .report .grade { display: flex; flex-direction: column; align-items: center; }
+        .report-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin: 14px 0; text-align: left; font-weight: 600; font-size: 0.9rem; }
+        .report-row select, .report-row textarea { width: 100%; margin-top: 4px; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+        .report button { border: none; cursor: pointer; font-size: 1rem; }
+        @media (max-width: 600px) { .report-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -59,6 +67,8 @@
     <div class="container">
         <div class="summary">
             <h1>{{ material.title }}</h1>
+            {% if not attempt.pk %}<div class="who">👀 Демонстрація — результат не збережено</div>
+            {% elif attempt.conducted_by_id %}<div class="who">👤 {% if report_student %}{{ report_student.real_name }} · {% endif %}практика на уроці {{ attempt.created_at|date:"d.m.Y" }}</div>{% endif %}
             <div class="reached">
                 {% if status == 'mastered' %}🏆 Тему опановано: пройдено всі три сходинки
                 {% elif level %}Найвища сходинка з правильною відповіддю: {{ level }} з {{ levels|length }}{% endif %}
@@ -72,7 +82,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <div class="grade-note">Оцінка залежить від того, на якій сходинці ти впорався: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було.</div>
+            <div class="grade-note">Оцінка залежить від того, на якій сходинці вдалося впоратися: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було.</div>
             {% if not attempt.nush_grades %}<p class="score">Оцінки за критеріями для цієї спроби не збережено.</p>{% endif %}
             {% with p=attempt.get_percent %}
             <div class="praise">
@@ -80,10 +90,34 @@
             </div>
             {% endwith %}
             <div class="actions">
-                <a href="{% url 'practice_session' material.id %}" class="btn btn-primary">🔁 Ще раз</a>
+                <a href="{{ again_url }}" class="btn btn-primary">🔁 Ще раз</a>
                 <a href="{% url 'cabinet' %}" class="btn btn-secondary">До кабінету</a>
             </div>
         </div>
+
+        {% if report_student %}
+        <form class="summary report" method="POST" action="{% url 'add_quick_report' %}">
+            {% csrf_token %}
+            <h2>📝 Додати в звіт заняття</h2>
+            <p class="score">{{ report_student.real_name }} · {{ material.curriculum_topic.name }}. Оцінки підставлено з практики — їх можна змінити.</p>
+            <input type="hidden" name="student_id" value="{{ report_student.id }}">
+            <input type="hidden" name="curriculum_topic" value="{{ material.curriculum_topic_id }}">
+            <div class="grades">
+                <label class="grade"><small>Моделювання</small><input type="number" name="nush_modeling" min="1" max="12" value="{{ attempt.nush_modeling|default_if_none:'' }}" required></label>
+                <label class="grade"><small>Розв'язування</small><input type="number" name="nush_solving" min="1" max="12" value="{{ attempt.nush_solving|default_if_none:'' }}" required></label>
+                <label class="grade"><small>Аналіз</small><input type="number" name="nush_analysis" min="1" max="12" value="{{ attempt.nush_analysis|default_if_none:'' }}" required></label>
+            </div>
+            <div class="report-row">
+                <label>Домашнє завдання
+                    <select name="homework_status">{% for value, label in hw_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+                </label>
+                <label>Коментар
+                    <textarea name="teacher_comment" rows="2" placeholder="Що вийшло, над чим попрацювати…"></textarea>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Зберегти звіт</button>
+        </form>
+        {% endif %}
 
         {% for r in results %}
         <div class="result-card {% if r.is_correct %}correct{% elif r.earned %}partial{% endif %}">
