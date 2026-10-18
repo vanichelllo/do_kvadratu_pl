@@ -304,9 +304,11 @@
         <details class="cab-section" data-section="tutor" data-default-open open>
             <summary><h2 class="cab-section-title"><span>🧑‍🏫 Кабінет викладача</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
             <div class="cab-section-body">
+                {% if licenses %}
                 <p style="margin-top: 0;"><b>Ваша підписка:</b>
                     {% for lic in licenses %}{{ lic.grade.short_label }} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}
                 </p>
+                {% endif %}
                 <p style="margin-bottom: 6px;"><b>Запросити учня:</b> надішліть учневі це посилання. Після реєстрації він одразу стане вашим учнем і зможе практикуватися в темах вашої підписки безкоштовно.</p>
                 <div class="hw-form">
                     <input type="text" id="invite-url" value="{{ invite_url }}" readonly style="flex: 1; min-width: 220px;" aria-label="Посилання-запрошення">

@@ -2805,7 +2805,15 @@ class TutorAccountTests(BaseTestCase):
 
     def test_owner_keeps_own_pupils_only(self):
         self.client.force_login(self.owner)
-        self.assertEqual(list(self.client.get('/cabinet/').context['my_students']), [self.owners_request])
+        context = self.client.get('/cabinet/').context
+        self.assertEqual(list(context['my_students']), [self.owners_request])
+        # Власник теж запрошує посиланням — учні стають його учнями без заявки
+        code = context['invite_url'].rstrip('/').rsplit('/', 1)[-1]
+        newbie = self.make_user('owners-new@example.com')
+        self.client.force_login(newbie)
+        self.client.post(f'/join/{code}/', {'real_name': 'Новий', 'course': 'grade_6'})
+        self.client.force_login(self.owner)
+        self.assertEqual(len(self.client.get('/cabinet/').context['my_students']), 2)
 
     def test_lesson_practice_cannot_target_someone_elses_pupil(self):
         self.client.force_login(self.tutor)
@@ -2885,3 +2893,77 @@ class TutorAccountTests(BaseTestCase):
         self.assertEqual(TutorStudentRequest.objects.get(user=newbie).teacher, self.tutor)
         self.client.logout()
         self.assertRedirects(self.client.get(f'/join/{code}/'), f'/login/?next=/join/{code}/', fetch_redirect_response=False)
+
+
+class TutorJourneyTests(BaseTestCase):
+    """Наскрізний сценарій репетитора: запрошення → групове заняття → ДЗ → звіт → сторінка батьків."""
+
+    def test_full_journey(self):
+        from .teachers import invite_for
+        tutor = self.make_user('journey-tutor@example.com', role='teacher')
+        topic = make_school_topic('1.1. Натуральні', 5, 101)
+        TeacherLicense.objects.create(teacher=tutor, grade=topic.chapter.grade,
+                                      valid_until=timezone.localdate() + datetime.timedelta(days=60))
+        lesson = StudyMaterial.objects.create(title='1.1', price=200, is_published=True, curriculum_topic=topic,
+                                              html_content='<html><body>slides</body></html>')
+        for level in (1, 2, 3):
+            for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+                for i in range(3):
+                    q = Question.objects.create(text=f'{skill}{level}{i}', question_type='CHOICE',
+                                                curriculum_topic=topic, difficulty=level, nush_skill=skill)
+                    AnswerOption.objects.create(question=q, text='А) так', is_correct=True)
+                    AnswerOption.objects.create(question=q, text='Б) ні', is_correct=False)
+        code = invite_for(tutor).code
+
+        pupils = []
+        for name in ('Оля', 'Марко'):
+            user = self.make_user(f'{name}@example.com')
+            self.client.force_login(user)
+            self.client.post(f'/join/{code}/', {'real_name': name, 'course': 'grade_5'})
+            pupils.append(TutorStudentRequest.objects.get(user=user))
+
+        # Заняття: показ презентації й групова практика
+        self.client.force_login(tutor)
+        self.assertEqual(self.client.get(f'/download/{lesson.id}/').status_code, 200)
+        group = f'?g={pupils[0].id}&g={pupils[1].id}'
+
+        def answer(query, correct=True):
+            q = self.client.get(f'/practice/{lesson.id}/{query}').context['question']
+            return self.client.post(f'/practice/{lesson.id}/check/{query}', json.dumps(
+                {'question_id': q.id, 'answer': str(q.options.get(is_correct=correct).id)}),
+                content_type='application/json').json()
+
+        for _ in range(2):
+            answer(f'{group}&student={pupils[0].id}')
+            answer(f'{group}&student={pupils[1].id}', correct=False)
+            answer(f'{group}&student={pupils[1].id}', correct=False)
+        self.client.post(f'/practice/{lesson.id}/{group}', {'scope': 'group'})
+        lesson_attempts = PracticeAttempt.objects.filter(conducted_by=tutor)
+        self.assertEqual(lesson_attempts.count(), 2)
+
+        # Звіт і ДЗ Марку
+        marko_attempt = lesson_attempts.get(user=pupils[1].user)
+        details = self.client.get(f'/attempt/{marko_attempt.id}/')
+        self.assertContains(details, 'Додати в звіт заняття')
+        self.client.post('/cabinet/add-report/', {
+            'student_id': pupils[1].id, 'curriculum_topic': topic.id, 'nush_modeling': 4, 'nush_solving': 4,
+            'nush_analysis': 4, 'homework_status': 'not_assigned', 'teacher_comment': 'Тренуємо вдома'})
+        self.client.post('/homework/assign/', {'student_id': pupils[1].id, 'material_id': lesson.id,
+                                               'due_date': (timezone.localdate() + datetime.timedelta(days=3)).isoformat()})
+
+        # Марко вдома: урок не куплений, але практика доступна (ДЗ + підписка викладача)
+        self.client.force_login(pupils[1].user)
+        self.assertContains(self.client.get('/cabinet/'), 'Мої домашні завдання')
+        for _ in range(7):
+            answer('')
+        self.client.post(f'/practice/{lesson.id}/')
+        homework_attempt = Homework.objects.get().attempt
+        self.assertEqual(homework_attempt.answers_json['status'], 'mastered')
+
+        # Викладач бачить виконане ДЗ; батьки — звіт і зростання рівня
+        self.client.force_login(tutor)
+        self.assertEqual(self.client.get('/cabinet/').context['homeworks'][0].state, 'done')
+        parents = self.client.get(f'/parents/{pupils[1].parent_token}/')
+        self.assertContains(parents, 'Тренуємо вдома')
+        self.assertContains(parents, '<strong>високий</strong>')
+        self.assertContains(parents, '📈')

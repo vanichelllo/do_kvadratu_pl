@@ -957,6 +957,8 @@ def practice_check_view(request, material_id):
 def next_material(material):
     """Наступна тема того самого класу за деревом тем — для учня, який опанував поточну."""
     topic = material.curriculum_topic
+    if topic is None:   # тему прибрали з класифікатора — розбір має відкриватися й так
+        return None
     chapter = topic.chapter
     later = (Q(curriculum_topic__chapter__order__gt=chapter.order)
              | Q(curriculum_topic__chapter__order=chapter.order, curriculum_topic__order__gt=topic.order))
@@ -1350,9 +1352,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 lesson_groups[-1]['materials'].append(m)
             context['tutor_lessons'] = lesson_groups
             context['licenses'] = teachers.active_licenses(user).select_related('grade__subject')
-            if not teachers.is_owner(user):
-                context['invite_url'] = self.request.build_absolute_uri(
-                    reverse('join_teacher', args=[teachers.invite_for(user).code]))
+            context['invite_url'] = self.request.build_absolute_uri(
+                reverse('join_teacher', args=[teachers.invite_for(user).code]))
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__in=students
             ).select_related('user', 'user__tutor_request', 'material').defer(
