@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Цифри. Десятковий запис натуральних чисел | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Десятки-палички й одиниці-кубики */
+        .ten-bar { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 1; }
+        .one-cube { fill: var(--brand-yellow); stroke: var(--card-bg); stroke-width: 1; }
+        .cell-line { stroke: var(--card-bg); stroke-width: 1; }
+        .svg-caption { fill: currentColor; font-size: 18px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: var(--text-muted); font-size: 14px; text-anchor: middle; }
+
+        /* Лічильниця з трьома стрижнями */
+        .rod { stroke: currentColor; stroke-width: 4; stroke-linecap: round; }
+        .abacus-base { fill: var(--border-color); }
+        .bead-0 { fill: var(--brand-blue); }
+        .bead-1 { fill: var(--brand-green); }
+        .bead-2 { fill: var(--brand-yellow); }
+        .rod-label { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .rod-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+        .rod-controls > div { display: flex; justify-content: center; gap: 6px; }
+        .rod-controls button { min-width: 44px; font-size: 1.1rem; }
+        .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+        .abacus-status { min-height: 1.6em; font-weight: 700; color: var(--brand-blue); }
+        .number-big { font-size: 2.2rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 4px 0; }
+
+        /* Число з підписаними розрядами, таблиця класів */
+        .digit-big { font-size: 64px; font-weight: 800; text-anchor: middle; }
+        .digit-tile { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; }
+        .digit-tile-num { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .pointer { stroke: currentColor; stroke-width: 2; fill: none; }
+        .place-text { font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .c0 { fill: var(--brand-blue); }
+        .c1 { fill: var(--brand-green); }
+        .c2 { fill: var(--brand-yellow); }
+        .class-frame { fill: none; stroke: var(--border-color); stroke-width: 2; transition: var(--transition); }
+        .class-frame.hl { stroke: var(--brand-green); stroke-width: 4; }
+        .class-name { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .rank-name { fill: var(--text-muted); font-size: 13px; text-anchor: middle; }
+        .cell { fill: var(--card-bg); stroke: var(--border-color); stroke-width: 1.5; }
+        .cell.zero { fill: var(--widget-bg); stroke: var(--brand-yellow); stroke-width: 2.5; }
+        .cell-digit { fill: currentColor; font-size: 26px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .ok-mark { stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round; fill: none; }
+        .wrong-text { fill: var(--warning-red); font-size: 30px; font-weight: 800; text-anchor: middle; }
+        .right-text { fill: var(--brand-green); font-size: 30px; font-weight: 800; text-anchor: middle; }
+
+        .step { display: none; padding: 4px 0; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            .rod-controls button { min-width: 36px; }
+            .number-big { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Ті самі цифри — те саме число? 🤔</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> У мене в скарбничці $52$ гривні.</div>
+                <div class="bubble right"><span class="who">Брат:</span> А в мене $25$. Отже, порівну — цифри ж ті самі: $2$ і $5$!</div>
+                <p class="big-question">Хто правий? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="hidden-answer" id="answer-1">
+                    <div class="grid-2">
+                        <div class="box hack">
+                            <div class="box-title">Права Оля! 🎉</div>
+                            <p>У числі $52$ цифра $5$ означає <b>5 десятків</b>, а в числі $25$ — лише <b>5 одиниць</b>.</p>
+                            <p>Важливо, <b>де</b> стоїть цифра!</p>
+                        </div>
+                        <div class="math-widget widget-svg-container">
+                            <svg viewBox="0 0 400 190" role="img" aria-label="52 — п'ять десятків і дві одиниці, 25 — два десятки і п'ять одиниць">
+                                <g id="blocks-52"></g>
+                                <g id="blocks-25" transform="translate(230 0)"></g>
+                                <text x="78" y="180" class="svg-caption">52</text>
+                                <text x="275" y="180" class="svg-caption">25</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Лічильниця з трьома стрижнями 🧮</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Скільки кульок на стрижні — така цифра стоїть у цьому місці числа. Кажіть, куди додати кульку, — а потім: яке число вийшло?</p>
+                    </div>
+                    <div class="presets">
+                        <button class="btn-secondary" onclick="setAbacus(52)">Як в Олі: 52</button>
+                        <button class="btn-secondary" onclick="setAbacus(25)">Як у брата: 25</button>
+                        <button class="btn-secondary" onclick="setAbacus(0)">Очистити</button>
+                    </div>
+                    <p class="abacus-status" id="abacus-status"></p>
+                    <button class="btn-primary" onclick="revealNumber()">Яке число вийшло?</button>
+                    <div class="hidden-answer" id="abacus-answer">
+                        <div class="number-big" id="abacus-number"></div>
+                        <p style="text-align:center" id="abacus-sum"></p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="widget-svg-container"><svg viewBox="0 0 360 260" id="abacus-scene" role="img" aria-label="Лічильниця: сотні, десятки, одиниці"></svg></div>
+                    <div class="rod-controls">
+                        <div><button class="btn-secondary" onclick="changeRod(0, -1)" aria-label="Забрати сотню">−</button><button class="btn-primary" onclick="changeRod(0, 1)" aria-label="Додати сотню">+</button></div>
+                        <div><button class="btn-secondary" onclick="changeRod(1, -1)" aria-label="Забрати десяток">−</button><button class="btn-primary" onclick="changeRod(1, 1)" aria-label="Додати десяток">+</button></div>
+                        <div><button class="btn-secondary" onclick="changeRod(2, -1)" aria-label="Забрати одиницю">−</button><button class="btn-primary" onclick="changeRod(2, 1)" aria-label="Додати одиницю">+</button></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Цифри і розряди</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Запам'ятай! ⭐</div>
+                        <p>Усі числа записують лише <b>десятьма цифрами</b>: $0,\ 1,\ 2,\ \ldots,\ 9$.</p>
+                        <p>Місце цифри в записі — <b>розряд</b>: одиниці, десятки, сотні…</p>
+                        <p style="text-align:center">$347 = 3 \cdot 100 + 4 \cdot 10 + 7$</p>
+                    </div>
+                    <p>$10$ одиниць — це $1$ десяток, $10$ десятків — $1$ сотня. Такий запис називають <b>десятковим</b>.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 270" role="img" aria-label="Десять цифр і число 347 з підписаними розрядами">
+                        <g id="digit-tiles"></g>
+                        <text x="120" y="160" class="digit-big c0">3</text>
+                        <text x="200" y="160" class="digit-big c1">4</text>
+                        <text x="280" y="160" class="digit-big c2">7</text>
+                        <path d="M120 172 L80 222" class="pointer"/>
+                        <path d="M200 172 L200 222" class="pointer"/>
+                        <path d="M280 172 L320 222" class="pointer"/>
+                        <text x="70" y="245" class="place-text c0">3 сотні</text>
+                        <text x="200" y="245" class="place-text c1">4 десятки</text>
+                        <text x="330" y="245" class="place-text c2">7 одиниць</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Як прочитати велике число 📖</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget">
+                    <p>Розряди групують по три — у <b>класи</b>: одиниць, тисяч, мільйонів.</p>
+                    <div class="widget-svg-container"><svg viewBox="0 0 480 150" id="classes-scene" role="img" aria-label="Таблиця класів для числа 3 045 200"></svg></div>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Прочитай: $3\,045\,200$</div>
+                    <div id="steps-read">
+                        <div class="step">1) Ділимо справа наліво по три цифри: $3 \;|\; 045 \;|\; 200$.</div>
+                        <div class="step">2) Клас мільйонів: «три мільйони».</div>
+                        <div class="step">3) Клас тисяч: $045$ — «сорок п'ять тисяч».</div>
+                        <div class="step">4) Клас одиниць: $200$ — «двісті».</div>
+                        <div class="step"><b>Відповідь:</b> три мільйони сорок п'ять тисяч двісті.</div>
+                    </div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="nextStep('steps-read')">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="resetSteps('steps-read')">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: загублені нулі ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>«Двадцять тисяч сорок» — це <b>не</b> $2\,040$.</p>
+                        <p>Після тисяч завжди йдуть <b>рівно три цифри</b>. Сотень немає — на їхнє місце пишемо $0$: $20\,040$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Записав число — прочитай його вголос. Чуєш те саме? Тоді правильно!</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" role="img" aria-label="2 040 — неправильно, 20 040 — правильно">
+                        <text x="120" y="55" class="wrong-text">2 040</text>
+                        <line x1="60" y1="20" x2="180" y2="65" class="cross"/>
+                        <text x="290" y="50" class="svg-note">це «дві тисячі сорок»</text>
+                        <g id="trap-table"></g>
+                        <text x="200" y="250" class="right-text">20 040</text>
+                        <path d="M290 232 l12 12 l24 -28" class="ok-mark"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Яка цифра стоїть у розряді десятків числа $4\,572$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">В) $7$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $2$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Розряди рахуємо <b>справа</b>: одиниці, потім десятки. Спробуй ще раз!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>Справа: $2$ — одиниці, $7$ — десятки, $5$ — сотні, $4$ — тисячі.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Яке число має $5$ сотень і $3$ одиниці?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $53$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $503$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $530$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $5\,003$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Десятків немає. Що пишемо на порожньому місці? Згадай лічильницю.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Сотні — $5$, десятки — $0$, одиниці — $3$: $503 = 5 \cdot 100 + 3$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Як записати цифрами число «двісті тисяч сорок»?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $20\,040$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $240\,000$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $200\,040$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $2\,000\,040$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Спершу запиши «двісті тисяч». Після тисяч — рівно три цифри. Спробуй ще раз!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Клас тисяч — $200$, клас одиниць — $040$. Разом: $200\,040$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Яке найменше чотирицифрове число, у якого всі цифри різні?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $1\,000$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $1\,234$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $1\,203$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Г) $1\,023$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Число не може починатися з $0$. А далі став найменші цифри, які ще не використав.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Перша цифра — $1$ (нуль першим не буває). Далі найменші вільні: $0$, $2$, $3$. Виходить $1\,023$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Цифр лише десять: $0,\ 1,\ \ldots,\ 9$. Значення цифри залежить від її <b>розряду</b>.</p>
+                    <p style="text-align:center">$5\,307 = 5 \cdot 1000 + 3 \cdot 100 + 7$</p>
+                    <p>Розряди групують по три в <b>класи</b>: одиниць, тисяч, мільйонів.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як читати 📖</div>
+                        <p>Ділимо справа по три цифри й читаємо класи зліва: $12 \;|\; 008$ — «дванадцять тисяч вісім».</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Не губи нулі: «двадцять тисяч сорок» — це $20\,040$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderBlocks();
+                if (currentSlide === 2) renderAbacus();
+                if (currentSlide === 3) renderDigitTiles();
+                if (currentSlide === 4) renderClasses();
+                if (currentSlide === 5) renderTrapTable();
+
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // --- Слайд 1: десятки-палички й одиниці-кубики ---
+            function blocks(tens, ones) {
+                const cell = 13, top = 20;
+                let svg = '';
+                for (let t = 0; t < tens; t++) {
+                    const x = 8 + t * 22;
+                    svg += `<rect x="${x}" y="${top}" width="16" height="${cell * 10}" class="ten-bar"/>`;
+                    for (let k = 1; k < 10; k++) svg += `<line x1="${x}" y1="${top + k * cell}" x2="${x + 16}" y2="${top + k * cell}" class="cell-line"/>`;
+                }
+                const ox = 8 + tens * 22 + 14;
+                for (let o = 0; o < ones; o++) {
+                    svg += `<rect x="${ox}" y="${top + cell * 10 - (o + 1) * cell}" width="16" height="${cell}" class="one-cube"/>`;
+                }
+                return svg;
+            }
+            window.renderBlocks = function () {
+                document.getElementById('blocks-52').innerHTML = blocks(5, 2);
+                document.getElementById('blocks-25').innerHTML = blocks(2, 5);
+            };
+
+            // --- Слайд 2: лічильниця (сотні, десятки, одиниці) ---
+            const ROD_X = [70, 180, 290];
+            const ROD_NAMES = ['сотні', 'десятки', 'одиниці'];
+            const PLACE = [100, 10, 1];
+            let abacusValue = 347;
+
+            const FORMS = [['сотня', 'сотні', 'сотень'], ['десяток', 'десятки', 'десятків'], ['одиниця', 'одиниці', 'одиниць']];
+            const plural = (n, i) => `${n} ${FORMS[i][n === 1 ? 0 : (n >= 2 && n <= 4 ? 1 : 2)]}`;
+            const digitsOf = (v) => [Math.floor(v / 100), Math.floor(v / 10) % 10, v % 10];
+            function setStatus(text) { document.getElementById('abacus-status').textContent = text; }
+            function hideAnswer() { document.getElementById('abacus-answer').classList.remove('shown'); }
+
+            window.renderAbacus = function () {
+                const d = digitsOf(abacusValue);
+                let svg = `<rect x="20" y="210" width="320" height="14" rx="4" class="abacus-base"/>`;
+                ROD_X.forEach((x, i) => {
+                    svg += `<line x1="${x}" y1="22" x2="${x}" y2="210" class="rod"/>`;
+                    for (let k = 0; k < d[i]; k++) {
+                        svg += `<ellipse cx="${x}" cy="${199 - k * 19}" rx="28" ry="9" class="bead-${i}"/>`;
+                    }
+                    svg += `<text x="${x}" y="248" class="rod-label">${ROD_NAMES[i]}</text>`;
+                });
+                document.getElementById('abacus-scene').innerHTML = svg;
+            };
+            window.setAbacus = function (v) {
+                abacusValue = v;
+                hideAnswer();
+                setStatus(v === 0 ? 'Стрижні порожні. Куди додамо кульку?' : 'Порахуйте кульки на кожному стрижні.');
+                renderAbacus();
+            };
+            window.changeRod = function (i, delta) {
+                const d = digitsOf(abacusValue);
+                if (delta < 0) {
+                    if (d[i] === 0) { setStatus(`На стрижні «${ROD_NAMES[i]}» кульок уже немає.`); return; }
+                    abacusValue -= PLACE[i];
+                    setStatus('Кульку забрали. Яке число тепер?');
+                } else {
+                    if (abacusValue + PLACE[i] > 999) { setStatus('Більше не вміщується! Потрібен новий розряд — тисячі.'); return; }
+                    abacusValue += PLACE[i];
+                    if (d[i] === 9) setStatus(`10 кульок не буває! ${i === 2 ? '10 одиниць = 1 десяток' : '10 десятків = 1 сотня'} — обмінюємо.`);
+                    else setStatus('Кульку додали. Яке число тепер?');
+                }
+                hideAnswer();
+                renderAbacus();
+            };
+            window.revealNumber = function () {
+                const d = digitsOf(abacusValue);
+                document.getElementById('abacus-number').textContent = String(abacusValue);
+                const parts = d.map((digit, i) => digit * PLACE[i]).filter(p => p > 0);
+                document.getElementById('abacus-sum').textContent = abacusValue === 0
+                    ? 'Кульок немає — це 0.'
+                    : d.map((digit, i) => plural(digit, i)).join(' · ') + (parts.length > 1 ? `  →  ${abacusValue} = ${parts.join(' + ')}` : '');
+                document.getElementById('abacus-answer').classList.add('shown');
+            };
+
+            // --- Слайд 3: десять цифр ---
+            window.renderDigitTiles = function () {
+                let svg = '';
+                for (let k = 0; k <= 9; k++) {
+                    const x = 12 + k * 38;
+                    svg += `<rect x="${x}" y="10" width="32" height="40" rx="6" class="digit-tile"/>`
+                         + `<text x="${x + 16}" y="38" class="digit-tile-num">${k}</text>`;
+                }
+                document.getElementById('digit-tiles').innerHTML = svg;
+            };
+
+            // --- Слайди 4–5: таблиця класів ---
+            const CLASS_NAMES = ['клас мільйонів', 'клас тисяч', 'клас одиниць'];
+            const RANKS = ['С', 'Д', 'О'];
+            function classTable(classes, digits, zeros, x0, y0, highlight) {
+                // classes — індекси класів (0 — мільйони); digits — цифри по клітинках ('' — порожньо)
+                const w = 48, gap = 12;
+                let svg = '';
+                classes.forEach((c, ci) => {
+                    const cx = x0 + ci * (3 * w + gap);
+                    svg += `<rect x="${cx - 4}" y="${y0}" width="${3 * w + 8}" height="112" rx="8" class="class-frame${highlight === c || highlight === 'all' ? ' hl' : ''}"/>`
+                         + `<text x="${cx + 1.5 * w}" y="${y0 + 22}" class="class-name">${CLASS_NAMES[c]}</text>`;
+                    for (let j = 0; j < 3; j++) {
+                        const k = ci * 3 + j, x = cx + j * w;
+                        svg += `<text x="${x + w / 2}" y="${y0 + 42}" class="rank-name">${RANKS[j]}</text>`
+                             + `<rect x="${x + 3}" y="${y0 + 50}" width="${w - 6}" height="50" rx="6" class="cell${zeros.includes(k) ? ' zero' : ''}"/>`
+                             + `<text x="${x + w / 2}" y="${y0 + 85}" class="cell-digit">${digits[k]}</text>`;
+                    }
+                });
+                return svg;
+            }
+            const HIGHLIGHT_BY_STEP = [null, 'all', 0, 1, 2, 'all'];
+            window.renderClasses = function () {
+                const shown = document.querySelectorAll('#steps-read .step.shown').length;
+                document.getElementById('classes-scene').innerHTML =
+                    classTable([0, 1, 2], ['', '', '3', '0', '4', '5', '2', '0', '0'], [], 6, 20, HIGHLIGHT_BY_STEP[shown]);
+            };
+            window.renderTrapTable = function () {
+                document.getElementById('trap-table').innerHTML =
+                    classTable([1, 2], ['', '2', '0', '0', '4', '0'], [3], 46, 85, null);
+            };
+
+            window.nextStep = function (id) {
+                const hidden = document.querySelector(`#${id} .step:not(.shown)`);
+                if (hidden) hidden.classList.add('shown');
+                if (id === 'steps-read') renderClasses();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+            window.resetSteps = function (id) {
+                document.querySelectorAll(`#${id} .step`).forEach(s => s.classList.remove('shown'));
+                if (id === 'steps-read') renderClasses();
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            setAbacus(347);
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

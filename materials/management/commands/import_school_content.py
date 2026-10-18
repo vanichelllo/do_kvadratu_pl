@@ -11,11 +11,18 @@
 
     python manage.py import_school_content content/school/math-5 --check     # лише перевірити
     python manage.py import_school_content content/school/math-5 --price 49  # завантажити
+    python manage.py import_school_content --all --keep-going                # усі класи (так робить деплой)
+
+Деплой (build.sh) запускає команду з --all --keep-going: усе, що злито в main, саме з'являється на сайті.
+Файл із помилками пропускається й не зупиняє деплой. Презентація перезаписується, лише якщо змінився сам файл,
+тож правки уроку в адмінці лишаються до наступної зміни файлу.
 """
+import hashlib
 import json
 import re
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
@@ -28,13 +35,39 @@ class Command(BaseCommand):
     help = 'Перевіряє й завантажує презентації та банки завдань шкільного класу з папки контенту'
 
     def add_arguments(self, parser):
-        parser.add_argument('folder')
+        parser.add_argument('folders', nargs='*')
+        parser.add_argument('--all', dest='all_folders', action='store_true', help='Усі папки з content/school')
+        parser.add_argument('--keep-going', action='store_true',
+                            help='Не зупинятися з помилкою (для деплою): лише вивести, які файли пропущено')
         parser.add_argument('--check', action='store_true', help='Лише перевірити, нічого не записувати')
         parser.add_argument('--publish', action='store_true', help='Опублікувати уроки на вітрині')
         parser.add_argument('--price', type=int, default=None, help='Ціна нових уроків, грн (за замовчуванням 0)')
 
-    def handle(self, folder, check=False, publish=False, price=None, **options):
-        root = Path(folder)
+    def handle(self, folders, all_folders=False, keep_going=False, check=False, publish=False, price=None, **options):
+        roots = [Path(folder) for folder in folders]
+        if all_folders:
+            roots += sorted(p for p in (Path(settings.BASE_DIR) / 'content' / 'school').iterdir() if p.is_dir())
+        if not roots:
+            raise CommandError('Вкажіть папку класу або --all')
+        failed = 0
+        for root in roots:
+            self.stdout.write(self.style.MIGRATE_HEADING(str(root)))
+            try:
+                failed += self.import_folder(root, check, publish, price)
+            except CommandError as exc:
+                if not keep_going:
+                    raise
+                self.stdout.write(self.style.ERROR(f'   помилка: {exc}'))
+                failed += 1
+        if failed and not keep_going:
+            raise CommandError(f'Файлів з помилками: {failed} — їх пропущено.')
+        if failed:
+            self.stdout.write(self.style.WARNING(f'Файлів з помилками: {failed} — їх пропущено.'))
+        else:
+            self.stdout.write(self.style.SUCCESS('Готово.' if not check else 'Перевірку пройдено.'))
+
+    def import_folder(self, root, check, publish, price):
+        """Перевіряє й завантажує одну папку класу; повертає кількість файлів з помилками."""
         meta_path = root / 'meta.json'
         if not meta_path.exists():
             raise CommandError(f'Немає {meta_path}')
@@ -52,17 +85,24 @@ class Command(BaseCommand):
             failed += self.report(path.name, problems, warnings, topic)
             if problems or topic is None or check:
                 continue
+            html = path.read_text(encoding='utf-8')
+            digest = hashlib.sha256(html.encode('utf-8')).hexdigest()
             with transaction.atomic():
                 material = StudyMaterial.objects.filter(curriculum_topic=topic, is_bundle=False).first()
                 if material is None:
                     material = StudyMaterial(curriculum_topic=topic, title=topic.name, price=price or 0,
                                              is_free=not price)
-                material.html_content = path.read_text(encoding='utf-8')
-                if price is not None and material.pk is None:
-                    material.price = price
+                changed = material.html_source_hash != digest
+                if not changed and (not publish or material.is_published):
+                    continue   # файл не змінився — урок (разом із правками в адмінці) не чіпаємо
+                if changed:
+                    material.html_content = html
+                    material.html_source_hash = digest
                 if publish:
                     material.is_published = True
                 material.save()
+                if changed:
+                    self.stdout.write(f'   → презентацію записано: {topic.name}')
 
         for path in sorted(root.glob('bank_*.py'), key=lambda p: natural_key(p.stem)):
             try:
@@ -81,9 +121,7 @@ class Command(BaseCommand):
             added = import_tasks(topic_name, tasks)[1]
             self.stdout.write(f'   → додано завдань: {added}')
 
-        if failed:
-            raise CommandError(f'Файлів з помилками: {failed} — їх пропущено.')
-        self.stdout.write(self.style.SUCCESS('Готово.' if not check else 'Перевірку пройдено.'))
+        return failed
 
     def topic_for(self, stem, topics):
         summary = re.fullmatch(r'summary-(\d+)', stem)

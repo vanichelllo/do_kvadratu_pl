@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Віднімання натуральних чисел | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Відстань між точками на промені */
+        .ray { stroke: currentColor; stroke-width: 2; }
+        .ray-arrow { fill: currentColor; }
+        .ray-tick { stroke: currentColor; stroke-width: 1.5; }
+        .ray-label { fill: currentColor; font-size: 12px; text-anchor: middle; }
+        .pt-a { fill: var(--brand-blue); }
+        .pt-b { fill: var(--brand-green); }
+        .pt-cap { font-size: 17px; font-weight: 800; text-anchor: middle; }
+        .gap-line { stroke: var(--brand-yellow); stroke-width: 4; }
+        .gap-cap { fill: var(--brand-yellow); font-size: 18px; font-weight: 800; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 22px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .diff-answer { font-size: 1.3rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 8px 0; }
+
+        /* Назви компонентів */
+        .term { font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .term-a { fill: var(--brand-blue); }
+        .term-b { fill: var(--brand-green); }
+        .term-s { fill: var(--brand-yellow); }
+        .term-op { fill: currentColor; font-size: 40px; font-weight: 700; text-anchor: middle; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2; }
+        .term-name { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+
+        /* Віднімання в стовпчик */
+        .col-cell { fill: var(--card-bg); stroke: var(--border-color); stroke-width: 1.5; }
+        .col-cell.active { stroke: var(--brand-yellow); stroke-width: 3; }
+        .col-digit { fill: currentColor; font-size: 26px; font-weight: 700; text-anchor: middle; }
+        .col-digit.borrowed { fill: var(--text-muted); text-decoration: line-through; }
+        .col-result { fill: var(--brand-green); font-size: 26px; font-weight: 800; text-anchor: middle; }
+        .col-new { fill: var(--brand-yellow); font-size: 17px; font-weight: 800; text-anchor: middle; }
+        .col-sign { fill: currentColor; font-size: 30px; font-weight: 700; text-anchor: middle; }
+        .col-line { stroke: currentColor; stroke-width: 2.5; }
+        .col-steps { min-height: 6.5em; margin-top: 6px; }
+        .col-steps div { padding: 2px 0; animation: fade 0.3s ease; }
+        .col-steps div:last-child { font-weight: 700; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">На скільки більше? 🤔</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> У мене $83$ наліпки, а в Дмитра — $47$. Я віднімаю і отримую $44$!</div>
+                <div class="bubble right"><span class="who">Дмитро:</span> А як переконатися, що ти не помилилась?</div>
+                <p class="big-question">Яка правильна відповідь? І як її перевірити? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Перевіряємо додаванням! 🎉</div>
+                    <p>$44 + 47 = 91$, а не $83$ — отже, Оля помилилась.</p>
+                    <p>Правильно: $83 - 47 = 36$. Перевірка: $36 + 47 = 83$ ✓</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Відстань між числами 📏</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Ставимо на промінь числа $A$ і $B$. На скільки $A$ більше за $B$? Скажіть, а потім перевіримо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a" style="color:var(--brand-blue)">A</label><input type="range" id="w-a" min="1" max="20" step="1" value="15" oninput="renderGap()"><span id="w-a-val">15</span></div>
+                    <div class="slider-control"><label for="w-b" style="color:var(--brand-green)">B</label><input type="range" id="w-b" min="0" max="15" step="1" value="9" oninput="renderGap()"><span id="w-b-val">9</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealGap()">На скільки більше?</button></p>
+                    <div class="hidden-answer" id="gap-answer">
+                        <div class="diff-answer" id="gap-sign"></div>
+                        <p style="text-align:center" id="gap-check"></p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 140" id="gap-scene" role="img" aria-label="Дві точки на промені і відстань між ними"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Зменшуване, від'ємник, різниця</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Перевірка:</b> різниця $+$ від'ємник $=$ зменшуване.</p>
+                    <p>$a - 0 = a$, $\;a - a = 0$.</p>
+                    <p>Відняти суму можна по черзі: $a - (b + c) = a - b - c.$</p>
+                    <p>Від меншого числа більше не віднімаємо.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" role="img" aria-label="83 мінус 47 дорівнює 36: зменшуване, від'ємник, різниця">
+                        <text x="70" y="80" class="term term-a">83</text>
+                        <text x="140" y="76" class="term-op">−</text>
+                        <text x="210" y="80" class="term term-b">47</text>
+                        <text x="275" y="78" class="term-op">=</text>
+                        <text x="340" y="80" class="term term-s">36</text>
+                        <path d="M40 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M180 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M310 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <text x="70" y="150" class="term-name">зменшуване</text>
+                        <text x="210" y="150" class="term-name">від'ємник</text>
+                        <text x="340" y="150" class="term-name">різниця</text>
+                        <text x="200" y="188" class="term-name" style="font-weight:600">перевірка: 36 + 47 = 83</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Віднімаємо в стовпчик ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як віднімати</div>
+                        <p>Розряд під розрядом, справа наліво. Цифра зверху менша? <b>Займаємо</b> $1$ у сусіднього розряду: $1$ десяток $= 10$ одиниць.</p>
+                    </div>
+                    <div class="col-steps" id="col-steps"></div>
+                </div>
+                <div class="math-widget">
+                    <div class="widget-svg-container"><svg viewBox="0 0 320 210" id="col-scene" role="img" aria-label="Віднімання в стовпчик"></svg></div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="colStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="colReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="colPair()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: «від більшої цифри» ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$52 - 17 = 45$? <b>Ні!</b> Тут від $7$ відняли $2$ — «бо так можна».</p>
+                        <p>Віднімаємо завжди <b>нижню</b> цифру від <b>верхньої</b>. $2$ менше за $7$ — займаємо десяток: $12 - 7 = 5$, далі $4 - 1 = 3$. Відповідь: $35$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перевір додаванням: $45 + 17 = 62$, а треба $52$. Помилку видно одразу!</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" role="img" aria-label="Неправильно 52 мінус 17 дорівнює 45, правильно 35">
+                        <g id="trap-wrong"></g>
+                        <g id="trap-right" transform="translate(205 0)"></g>
+                        <text x="95" y="222" class="svg-caption" style="fill:var(--warning-red)">7 − 2 — ні</text>
+                        <text x="300" y="222" class="svg-caption" style="fill:var(--brand-green)">займаємо десяток</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $84 - 29$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $65$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $55$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $45$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$4$ менше за $9$ — займи десяток. Перевір відповідь додаванням!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$14 - 9 = 5$, $7 - 2 = 5$: $84 - 29 = 55$. Перевірка: $55 + 29 = 84$ ✓</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Від задуманого числа відняли $35$ і отримали $48$. Яке число задумали?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $13$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $83$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $73$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Задумане число — зменшуване. Згадай перевірку: різниця $+$ від'ємник $=$ …</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Зменшуване $=$ різниця $+$ від'ємник: $48 + 35 = 83$. Перевірка: $83 - 35 = 48$ ✓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли зручним способом: $437 - 85 - 15$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $367$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $337$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $357$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $307$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Відняти $85$, а потім $15$ — це те саме, що відняти їхню суму.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$437 - (85 + 15) = 437 - 100 = 337$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли: $1\,000 - 274$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $836$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $736$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $826$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Г) $726$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Займаємо в тисячах: нулі в сотнях і десятках стають дев'ятками. Перевір додаванням!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$1\,000 = 9$ сотень $9$ десятків $10$ одиниць. $10 - 4 = 6$, $9 - 7 = 2$, $9 - 2 = 7$: $726$. Перевірка: $726 + 274 = 1\,000$ ✓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>зменшуване $-$ від'ємник $=$ різниця</p>
+                    <p>Перевірка: різниця $+$ від'ємник $=$ зменшуване.</p>
+                    <p>$a - 0 = a$, $\;a - a = 0$, $\;a - (b + c) = a - b - c$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як віднімати ✍️</div>
+                        <p>У стовпчик справа наліво. Зверху менше — займаємо $1$ у сусіднього розряду. Нулі по дорозі стають $9$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Не віднімай «від більшої цифри»: $52 - 17 = 35$, а не $45$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 2) renderGap();
+                if (currentSlide === 4) renderColumn();
+                if (currentSlide === 5) renderTrap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Слайд 2: на скільки A більше за B ---
+            const RAY_X0 = 25, RAY_DX = 19;
+            const val = (id) => parseInt(document.getElementById(id).value, 10) || 0;
+            window.renderGap = function () {
+                const a = Math.max(1, val('w-a'));
+                const bInput = document.getElementById('w-b');
+                bInput.max = a;                                   // від'ємник не більший за зменшуване
+                if (val('w-b') > a) bInput.value = a;
+                const b = val('w-b');
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('gap-answer').classList.remove('shown');
+                let svg = `<line x1="15" y1="90" x2="425" y2="90" class="ray"/><path d="M430 90 l-10 -6 v12 z" class="ray-arrow"/>`;
+                for (let v = 0; v <= 20; v++) {
+                    const x = RAY_X0 + v * RAY_DX;
+                    svg += `<line x1="${x}" y1="84" x2="${x}" y2="96" class="ray-tick"/><text x="${x}" y="114" class="ray-label">${v}</text>`;
+                }
+                const xa = RAY_X0 + a * RAY_DX, xb = RAY_X0 + b * RAY_DX;
+                if (a > b) svg += `<line x1="${xb}" y1="55" x2="${xa}" y2="55" class="gap-line"/><line x1="${xb}" y1="48" x2="${xb}" y2="62" class="gap-line"/><line x1="${xa}" y1="48" x2="${xa}" y2="62" class="gap-line"/><text x="${(xa + xb) / 2}" y="44" class="gap-cap">?</text>`;
+                svg += `<circle cx="${xb}" cy="90" r="8" class="pt-b"/><text x="${xb}" y="134" class="pt-cap pt-b">B</text>`
+                     + `<circle cx="${xa}" cy="90" r="${a === b ? 5 : 8}" class="pt-a"/><text x="${a === b ? xa + 14 : xa}" y="134" class="pt-cap pt-a">A</text>`;
+                document.getElementById('gap-scene').innerHTML = svg;
+            };
+            window.revealGap = function () {
+                const a = val('w-a'), b = val('w-b');
+                document.getElementById('gap-sign').textContent = `${a} − ${b} = ${a - b}`;
+                document.getElementById('gap-check').textContent = a === b
+                    ? 'Точки збігаються: різниця 0.'
+                    : `Перевірка: ${a - b} + ${b} = ${a} ✓`;
+                const cap = document.querySelector('#gap-scene .gap-cap');
+                if (cap) cap.textContent = a - b;
+                document.getElementById('gap-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: віднімання в стовпчик із займанням ---
+            const PLACES = ['Одиниці', 'Десятки', 'Сотні', 'Тисячі', 'Десятки тисяч'];
+            const PLACES_GEN = ['одиниць', 'десятків', 'сотень', 'тисяч', 'десятків тисяч'];
+            const PAIRS = [[731, 258], [503, 128], [1000, 1]];
+            let pairIndex = 0, shownSteps = 0;
+            function columnSteps(a, b) {
+                // Кожен крок: розряд, цифра відповіді, верхні цифри після займання, пояснення
+                const top = String(a).split('').reverse().map(Number), bot = String(b).split('').reverse().map(Number);
+                const steps = [], resultLen = String(a - b).length;
+                for (let i = 0; i < top.length; i++) {
+                    const y = bot[i] || 0;
+                    let text = `${PLACES[i]}: `;
+                    if (top[i] < y) {
+                        let j = i + 1;
+                        while (top[j] === 0) j++;
+                        text += `${top[i]} менше за ${y} — займаємо 1 у розряді ${PLACES_GEN[j]}`
+                              + (j > i + 1 ? ', а нулі між ними стають 9' : '') + '. ';
+                        top[j] -= 1;
+                        for (let k = j - 1; k > i; k--) top[k] = 9;
+                        top[i] += 10;
+                    }
+                    const d = top[i] - y;
+                    if (i >= resultLen) text += `${top[i]} − ${y} = 0 — нуль на початку числа не пишемо.`;
+                    else text += `${top[i]} − ${y} = ${d}.`;
+                    steps.push({ col: i, digit: i >= resultLen ? null : d, tops: top.slice(), text });
+                }
+                steps.push({ col: -1, tops: top.slice(), text: `Відповідь: ${fmt(a)} − ${fmt(b)} = ${fmt(a - b)}. Перевірка: ${fmt(a - b)} + ${fmt(b)} = ${fmt(a)} ✓` });
+                return steps;
+            }
+            window.renderColumn = function () {
+                const [a, b] = PAIRS[pairIndex];
+                const steps = columnSteps(a, b), shown = steps.slice(0, shownSteps);
+                const n = String(a).length, w = 52, x0 = 60;
+                const xOf = (i) => x0 + (n - 1 - i) * w;
+                const orig = String(a).split('').reverse().map(Number), sb = String(b).split('').reverse();
+                const last = shown[shown.length - 1];
+                const tops = last ? last.tops : orig;
+                const active = last && last.col >= 0 ? last.col : -1;
+                let svg = '';
+                for (let i = 0; i < n; i++) {
+                    const x = xOf(i), changed = tops[i] !== orig[i];
+                    svg += `<rect x="${x + 3}" y="40" width="${w - 6}" height="44" rx="6" class="col-cell${i === active ? ' active' : ''}"/>`
+                         + `<text x="${x + w / 2}" y="72" class="col-digit${changed ? ' borrowed' : ''}">${orig[i]}</text>`
+                         + (changed ? `<text x="${x + w / 2}" y="30" class="col-new">${tops[i]}</text>` : '')
+                         + `<rect x="${x + 3}" y="90" width="${w - 6}" height="44" rx="6" class="col-cell${i === active ? ' active' : ''}"/>`
+                         + `<text x="${x + w / 2}" y="122" class="col-digit">${sb[i] || ''}</text>`;
+                }
+                svg += `<text x="${xOf(n - 1) - 16}" y="120" class="col-sign">−</text>`
+                     + `<line x1="${xOf(n - 1) - 4}" y1="145" x2="${xOf(0) + w}" y2="145" class="col-line"/>`;
+                shown.forEach(s => {
+                    if (s.col >= 0 && s.digit !== null) svg += `<text x="${xOf(s.col) + w / 2}" y="182" class="col-result">${s.digit}</text>`;
+                });
+                document.getElementById('col-scene').innerHTML = svg;
+                const box = document.getElementById('col-steps');
+                box.innerHTML = '';
+                shown.forEach(s => { const div = document.createElement('div'); div.textContent = s.text; box.appendChild(div); });
+                if (!shown.length) box.textContent = `Скільки буде ${fmt(a)} − ${fmt(b)}? Скажіть, а потім показуємо кроки.`;
+            };
+            window.colStep = function () {
+                const [a, b] = PAIRS[pairIndex];
+                shownSteps = Math.min(shownSteps + 1, columnSteps(a, b).length);
+                renderColumn();
+            };
+            window.colReset = function () { shownSteps = 0; renderColumn(); };
+            window.colPair = function () { pairIndex = (pairIndex + 1) % PAIRS.length; shownSteps = 0; renderColumn(); };
+
+            // --- Слайд 5: неправильне і правильне віднімання 52 − 17 ---
+            function stack(result, wrong) {
+                const w = 44, x0 = 70;
+                const rows = [['5', '2'], ['1', '7'], result.split('')];
+                let svg = '';
+                rows.forEach((row, r) => row.forEach((d, i) => {
+                    const y = [30, 80, 156][r];
+                    if (r < 2) svg += `<rect x="${x0 + i * w + 2}" y="${y}" width="${w - 4}" height="42" rx="5" class="col-cell"/>`;
+                    svg += `<text x="${x0 + i * w + w / 2}" y="${y + 31}" class="${r === 2 ? 'col-result' : 'col-digit'}"${r === 2 && wrong ? ' style="fill:var(--warning-red)"' : ''}>${d}</text>`;
+                }));
+                svg += `<text x="${x0 - 14}" y="110" class="col-sign">−</text><line x1="${x0}" y1="134" x2="${x0 + 2 * w}" y2="134" class="col-line"/>`;
+                if (wrong) svg += `<line x1="${x0 - 6}" y1="150" x2="${x0 + 2 * w + 6}" y2="196" class="cross"/>`;
+                else svg += `<text x="${x0 + w * 1.5}" y="24" class="col-new">12</text><text x="${x0 + w / 2}" y="24" class="col-new">4</text>`;
+                return svg;
+            }
+            window.renderTrap = function () {
+                document.getElementById('trap-wrong').innerHTML = stack('45', true);
+                document.getElementById('trap-right').innerHTML = stack('35', false);
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

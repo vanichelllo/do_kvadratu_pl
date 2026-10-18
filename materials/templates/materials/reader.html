@@ -260,18 +260,31 @@
                         padding: 0 !important;
                         z-index: 1000 !important;
                     }
-                    /* ДОДАЄМО ПУСТИЙ ПРОСТІР ЗНИЗУ (БУФЕРНА ЗОНА ДЛЯ ПАНЕЛІ) */
-                    .presentation-viewport {
-                        height: 100vh !important;
-                        max-height: 100vh !important;
-                        padding-bottom: 100px !important;
-                        box-sizing: border-box !important;
+                    /* Гортає плаваюча панель читалки (◀ ⛶ ▶), тож власні кнопки презентації ховаємо, щоб не
+                       дублювались. Підвал лишається смугою під панеллю: зліва лічильник слайдів */
+                    .controls-footer > :not(.slide-counter) { display: none !important; }
+                    .controls-footer {
+                        height: 96px !important;
+                        justify-content: flex-start !important;
+                        flex-shrink: 0 !important;
                     }
+                    @media (max-width: 600px) {
+                        .slide-counter { display: none !important; }
+                    }
+                    /* Слайд займає все між прогрес-баром і підвалом (у старих презентаціях висота була числом) */
                     body {
                         margin: 0;
                         padding: 0;
-                        padding-bottom: 100px !important;
                         overflow: hidden;
+                        height: 100vh;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+                    .presentation-viewport {
+                        flex: 1 1 auto !important;
+                        height: auto !important;
+                        max-height: none !important;
+                        min-height: 0 !important;
                     }
                 </style>
             </head>`;
