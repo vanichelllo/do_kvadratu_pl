@@ -49,6 +49,12 @@
         .r-line span { color: var(--text-muted); font-weight: 600; }
         .solution { margin-top: 10px; padding: 10px 12px; background: var(--bg-light); border-radius: 8px; line-height: 1.55; overflow-x: auto; }
         @media (max-width: 500px) { .grade b { font-size: 1.6rem; } }
+        .flash { background: rgba(39,174,96,0.1); border: 1px solid var(--brand-green); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-weight: 600; }
+        .flash.error { background: rgba(231,76,60,0.08); border-color: var(--red); }
+        .next-steps { text-align: left; }
+        .next-steps h2 { color: var(--brand-blue); font-size: 1.15rem; margin: 0 0 8px; }
+        .next-steps ul { margin: 6px 0; padding-left: 20px; line-height: 1.7; }
+        .next-steps a:not(.btn) { color: var(--brand-blue); font-weight: 600; }
         .who { color: var(--brand-blue); font-weight: 700; margin-bottom: 6px; }
         .report h2 { color: var(--brand-blue); font-size: 1.15rem; margin: 0 0 4px; }
         .report .grade input { width: 70px; font-size: 1.5rem; font-weight: 800; text-align: center; color: var(--brand-blue); border: 2px solid var(--border-color); border-radius: 8px; margin-top: 4px; }
@@ -56,6 +62,10 @@
         .report-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin: 14px 0; text-align: left; font-weight: 600; font-size: 0.9rem; }
         .report-row select, .report-row textarea { width: 100%; margin-top: 4px; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
         .report button { border: none; cursor: pointer; font-size: 1rem; }
+        .report button.btn-secondary { border: 1.5px solid var(--brand-blue); background: none; }
+        .report-row input[type=date] { display: block; margin-top: 4px; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-family: inherit; }
+        .hw-row { align-items: center; }
+        .report .btn-danger { background: none; color: var(--red); border: 1.5px solid var(--red); }
         @media (max-width: 600px) { .report-row { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -65,6 +75,7 @@
     </header>
 
     <div class="container">
+        {% if messages %}{% for message in messages %}<div class="flash {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
         <div class="summary">
             <h1>{{ material.title }}</h1>
             {% if not attempt.pk %}<div class="who">👀 Демонстрація — результат не збережено</div>
@@ -82,7 +93,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <div class="grade-note">Оцінка залежить від того, на якій сходинці вдалося впоратися: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було.</div>
+            <div class="grade-note">Оцінка залежить від того, на якій сходинці вдалося впоратися: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було. Це тренування: оцінку за тему ставить вчитель.</div>
             {% if not attempt.nush_grades %}<p class="score">Оцінки за критеріями для цієї спроби не збережено.</p>{% endif %}
             {% with p=attempt.get_percent %}
             <div class="praise">
@@ -94,6 +105,24 @@
                 <a href="{% url 'cabinet' %}" class="btn btn-secondary">До кабінету</a>
             </div>
         </div>
+
+        {% if stuck or gaps or next_material %}
+        <div class="summary next-steps">
+            <h2>🧭 Що далі</h2>
+            {% if stuck %}
+                <p>Перша сходинка поки не піддалася — це нормально. {% if report_student %}Варто ще раз пояснити тему й розібрати приклади разом.{% else %}Переглянь презентацію уроку ще раз, розбери приклади, а потім спробуй знову.{% endif %}</p>
+                {% if not report_student %}<p><a href="{% url 'material_detail' material.id %}" class="btn btn-secondary">📖 До уроку</a></p>{% endif %}
+            {% endif %}
+            {% if gaps %}
+                <p>У завданнях на повторення були помилки. Варто повторити:</p>
+                <ul>{% for topic, lesson in gaps %}<li>{% if lesson %}<a href="{% url 'material_detail' lesson.id %}">{{ topic.name }}</a>{% else %}{{ topic.name }}{% endif %}</li>{% endfor %}</ul>
+            {% endif %}
+            {% if next_material %}
+                <p>Тему опановано — можна рухатися далі:</p>
+                <p><a href="{% if report_student %}{% url 'practice_session' next_material.id %}?student={{ report_student.id }}{% else %}{% url 'material_detail' next_material.id %}{% endif %}" class="btn btn-primary">➡️ {{ next_material.title }}</a></p>
+            {% endif %}
+        </div>
+        {% endif %}
 
         {% if report_student %}
         <form class="summary report" method="POST" action="{% url 'add_quick_report' %}">
@@ -109,7 +138,7 @@
             </div>
             <div class="report-row">
                 <label>Домашнє завдання
-                    <select name="homework_status">{% for value, label in hw_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+                    <select name="homework_status">{% for value, label in hw_choices %}<option value="{{ value }}"{% if value == hw_default %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
                 </label>
                 <label>Коментар
                     <textarea name="teacher_comment" rows="2" placeholder="Що вийшло, над чим попрацювати…"></textarea>
@@ -117,12 +146,36 @@
             </div>
             <button type="submit" class="btn btn-primary">Зберегти звіт</button>
         </form>
+        <form class="summary report" method="POST" action="{% url 'homework_assign' %}">
+            {% csrf_token %}
+            <h2>🏠 Задати цю практику додому</h2>
+            <input type="hidden" name="student_id" value="{{ report_student.id }}">
+            <input type="hidden" name="material_id" value="{{ material.id }}">
+            <div class="report-row hw-row">
+                <label>Виконати до <input type="date" name="due_date" value="{{ default_due|date:'Y-m-d' }}" required></label>
+                <span class="score">{{ report_student.real_name }} побачить ДЗ у кабінеті. Результатом буде перша спроба вдома.</span>
+            </div>
+            <button type="submit" class="btn btn-secondary">Задати ДЗ</button>
+        </form>
+        <form class="summary report fix" method="POST" action="{% url 'attempt_manage' attempt.id %}">
+            {% csrf_token %}
+            <h2>🛠 Обрали не того учня?</h2>
+            <div class="report-row hw-row">
+                <label>Перенести спробу учневі
+                    <select name="student_id">{% for s in other_students %}<option value="{{ s.id }}">{{ s.real_name }}</option>{% endfor %}</select>
+                </label>
+                <span>
+                    <button type="submit" name="action" value="move" class="btn btn-secondary">Перенести</button>
+                    <button type="submit" name="action" value="delete" class="btn btn-danger" formnovalidate onclick="return confirm('Видалити цю спробу назавжди?');">Видалити спробу</button>
+                </span>
+            </div>
+        </form>
         {% endif %}
 
         {% for r in results %}
-        <div class="result-card {% if r.is_correct %}correct{% elif r.earned %}partial{% endif %}">
+        <div class="result-card {% if r.assisted %}partial{% elif r.is_correct %}correct{% elif r.earned %}partial{% endif %}">
             <div class="r-head">
-                <span>{% if r.is_correct %}✅{% elif r.earned %}🟡{% else %}❌{% endif %} Завдання {{ forloop.counter }} · сходинка {{ r.level }} · {{ r.earned }} з {{ r.max_points }}</span>
+                <span>{% if r.assisted %}🤝{% elif r.is_correct %}✅{% elif r.earned %}🟡{% else %}❌{% endif %} Завдання {{ forloop.counter }} · сходинка {{ r.level }} · {% if r.assisted %}з підказкою вчителя — не враховано{% else %}{{ r.earned }} з {{ r.max_points }}{% endif %}</span>
                 <span class="skill-chip">{{ r.question.get_nush_skill_display }}</span>
             </div>
             <div class="r-text">{{ r.question.text|safe }}</div>

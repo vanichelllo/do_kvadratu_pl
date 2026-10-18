@@ -18,12 +18,12 @@ from django.contrib.auth import get_user_model
 from users.models import PurchaseHistory
 from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
                           validate_school_spec)
-from .practice import describe_correct
+from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework
 )
 
 User = get_user_model()
@@ -358,6 +358,14 @@ class QuestionAdmin(admin.ModelAdmin):
                 request.session[session_key] = {'name': upload.name, 'source': source}
                 context.update(report=build_report(topic_name, tasks), file_name=upload.name)
         return render(request, 'admin/materials/question/import_bank.html', context)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if change:
+            # Виправили відповідь чи варіанти — перерахувати оцінки учнів, яким це завдання траплялося
+            updated = recalculate_attempts(form.instance)
+            if updated:
+                self.message_user(request, f'Перераховано оцінки в спробах учнів: {updated}.')
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         request._admin_question_id = object_id
@@ -726,3 +734,13 @@ def index_with_attention(request, extra_context=None):
 
 
 admin.site.index = index_with_attention
+
+
+@admin.register(Homework)
+class HomeworkAdmin(admin.ModelAdmin):
+    list_display = ('student', 'material', 'due_date', 'created_at', 'attempt')
+    list_select_related = ('student', 'material', 'attempt')
+    list_filter = ('due_date',)
+    search_fields = ('student__real_name', 'material__title')
+    raw_id_fields = ('student', 'material', 'attempt', 'teacher')
+

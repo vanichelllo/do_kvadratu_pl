@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Групове заняття: {{ material.title }} | ДО КВАДРАТУ</title>
+    {% include "_favicons.html" %}
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --text-dark: #2c3e50; --text-muted: #7f8c8d; --font-main: 'Segoe UI', system-ui, sans-serif; }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); margin: 0; }
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 16px; display: flex; align-items: center; height: 60px; font-weight: 800; color: var(--brand-blue); }
+        .container { max-width: 760px; margin: 24px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; }
+        h1 { color: var(--brand-blue); font-size: 1.35rem; margin: 0 0 6px; }
+        .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .grades { color: var(--text-muted); font-size: 0.95rem; }
+        .grades b { color: var(--brand-blue); }
+        a.btn { background: var(--brand-green); color: #fff; text-decoration: none; padding: 9px 16px; border-radius: 10px; font-weight: 700; }
+        .muted { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <header class="navbar">ДО КВАДРАТУ | Групове заняття</header>
+    <div class="container">
+        <div class="card">
+            <h1>{{ material.title }}</h1>
+            <p class="muted">Спроби збережено в акаунтах учнів. У розборі кожного — оцінки, форма звіту заняття і видача ДЗ.</p>
+        </div>
+        {% for student, attempt in rows %}
+        <div class="card row">
+            <div>
+                <b>{{ student.real_name }}</b>
+                <div class="grades">
+                    {% if attempt %}{% for name, grade in attempt.nush_grades %}{{ name }}: <b>{{ grade|default:"—" }}</b>{% if not forloop.last %} · {% endif %}{% endfor %}
+                    {% else %}не розв'язав жодного завдання — нічого не збережено{% endif %}
+                </div>
+            </div>
+            {% if attempt %}<a class="btn" href="{% url 'view_attempt_details' attempt.id %}">Розбір і звіт</a>{% endif %}
+        </div>
+        {% endfor %}
+        <p><a href="{% url 'cabinet' %}">До кабінету</a></p>
+    </div>
+</body>
+</html>

@@ -12,8 +12,10 @@ from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
+from django.db import models
+
 from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, DiagnosticOffer, CurriculumGrade, CurriculumSubject,
-                     CurriculumTopic, GameMistake, MatchItem, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
+                     CurriculumTopic, GameMistake, Homework, MatchItem, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
                      StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
@@ -2462,3 +2464,223 @@ class LessonPracticeTests(BaseTestCase):
         runs = PracticeRun.objects.filter(user=self.pupil)
         self.assertEqual(sorted(r.teacher_id is None for r in runs), [False, True])
         self.assertEqual(runs.get(teacher=self.teacher).state['history'][0]['qid'], lesson_question.id)
+
+
+class LearningSituationsTests(BaseTestCase):
+    """Нестандартні ситуації: тренування для батьків, підказка вчителя, ДЗ, «застряг», прогалини, виправлення, групи."""
+
+    def setUp(self):
+        self.teacher = self.make_user('t2@example.com', is_staff=True)
+        self.pupil = self.make_user('p2@example.com')
+        self.request = TutorStudentRequest.objects.create(user=self.pupil, real_name='Оля', course='grade_5',
+                                                          status='approved')
+        self.topic_old = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.topic = make_school_topic('1.2. Цифри', 5, 102)
+        self.topic_next = make_school_topic('1.3. Порівняння', 5, 103)
+        self.lesson = StudyMaterial.objects.create(title='1.2. Цифри', price=100, is_published=True,
+                                                   curriculum_topic=self.topic)
+        self.old_lesson = StudyMaterial.objects.create(title='1.1. Натуральні', price=0, is_published=True,
+                                                       curriculum_topic=self.topic_old)
+        self.next_lesson = StudyMaterial.objects.create(title='1.3. Порівняння', price=0, is_published=True,
+                                                        curriculum_topic=self.topic_next)
+
+    def bank(self, topic, levels=(1, 2, 3), per=3):
+        for level in levels:
+            for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+                for i in range(per):
+                    q = Question.objects.create(text=f'{topic.id}-{skill}{level}-{i}', question_type='CHOICE',
+                                                curriculum_topic=topic, difficulty=level, nush_skill=skill)
+                    AnswerOption.objects.create(question=q, text='А) 1', is_correct=False)
+                    AnswerOption.objects.create(question=q, text='Б) 2', is_correct=True)
+
+    def answer(self, query='', correct=True, assisted=False, lesson=None):
+        lesson = lesson or self.lesson
+        q = self.client.get(f'/practice/{lesson.id}/{query}').context['question']
+        payload = {'question_id': q.id, 'answer': str(q.options.get(is_correct=correct).id)}
+        if assisted:
+            payload['assisted'] = True
+        data = self.client.post(f'/practice/{lesson.id}/check/{query}', json.dumps(payload),
+                                content_type='application/json').json()
+        return q, data
+
+    def lesson_query(self):
+        return f'?student={self.request.id}'
+
+    def test_parents_see_level_and_trend_not_points(self):
+        self.client.force_login(self.teacher)
+        self.bank(self.topic)
+        for correct in (False, False, False, False):
+            self.answer(self.lesson_query(), correct=correct)
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        for _ in range(7):
+            self.answer(self.lesson_query())
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        response = self.client.get(f'/parents/{self.request.parent_token}/')
+        self.assertContains(response, 'Тренування на платформі')
+        self.assertContains(response, 'початковий → <strong>високий</strong>')
+        self.assertContains(response, 'тему опановано')
+        self.assertNotContains(response, 'балів')
+
+    def test_assisted_task_does_not_move_the_ladder_or_count(self):
+        self.client.force_login(self.teacher)
+        self.bank(self.topic)
+        self.answer(self.lesson_query(), assisted=True)
+        self.answer(self.lesson_query(), assisted=True)
+        run = PracticeRun.objects.get()
+        self.assertEqual((run.state['level'], run.state['ok']), (1, 0))
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual(attempt.max_score, 0)
+        self.assertEqual(attempt.nush_grades, [])
+        # Для учня, що практикується сам, позначка ігнорується
+        self.lesson.is_free = True
+        self.lesson.save()
+        self.client.force_login(self.pupil)
+        self.answer(assisted=True)
+        self.assertNotIn('assisted', PracticeRun.objects.get(teacher=None).state['history'][0])
+
+    def test_homework_flow(self):
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        due = timezone.localdate() + datetime.timedelta(days=3)
+        self.client.post('/homework/assign/', {'student_id': self.request.id, 'material_id': self.lesson.id,
+                                               'due_date': due.isoformat()})
+        hw = Homework.objects.get()
+        self.assertEqual(self.client.get('/cabinet/').context['homeworks'][0].state, 'waiting')
+
+        # Урок платний і не куплений, але ДЗ відкриває практику
+        self.client.force_login(self.pupil)
+        cabinet = self.client.get('/cabinet/')
+        self.assertContains(cabinet, 'Мої домашні завдання')
+        self.answer()
+        self.client.force_login(self.teacher)
+        row = self.client.get('/cabinet/').context['homeworks'][0]
+        self.assertEqual((row.state, row.answered), ('started', 1))
+        self.assertEqual(self.client.get('/cabinet/').context['homeworks'][0].label, '🟠 Почав, не завершив')
+
+        # Вчитель зараховує зроблене
+        self.client.post(f'/homework/{hw.id}/credit/')
+        hw.refresh_from_db()
+        self.assertEqual(hw.attempt.user, self.pupil)
+        self.assertIsNone(hw.attempt.conducted_by)
+        self.assertEqual(self.client.get('/cabinet/').context['homeworks'][0].state, 'done')
+
+    def test_homework_result_is_the_first_attempt_and_home_lesson_gap_warns(self):
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        for _ in range(4):
+            self.answer(self.lesson_query(), correct=False)
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')   # на уроці — початковий рівень
+        Homework.objects.create(teacher=self.teacher, student=self.request, material=self.lesson,
+                                due_date=timezone.localdate())
+        self.client.force_login(self.pupil)
+        for _ in range(7):
+            self.answer()
+        self.client.post(f'/practice/{self.lesson.id}/')
+        first = PracticeAttempt.objects.filter(user=self.pupil, conducted_by=None).get()
+        self.answer()
+        self.client.post(f'/practice/{self.lesson.id}/')   # друга домашня спроба результату ДЗ не змінює
+        self.assertEqual(Homework.objects.get().attempt, first)
+        self.client.force_login(self.teacher)
+        row = self.client.get('/cabinet/').context['homeworks'][0]
+        self.assertIn('Вдома 12', row.warning)
+
+    def test_report_status_comes_from_homework(self):
+        from .homework import report_status
+        self.assertEqual(report_status(self.request), 'not_assigned')
+        Homework.objects.create(student=self.request, material=self.lesson,
+                                due_date=timezone.localdate() - datetime.timedelta(days=1))
+        self.assertEqual(report_status(self.request), 'not_submitted')
+
+    def test_stuck_pupil_and_gaps_are_flagged(self):
+        self.bank(self.topic)
+        self.bank(self.topic_old, levels=(1,))
+        self.client.force_login(self.teacher)
+        for _ in range(16):   # тренажер: 2 спроби на завдання — 8 завдань без правильних
+            self.answer(self.lesson_query(), correct=False)
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        attempt = PracticeAttempt.objects.get()
+        self.assertTrue(attempt.answers_json['stuck'])
+        self.assertEqual(attempt.answers_json['gaps'], [self.topic_old.id])
+        details = self.client.get(f'/attempt/{attempt.id}/')
+        self.assertContains(details, 'Що далі')
+        self.assertContains(details, self.topic_old.name)
+        attention = self.client.get('/cabinet/').context['attention']
+        self.assertEqual(attention[0]['gap_names'], [self.topic_old.name])
+
+    def test_mastered_pupil_gets_next_topic(self):
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        for _ in range(7):
+            self.answer(self.lesson_query())
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        details = self.client.get(f'/attempt/{PracticeAttempt.objects.get().id}/')
+        self.assertEqual(details.context['next_material'], self.next_lesson)
+        self.assertContains(details, f'/practice/{self.next_lesson.id}/?student={self.request.id}')
+
+    def test_teacher_moves_or_deletes_attempt(self):
+        other_user = self.make_user('p3@example.com')
+        other = TutorStudentRequest.objects.create(user=other_user, real_name='Марко', status='approved')
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        self.answer(self.lesson_query())
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        attempt = PracticeAttempt.objects.get()
+        self.client.post(f'/attempt/{attempt.id}/manage/', {'action': 'move', 'student_id': other.id})
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.user, other_user)
+        self.client.post(f'/attempt/{attempt.id}/manage/', {'action': 'delete'})
+        self.assertFalse(PracticeAttempt.objects.exists())
+        self.client.force_login(self.pupil)
+        self.client.post(f'/attempt/1/manage/', {'action': 'delete'})   # учень не може
+
+    def test_fixing_a_question_recalculates_grades(self):
+        from .practice import recalculate_attempts
+        self.bank(self.topic, levels=(1,), per=1)
+        self.client.force_login(self.teacher)
+        q, data = self.answer(self.lesson_query(), correct=False)
+        self.answer(self.lesson_query(), correct=False)
+        self.client.post(f'/practice/{self.lesson.id}/{self.lesson_query()}')
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual(attempt.score, 0)
+        # У банку була помилка: «правильним» мав бути варіант, який обрав учень
+        q.options.update(is_correct=models.Case(models.When(text='А) 1', then=True), default=False))
+        self.assertEqual(recalculate_attempts(q), 1)
+        attempt.refresh_from_db()
+        self.assertEqual(attempt.score, 2)
+
+    def test_units_after_number_are_accepted(self):
+        from .games import short_answer_matches
+        self.assertTrue(short_answer_matches('5 см', '5'))
+        self.assertTrue(short_answer_matches('12,5 кг', '12.5'))
+        self.assertFalse(short_answer_matches('5 x', '5'))
+
+    def test_group_lesson_rotates_pupils_and_keeps_separate_ladders(self):
+        other_user = self.make_user('p4@example.com')
+        other = TutorStudentRequest.objects.create(user=other_user, real_name='Марко', course='grade_5',
+                                                   status='approved')
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        group = f'?g={self.request.id}&g={other.id}'
+        page = self.client.get(f'/practice/{self.lesson.id}/{group}')
+        self.assertEqual(page.context['actor'].student, self.request)
+        self.assertEqual(page.context['next_query'], f'{group}&student={other.id}')
+        self.answer(f'{group}&student={self.request.id}')
+        self.answer(f'{group}&student={self.request.id}')   # Оля піднялась на 2-гу сходинку
+        self.answer(f'{group}&student={other.id}', correct=False)
+        response = self.client.post(f'/practice/{self.lesson.id}/{group}', {'scope': 'group'})
+        self.assertTemplateUsed(response, 'materials/practice_group_results.html')
+        self.assertEqual({a.user for a in PracticeAttempt.objects.all()}, {self.pupil, other_user})
+        self.assertEqual(PracticeRun.objects.filter(finished_at=None).count(), 0)
+
+    def test_review_task_on_top_step_does_not_hide_a_criterion(self):
+        """Повторення на третій сходинці — легке завдання: критерій з нього не вважається «пройденим» на вершині."""
+        self.bank(self.topic)
+        self.bank(self.topic_old, levels=(1,))
+        self.client.force_login(self.teacher)
+        statuses = [self.answer(self.lesson_query())[1]['status'] for _ in range(8)]
+        self.assertEqual(statuses[-1], 'mastered')
+        history = PracticeRun.objects.get().state['history']
+        top = sorted(e['skill'] for e in history if e['difficulty'] == 3)
+        self.assertEqual(top, ['ANALYZE', 'MODEL', 'SOLVE'])
+

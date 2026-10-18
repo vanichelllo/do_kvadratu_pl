@@ -125,6 +125,11 @@
         body.lesson .plot { max-width: 760px; }
         body.lesson .how { font-size: 1rem; }
         .lesson-who { font-weight: 700; color: var(--brand-green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .group-tabs { max-width: 1000px; margin: 12px auto 0; padding: 0 15px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-weight: 700; color: var(--text-muted); }
+        .group-tabs a { text-decoration: none; padding: 6px 14px; border-radius: 20px; border: 2px solid var(--border-color); background: var(--card-bg); color: var(--text-dark); }
+        .group-tabs a.current { background: var(--brand-green); border-color: var(--brand-green); color: #fff; }
+        .assist { display: block; text-align: right; margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+        .assist input { margin-right: 6px; }
         .keys { font-size: 0.8rem; color: var(--text-muted); text-align: right; margin-top: 8px; }
         .key-num { display: inline-block; min-width: 1.4em; font-size: 0.8rem; font-weight: 800; color: var(--text-muted); }
 
@@ -138,10 +143,20 @@
 <body class="{% if actor.lesson %}lesson{% endif %}">
     <header class="navbar">
         <div class="brand-logo">ДО КВАДРАТУ | {{ cfg.title }}</div>
-        {% if actor.demo %}<div class="lesson-who">👀 Демонстрація</div>{% elif actor.lesson %}<div class="lesson-who">👤 {{ actor.student.real_name }}</div>{% endif %}
+        {% if actor.demo %}<div class="lesson-who">👀 Демонстрація</div>{% elif actor.lesson and not actor.group %}<div class="lesson-who">👤 {{ actor.student.real_name }}</div>{% endif %}
+        {% if actor.group %}
+        <button type="button" class="btn-finish" id="btn-finish" onclick="finishPractice(true)">Завершити заняття</button>
+        {% else %}
         <button type="button" class="btn-finish{% if not solved_count %} hidden{% endif %}" id="btn-finish" onclick="finishPractice(true)">Завершити й отримати оцінку</button>
+        {% endif %}
     </header>
-    <form method="POST" id="finish-form">{% csrf_token %}</form>
+    <form method="POST" id="finish-form">{% csrf_token %}{% if actor.group %}<input type="hidden" name="scope" value="group">{% endif %}</form>
+    {% if group_tabs %}
+    <nav class="group-tabs" aria-label="Хто відповідає">
+        <span>Відповідає:</span>
+        {% for s, query, current in group_tabs %}<a href="{{ query }}" class="{% if current %}current{% endif %}">{{ s.real_name }}</a>{% endfor %}
+    </nav>
+    {% endif %}
 
     <div class="container">
         <div class="ladder-block">
@@ -212,21 +227,26 @@
             <div class="form-msg" id="form-msg"></div>
             <div class="actions">
                 <button type="button" class="btn btn-check" id="btn-check">Перевірити</button>
-                <a href="" class="btn btn-next hidden" id="btn-next">Далі →</a>
+                <a href="{{ next_query }}" class="btn btn-next hidden" id="btn-next">Далі →</a>
                 <button type="button" class="btn btn-next hidden" id="btn-result" onclick="finishPractice(false)">Побачити оцінку 🏁</button>
             </div>
+            {% if actor.lesson %}<label class="assist"><input type="checkbox" id="assisted"> 🤝 Розв'язано з підказкою вчителя — не враховувати в оцінку і сходинки</label>{% endif %}
             {% if actor.lesson %}<div class="keys">Клавіші: 1–9 — варіант · Enter — перевірити / далі</div>{% endif %}
         </div>
         {% else %}
         <div class="end-card">
-            {% if state.status == 'mastered' %}
+            {% if actor.group %}
+                <h2>✅ {{ actor.student.real_name }}: практику завершено</h2>
+                <p>{% if state.status == 'mastered' %}🏆 Тему опановано. {% endif %}Оцінки всіх учнів — кнопкою «Завершити заняття» вгорі.</p>
+                <a href="{{ next_query }}" class="btn btn-next">Наступний учень →</a>
+            {% elif state.status == 'mastered' %}
                 <h2>🏆 Тему опановано!</h2><p>{% if actor.lesson %}Усі три сходинки пройдено.{% else %}Ти пройшов усі три сходинки.{% endif %}</p>
             {% elif state.status == 'limit' %}
                 <h2>💪 На сьогодні досить</h2><p>Розв'язано {{ max_tasks }} завдань. Далі — оцінка, а потім можна спробувати ще раз.</p>
             {% else %}
                 <h2>👏 Завдання цієї теми закінчились</h2><p>Подивись оцінку і розбір.</p>
             {% endif %}
-            <button type="button" class="btn btn-next" onclick="finishPractice(false)">Побачити оцінку 🏁</button>
+            {% if not actor.group %}<button type="button" class="btn btn-next" onclick="finishPractice(false)">Побачити оцінку 🏁</button>{% endif %}
         </div>
         {% endif %}
     </div>
@@ -251,10 +271,13 @@
         // На уроці вчитель показує екран і сам натискає — тексти без звертань «натисни», «впиши»
         const LESSON = {{ actor.lesson|yesno:"true,false" }};
         const T = (pupil, lesson) => LESSON ? lesson : pupil;
+        const GROUP = {{ actor.group|yesno:"true,false" }};
         const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined); };
 
         function finishPractice(ask) {
-            if (ask && !confirm('Завершити практику зараз? Оцінка буде за вже розв\'язані завдання.')) return;
+            const question = GROUP ? 'Завершити заняття для всіх учнів групи? Оцінки будуть за вже розв\'язані завдання.'
+                                   : 'Завершити практику зараз? Оцінка буде за вже розв\'язані завдання.';
+            if (ask && !confirm(question)) return;
             document.getElementById('finish-form').submit();
         }
 
@@ -618,7 +641,8 @@
                 const res = await fetch('{{ check_url }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ question_id: card.dataset.qid, answer: answer }),
+                    body: JSON.stringify({ question_id: card.dataset.qid, answer: answer,
+                                           assisted: !!(document.getElementById('assisted') || {}).checked }),
                 });
                 data = await res.json();
                 if (res.status === 409) { location.reload(); return; }
@@ -658,7 +682,7 @@
                 if (data.status === 'mastered') feedback.appendChild(el('div', 'level-msg', '🏆 Тему опановано — усі три сходинки пройдено!'));
                 if (data.status === 'limit') feedback.appendChild(el('div', 'level-msg', '💪 На сьогодні досить — подивись оцінку.'));
                 lock();
-                document.getElementById(data.status === 'active' ? 'btn-next' : 'btn-result').classList.remove('hidden');
+                document.getElementById(data.status === 'active' || GROUP ? 'btn-next' : 'btn-result').classList.remove('hidden');
             }
             typeset(card);
         }

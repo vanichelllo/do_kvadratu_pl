@@ -29,14 +29,14 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import practice
+from . import homework, practice
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    PracticeAttempt, PracticeRun, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
 )
@@ -458,7 +458,8 @@ def diagnostic_choose_topics(request, nmt_topics):
 @login_required
 def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
-    has_access = is_teacher(request.user) or user_owns_material(request.user, material)
+    has_access = (is_teacher(request.user) or user_owns_material(request.user, material)
+                  or homework.grants_access(request.user, material))
 
     if not material.is_published and not has_access:
         raise Http404("Матеріал не знайдено.")
@@ -609,27 +610,40 @@ def practice_session_view(request, material_id):
 
 def practice_access(request, material):
     """Шкільну практику бачить той, хто може відкрити саму тему (як і в practice_session_view)."""
-    has_access = is_teacher(request.user) or user_owns_material(request.user, material)
+    has_access = (is_teacher(request.user) or user_owns_material(request.user, material)
+                  or homework.grants_access(request.user, material))
     return (material.is_published or has_access) and (material.is_free or has_access)
 
 
 class PracticeActor:
     """Для кого йде практика. Учень практикується сам (домашнє завдання). Вчитель на уроці показує екран і сам
-    натискає: обирає учня (?student=<id заявки>) — спроба й оцінки зараховуються учневі, — або демонстрацію
-    без збереження (?demo=1)."""
+    натискає: обирає учня (?student=<id заявки>) — спроба й оцінки зараховуються учневі, — групу учнів
+    (?g=…&g=…&student=<хто відповідає зараз>; у кожного свої сходинки), або демонстрацію без збереження (?demo=1)."""
 
-    def __init__(self, user, teacher=None, student=None, demo=False):
-        self.user, self.teacher, self.student, self.demo = user, teacher, student, demo
+    def __init__(self, user, teacher=None, student=None, demo=False, group=()):
+        self.user, self.teacher, self.student, self.demo, self.group = user, teacher, student, demo, list(group)
 
     @property
     def lesson(self):
         return self.teacher is not None
 
+    def query_for(self, student):
+        group = ''.join(f'g={s.id}&' for s in self.group)
+        return f'?{group}student={student.id}'
+
     @property
     def query(self):
         if self.demo:
             return '?demo=1'
-        return f'?student={self.student.id}' if self.student else ''
+        return self.query_for(self.student) if self.student else ''
+
+    @property
+    def next_query(self):
+        """У групі після завдання відповідає наступний учень."""
+        if not self.group:
+            return self.query
+        index = next((i for i, s in enumerate(self.group) if s.id == self.student.id), -1)
+        return self.query_for(self.group[(index + 1) % len(self.group)])
 
     @classmethod
     def from_request(cls, request):
@@ -638,8 +652,15 @@ class PracticeActor:
             return cls(request.user)
         if request.GET.get('demo') == '1':
             return cls(request.user, teacher=request.user, demo=True)
-        student = (TutorStudentRequest.objects.filter(id=to_int(request.GET.get('student')), status='approved')
-                   .select_related('user').first())
+        approved = TutorStudentRequest.objects.filter(status='approved').select_related('user')
+        ids = [i for i in (to_int(v) for v in request.GET.getlist('g')) if i is not None][:10]
+        by_id = {s.id: s for s in approved.filter(id__in=ids)}
+        group = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+        wanted = to_int(request.GET.get('student'))
+        if group:
+            student = next((s for s in group if s.id == wanted), group[0])
+            return cls(student.user, teacher=request.user, student=student, group=group)
+        student = approved.filter(id=wanted).first()
         return cls(student.user, teacher=request.user, student=student) if student else None
 
 
@@ -672,6 +693,8 @@ def school_practice(request, material, profile):
         run = PracticeRun.objects.create(user=actor.user, teacher=actor.teacher, material=material, profile=profile,
                                          state=practice.new_state())
     if request.method == 'POST':
+        if actor.group and request.POST.get('scope') == 'group':
+            return finish_group(request, material, actor)
         return finish_run(request, run, actor)
 
     state = run.state
@@ -680,7 +703,7 @@ def school_practice(request, material, profile):
         own, review = practice.question_pools(material, profile)
         if not state['history']:
             state['top_skills'] = sorted(practice.top_skills(own))
-        question = practice.next_question(state, own, review, seen_question_ids(actor.user))
+        question, is_review = practice.next_question(state, own, review, seen_question_ids(actor.user))
         if question is None and not state['history']:
             run.delete()
             messages.info(request, "Для цієї теми ще не додано практичних завдань.")
@@ -688,7 +711,7 @@ def school_practice(request, material, profile):
         if question is None:
             state['status'] = 'empty'
         else:
-            entry = practice.start_task(state, question)
+            entry = practice.start_task(state, question, review=is_review)
         run.save(update_fields=['state', 'updated_at'])
 
     question = None
@@ -701,33 +724,125 @@ def school_practice(request, material, profile):
         'task_number': len(state['history']), 'max_tasks': practice.MAX_TASKS, 'levels': practice.LEVELS,
         'solved_count': sum(1 for e in state['history'] if e.get('tries')),
         'check_url': reverse('practice_check', args=[material.id]) + actor.query,
-        'actor': actor,
+        'actor': actor, 'next_query': actor.next_query,
+        'group_tabs': [(s, actor.query_for(s), s.id == actor.student.id) for s in actor.group],
     })
+
+
+def build_attempt(run, actor):
+    """Спроба з розв'язаних завдань практики (ще не збережена) і розбір; None — відповідей немає."""
+    state = run.state
+    history = [entry for entry in state['history'] if entry.get('tries')]
+    if not history:
+        return None, []
+    questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
+    results, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
+    attempt = PracticeAttempt(
+        user=actor.user, conducted_by=actor.teacher, material=run.material, score=total, max_score=maximum, **grades,
+        answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
+                      'history': history, 'level': state['level'], 'status': state['status'],
+                      'stuck': practice.is_stuck(history), 'gaps': practice.gap_topics(history)})
+    return attempt, results
+
+
+def save_attempt(run, attempt):
+    attempt.save()
+    run.finished_at = timezone.now()
+    run.save(update_fields=['finished_at', 'updated_at'])
+    if attempt.conducted_by_id is None:
+        homework.link_attempt(attempt)
 
 
 def finish_run(request, run, actor):
     """Завершити практику: зберегти спробу з оцінками й показати розбір (через redirect — без повторної відправки).
     Демонстрацію не зберігаємо — розбір показуємо одразу."""
-    material, state = run.material, run.state
-    history = [entry for entry in state['history'] if entry.get('tries')]
-    if not history:
+    attempt, results = build_attempt(run, actor)
+    if attempt is None:
         run.delete()
         messages.info(request, "Ще немає жодної відповіді — практику не збережено.")
         return redirect('cabinet')
-    questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
-    results, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
-    attempt = PracticeAttempt(
-        user=actor.user, conducted_by=actor.teacher, material=material, score=total, max_score=maximum, **grades,
-        answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
-                      'history': history, 'level': state['level'], 'status': state['status']})
     if actor.demo:
         run.delete()
         context = school_results_context(request, attempt, results)
-        context['again_url'] = reverse('practice_session', args=[material.id]) + actor.query
+        context['again_url'] = reverse('practice_session', args=[run.material_id]) + actor.query
         return render(request, 'materials/practice_school_results.html', context)
-    attempt.save()
-    run.finished_at = timezone.now()
-    run.save(update_fields=['finished_at', 'updated_at'])
+    save_attempt(run, attempt)
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+def finish_group(request, material, actor):
+    """Групове заняття закінчено: зберегти спроби всіх учнів групи, які щось розв'язали."""
+    rows = []
+    for student in actor.group:
+        member = PracticeActor(student.user, teacher=actor.teacher, student=student)
+        run = active_run(member, material)
+        attempt = build_attempt(run, member)[0] if run else None
+        if attempt is not None:
+            save_attempt(run, attempt)
+        elif run is not None:
+            run.delete()
+        rows.append((student, attempt))
+    return render(request, 'materials/practice_group_results.html', {'material': material, 'rows': rows})
+
+
+@login_required
+@post_required('cabinet')
+def attempt_manage(request, attempt_id):
+    """Вчитель виправляє промах: спробу записано не тому учневі (перенести) або випадково (видалити)."""
+    if not is_teacher(request.user):
+        return redirect('cabinet')
+    attempt = get_object_or_404(PracticeAttempt.objects.select_related('material'), id=attempt_id)
+    if request.POST.get('action') == 'delete':
+        attempt.delete()
+        messages.success(request, f"🗑 Спробу «{attempt.material.title}» видалено.")
+        return redirect('cabinet')
+    student = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')), status='approved')
+    Homework.objects.filter(attempt=attempt).update(attempt=None)
+    attempt.user = student.user
+    attempt.save(update_fields=['user'])
+    if attempt.conducted_by_id is None:
+        homework.link_attempt(attempt)
+    messages.success(request, f"↪ Спробу перенесено: {student.real_name}.")
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+@login_required
+@post_required('cabinet')
+def homework_assign(request):
+    """Задати учневі практику з теми додому до дати."""
+    if not is_teacher(request.user):
+        return redirect('cabinet')
+    student = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')), status='approved')
+    material = get_object_or_404(StudyMaterial, id=to_int(request.POST.get('material_id')))
+    try:
+        due_date = datetime.date.fromisoformat(request.POST.get('due_date', ''))
+    except ValueError:
+        messages.error(request, "Вкажіть дату, до якої виконати ДЗ.")
+        return redirect(safe_back_url(request))
+    if practice.practice_profile(material) is None:
+        messages.error(request, "Домашню практику можна задати лише з теми шкільного курсу.")
+        return redirect(safe_back_url(request))
+    Homework.objects.create(teacher=request.user, student=student, material=material, due_date=due_date)
+    messages.success(request, f"✅ {student.real_name}: задано «{material.title}» до {due_date:%d.%m.%Y}.")
+    return redirect(safe_back_url(request))
+
+
+@login_required
+@post_required('cabinet')
+def homework_credit(request, homework_id):
+    """Учень почав ДЗ і не завершив — зарахувати те, що вже розв'язано."""
+    if not is_teacher(request.user):
+        return redirect('cabinet')
+    hw = get_object_or_404(Homework.objects.select_related('student__user', 'material'), id=homework_id,
+                           attempt__isnull=True)
+    run = (PracticeRun.objects.filter(user=hw.student.user, material=hw.material, teacher__isnull=True,
+                                      finished_at__isnull=True, created_at__gte=hw.created_at).order_by('-id').first())
+    attempt = build_attempt(run, PracticeActor(hw.student.user))[0] if run else None
+    if attempt is None:
+        messages.info(request, "Учень ще не розв'язав жодного завдання.")
+        return redirect('cabinet')
+    save_attempt(run, attempt)
+    messages.success(request, f"✅ Зараховано розв'язане: {hw.student.real_name}, «{hw.material.title}».")
     return redirect('view_attempt_details', attempt_id=attempt.id)
 
 
@@ -770,6 +885,8 @@ def practice_check_view(request, material_id):
     if answer_is_empty(answer):
         return JsonResponse({'error': 'empty'}, status=400)
     entry['tries'].append(answer)
+    if actor.lesson and data.get('assisted') is True:
+        entry['assisted'] = True
     state = run.state
     response = {'correct': practice.is_correct(question, answer),
                 'finished': practice.is_finished(question, entry['tries'], profile)}
@@ -786,6 +903,44 @@ def practice_check_view(request, material_id):
     return JsonResponse(response)
 
 
+def next_material(material):
+    """Наступна тема того самого класу за деревом тем — для учня, який опанував поточну."""
+    topic = material.curriculum_topic
+    chapter = topic.chapter
+    later = (Q(curriculum_topic__chapter__order__gt=chapter.order)
+             | Q(curriculum_topic__chapter__order=chapter.order, curriculum_topic__order__gt=topic.order))
+    return (StudyMaterial.objects.filter(later, is_published=True, is_bundle=False,
+                                         curriculum_topic__chapter__grade=chapter.grade)
+            .order_by('curriculum_topic__chapter__order', 'curriculum_topic__order').defer('html_content').first())
+
+
+def gap_materials(topic_ids):
+    """[(тема, урок або None)] — що повторити за помилками в завданнях на повторення."""
+    topics = {t.id: t for t in CurriculumTopic.objects.filter(id__in=topic_ids)}
+    lessons = {}
+    for m in StudyMaterial.objects.filter(curriculum_topic_id__in=topic_ids, is_published=True, is_bundle=False) \
+            .defer('html_content'):
+        lessons.setdefault(m.curriculum_topic_id, m)
+    return [(topics[t], lessons.get(t)) for t in topic_ids if t in topics]
+
+
+def attention_list(since_days=30):
+    """Учні, на яких варто звернути увагу: застрягли або помиляються в повторенні попередніх тем."""
+    since = timezone.now() - datetime.timedelta(days=since_days)
+    rows = []
+    for attempt in (PracticeAttempt.objects.filter(created_at__gte=since, user__tutor_request__status='approved')
+                    .select_related('user__tutor_request', 'material').defer('material__html_content')
+                    .order_by('-created_at')[:200]):
+        saved = attempt.answers_json or {}
+        if saved.get('mode') in practice.PROFILES and (saved.get('stuck') or saved.get('gaps')):
+            rows.append({'attempt': attempt, 'stuck': saved.get('stuck'), 'gaps': saved.get('gaps') or []})
+    topic_names = dict(CurriculumTopic.objects.filter(id__in={t for r in rows for t in r['gaps']})
+                       .values_list('id', 'name'))
+    for row in rows:
+        row['gap_names'] = [topic_names[t] for t in row['gaps'] if t in topic_names]
+    return rows[:20]
+
+
 def school_results_context(request, attempt, results):
     saved = attempt.answers_json or {}
     context = {
@@ -794,6 +949,8 @@ def school_results_context(request, attempt, results):
         'level': max((r['level'] for r in results if r['earned']), default=0),
         'status': saved.get('status'), 'levels': practice.LEVELS,
         'again_url': reverse('practice_session', args=[attempt.material.id]),
+        'stuck': saved.get('stuck'), 'gaps': gap_materials(saved.get('gaps') or []),
+        'next_material': next_material(attempt.material) if saved.get('status') == 'mastered' else None,
     }
     # Вчитель після уроку: оцінки одразу в звіт заняття учня
     if is_teacher(request.user) and attempt.pk and attempt.user_id != request.user.id:
@@ -801,7 +958,11 @@ def school_results_context(request, attempt, results):
         if student:
             context['report_student'] = student
             context['hw_choices'] = StudentReport.HW_CHOICES
+            context['hw_default'] = homework.report_status(student)
+            context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
             context['again_url'] += f'?student={student.id}'
+            context['other_students'] = TutorStudentRequest.objects.filter(status='approved').exclude(id=student.id) \
+                .order_by('real_name')
     return context
 
 
@@ -1088,7 +1249,24 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 .select_related('curriculum_topic').distinct(),
                 key=lambda m: m.curriculum_topic.order)
 
+        tutor_request = context['tutor_request']
+        if tutor_request and tutor_request.status == 'approved':
+            context['my_homeworks'] = homework.annotate(
+                Homework.objects.filter(student=tutor_request).select_related('student', 'material', 'attempt')
+                .defer('material__html_content')[:10])
+
         if is_teacher(self.request.user):
+            context['attention'] = attention_list()
+            context['homeworks'] = homework.annotate(
+                Homework.objects.select_related('student', 'material', 'attempt')
+                .defer('material__html_content')[:40])
+            context['school_materials'] = sorted(
+                (m for m in StudyMaterial.objects.filter(is_bundle=False, curriculum_topic__isnull=False)
+                 .select_related('curriculum_topic__chapter__grade__subject').defer('html_content')
+                 if practice.practice_profile(m)),
+                key=lambda m: (m.curriculum_grade.subject.order, m.curriculum_grade.order,
+                               m.curriculum_topic.chapter.order, m.curriculum_topic.order))
+            context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
             context['students_attempts'] = PracticeAttempt.objects.filter(
                 user__tutor_request__status='approved'
             ).select_related('user', 'user__tutor_request', 'material').defer(
@@ -1734,6 +1912,9 @@ def parent_dashboard_view(request, parent_token):
         reports = StudentReport.objects.filter(student=student_request).order_by('-date')
         context['reports'] = reports
         context['is_nmt'] = False
+        context['training'] = practice.topic_progress(
+            PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
+            .defer('material__html_content'))
 
     return render(request, 'materials/parent_dashboard.html', context)
 

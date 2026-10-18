@@ -277,6 +277,12 @@
     .score-good { background: #e8f8f5; color: #27ae60; border-color: #27ae60; }
     .score-avg { background: #fef9e7; color: #f39c12; border-color: #f39c12; }
     .score-bad { background: #fdf2e9; color: #e74c3c; border-color: #e74c3c; }
+    .hw-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .hw-form select, .hw-form input { padding: 8px; border: 2px solid #dce3ec; border-radius: 8px; font-family: inherit; max-width: 100%; }
+    .hw-form select[name="material_id"] { flex: 1; min-width: 200px; }
+    .hw-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .hw-link { background: none; border: none; color: #344e86; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.85rem; }
+    .hw-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f5; }
 </style>
 
 <!-- ШАПКА КАБІНЕТУ -->
@@ -331,6 +337,73 @@
         </details>
         {% endif %}
 
+        <!-- ПОТРЕБУЮТЬ УВАГИ (ДЛЯ ВЧИТЕЛЯ) -->
+        {% if attention %}
+        <details class="cab-section" data-section="attention" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>⚠️ Потребують уваги</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            {% for row in attention %}
+                <div class="hw-row">
+                    <div>
+                        <b>{{ row.attempt.user.tutor_request.real_name }}</b> · {{ row.attempt.material.title }}
+                        <div style="font-size: 0.85rem; color: #666;">
+                            {% if row.stuck %}застряг на першій сходинці{% endif %}{% if row.stuck and row.gap_names %}; {% endif %}{% if row.gap_names %}помилки в повторенні: {{ row.gap_names|join:", " }}{% endif %}
+                            · {{ row.attempt.created_at|date:"d.m" }}{% if row.attempt.conducted_by_id %} · на уроці{% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'view_attempt_details' row.attempt.id %}" class="hw-link">Розбір</a>
+                </div>
+            {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- ДОМАШНІ ЗАВДАННЯ (ДЛЯ ВЧИТЕЛЯ) -->
+        {% if my_students %}
+        <details class="cab-section" data-section="homework">
+            <summary><h2 class="cab-section-title"><span>🏠 Домашні завдання</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            <form method="POST" action="{% url 'homework_assign' %}" class="hw-form">
+                {% csrf_token %}
+                <select name="student_id" required aria-label="Учень">
+                    <option value="">Учень…</option>
+                    {% for s in my_students %}{% if s.course != 'nmt' %}<option value="{{ s.id }}">{{ s.real_name }}</option>{% endif %}{% endfor %}
+                </select>
+                <select name="material_id" required aria-label="Тема">
+                    <option value="">Тема…</option>
+                    {% for m in school_materials %}<option value="{{ m.id }}">{{ m.curriculum_grade.short_label }} — {{ m.title }}</option>{% endfor %}
+                </select>
+                <input type="date" name="due_date" value="{{ default_due|date:'Y-m-d' }}" required aria-label="Виконати до">
+                <button type="submit" class="hw-btn">Задати</button>
+            </form>
+            {% if homeworks %}
+            <div class="stats-table-wrapper">
+                <table class="stats-table compact">
+                    <thead><tr><th>Учень</th><th>Тема</th><th>До</th><th>Стан</th></tr></thead>
+                    <tbody>
+                    {% for hw in homeworks %}
+                        <tr>
+                            <td style="font-weight: bold;">{{ hw.student.real_name }}</td>
+                            <td>{{ hw.material.title }}</td>
+                            <td style="white-space: nowrap;">{{ hw.due_date|date:"d.m" }}</td>
+                            <td>
+                                {% if hw.attempt_id %}<a href="{% url 'view_attempt_details' hw.attempt_id %}">{{ hw.label }}</a>{% else %}{{ hw.label }}{% endif %}
+                                {% if hw.state == 'started' %}
+                                    <div style="font-size: 0.8rem; color: #666;">розв'язано завдань: {{ hw.answered }}</div>
+                                    <form method="POST" action="{% url 'homework_credit' hw.id %}" style="margin-top: 4px;">{% csrf_token %}<button type="submit" class="hw-link">Зарахувати зроблене</button></form>
+                                {% endif %}
+                                {% if hw.warning %}<div style="font-size: 0.8rem; color: #c0392b; margin-top: 4px;">⚠ {{ hw.warning }}</div>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            </div>
+        </details>
+        {% endif %}
+
         <!-- УПРАВЛІННЯ УЧНЯМИ ТА ЗВІТИ (ДЛЯ ВЧИТЕЛЯ) -->
         {% if my_students %}
         <details class="cab-section" data-section="students">
@@ -376,6 +449,28 @@
                     </tbody>
                 </table>
             </div>
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- ДОМАШНІ ЗАВДАННЯ УЧНЯ -->
+        {% if my_homeworks %}
+        <details class="cab-section" data-section="my-homework" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>🏠 Мої домашні завдання</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            {% for hw in my_homeworks %}
+                <div class="hw-row">
+                    <div>
+                        <b>{{ hw.material.title }}</b>
+                        <div style="font-size: 0.85rem; color: #666;">до {{ hw.due_date|date:"d.m.Y" }} · {{ hw.label }}</div>
+                    </div>
+                    {% if hw.attempt_id %}
+                        <a href="{% url 'view_attempt_details' hw.attempt_id %}" class="hw-link">Результат</a>
+                    {% else %}
+                        <a href="{% url 'practice_session' hw.material_id %}" class="hw-btn">{% if hw.state == 'started' %}Продовжити{% else %}Почати{% endif %}</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
             </div>
         </details>
         {% endif %}

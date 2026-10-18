@@ -4,6 +4,7 @@
 для учня, що увійшов, кожна відповідь оновлює список його помилок (GameMistake)."""
 import json
 import random
+import re
 from fractions import Fraction
 
 from django.contrib.auth.decorators import login_required
@@ -88,12 +89,19 @@ def _number(text):
         return None
 
 
+# Одиниці виміру, які учні дописують до числа: «5 см», «12 кг», «30 %» — та сама відповідь, що й «5»
+UNIT_SUFFIX = re.compile(r'^\s*(.*?\d)\s*(?:мм|см|дм|км|м|мг|кг|г|т|мл|л|с|хв|год|грн|коп|шт|%|°)\.?[²³23]?\s*$')
+
+
 def short_answer_matches(answer, correct):
-    """«0,5», «0.50» і «1/2» — та сама відповідь; нечислові відповіді порівнюємо як текст."""
+    """«0,5», «0.50» і «1/2» — та сама відповідь; «5 см» зараховується як «5»; нечислові — порівнюємо як текст."""
     answer, correct = str(answer or '').strip(), str(correct or '').strip()
     if not answer:
         return False
     a, c = _number(answer), _number(correct)
+    if a is None and c is not None:
+        unit = UNIT_SUFFIX.match(answer)
+        a = _number(unit.group(1)) if unit else None
     if a is not None and c is not None:
         return a == c
     return answer.replace(',', '.').replace(' ', '').lower() == correct.replace(',', '.').replace(' ', '').lower()

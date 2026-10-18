@@ -650,6 +650,28 @@ class PracticeRun(models.Model):
         return f"{self.user} — {self.material} ({'завершено' if self.finished_at else 'в процесі'})"
 
 
+class Homework(models.Model):
+    """Практика з теми, задана учневі додому до дати. Результат — перша спроба учня після видачі (attempt)."""
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='given_homeworks', verbose_name="Задав")
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='homeworks',
+                                verbose_name="Учень")
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='homeworks',
+                                 verbose_name="Тема (урок)")
+    due_date = models.DateField(verbose_name="Виконати до")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Задано")
+    attempt = models.ForeignKey(PracticeAttempt, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='homeworks', verbose_name="Результат (перша спроба після видачі)")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Домашнє завдання"
+        verbose_name_plural = "Домашні завдання"
+
+    def __str__(self):
+        return f"{self.student.real_name}: {self.material.title} до {self.due_date:%d.%m.%Y}"
+
+
 class StudentPresentation(models.Model):
     objects = WithoutHtmlManager()
 

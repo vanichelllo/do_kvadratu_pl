@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 
 from .expr import expressions_equal
 from .games import record_game_answer, short_answer_matches
-from .models import Question
+from .models import PracticeAttempt, Question
 
 CLASSIC_TYPES = ('CHOICE', 'SHORT', 'MATCH')
 SCHOOL_TYPES = ('MULTI', 'TF', 'FIELDS', 'ERROR', 'ORDER', 'GROUP', 'EXPR', 'POINT', 'COORD')
@@ -99,7 +99,7 @@ def pick(pool, history, seen_ids, level):
     """Спершу критерій, якого найменше було на цій сходинці (а за рівності — загалом), щоб критерії чергувались;
     серед них — ще не бачене учнем завдання."""
     def used(skill):
-        return (sum(1 for e in history if e['skill'] == skill and e['level'] == level),
+        return (sum(1 for e in history if e['skill'] == skill and e.get('difficulty', e['level']) == level),
                 sum(1 for e in history if e['skill'] == skill))
     fewest = min(used(q.nush_skill) for q in pool)
     pool = [q for q in pool if used(q.nush_skill) == fewest]
@@ -112,26 +112,29 @@ def top_skills(own):
 
 
 def next_question(state, own, review, seen_ids):
+    """(завдання, чи це повторення попередньої теми) або (None, False), якщо завдань не лишилось."""
     used = {entry['qid'] for entry in state['history']}
     level = state['level']
     if len(state['history']) % REVIEW_EVERY == REVIEW_EVERY - 1:
         old = [q for q in review if q.id not in used and q.difficulty <= level]
         if old:
-            return pick(old, state['history'], seen_ids, level)
+            return pick(old, state['history'], seen_ids, level), True
     fresh = [q for q in own if q.id not in used]
     # Сходинка без нових завдань — беремо найближчу за складністю
     for distance in range(len(LEVELS)):
         for wanted in (level - distance, level + distance):
             pool = [q for q in fresh if q.difficulty == wanted]
             if pool:
-                return pick(pool, state['history'], seen_ids, level)
-    return None
+                return pick(pool, state['history'], seen_ids, level), False
+    return None, False
 
 
-def start_task(state, question):
+def start_task(state, question, review=False):
     # level — сходинка учня, difficulty — складність самого завдання (різняться, коли на сходинці скінчились завдання)
     entry = {'qid': question.id, 'level': state['level'], 'difficulty': question.difficulty,
              'skill': question.nush_skill, 'tries': [], 'done': False}
+    if review:
+        entry['review_topic'] = question.curriculum_topic_id   # повторення попередньої теми
     if question.question_type == 'ORDER':
         perm = list(range(len(spec_of(question).get('items') or [])))
         while len(perm) > 1 and perm == sorted(perm):
@@ -142,8 +145,14 @@ def start_task(state, question):
 
 
 def finish_task(state, question, entry):
-    """Завдання завершене: рухаємо учня сходинками. Повертає, чи була перша спроба правильною."""
+    """Завдання завершене: рухаємо учня сходинками. Повертає, чи була перша спроба правильною.
+    Завдання, розв'язане з підказкою вчителя на уроці, сходинок не рухає і в оцінку не йде."""
     entry['done'] = True
+    if entry.get('assisted'):
+        entry['first_ok'] = False
+        if state['status'] == 'active' and len(state['history']) >= MAX_TASKS:
+            state['status'] = 'limit'
+        return False
     first_ok = entry['first_ok'] = is_correct(question, entry['tries'][0])
     if first_ok:
         state['ok'], state['bad'] = state['ok'] + 1, 0
@@ -437,6 +446,11 @@ def build_results(questions_by_id, history, profile):
         tries = entry.get('tries') or []
         if q is None or not tries:
             continue
+        if entry.get('assisted'):
+            results.append({'question': q, 'level': entry.get('difficulty', q.difficulty), 'earned': 0, 'max_points': 0,
+                            'is_correct': False, 'assisted': True, 'answers': [describe(q, t) for t in tries],
+                            'correct_text': describe_correct(q)})
+            continue
         earned = earned_points(q, tries, profile)
         first = is_correct(q, tries[0])
         solved = any(is_correct(q, t) for t in tries)
@@ -456,3 +470,92 @@ def record_mistake(user, question, first_ok):
     """«Робота над помилками» вміє лише класичні типи — нові туди не потрапляють."""
     if question.question_type in CLASSIC_TYPES:
         record_game_answer(user, question, first_ok)
+
+
+# ---------- Для батьків: тренування — це рівень і динаміка, а не бали ----------
+
+LEVEL_BANDS = ((3, 'початковий'), (6, 'середній'), (9, 'достатній'), (12, 'високий'))
+
+
+def level_band(grade):
+    """Номер рівня НУШ (0–3) для оцінки 1–12."""
+    return next(i for i, (top, _) in enumerate(LEVEL_BANDS) if grade <= top)
+
+
+def level_name(grade):
+    return LEVEL_BANDS[level_band(grade)][1] if grade else None
+
+
+def overall_grade(attempt):
+    grades = [g for _, g in attempt.nush_grades if g]
+    return round(sum(grades) / len(grades)) if grades else None
+
+
+def topic_progress(attempts):
+    """Тренування по темах: скільки разів, рівень на першій і останній спробі, рівні за критеріями зараз.
+    Перша спроба — чесна відправна точка, далі показуємо, як рівень зріс."""
+    by_material = {}
+    for attempt in sorted(attempts, key=lambda a: a.created_at):
+        if (attempt.answers_json or {}).get('mode') in PROFILES and overall_grade(attempt):
+            by_material.setdefault(attempt.material_id, []).append(attempt)
+    rows = []
+    for items in by_material.values():
+        first, last = items[0], items[-1]
+        first_grade, last_grade = overall_grade(first), overall_grade(last)
+        rows.append({
+            'material': last.material, 'count': len(items), 'date': last.created_at,
+            'first': level_name(first_grade), 'last': level_name(last_grade),
+            'grew': level_band(last_grade) > level_band(first_grade),
+            'fell': level_band(last_grade) < level_band(first_grade),
+            'criteria': [(name, level_name(g)) for name, g in last.nush_grades if g],
+            'mastered': any((a.answers_json or {}).get('status') == 'mastered' for a in items),
+        })
+    rows.sort(key=lambda row: row['date'], reverse=True)
+    return rows
+
+
+# ---------- Сигнали: застряг, прогалини ----------
+
+STUCK_AFTER = 8   # стільки завдань без жодного правильного вище першої сходинки — учень застряг
+
+
+def is_stuck(history):
+    """Учень довго не може піднятися з першої сходинки."""
+    counted = [e for e in history if e.get('tries') and not e.get('assisted')]
+    return len(counted) >= STUCK_AFTER and not any(e.get('first_ok') and e.get('difficulty', 1) >= 2 for e in counted)
+
+
+def gap_topics(history):
+    """Попередні теми, на завданнях повторення з яких учень помилився з першої спроби."""
+    topics = []
+    for e in history:
+        topic = e.get('review_topic')
+        if topic and e.get('tries') and not e.get('first_ok') and not e.get('assisted') and topic not in topics:
+            topics.append(topic)
+    return topics
+
+
+def recalculate_attempts(question):
+    """Після виправлення завдання (хибна правильна відповідь у банку) перерахувати бали й оцінки шкільних спроб,
+    у яких воно траплялося. Шлях сходинками не змінюється — лише те, що зараховано. Повертає кількість спроб."""
+    changed = 0
+    candidates = PracticeAttempt.objects.filter(answers_json__question_ids__icontains=str(question.id))
+    for attempt in candidates:
+        saved = attempt.answers_json or {}
+        history = saved.get('history') or []
+        if saved.get('mode') not in PROFILES or not any(e.get('qid') == question.id for e in history):
+            continue
+        ids = {e['qid'] for e in history}
+        questions_by_id = {q.id: q for q in Question.objects.filter(id__in=ids).prefetch_related('options', 'match_items')}
+        _, total, maximum, grades = build_results(questions_by_id, history, saved['mode'])
+        for entry in history:
+            q = questions_by_id.get(entry['qid'])
+            if q is not None and entry.get('tries') and not entry.get('assisted'):
+                entry['first_ok'] = is_correct(q, entry['tries'][0])
+        attempt.score, attempt.max_score = total, maximum
+        for field, grade in grades.items():
+            setattr(attempt, field, grade)
+        attempt.save(update_fields=['score', 'max_score', 'answers_json', *grades])
+        changed += 1
+    return changed
+
