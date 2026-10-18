@@ -393,32 +393,6 @@
         .audience-card { padding: 22px 18px; }
     }
 
-    /* Цифри під банером */
-    .stats-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 12px;
-        margin: -30px 0 60px;
-    }
-
-    .stat {
-        background: #ffffff;
-        border: 3px solid var(--brand-blue);
-        border-radius: 12px;
-        padding: 16px;
-        text-align: center;
-        color: var(--text-dark);
-        font-weight: 700;
-    }
-
-    .stat strong {
-        display: block;
-        color: var(--brand-blue);
-        font-size: 2rem;
-        font-weight: 900;
-        line-height: 1.1;
-    }
-
     /* Ігри */
     .games-grid-home {
         display: grid;
@@ -581,15 +555,6 @@
     </p>
 </div>
 
-{% if stats.lessons %}
-<div class="stats-strip">
-    <div class="stat"><strong>{{ stats.lessons }}</strong>{{ stats.lessons_word }}</div>
-    {% if stats.tasks %}<div class="stat"><strong>{{ stats.tasks }}</strong>{{ stats.tasks_word }}</div>{% endif %}
-    {% if stats.free %}<div class="stat"><strong>{{ stats.free }}</strong>{{ stats.free_word }}</div>{% endif %}
-    <div class="stat"><strong>4</strong>гри-тренажери</div>
-</div>
-{% endif %}
-
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ (лише в дати акцій) -->
 {% if promo_active or halloween_active %}
 <div class="banners-grid">
@@ -691,7 +656,7 @@
 <p class="section-lead">Уроки шкільної програми додаються поступово — тема за темою.</p>
 <div class="chips">
     {% for grade in school_grades %}
-        <a class="chip" href="{% url 'materials_list' %}?grade={{ grade.id }}">{{ grade.number }} клас · {{ grade.subject.name }} · {{ grade.lessons }} {{ grade.lessons_word }}</a>
+        <a class="chip" href="{% url 'materials_list' %}?grade={{ grade.id }}">{{ grade.number }} клас · {{ grade.subject.name }}</a>
     {% endfor %}
 </div>
 {% endif %}

@@ -2115,9 +2115,9 @@ class DiagnosticOfferTests(BaseTestCase):
         self.assertContains(page, 'Репетиторам і вчителям')
         self.assertContains(page, 'Практика, що підлаштовується під учня')
         self.assertContains(page, f'?grade={topic.chapter.grade_id}')
-        self.assertContains(page, '5 клас · Математика (5-6 класи) · 1 урок<')
+        self.assertContains(page, '5 клас · Математика (5-6 класи)<')
         self.assertNotContains(page, f'?grade={empty.chapter.grade_id}')
-        self.assertContains(page, '<strong>4</strong>уроки й конспекти')
+        self.assertNotContains(page, 'stats-strip')
         self.assertContains(page, 'Тренуйся граючи')
 
     def test_countdown_words_and_storefront_banner(self):
