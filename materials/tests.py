@@ -2967,3 +2967,32 @@ class TutorJourneyTests(BaseTestCase):
         self.assertContains(parents, 'Тренуємо вдома')
         self.assertContains(parents, '<strong>високий</strong>')
         self.assertContains(parents, '📈')
+
+
+class SchoolContentTests(BaseTestCase):
+    """Контент у content/school/* (презентації й банки) має проходити перевірку та імпортуватися."""
+
+    def test_repository_content_passes_checks_and_imports(self):
+        from pathlib import Path
+        from django.core.management import call_command
+        call_command('import_curriculum', stdout=open('/dev/null', 'w'))
+        folders = sorted(p for p in (Path(settings.BASE_DIR) / 'content' / 'school').iterdir() if p.is_dir())
+        self.assertTrue(folders)
+        for folder in folders:
+            with self.subTest(folder=folder.name):
+                call_command('import_school_content', str(folder), stdout=open('/dev/null', 'w'))
+        lesson = StudyMaterial.objects.get(curriculum_topic__name__startswith='1.1. ',
+                                           curriculum_topic__chapter__grade__name='5 клас')
+        self.assertFalse(lesson.is_published)
+        self.assertGreaterEqual(Question.objects.filter(materials=lesson).count(), 45)
+
+    def test_checker_rejects_broken_files(self):
+        from .content_check import check_bank, check_presentation
+        problems, _ = check_presentation('<!DOCTYPE html><html><head></head><body><img src="x.png"></body></html>')
+        self.assertTrue(any('img' in p for p in problems))
+        self.assertTrue(any('keydown' in p for p in problems))
+        bad = [{'type': 'POINT', 'difficulty': 1, 'skill': 'MODEL', 'text': 'x', 'min': 0, 'max': 10, 'step': 1,
+                'answer': 3, 'solution': 's'}]
+        problems, warnings = check_bank(bad)
+        self.assertTrue(any('hint' in p for p in problems))
+        self.assertTrue(any('рекомендовано 45' in w for w in warnings))
