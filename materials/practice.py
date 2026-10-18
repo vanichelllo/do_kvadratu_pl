@@ -79,11 +79,22 @@ def practice_button_label(material):
 
 # ---------- Сходинки ----------
 
-def new_state(top_skills=(), kind='lesson'):
+def new_state(top_skills=(), kind='lesson', level=1):
     """top_skills — критерії, для яких у банку є завдання третьої сходинки: тему опановано, лише коли кожен
-    з них розв'язано на третій сходинці (інакше сильний учень мав би оцінку лише за два критерії)."""
-    return {'level': 1, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active', 'top_skills': sorted(top_skills),
-            'kind': kind}
+    з них розв'язано на третій сходинці (інакше сильний учень мав би оцінку лише за два критерії).
+    level — сходинка, з якої почати (див. resume_level)."""
+    return {'level': level, 'start_level': level, 'ok': 0, 'bad': 0, 'history': [], 'status': 'active',
+            'top_skills': sorted(top_skills), 'kind': kind}
+
+
+def resume_level(previous_state):
+    """Тема йде кілька уроків і ДЗ: нова практика з тієї ж теми починається зі сходинки, на якій учень зупинився
+    минулого разу (тему опановано — з третьої). Узагальнення й діагностика завжди починаються з початку."""
+    if not previous_state or previous_state.get('kind', 'lesson') != 'lesson' or not previous_state.get('history'):
+        return LEVELS[0]
+    if previous_state.get('status') == 'mastered':
+        return LEVELS[-1]
+    return min(max(int(previous_state.get('level') or LEVELS[0]), LEVELS[0]), LEVELS[-1])
 
 
 def max_tries(state, profile):

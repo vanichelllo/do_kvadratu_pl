@@ -2227,8 +2227,30 @@ class SchoolPracticeTests(BaseTestCase):
         self.assertEqual((attempt.score, attempt.max_score), (14, 14))
         details = self.client.get(f'/attempt/{attempt.id}/')
         self.assertContains(details, 'Тему опановано')
-        # Наступний вхід — нова практика з першої сходинки
-        self.assertEqual(self.current(lesson).difficulty, 1)
+        # Наступний вхід (другий урок, ДЗ) — нова практика одразу з третьої сходинки: тему вже опановано
+        self.assertEqual(self.current(lesson).difficulty, 3)
+        self.assertContains(self.client.get(f'/practice/{lesson.id}/'), 'Продовжуємо зі сходинки 3')
+
+    def test_next_practice_resumes_from_the_level_reached(self):
+        topic, lesson = self.algebra8()
+        self.fill_bank(topic)
+        self.answer(lesson)
+        self.answer(lesson)                      # піднявся на сходинку 2
+        self.client.post(f'/practice/{lesson.id}/')   # завершив, не дійшовши до кінця
+        self.assertEqual(self.current(lesson).difficulty, 2)
+        state = self.run_state(lesson)
+        self.assertEqual((state['level'], state['start_level']), (2, 2))
+        self.answer(lesson, correct=False)
+        _, data = self.answer(lesson, correct=False)
+        self.assertEqual(data['level'], 1)       # сходинки працюють як звичайно
+
+    def test_summary_and_first_practice_start_from_the_first_level(self):
+        from .practice import resume_level
+        self.assertEqual(resume_level(None), 1)
+        self.assertEqual(resume_level({'kind': 'summary', 'level': 3, 'history': [{}]}), 1)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 2, 'history': []}), 1)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 2, 'history': [{}]}), 2)
+        self.assertEqual(resume_level({'kind': 'lesson', 'level': 3, 'status': 'mastered', 'history': [{}]}), 3)
 
     def test_slow_pupil_gets_grade_of_the_level_reached(self):
         topic, lesson = self.algebra8()

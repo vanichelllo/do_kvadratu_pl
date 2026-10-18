@@ -700,8 +700,11 @@ def school_practice(request, material, profile):
         return choose_student_page(request, material)
     run = active_run(actor, material)
     if run is None or run.profile != profile:
+        kind = practice.topic_kind(material)
+        previous = next((r.state for r in PracticeRun.objects.filter(user=actor.user, material=material)
+                         .order_by('-id')[:5] if (r.state or {}).get('history')), None)
         run = PracticeRun.objects.create(user=actor.user, teacher=actor.teacher, material=material, profile=profile,
-                                         state=practice.new_state(kind=practice.topic_kind(material)))
+                                         state=practice.new_state(kind=kind, level=practice.resume_level(previous)))
     if request.method == 'POST':
         if actor.group and request.POST.get('scope') == 'group':
             return finish_group(request, material, actor)

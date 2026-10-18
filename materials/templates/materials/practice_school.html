@@ -104,6 +104,7 @@
         .feedback.bad { display: block; border-color: var(--red); background: rgba(231,76,60,0.07); }
         .feedback .solution, .feedback .level-msg { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); }
         .level-msg { font-weight: 700; }
+        .resume-note { font-weight: 700; color: var(--brand-blue); margin-bottom: 4px; }
         .form-msg { color: var(--red); font-weight: 700; margin-top: 8px; min-height: 1.2em; }
 
         .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
@@ -177,6 +178,7 @@
             </div>
             <div class="streak">
                 {% if kind == 'summary' %}Узагальнення: завдання з усіх тем розділу по черзі. {% endif %}
+                {% if state.start_level > 1 and state.history|length <= 1 %}<div class="resume-note">Продовжуємо зі сходинки {{ state.start_level }} — там, де {% if actor.lesson %}учень зупинився{% else %}ти зупинився{% endif %} минулого разу.</div>{% endif %}
                 {% if state.status == 'active' %}
                     Сходинка {{ state.level }} з {{ levels|length }}. Дві правильні відповіді поспіль — і {% if state.level < 3 %}{% if actor.lesson %}вище{% else %}ти вище{% endif %}{% else %}{% if kind == 'summary' %}розділ опановано{% else %}тему опановано{% endif %}{% endif %}:
                     <span class="dot {% if state.ok >= 1 %}on{% endif %}"></span><span class="dot {% if state.ok >= 2 %}on{% endif %}"></span>
