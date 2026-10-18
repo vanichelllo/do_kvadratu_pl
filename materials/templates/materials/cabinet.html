@@ -306,8 +306,10 @@
             <div class="cab-section-body">
                 {% if licenses %}
                 <p style="margin-top: 0;"><b>Ваша підписка:</b>
-                    {% for lic in licenses %}{{ lic.grade.short_label }} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                    {% for lic in licenses %}{% if lic.scope == 'grade' %}{{ lic.grade.short_label }}{% else %}{{ lic.get_scope_display }}{% endif %}{% if lic.plan %} «{{ lic.plan.name }}»{% endif %}{% if lic.is_trial %} (пробна){% endif %} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                    · <a href="{% url 'for_tutors' %}">тарифи й продовження</a>
                 </p>
+                <p><b>Учнів:</b> {{ student_count }}{% if student_limit %} з {{ student_limit }}{% if student_count >= student_limit %} — ліміт вичерпано, нові учні не зможуть приєднатися. <a href="{% url 'for_tutors' %}">Змінити тариф</a>{% endif %}{% else %} (без обмежень){% endif %}</p>
                 {% endif %}
                 <p style="margin-bottom: 6px;"><b>Запросити учня:</b> надішліть учневі це посилання. Після реєстрації він одразу стане вашим учнем і зможе практикуватися в темах вашої підписки безкоштовно.</p>
                 <div class="hw-form">
@@ -343,8 +345,11 @@
         {% if tutor_offer %}
         <div class="cab-section" style="border: 2px dashed var(--brand-blue); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
             <h2 class="cab-section-title" style="margin-top: 0;"><span>🧑‍🏫 Кабінет викладача</span></h2>
-            <p>Презентації для показу на заняттях, практика сходинками для ваших учнів, домашні завдання, групові заняття і звіти для батьків — за підпискою на клас.</p>
-            <p style="margin-bottom: 0;">Щоб підключити, напишіть нам: <a href="{% url 'about' %}">контакти</a>.</p>
+            <p>Презентації для показу на заняттях, практика сходинками для ваших учнів, домашні завдання, групові заняття і звіти для батьків — усі класи 5–11 за однією підпискою.</p>
+            {% if trial_available %}
+            <form method="post" action="{% url 'tutor_trial' %}" style="margin-bottom: 8px;">{% csrf_token %}<button type="submit" class="hw-btn">🎁 Почати пробний період</button></form>
+            {% endif %}
+            <p style="margin-bottom: 0;"><a href="{% url 'for_tutors' %}">Тарифи й деталі →</a></p>
         </div>
         {% endif %}
 

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Для репетиторів — уроки, практика, ДЗ і звіти | ДО КВАДРАТУ{% endblock %}
+{% block content %}
+<style>
+    .ft { max-width: 1000px; margin: 30px auto 60px; padding: 0 16px; }
+    .ft-hero { background: var(--brand-blue); color: #fff; border-radius: 16px; padding: 32px 28px; box-shadow: 8px 8px 0 var(--brand-yellow); }
+    .ft-hero h1 { margin: 0 0 10px; font-size: 1.9rem; color: #fff; }
+    .ft-hero p { margin: 0 0 18px; font-size: 1.1rem; line-height: 1.5; opacity: 0.95; }
+    .ft-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 28px 0; }
+    .ft-card { background: #fff; border: 2px solid #dce3ec; border-radius: 14px; padding: 18px; }
+    .ft-card h3 { margin: 0 0 6px; color: var(--brand-blue); font-size: 1.05rem; }
+    .ft-card p { margin: 0; color: #555; line-height: 1.5; font-size: 0.95rem; }
+    .ft h2 { color: var(--brand-blue); margin: 34px 0 12px; }
+    .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .plan { background: #fff; border: 3px solid var(--brand-blue); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .plan h3 { margin: 0; font-size: 1.3rem; color: var(--brand-blue); }
+    .plan .seats { font-weight: 700; }
+    .plan .price { font-size: 1.6rem; font-weight: 800; }
+    .plan .price small { font-size: 0.9rem; font-weight: 600; color: #666; }
+    .plan form { margin: 0; }
+    .plan button, .ft-trial button { width: 100%; padding: 11px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+    .btn-month { background: var(--brand-blue); color: #fff; }
+    .btn-year { background: var(--brand-yellow); color: var(--brand-blue); }
+    .agree { font-size: 0.8rem; color: #555; display: flex; gap: 6px; align-items: flex-start; }
+    .ft-trial { background: #fff; border: 3px dashed #27ae60; border-radius: 14px; padding: 22px; margin-top: 18px; }
+    .ft-trial button { background: #27ae60; color: #fff; max-width: 360px; }
+    .ft-note { color: #666; font-size: 0.9rem; line-height: 1.5; }
+    .ft-mine { background: #eef7f0; border-radius: 10px; padding: 12px 16px; margin-top: 16px; }
+</style>
+<div class="ft">
+    <div class="ft-hero">
+        <h1>🧑‍🏫 Усе для занять з математики — в одному місці</h1>
+        <p>Інтерактивні презентації для показу на екрані, практика «сходинками» для учнів, домашні завдання, групові заняття й звіти для батьків з оцінками за критеріями НУШ. 5–11 класи, НМТ — додатком.</p>
+        {% if trial_available %}<a href="#trial" class="btn-brand">Спробувати {{ trial_days }} днів безкоштовно</a>{% endif %}
+    </div>
+
+    <div class="ft-grid">
+        <div class="ft-card"><h3>🖥 Урок з показом екрана</h3><p>Презентація на кожну тему програми НУШ: ви показуєте екран і натискаєте, учень відповідає вголос.</p></div>
+        <div class="ft-card"><h3>🪜 Практика сходинками</h3><p>Кожен учень у своєму темпі: правильно — вище, помилка — підказка. 12 типів завдань, не лише тести.</p></div>
+        <div class="ft-card"><h3>👥 Один учень чи група</h3><p>Практика на уроці для обраного учня або групи — оцінки зараховуються кожному.</p></div>
+        <div class="ft-card"><h3>🏠 Домашні завдання</h3><p>Задали тему до дати — бачите, хто почав, хто виконав і де «вдома краще, ніж на уроці».</p></div>
+        <div class="ft-card"><h3>📝 Звіти для батьків</h3><p>Три оцінки НУШ підставляються з практики; батьки бачать звіти, рівень і прогрес за посиланням.</p></div>
+        <div class="ft-card"><h3>🗺 Діагностика й узагальнення</h3><p>Карта прогалин за минулий клас і практика-узагальнення кожного розділу.</p></div>
+    </div>
+
+    {% if demo_lesson %}
+        <p class="ft-note">Подивитися, як виглядає урок: <a href="{% url 'material_detail' demo_lesson.id %}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
+    {% endif %}
+
+    {% if licenses %}
+    <div class="ft-mine">
+        <strong>Ваша підписка:</strong>
+        {% for lic in licenses %}{{ lic.get_scope_display }}{% if lic.plan %} «{{ lic.plan.name }}»{% endif %}{% if lic.is_trial %} (пробна){% endif %} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}.
+        <a href="{% url 'cabinet' %}">До кабінету</a>
+    </div>
+    {% endif %}
+
+    <h2>Тарифи «Школа 5–11»</h2>
+    <p class="ft-note">У кожному тарифі — усі шкільні класи 5–11 і всі можливості. Різниця лише в кількості учнів, яких ви ведете на платформі. Навчальний рік — до 30 червня.</p>
+    {% if school_plans %}
+    <div class="plans">
+        {% for plan in school_plans %}
+        <div class="plan">
+            <h3>{{ plan.name }}</h3>
+            <div class="seats">{% if plan.max_students %}до {{ plan.max_students }} учнів{% else %}учнів без обмежень{% endif %}</div>
+            {% if plan.price_month %}<div class="price">{{ plan.price_month }} ₴ <small>/ місяць</small></div>{% endif %}
+            {% if plan.price_year %}<div class="ft-note">або {{ plan.price_year }} ₴ за навчальний рік</div>{% endif %}
+            {% include "materials/_tutor_buy.html" %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p><strong>Ціни незабаром.</strong> Поки що — пробний період або напишіть нам: <a href="{% url 'about' %}">контакти</a>.</p>
+    {% endif %}
+
+    {% if nmt_plans %}
+    <h2>Додаток «НМТ»</h2>
+    <p class="ft-note">Курс підготовки до НМТ: конспекти всіх тем, практика у форматі НМТ, діагностика. Підключається до будь-якого тарифу «Школа».</p>
+    <div class="plans">
+        {% for plan in nmt_plans %}
+        <div class="plan">
+            <h3>{{ plan.name }}</h3>
+            {% if plan.price_month %}<div class="price">+{{ plan.price_month }} ₴ <small>/ місяць</small></div>{% endif %}
+            {% if plan.price_year %}<div class="ft-note">або +{{ plan.price_year }} ₴ за навчальний рік</div>{% endif %}
+            {% if user.is_authenticated and not has_school %}<p class="ft-note">Спершу оформіть тариф «Школа».</p>
+            {% else %}{% include "materials/_tutor_buy.html" %}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if trial_available %}
+    <div class="ft-trial" id="trial">
+        <h2 style="margin-top: 0;">🎁 Пробний період — {{ trial_days }} днів</h2>
+        <p class="ft-note">Усі класи і НМТ, до {{ trial_students }} учнів. Без оплати й без прив'язки картки. Запросіть учня посиланням і проведіть справжнє заняття.</p>
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'tutor_trial' %}">{% csrf_token %}<button type="submit">Почати пробний період</button></form>
+        {% else %}
+        <a href="{% url 'login' %}?next={% url 'for_tutors' %}%23trial" class="btn-brand">Увійти або зареєструватися</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
