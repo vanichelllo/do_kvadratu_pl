@@ -1200,6 +1200,14 @@ class HomeView(TemplateView):
         for grade in context['school_grades']:
             grade.lessons_word = uk_plural(grade.lessons, 'урок', 'уроки', 'уроків')
         context['nmt_countdown'] = nmt_countdown(0)
+        published = StudyMaterial.objects.filter(is_published=True, is_bundle=False)
+        lessons, free, tasks = published.count(), published.filter(is_free=True).count(), Question.objects.count()
+        context['stats'] = {
+            'lessons': lessons, 'lessons_word': uk_plural(lessons, 'урок і конспект', 'уроки й конспекти',
+                                                          'уроків і конспектів'),
+            'tasks': tasks, 'tasks_word': uk_plural(tasks, 'завдання', 'завдання', 'завдань') + ' для практики',
+            'free': free, 'free_word': uk_plural(free, 'безкоштовний матеріал', 'безкоштовні матеріали',
+                                                 'безкоштовних матеріалів')}
         return context
 
 

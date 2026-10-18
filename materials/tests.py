@@ -2117,6 +2117,8 @@ class DiagnosticOfferTests(BaseTestCase):
         self.assertContains(page, f'?grade={topic.chapter.grade_id}')
         self.assertContains(page, '5 клас · Математика (5-6 класи) · 1 урок<')
         self.assertNotContains(page, f'?grade={empty.chapter.grade_id}')
+        self.assertContains(page, '<strong>4</strong>уроки й конспекти')
+        self.assertContains(page, 'Тренуйся граючи')
 
     def test_countdown_words_and_storefront_banner(self):
         from .views import uk_plural

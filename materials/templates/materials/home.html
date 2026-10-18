@@ -393,6 +393,62 @@
         .audience-card { padding: 22px 18px; }
     }
 
+    /* Цифри під банером */
+    .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
+        margin: -30px 0 60px;
+    }
+
+    .stat {
+        background: #ffffff;
+        border: 3px solid var(--brand-blue);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        color: var(--text-dark);
+        font-weight: 700;
+    }
+
+    .stat strong {
+        display: block;
+        color: var(--brand-blue);
+        font-size: 2rem;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    /* Ігри */
+    .games-grid-home {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .game-tile {
+        background: #f0fff4;
+        border: 3px solid #27c93f;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 5px 5px 0px #27c93f;
+        min-width: 0;
+    }
+
+    .game-tile h3 {
+        color: var(--brand-blue);
+        font-size: 1.2rem;
+        font-weight: 900;
+        margin: 0 0 8px;
+    }
+
+    .game-tile p {
+        margin: 0;
+        color: var(--text-dark);
+        line-height: 1.55;
+    }
+
     /* Блок "Про автора" */
     .about-author {
         background: #f8f9fa;
@@ -525,6 +581,15 @@
     </p>
 </div>
 
+{% if stats.lessons %}
+<div class="stats-strip">
+    <div class="stat"><strong>{{ stats.lessons }}</strong>{{ stats.lessons_word }}</div>
+    {% if stats.tasks %}<div class="stat"><strong>{{ stats.tasks }}</strong>{{ stats.tasks_word }}</div>{% endif %}
+    {% if stats.free %}<div class="stat"><strong>{{ stats.free }}</strong>{{ stats.free_word }}</div>{% endif %}
+    <div class="stat"><strong>4</strong>гри-тренажери</div>
+</div>
+{% endif %}
+
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ (лише в дати акцій) -->
 {% if promo_active or halloween_active %}
 <div class="banners-grid">
@@ -631,6 +696,31 @@
 </div>
 {% endif %}
 
+<!-- ІГРИ -->
+<h2 class="section-title">🎮 Тренуйся граючи</h2>
+<p class="section-lead">Короткі раунди на кілька хвилин — з тем, які відкриті учневі, і з безкоштовних.</p>
+<div class="games-grid-home">
+    <div class="game-tile">
+        <h3>⚡ Математичний спринт</h3>
+        <p>Якомога більше прикладів за 60 секунд. Помилка коштує 3 секунди.</p>
+    </div>
+    <div class="game-tile">
+        <h3>🧩 Пари</h3>
+        <p>З'єднай умови з відповідями — як завдання на відповідність у НМТ.</p>
+    </div>
+    <div class="game-tile">
+        <h3>✍️ Без варіантів</h3>
+        <p>Відповідь вводиш сам — вгадати не вийде.</p>
+    </div>
+    <div class="game-tile">
+        <h3>🔁 Робота над помилками</h3>
+        <p>Завдання, де ти помилився в практиці чи іграх, повертаються, доки не відповіси правильно двічі поспіль.</p>
+    </div>
+</div>
+<div style="text-align: center; margin-bottom: 60px;">
+    <a href="{% url 'game_hub' %}" class="promo-btn" style="background: #27c93f; color: #ffffff; border: 2px solid #1e9930; box-shadow: 4px 4px 0px #1e9930;">Грати ➔</a>
+</div>
+
 <!-- НМТ -->
 <div class="nmt-block">
     <div>
@@ -654,23 +744,42 @@
 
 <!-- ПРО ПЛАТФОРМУ -->
 <h2 class="section-title" style="margin-bottom: 40px;">Власна освітня ІТ-платформа</h2>
-<div class="features-grid">
+<div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));">
     <div class="feature-card feature-card-test">
         <div class="feature-icon">🚀</div>
         <h3 style="color: #ff4757; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Інтерактивні уроки</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Ніяких нудних PDF та паперових підручників. Анімації, рухомі графіки та вбудовані міні-тести — і зручний показ на весь екран.</p>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Ніяких нудних PDF та паперових підручників. Анімації, рухомі графіки, вбудовані міні-тести і показ на весь екран, а конспект у PDF можна завантажити.</p>
     </div>
 
     <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Розумні тренажери</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Адаптивна практика, симулятор НМТ та ігри, які допомагають зрозуміти математику на практиці, а не просто завчити.</p>
+        <div class="feature-icon">📚</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Особистий кабінет</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Бібліотека відкритих тем, результати практики й діагностик з динамікою, домашні завдання, а в учнів викладача — ще й презентації з кожного заняття.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Чесні ціни</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Купуєш лише потрібні теми або пакет тем зі знижкою. Безкоштовні конспекти — для всіх. Оплата карткою через Monobank або з балансу кабінету.</p>
     </div>
 
     <div class="feature-card">
         <div class="feature-icon">📱</div>
-        <h3 style="color: #27c93f; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Кишеньковий помічник</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Бот <span style="font-weight:bold;">@do_kvadratu_bot</span> забезпечує миттєвий доступ до всіх придбаних конспектів, розкладу та домашок прямо у месенджері.</p>
+        <h3 style="color: #27c93f; font-weight: 900; font-size: 1.3rem; margin-top: 0;">Telegram-бот</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;"><span style="font-weight:bold;">@do_kvadratu_bot</span>: кабінет і магазин конспектів прямо в месенджері, швидкий тест рівня, уся безкоштовна база НМТ одним файлом і запис на заняття.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🛟</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Помилка в завданні?</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 0;">Кнопка «Повідомити про помилку» прямо в практиці — завдання перевірять і виправлять.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">👨‍🏫</div>
+        <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Заняття з автором</h3>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 18px; flex-grow: 1;">Індивідуальні уроки онлайн на цій самій платформі: звіти батькам після кожного заняття й практика вдома.</p>
+        <a href="{% url 'booking' %}" class="promo-btn" style="background: var(--brand-yellow); color: var(--brand-blue); border: 2px solid var(--brand-blue); box-shadow: 4px 4px 0px var(--brand-blue); font-size: 0.9rem; padding: 10px 16px;">Записатися ➔</a>
     </div>
 </div>
 
