@@ -29,6 +29,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
+from . import practice
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -465,6 +466,10 @@ def practice_session_view(request, material_id):
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
         return redirect('material_detail', pk=material.id)
 
+    profile = practice.practice_profile(material)
+    if profile:
+        return school_practice(request, material, profile)
+
     if request.method == 'POST':
         total_score = 0
         max_score = 0
@@ -600,6 +605,97 @@ def practice_session_view(request, material_id):
         'q_short': q_short, 'question_ids_str': question_ids_str, 'total_selected': len(selected_questions)
     }
     return render(request, 'materials/practice_session.html', context)
+
+
+def practice_access(request, material):
+    """Шкільну практику бачить той, хто може відкрити саму тему (як і в practice_session_view)."""
+    has_access = is_teacher(request.user) or user_owns_material(request.user, material)
+    return (material.is_published or has_access) and (material.is_free or has_access)
+
+
+def school_practice(request, material, profile):
+    cfg = practice.PROFILES[profile]
+    key = practice.session_key(material)
+
+    if request.method == 'POST':
+        state = request.session.get(key)
+        ids = (state or {}).get('ids') or []
+        questions = list(questions_in_order(ids))
+        if not questions:
+            messages.info(request, "Цю практику вже завершено або вона застаріла — почніть нову.")
+            return redirect('practice_session', material_id=material.id)
+
+        if cfg['step_by_step']:
+            tries = state.get('tries') or {}
+        else:
+            tries = {str(q.id): [practice.answer_from_post(q, request.POST)] for q in questions}
+            for q in questions:
+                practice.record_mistakes(request.user, q, tries[str(q.id)])
+
+        results, total, maximum, grades = practice.build_results(questions, tries, profile)
+        attempt = PracticeAttempt.objects.create(
+            user=request.user, material=material, score=total, max_score=maximum, **grades,
+            answers_json={'mode': profile, 'question_ids': ','.join(str(q.id) for q in questions), 'tries': tries})
+        request.session.pop(key, None)
+        return render(request, 'materials/practice_school_results.html', school_results_context(attempt, results))
+
+    questions = practice.select_questions(material, profile, seen_question_ids(request.user))
+    if not questions:
+        messages.info(request, "Для цієї теми ще не додано практичних завдань.")
+        return redirect('cabinet')
+
+    request.session[key] = {'ids': [q.id for q in questions], 'tries': {}}
+    return render(request, 'materials/practice_school.html', {
+        'material': material, 'questions': questions, 'profile': profile, 'cfg': cfg,
+        'check_url': reverse('practice_check', args=[material.id]),
+    })
+
+
+@login_required
+def practice_check_view(request, material_id):
+    """Перевірка однієї відповіді в покроковій практиці (5–9 кл.). Правильну відповідь і розв'язання
+    повертаємо лише тоді, коли спроби на це завдання закінчились."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+    material = get_object_or_404(StudyMaterial, id=material_id)
+    profile = practice.practice_profile(material)
+    if not profile or not practice.PROFILES[profile]['step_by_step'] or not practice_access(request, material):
+        raise Http404
+    try:
+        data = json.loads(request.body)
+        question_id = int(data.get('question_id'))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'bad request'}, status=400)
+
+    key = practice.session_key(material)
+    state = request.session.get(key)
+    if not state or question_id not in state.get('ids', []):
+        return JsonResponse({'error': 'stale'}, status=409)
+    question = get_object_or_404(Question.objects.prefetch_related('options', 'match_items'), id=question_id)
+
+    tries = state['tries'].setdefault(str(question_id), [])
+    if practice.is_finished(question, [practice.clean_answer(question, t) for t in tries], profile):
+        return JsonResponse({'error': 'finished'}, status=409)
+    answer = practice.clean_answer(question, data.get('answer'))
+    tries.append(answer)
+    request.session.modified = True
+
+    points = practice.answer_points(question, answer)
+    finished = practice.is_finished(question, tries, profile)
+    response = {'correct': points == practice.POINTS[question.question_type], 'finished': finished}
+    if finished:
+        practice.record_mistakes(request.user, question, tries)
+        response.update(practice.correct_answer(question), solution=question.solution)
+    else:
+        response['hint'] = question.hint or practice.DEFAULT_HINT
+    return JsonResponse(response)
+
+
+def school_results_context(attempt, results):
+    return {
+        'material': attempt.material, 'attempt': attempt, 'results': results,
+        'profile': (attempt.answers_json or {}).get('mode'),
+    }
 
 
 # ==========================================
@@ -1398,6 +1494,11 @@ def view_attempt_details(request, attempt_id):
         return redirect('cabinet')
 
     questions = questions_in_order(parse_id_list(saved_answers.get('question_ids', '')))
+
+    mode = saved_answers.get('mode')
+    if mode in practice.PROFILES:
+        results = practice.build_results(questions, saved_answers.get('tries') or {}, mode)[0]
+        return render(request, 'materials/practice_school_results.html', school_results_context(attempt, results))
 
     results_data = []
     for q in questions:

@@ -111,6 +111,12 @@
                             <div class="progress">
                                 <div class="progress-bar" role="progressbar" style="width: {{ attempt.get_percent }}%;"></div>
                             </div>
+                            {% if attempt.nush_grades %}
+                            <div class="stat-row mt-2">
+                                <span>Оцінки НУШ:</span>
+                                <strong>{% for name, grade in attempt.nush_grades %}{{ name }} {{ grade|default:"—" }}{% if not forloop.last %} · {% endif %}{% endfor %}</strong>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

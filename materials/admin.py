@@ -289,7 +289,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('short_text', 'id', 'topic_name', 'question_type', 'difficulty', 'health')
     list_select_related = ('curriculum_topic',)
     list_filter = ('curriculum_topic__chapter__grade', TopicOfGradeFilter,
-                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', HasPictureFilter, DuplicateTextFilter)
+                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', 'nush_skill', HasPictureFilter, DuplicateTextFilter)
     # Пошук і за назвою теми: «21» або «логарифм»
     search_fields = ('text', 'curriculum_topic__name')
     autocomplete_fields = ['curriculum_topic']
@@ -298,6 +298,7 @@ class QuestionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('text', 'question_type', 'difficulty', 'curriculum_topic', 'materials', 'image',
                            'svg_code', 'correct_short_answer')}),
+        ('Шкільна практика (5–11 класи)', {'fields': ('nush_skill', 'hint', 'solution')}),
         ('Попередній перегляд (збережена версія)', {'fields': ('preview',)}),
     )
     filter_horizontal = ('materials',)

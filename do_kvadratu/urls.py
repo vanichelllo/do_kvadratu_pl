@@ -47,6 +47,7 @@ from materials.views import (
     pay_with_mono,
     payment_result,
     practice_session_view,
+    practice_check_view,
     remove_from_cart,
     report_question_error,
     request_tutor_student_status,
@@ -83,6 +84,7 @@ urlpatterns = [
 
     path('download/<int:material_id>/', download_material_view, name='download_material'),
     path('practice/<int:material_id>/', practice_session_view, name='practice_session'),
+    path('practice/<int:material_id>/check/', practice_check_view, name='practice_check'),
     path('api/bot/library/<str:telegram_id>/', api_bot_user_library),
     path('material/<int:pk>/', MaterialDetailView.as_view(), name='material_detail'),
     path('about/', AboutView.as_view(), name='about'),

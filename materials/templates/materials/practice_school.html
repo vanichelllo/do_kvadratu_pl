@@ -1,0 +1,349 @@
+{% load question_tags %}<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ cfg.title }}: {{ material.title }} | ДО КВАДРАТУ</title>
+    {% include "_favicons.html" %}
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --red: #e74c3c; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --text-dark: #2c3e50; --text-muted: #7f8c8d; --font-main: 'Segoe UI', system-ui, sans-serif; }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); margin: 0; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 60px; position: sticky; top: 0; z-index: 100; }
+        .brand-logo { font-weight: 800; color: var(--brand-blue); }
+        .btn-exit { color: var(--red); text-decoration: none; font-weight: bold; border: 1px solid var(--red); padding: 6px 14px; border-radius: 6px; }
+        .progress-container { height: 6px; background: var(--border-color); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .container { max-width: 800px; margin: 24px auto; padding: 0 15px; }
+        .header-block { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; text-align: center; }
+        .header-block h1 { margin: 0 0 8px; color: var(--brand-blue); font-size: 1.4rem; }
+        .badge { display: inline-block; background: rgba(39,174,96,0.1); color: var(--brand-green); padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        .criteria-note { color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; }
+
+        .question-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
+        .step-mode .question-card { display: none; }
+        .step-mode .question-card.current { display: block; }
+        .q-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; margin-bottom: 14px; }
+        .q-number { font-weight: 900; color: var(--brand-blue); }
+        .skill-chip { font-size: 0.75rem; font-weight: 700; color: var(--brand-blue); background: var(--bg-light); padding: 3px 9px; border-radius: 12px; }
+        .btn-error { background: none; border: none; color: var(--red); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.85rem; padding: 0; }
+        .q-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 14px; overflow-x: auto; }
+        .q-image { max-width: 100%; border-radius: 8px; margin-bottom: 14px; }
+        .q-svg { display: flex; justify-content: center; margin-bottom: 14px; background: var(--bg-light); border-radius: 8px; padding: 10px; }
+        .q-svg svg { max-width: 100%; height: auto; }
+
+        .option-label { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; margin-bottom: 8px; background: var(--bg-light); transition: 0.2s; }
+        .option-label:hover { border-color: var(--brand-blue); }
+        .option-label.right { border-color: var(--brand-green); background: rgba(39,174,96,0.08); }
+        .option-label.wrong { border-color: var(--red); background: rgba(231,76,60,0.08); }
+        .option-label.disabled { opacity: 0.55; cursor: default; }
+        input[type="radio"] { accent-color: var(--brand-blue); transform: scale(1.2); }
+
+        .match-options { background: var(--bg-light); padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; }
+        .match-options p { margin: 4px 0; }
+        .match-wrap { overflow-x: auto; }
+        .match-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .match-table th, .match-table td { border: 1px solid var(--border-color); padding: 8px; }
+        .match-table th { background: var(--bg-light); color: var(--brand-blue); }
+        .match-table td:first-child { text-align: left; font-weight: bold; }
+        .match-table td.right { background: rgba(39,174,96,0.18); }
+
+        .short-wrap { text-align: center; }
+        .short-input { width: 100%; max-width: 220px; padding: 12px; font-size: 1.1rem; border: 2px solid var(--brand-blue); border-radius: 8px; text-align: center; }
+        .short-input.right { border-color: var(--brand-green); }
+        .short-input.wrong { border-color: var(--red); }
+        .short-note { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+
+        .feedback { display: none; margin-top: 14px; border-radius: 8px; padding: 12px 15px; border-left: 5px solid; line-height: 1.55; overflow-x: auto; }
+        .feedback.ok { display: block; border-color: var(--brand-green); background: rgba(39,174,96,0.08); }
+        .feedback.hint { display: block; border-color: var(--brand-yellow); background: rgba(243,156,18,0.1); }
+        .feedback.bad { display: block; border-color: var(--red); background: rgba(231,76,60,0.07); }
+        .feedback .solution { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); }
+
+        .step-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+        .btn { border: none; border-radius: 10px; padding: 12px 22px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+        .btn-check { background: var(--brand-blue); color: #fff; }
+        .btn-next { background: var(--brand-green); color: #fff; display: none; }
+        .btn:disabled { opacity: 0.6; cursor: default; }
+        .btn-submit { display: block; width: 100%; background: var(--brand-green); color: #fff; border: none; padding: 16px; font-size: 1.15rem; font-weight: bold; border-radius: 12px; cursor: pointer; margin: 20px 0 50px; }
+        .form-msg { color: var(--red); font-weight: 700; margin-top: 8px; min-height: 1.2em; }
+
+        @media (max-width: 600px) {
+            .question-card { padding: 16px; }
+            .step-actions .btn { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand-logo">ДО КВАДРАТУ | {{ cfg.title }}</div>
+        <a href="{% url 'cabinet' %}" class="btn-exit" onclick="return confirm('Вийти? Цю спробу не буде збережено.');">Вийти</a>
+    </header>
+    {% if cfg.step_by_step %}<div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>{% endif %}
+
+    <div class="container">
+        <div class="header-block">
+            <h1>{{ material.title }}</h1>
+            {% if profile == 'A' %}
+                <span class="badge">{{ questions|length }} завдань · помилився — отримаєш підказку і ще одну спробу</span>
+            {% elif profile == 'B' %}
+                <span class="badge">{{ questions|length }} завдань по одному · після відповіді — розв'язання</span>
+            {% else %}
+                <span class="badge">{{ questions|length }} завдань · розбір після завершення</span>
+            {% endif %}
+            <div class="criteria-note">Оцінка 1–12 за трьома критеріями НУШ: моделювання, розв'язування, аналіз результатів.</div>
+        </div>
+
+        <form method="POST" id="practice-form" class="{% if cfg.step_by_step %}step-mode{% endif %}">
+            {% csrf_token %}
+            {% for q in questions %}
+            <div class="question-card{% if forloop.first %} current{% endif %}" data-qid="{{ q.id }}" data-type="{{ q.question_type }}">
+                <div class="q-head">
+                    <div class="q-number">Завдання {{ forloop.counter }} з {{ questions|length }}</div>
+                    <span class="skill-chip">{{ q.get_nush_skill_display }}</span>
+                    <button type="button" class="btn-error" onclick="openErrorModal({{ q.id }})">⚠️ Помилка?</button>
+                </div>
+                <div class="q-text">{{ q.text|safe }}</div>
+                {% if q.svg_code %}
+                    <div class="q-svg">{{ q.svg_code|safe }}</div>
+                {% elif q.image %}
+                    <img src="{{ q.image.url }}" class="q-image" alt="Малюнок до завдання">
+                {% endif %}
+
+                {% if q.question_type == 'CHOICE' %}
+                    {% shuffled_options q as choice_options %}
+                    {% for opt in choice_options %}
+                    <label class="option-label" data-option="{{ opt.id }}">
+                        <input type="radio" name="q_{{ q.id }}" value="{{ opt.id }}">
+                        <span>{{ opt.display_text|safe }}</span>
+                    </label>
+                    {% endfor %}
+                {% elif q.question_type == 'MATCH' %}
+                    <div class="match-options">
+                        {% for opt in q.options.all %}<p>{{ opt.text|safe }}</p>{% endfor %}
+                    </div>
+                    <div class="match-wrap">
+                        <table class="match-table">
+                            <thead><tr><th></th>{% for opt in q.options.all %}<th>{{ opt.text|slice:":1" }}</th>{% endfor %}</tr></thead>
+                            <tbody>
+                            {% for item in q.match_items.all %}
+                                <tr data-item="{{ item.id }}">
+                                    <td>{{ item.text|safe }}</td>
+                                    {% for opt in q.options.all %}<td data-option="{{ opt.id }}"><input type="radio" name="match_{{ item.id }}" value="{{ opt.id }}" aria-label="{{ opt.text|slice:':1' }}"></td>{% endfor %}
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="short-wrap">
+                        <div class="short-note">Впиши відповідь (число; дріб — через кому):</div>
+                        <input type="text" name="q_{{ q.id }}" class="short-input" autocomplete="off" inputmode="decimal">
+                    </div>
+                {% endif %}
+
+                {% if cfg.step_by_step %}
+                    <div class="feedback" aria-live="polite"></div>
+                    <div class="form-msg"></div>
+                    <div class="step-actions">
+                        <button type="button" class="btn btn-check">Перевірити</button>
+                        <button type="button" class="btn btn-next">{% if forloop.last %}Завершити ✅{% else %}Далі →{% endif %}</button>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if not cfg.step_by_step %}
+                <div class="form-msg" id="test-msg"></div>
+                <button type="submit" class="btn-submit">✅ Завершити й побачити розбір</button>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Повідомлення про помилку в завданні -->
+    <div id="errorModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 26px; border-radius: 12px; width: 90%; max-width: 400px;">
+            <h3 style="margin-top: 0; color: var(--brand-blue);">Повідомити про помилку</h3>
+            <p style="font-size: 0.9rem; color: #666;">Що не так із завданням: умова, варіанти, відповідь, малюнок?</p>
+            <textarea id="errorMessage" rows="4" style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+            <input type="hidden" id="errorQuestionId">
+            <div style="display: flex; gap: 12px; margin-top: 14px;">
+                <button type="button" class="btn btn-check" style="flex: 1;" onclick="submitError()">Надіслати</button>
+                <button type="button" class="btn" style="flex: 1; background: #e1e1e1;" onclick="closeErrorModal()">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const form = document.getElementById('practice-form');
+        const cards = Array.from(document.querySelectorAll('.question-card'));
+        const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(el ? [el] : undefined); };
+
+        function readAnswer(card) {
+            const qid = card.dataset.qid;
+            if (card.dataset.type === 'CHOICE') {
+                const checked = card.querySelector(`input[name="q_${qid}"]:checked`);
+                return checked ? checked.value : null;
+            }
+            if (card.dataset.type === 'MATCH') {
+                const pairs = {};
+                for (const row of card.querySelectorAll('tr[data-item]')) {
+                    const checked = row.querySelector('input:checked');
+                    if (!checked) return null;
+                    pairs[row.dataset.item] = checked.value;
+                }
+                return pairs;
+            }
+            const value = card.querySelector('.short-input').value.trim();
+            return value || null;
+        }
+
+        {% if cfg.step_by_step %}
+        let current = 0;
+        const progress = document.getElementById('progress-bar');
+        const showCard = (i) => {
+            cards.forEach((c, k) => c.classList.toggle('current', k === i));
+            progress.style.width = `${i / cards.length * 100}%`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        function lock(card) {
+            card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+            card.querySelectorAll('.option-label').forEach(l => l.classList.add('disabled'));
+            card.querySelector('.btn-check').style.display = 'none';
+            card.querySelector('.btn-next').style.display = 'inline-block';
+        }
+
+        function showCorrect(card, data) {
+            if (card.dataset.type === 'CHOICE' && data.option_id) {
+                const right = card.querySelector(`.option-label[data-option="${data.option_id}"]`);
+                if (right) right.classList.add('right');
+            } else if (card.dataset.type === 'MATCH' && data.pairs) {
+                for (const [item, option] of Object.entries(data.pairs)) {
+                    const cell = card.querySelector(`tr[data-item="${item}"] td[data-option="${option}"]`);
+                    if (cell) cell.classList.add('right');
+                }
+            }
+        }
+
+        function markAnswer(card, ok) {
+            if (card.dataset.type === 'CHOICE') {
+                const checked = card.querySelector('input:checked');
+                if (checked) {
+                    const label = checked.closest('.option-label');
+                    label.classList.add(ok ? 'right' : 'wrong');
+                    if (!ok) { checked.checked = false; checked.disabled = true; label.classList.add('disabled'); }
+                }
+            } else if (card.dataset.type === 'SHORT') {
+                const input = card.querySelector('.short-input');
+                input.classList.remove('right', 'wrong');
+                input.classList.add(ok ? 'right' : 'wrong');
+            }
+        }
+
+        async function checkCard(card) {
+            const msg = card.querySelector('.form-msg');
+            const answer = readAnswer(card);
+            if (answer === null) { msg.textContent = card.dataset.type === 'MATCH' ? 'Обери відповідь для кожного рядка.' : 'Спершу дай відповідь.'; return; }
+            msg.textContent = '';
+            const button = card.querySelector('.btn-check');
+            button.disabled = true;
+            let data;
+            try {
+                const res = await fetch('{{ check_url }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ question_id: card.dataset.qid, answer: answer }),
+                });
+                data = await res.json();
+                if (!res.ok) throw new Error(data.error || res.status);
+            } catch (e) {
+                msg.textContent = 'Не вдалося перевірити відповідь. Онови сторінку і спробуй ще раз.';
+                button.disabled = false;
+                return;
+            }
+            button.disabled = false;
+
+            const feedback = card.querySelector('.feedback');
+            feedback.className = 'feedback';
+            markAnswer(card, data.correct);
+            if (data.correct) {
+                feedback.classList.add('ok');
+                feedback.innerHTML = '<b>Правильно! 🎉</b>';
+            } else if (!data.finished) {
+                feedback.classList.add('hint');
+                feedback.innerHTML = '<b>Майже! Підказка 💡</b><div></div>';
+                feedback.lastChild.innerHTML = data.hint;
+                feedback.insertAdjacentHTML('beforeend', '<div><i>Спробуй ще раз.</i></div>');
+            } else {
+                feedback.classList.add('bad');
+                feedback.innerHTML = '<b>Не зовсім.</b>';
+                if (card.dataset.type === 'SHORT') {
+                    const line = document.createElement('div');
+                    line.textContent = `Правильна відповідь: ${data.answer}`;
+                    feedback.appendChild(line);
+                } else {
+                    feedback.insertAdjacentHTML('beforeend', '<div>Правильну відповідь підсвічено зеленим.</div>');
+                }
+            }
+            if (data.finished) {
+                showCorrect(card, data);
+                if (data.solution) {
+                    const sol = document.createElement('div');
+                    sol.className = 'solution';
+                    sol.innerHTML = "<b>Розв'язання:</b> " + data.solution;
+                    feedback.appendChild(sol);
+                }
+                lock(card);
+            }
+            typeset(feedback);
+        }
+
+        cards.forEach((card, i) => {
+            card.querySelector('.btn-check').addEventListener('click', () => checkCard(card));
+            card.querySelector('.btn-next').addEventListener('click', () => {
+                if (i === cards.length - 1) { progress.style.width = '100%'; form.submit(); }
+                else { current = i + 1; showCard(current); }
+            });
+            const input = card.querySelector('.short-input');
+            if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkCard(card); } });
+        });
+        showCard(0);
+        {% else %}
+        form.addEventListener('submit', (e) => {
+            const empty = cards.filter(c => readAnswer(c) === null).length;
+            if (empty && !confirm(`Без відповіді: ${empty}. Вони отримають 0 балів. Завершити?`)) e.preventDefault();
+        });
+        {% endif %}
+
+        function openErrorModal(qId) {
+            document.getElementById('errorQuestionId').value = qId;
+            document.getElementById('errorMessage').value = '';
+            document.getElementById('errorModal').style.display = 'flex';
+        }
+        function closeErrorModal() { document.getElementById('errorModal').style.display = 'none'; }
+        function submitError() {
+            const msg = document.getElementById('errorMessage').value;
+            if (!msg.trim()) { alert('Опиши, будь ласка, проблему.'); return; }
+            fetch("{% url 'report_question_error' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ question_id: document.getElementById('errorQuestionId').value, message: msg }),
+            }).then(r => r.json()).then(d => {
+                alert(d.status === 'success' ? 'Дякуємо! Ми перевіримо завдання.' : 'Не вдалося надіслати. Спробуй пізніше.');
+                closeErrorModal();
+            }).catch(() => alert("Помилка зв'язку із сервером."));
+        }
+    </script>
+</body>
+</html>

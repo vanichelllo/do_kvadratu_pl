@@ -429,6 +429,17 @@ class Question(models.Model):
     correct_short_answer = models.CharField(max_length=50, blank=True, null=True,
                                             verbose_name="Відповідь (тільки для 19-22 завдань)")
 
+    # Критерії оцінювання НУШ: у шкільній практиці (5–11 класи) за кожним учень отримує окрему оцінку 1–12
+    SKILL_CHOICES = (
+        ('MODEL', 'Моделювання'),
+        ('SOLVE', "Розв'язування"),
+        ('ANALYZE', 'Аналіз результатів'),
+    )
+    nush_skill = models.CharField(max_length=10, choices=SKILL_CHOICES, default='SOLVE',
+                                  verbose_name="Критерій НУШ")
+    hint = models.TextField(blank=True, default='', verbose_name="Підказка (показується після першої помилки, 5–6 кл.)")
+    solution = models.TextField(blank=True, default='', verbose_name="Розв'язання (показується після відповіді)")
+
     def __str__(self):
         return f"[{self.get_question_type_display()}] {self.text[:40]}..."
 
@@ -580,6 +591,11 @@ class PracticeAttempt(models.Model):
     # НОВЕ ПОЛЕ: Зберігає всі обрані учнем варіанти
     answers_json = models.JSONField(null=True, blank=True, verbose_name="Збережені відповіді")
 
+    # Оцінки 1–12 за критеріями НУШ — лише для шкільної практики (5–11 класи); у НМТ-практиці порожні
+    nush_modeling = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Моделювання (1-12)")
+    nush_solving = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Розв'язування (1-12)")
+    nush_analysis = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Аналіз результатів (1-12)")
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Спроба проходження"
@@ -587,6 +603,13 @@ class PracticeAttempt(models.Model):
 
     def get_percent(self):
         return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
+
+    @property
+    def nush_grades(self):
+        """[(назва критерію, оцінка або None)] — для шкільної практики; порожній список для НМТ."""
+        grades = [('Моделювання', self.nush_modeling), ("Розв'язування", self.nush_solving),
+                  ('Аналіз', self.nush_analysis)]
+        return grades if any(g is not None for _, g in grades) else []
 
     def __str__(self):
         return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"

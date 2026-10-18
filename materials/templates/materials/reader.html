@@ -1,4 +1,4 @@
-{% load static %}
+{% load static question_tags %}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -211,7 +211,7 @@
         </div>
         <div class="header-right">
             {% if not is_personal %}
-                <a href="{% url 'practice_session' material.id %}" class="action-btn btn-practice"><span>🎯 Практика НМТ</span></a>
+                <a href="{% url 'practice_session' material.id %}" class="action-btn btn-practice"><span>{% practice_label material %}</span></a>
                 {% if material.file %}
                     <a href="{{ material.file.url }}" target="_blank" download class="action-btn btn-download"><span>📥 PDF</span></a>
                 {% endif %}

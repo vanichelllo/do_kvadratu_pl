@@ -19,3 +19,10 @@ def shuffled_options(question):
         letter = LETTERS[index] if index < len(LETTERS) else str(index + 1)
         option.display_text = f'{letter}) {option.body}'
     return options
+
+
+@register.simple_tag
+def practice_label(material):
+    """Напис кнопки практики: «Практика НМТ» для курсу НМТ, «Тренажер» / «Практика» — для шкільних тем."""
+    from materials.practice import practice_button_label
+    return practice_button_label(material)

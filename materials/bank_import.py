@@ -13,6 +13,7 @@ TAG_ALIASES = {
 }
 
 TYPES = ('CHOICE', 'MATCH', 'SHORT')
+SKILLS = ('MODEL', 'SOLVE', 'ANALYZE')
 SHORT_ANSWER_MAX = 50
 OPTION_TEXT_MAX = 255
 
@@ -47,7 +48,7 @@ def parse_bank_source(source):
         if not is_plain_assign:
             raise BankFormatError('Дозволені лише присвоєння TOPIC_NAME = … та TASKS = …')
         name = node.targets[0].id
-        if name not in ('TOPIC_NAME', 'TASKS'):
+        if name not in ('TOPIC_NAME', 'TASKS', 'COURSE', 'GRADE'):
             continue
         try:
             values[name] = ast.literal_eval(node.value)
@@ -58,6 +59,16 @@ def parse_bank_source(source):
         raise BankFormatError('У файлі немає TOPIC_NAME.')
     if not isinstance(values.get('TASKS'), list):
         raise BankFormatError('У файлі немає TASKS.')
+    # Шкільний банк (5–11 кл.): COURSE і GRADE однозначно визначають тему — «1.1. …» є в кожному класі.
+    # Їх переносимо в кожне завдання, щоб вони збереглися й після об'єднання банків (combine_banks)
+    if 'GRADE' in values or 'COURSE' in values:
+        course, grade = values.get('COURSE'), values.get('GRADE')
+        if not (isinstance(course, str) and course.strip() and isinstance(grade, str) and grade.strip()):
+            raise BankFormatError('Для шкільного банку потрібні обидва рядки: COURSE і GRADE.')
+        for task in values['TASKS']:
+            if isinstance(task, dict):
+                task.setdefault('course', course.strip())
+                task.setdefault('grade', grade.strip())
     return values['TOPIC_NAME'].strip(), values['TASKS']
 
 def _is_pair(item, second_type):
@@ -72,6 +83,13 @@ def validate_task(task):
     if task.get('difficulty') not in (1, 2, 3): problems.append('складність має бути 1, 2 або 3')
     if 'topic' in task and (not isinstance(task['topic'], str) or not task['topic'].strip()):
         problems.append('topic: має бути назвою теми, напр. «21. Показникові рівняння»')
+    if task.get('skill', 'SOLVE') not in SKILLS:
+        problems.append('skill: має бути MODEL, SOLVE або ANALYZE')
+    for text_field in ('hint', 'solution'):
+        if not isinstance(task.get(text_field, ''), str):
+            problems.append(f'{text_field}: має бути текстом')
+    if 'grade' in task and not (isinstance(task.get('grade'), str) and isinstance(task.get('course'), str)):
+        problems.append('grade/course: мають бути назвами класу й курсу')
     options = task.get('options')
     if q_type == 'CHOICE':
         if not isinstance(options, (list, tuple)) or len(options) < 2 or not all(_is_pair(o, bool) for o in options):
@@ -116,6 +134,14 @@ def resolve_material(tag, materials_cache):
         materials_cache[needle] = StudyMaterial.objects.filter(title__icontains=needle).first()
     return materials_cache[needle], corrected
 
+def school_topic(task, topic_name):
+    """Тема шкільного курсу за назвою, класом і курсом; None — якщо такої немає в класифікаторі."""
+    return (CurriculumTopic.objects
+            .filter(name=(task.get('topic') or topic_name).strip(), chapter__grade__name=task['grade'],
+                    chapter__grade__subject__name=task['course'])
+            .first())
+
+
 def build_report(topic_name, tasks):
     report = ImportReport(topic_name=topic_name, total=len(tasks))
     seen = {question_key(q) for q in Question.objects.prefetch_related('options', 'match_items')}
@@ -124,6 +150,8 @@ def build_report(topic_name, tasks):
 
     for index, task in enumerate(tasks, start=1):
         problems = validate_task(task)
+        if not problems and 'grade' in task and school_topic(task, topic_name) is None:
+            problems = [f"тему «{task.get('topic') or topic_name}» не знайдено в «{task['course']} / {task['grade']}»"]
         if problems:
             report.errors.append((index, '; '.join(problems)))
             continue
@@ -164,14 +192,21 @@ def import_tasks(topic_name, tasks):
         data = tasks[index - 1]
         
         # ЗБЕРІГАЄМО З НОВИМ curriculum_topic
+        topic = school_topic(data, topic_name) if 'grade' in data else topic_for(data.get('topic') or topic_name)
         q = Question.objects.create(
-            curriculum_topic=topic_for(data.get('topic') or topic_name),
+            curriculum_topic=topic,
             question_type=data['type'],
             difficulty=data['difficulty'],
             text=data['text'],
             svg_code=data.get('svg_code', ''),
+            nush_skill=data.get('skill', 'SOLVE'),
+            hint=data.get('hint', ''),
+            solution=data.get('solution', ''),
         )
-        
+        if 'grade' in data:
+            # Шкільне завдання належить усім урокам цієї теми
+            q.materials.add(*StudyMaterial.objects.filter(curriculum_topic=topic))
+
         for tag in data.get('topic_tags', []):
             material, _ = resolve_material(tag, materials_cache)
             if material:

@@ -2082,3 +2082,203 @@ class DiagnosticOfferTests(BaseTestCase):
         self.assertEqual([uk_plural(n, 'день', 'дні', 'днів') for n in (1, 2, 5, 11, 21, 22, 112, 213)],
                          ['день', 'дні', 'днів', 'днів', 'день', 'дні', 'днів', 'днів'])
         self.assertContains(self.client.get('/materials/'), 'Пройди безкоштовну діагностику')
+
+
+def make_school_topic(name, grade_number, order, chapter_order=10, subject='Математика (5-6 класи)'):
+    subject_obj, _ = CurriculumSubject.objects.get_or_create(name=subject)
+    grade, _ = CurriculumGrade.objects.get_or_create(subject=subject_obj, name=f'{grade_number} клас',
+                                                     defaults={'number': grade_number})
+    chapter, _ = CurriculumChapter.objects.get_or_create(grade=grade, name=f'Розділ {chapter_order}',
+                                                         order=chapter_order)
+    return CurriculumTopic.objects.create(chapter=chapter, name=name, order=order)
+
+
+class SchoolPracticeTests(BaseTestCase):
+    def setUp(self):
+        self.user = self.make_user('pupil@example.com')
+        self.client.force_login(self.user)
+        self.topic1 = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.topic2 = make_school_topic('1.2. Цифри', 5, 102)
+        self.topic3 = make_school_topic('1.3. Порівняння', 5, 103)
+        self.lesson = StudyMaterial.objects.create(title='1.2. Цифри', price=0, is_free=True, is_published=True,
+                                                   curriculum_topic=self.topic2)
+
+    def make_choice(self, text, topic, difficulty=1, skill='SOLVE', hint='', solution=''):
+        q = Question.objects.create(text=text, question_type='CHOICE', curriculum_topic=topic, difficulty=difficulty,
+                                    nush_skill=skill, hint=hint, solution=solution)
+        AnswerOption.objects.create(question=q, text='А) 1', is_correct=False)
+        right = AnswerOption.objects.create(question=q, text='Б) 2', is_correct=True)
+        return q, right
+
+    def check(self, question, answer, material=None):
+        material = material or self.lesson
+        return self.client.post(f'/practice/{material.id}/check/', json.dumps(
+            {'question_id': question.id, 'answer': answer}), content_type='application/json')
+
+    def test_profiles_and_button_labels(self):
+        from .practice import practice_button_label, practice_profile
+        self.assertEqual(practice_profile(self.lesson), 'A')
+        algebra = make_school_topic('2.1. Функція', 8, 201, subject='Алгебра (7-9 класи)')
+        analysis = make_school_topic('4.2. Похідна', 10, 402, subject='Алгебра і початки аналізу (10-11 класи)')
+        nmt = make_nmt_topic('26. Похідна')
+        self.assertEqual(practice_profile(StudyMaterial(title='x', curriculum_topic=algebra)), 'B')
+        self.assertEqual(practice_profile(StudyMaterial(title='x', curriculum_topic=analysis)), 'C')
+        self.assertIsNone(practice_profile(StudyMaterial(title='x', curriculum_topic=nmt)))
+        self.assertIsNone(practice_profile(StudyMaterial(title='26. Похідна')))
+        self.assertEqual(practice_button_label(self.lesson), '✏️ Тренажер')
+        self.assertEqual(practice_button_label(StudyMaterial(title='x', curriculum_topic=nmt)), '🎯 Практика НМТ')
+
+    def test_pool_is_topic_plus_earlier_review_without_later_topics_or_match(self):
+        own = [self.make_choice(f'own{i}', self.topic2, difficulty=1 + i % 3)[0] for i in range(10)]
+        review = [self.make_choice(f'old{i}', self.topic1)[0] for i in range(5)]
+        later = self.make_choice('later', self.topic3)[0]
+        match = Question.objects.create(text='match', question_type='MATCH', curriculum_topic=self.topic2)
+        response = self.client.get(f'/practice/{self.lesson.id}/')
+        self.assertTemplateUsed(response, 'materials/practice_school.html')
+        shown = response.context['questions']
+        ids = {q.id for q in shown}
+        self.assertEqual(len(shown), 8)
+        self.assertNotIn(later.id, ids)
+        self.assertNotIn(match.id, ids)
+        self.assertTrue(ids <= {q.id for q in own + review})
+        self.assertEqual(len(ids & {q.id for q in review}), 2)  # 20% від 8
+        self.assertEqual([q.difficulty for q in shown], sorted(q.difficulty for q in shown))
+
+    def test_balanced_pick_covers_all_criteria(self):
+        for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+            for i in range(5):
+                self.make_choice(f'{skill}{i}', self.topic2, skill=skill)
+        shown = self.client.get(f'/practice/{self.lesson.id}/').context['questions']
+        self.assertEqual({q.nush_skill for q in shown}, {'MODEL', 'SOLVE', 'ANALYZE'})
+
+    def test_trainer_gives_hint_then_second_try_for_half_points(self):
+        q, right = self.make_choice('q', self.topic2, skill='MODEL', hint='Порахуй ще раз', solution='Це 2')
+        self.client.get(f'/practice/{self.lesson.id}/')
+        wrong = q.options.get(is_correct=False)
+
+        first = self.check(q, str(wrong.id)).json()
+        self.assertEqual(first, {'correct': False, 'finished': False, 'hint': 'Порахуй ще раз'})
+        second = self.check(q, str(right.id)).json()
+        self.assertTrue(second['correct'])
+        self.assertTrue(second['finished'])
+        self.assertEqual(second['option_id'], str(right.id))
+        self.assertEqual(second['solution'], 'Це 2')
+        self.assertEqual(self.check(q, str(right.id)).status_code, 409)  # спроби закінчились
+
+        response = self.client.post(f'/practice/{self.lesson.id}/')
+        self.assertTemplateUsed(response, 'materials/practice_school_results.html')
+        attempt = PracticeAttempt.objects.get(user=self.user)
+        self.assertEqual((attempt.score, attempt.max_score), (1, 2))
+        self.assertEqual(attempt.nush_modeling, 6)
+        self.assertIsNone(attempt.nush_solving)
+        self.assertEqual(attempt.answers_json['mode'], 'A')
+        # Помилка в першій спробі — завдання йде в «Роботу над помилками»
+        self.assertTrue(GameMistake.objects.filter(user=self.user, question=q).exists())
+        # Спробу завершено — повторна відправка не створює ще одну
+        self.client.post(f'/practice/{self.lesson.id}/')
+        self.assertEqual(PracticeAttempt.objects.count(), 1)
+
+    def test_check_rejects_foreign_question_and_finish_ignores_client_claims(self):
+        q, right = self.make_choice('q', self.topic2)
+        other, _ = self.make_choice('other', self.topic3)
+        self.client.get(f'/practice/{self.lesson.id}/')
+        self.assertEqual(self.check(other, '1').status_code, 409)
+        # Відповідь у формі завершення не зараховується — лише перевірені сервером спроби
+        self.client.post(f'/practice/{self.lesson.id}/', {f'q_{q.id}': str(right.id)})
+        self.assertEqual(PracticeAttempt.objects.get().score, 0)
+
+    def test_grade_8_has_one_try_and_shows_answer_at_once(self):
+        topic = make_school_topic('3.2. Формула коренів', 8, 302, subject='Алгебра (7-9 класи)')
+        lesson = StudyMaterial.objects.create(title='3.2', price=0, is_free=True, is_published=True,
+                                              curriculum_topic=topic)
+        q = Question.objects.create(text='x?', question_type='SHORT', correct_short_answer='0,5',
+                                    curriculum_topic=topic, solution='x = 1/2')
+        self.client.get(f'/practice/{lesson.id}/')
+        data = self.check(q, '7', material=lesson).json()
+        self.assertEqual(data, {'correct': False, 'finished': True, 'answer': '0,5', 'solution': 'x = 1/2'})
+
+    def test_grade_10_is_a_whole_test_graded_on_submit(self):
+        topic = make_school_topic('1.2. Корінь n-го степеня', 10, 102,
+                                  subject='Алгебра і початки аналізу (10-11 класи)')
+        lesson = StudyMaterial.objects.create(title='1.2', price=0, is_free=True, is_published=True,
+                                              curriculum_topic=topic)
+        q, right = self.make_choice('q', topic, skill='ANALYZE')
+        m = Question.objects.create(text='m', question_type='MATCH', curriculum_topic=topic, nush_skill='MODEL')
+        opts = [AnswerOption.objects.create(question=m, text=t) for t in ('А) a', 'Б) b', 'В) c')]
+        items = [MatchItem.objects.create(question=m, text=f'{i}.', correct_option=opts[i]) for i in range(3)]
+        self.client.get(f'/practice/{lesson.id}/')
+        self.assertEqual(self.check(q, str(right.id), material=lesson).status_code, 404)  # покрокової перевірки немає
+        response = self.client.post(f'/practice/{lesson.id}/', {
+            f'q_{q.id}': str(right.id),
+            f'match_{items[0].id}': str(opts[0].id), f'match_{items[1].id}': str(opts[1].id),
+            f'match_{items[2].id}': str(opts[0].id),
+        })
+        attempt = PracticeAttempt.objects.get()
+        self.assertEqual((attempt.score, attempt.max_score), (4, 5))
+        self.assertEqual((attempt.nush_analysis, attempt.nush_modeling, attempt.nush_solving), (12, 8, None))
+        self.assertContains(response, 'Моделювання')
+        details = self.client.get(f'/attempt/{attempt.id}/')
+        self.assertTemplateUsed(details, 'materials/practice_school_results.html')
+
+    def test_short_answer_from_pupil_is_escaped_on_results(self):
+        topic = make_school_topic('1.2. Корінь', 10, 102, subject='Алгебра і початки аналізу (10-11 класи)')
+        lesson = StudyMaterial.objects.create(title='1.2', price=0, is_free=True, is_published=True,
+                                              curriculum_topic=topic)
+        q = Question.objects.create(text='x?', question_type='SHORT', correct_short_answer='2', curriculum_topic=topic)
+        self.client.get(f'/practice/{lesson.id}/')
+        response = self.client.post(f'/practice/{lesson.id}/', {f'q_{q.id}': '<b>x</b>'})
+        self.assertContains(response, '&lt;b&gt;x&lt;/b&gt;')
+
+    def test_nush_grade_scale(self):
+        from .practice import nush_grade
+        self.assertEqual([nush_grade(e, 10) for e in (0, 1, 5, 9, 10)], [1, 1, 6, 11, 12])
+        self.assertIsNone(nush_grade(0, 0))
+
+    def test_paid_school_lesson_needs_purchase(self):
+        self.lesson.is_free = False
+        self.lesson.save()
+        q, right = self.make_choice('q', self.topic2)
+        response = self.client.get(f'/practice/{self.lesson.id}/')
+        self.assertRedirects(response, f'/material/{self.lesson.id}/', fetch_redirect_response=False)
+        self.assertEqual(self.check(q, str(right.id)).status_code, 404)
+
+
+SCHOOL_BANK = '''TOPIC_NAME = "1.2. Цифри"
+COURSE = "Математика (5-6 класи)"
+GRADE = "5 клас"
+TASKS = [
+    {"type": "CHOICE", "difficulty": 1, "skill": "MODEL", "text": "Скільки цифр?", "hint": "Порахуй",
+     "solution": "Десять", "options": [("10", True), ("9", False)]},
+    {"type": "SHORT", "difficulty": 2, "skill": "WRONG", "text": "Погане", "answer": "1"},
+    {"type": "SHORT", "difficulty": 2, "topic": "9.9. Нема такої", "text": "Чужа тема", "answer": "1"},
+]
+'''
+
+
+class SchoolBankImportTests(BaseTestCase):
+    url = '/do-kvadratu-secret-control/materials/question/import-bank/'
+
+    def setUp(self):
+        self.client.force_login(self.make_user('boss2@example.com', is_staff=True, is_superuser=True))
+        self.topic = make_school_topic('1.2. Цифри', 5, 102)
+        make_school_topic('1.2. Цифри', 6, 102, subject='Інший курс')  # така сама назва в іншому курсі
+        self.lesson = StudyMaterial.objects.create(title='Цифри', price=0, curriculum_topic=self.topic)
+
+    def upload(self, action):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post(self.url, {'action': action, 'bank_file': SimpleUploadedFile('b.py', SCHOOL_BANK.encode())})
+
+    def test_school_bank_resolves_topic_by_course_and_grade(self):
+        report = self.upload('preview').context['report']
+        self.assertEqual(report.to_add, [1])
+        self.assertEqual([i for i, _ in report.errors], [2, 3])
+        self.assertIn('Нема такої', report.errors[1][1])
+        self.client.post(self.url, {'action': 'import'})
+        q = Question.objects.get(text='Скільки цифр?')
+        self.assertEqual((q.curriculum_topic, q.nush_skill, q.hint, q.solution), (self.topic, 'MODEL', 'Порахуй', 'Десять'))
+        self.assertEqual(list(q.materials.all()), [self.lesson])
+
+    def test_course_without_grade_is_rejected(self):
+        from .bank_import import BankFormatError, parse_bank_source
+        with self.assertRaises(BankFormatError):
+            parse_bank_source('TOPIC_NAME = "x"\nCOURSE = "y"\nTASKS = []\n')

@@ -319,6 +319,7 @@
                                     <span class="score-badge {% if p >= 70 %}score-good{% elif p >= 40 %}score-avg{% else %}score-bad{% endif %}">
                                         {{ attempt.score }} / {{ attempt.max_score }} ({{ p }}%)
                                     </span>
+                                    {% if attempt.nush_grades %}<div style="font-size: 0.8rem; color: #666; margin-top: 4px;">{% for name, grade in attempt.nush_grades %}{{ name }}: <b>{{ grade|default:"—" }}</b>{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% endif %}
                                 {% endwith %}
                             </td>
                         </tr>
@@ -403,6 +404,7 @@
                                     <span class="score-badge {% if p >= 70 %}score-good{% elif p >= 40 %}score-avg{% else %}score-bad{% endif %}">
                                         {{ attempt.score }} з {{ attempt.max_score }} б. ({{ p }}%)
                                     </span>
+                                    {% if attempt.nush_grades %}<div style="font-size: 0.8rem; color: #666; margin-top: 4px;">{% for name, grade in attempt.nush_grades %}{{ name }}: <b>{{ grade|default:"—" }}</b>{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% endif %}
                                 {% endwith %}
                             </td>
                         </tr>
