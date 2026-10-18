@@ -21,6 +21,9 @@
     .plan button, .ft-trial button { width: 100%; padding: 11px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 1rem; }
     .btn-month { background: var(--brand-blue); color: #fff; }
     .btn-year { background: var(--brand-yellow); color: var(--brand-blue); }
+    .btn-balance { background: #fff; color: var(--brand-blue); border: 2px solid var(--brand-blue) !important; }
+    .plan form button + button { margin-top: 8px; }
+    .agree input { flex-shrink: 0; margin-top: 2px; }
     .agree { font-size: 0.8rem; color: #555; display: flex; gap: 6px; align-items: flex-start; }
     .ft-trial { background: #fff; border: 3px dashed #27ae60; border-radius: 14px; padding: 22px; margin-top: 18px; }
     .ft-trial button { background: #27ae60; color: #fff; max-width: 360px; }
@@ -47,12 +50,38 @@
         <p class="ft-note">Подивитися, як виглядає урок: <a href="{% url 'material_detail' demo_lesson.id %}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
     {% endif %}
 
+    {% if owner_view %}
+    <div class="ft-mine" style="background: #fff8e1;">
+        <strong>Ви власник сайту:</strong> у вас повний доступ без підписки, тому пробний період і кнопки оплати
+        вам не показуються — так цю сторінку бачать репетитори, але без них.
+        {% if plans_off %}
+            <br>Не продаються (вимкнено або без ціни): {% for plan in plans_off %}«{{ plan.name }}»{% if not forloop.last %}, {% endif %}{% endfor %}.
+            Репетитори бачать «Ціни незабаром», доки ви не вкажете ціну й не позначите «Активний»:
+            <a href="{% url 'admin:materials_teacherplan_changelist' %}">налаштувати тарифи</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% if licenses %}
     <div class="ft-mine">
         <strong>Ваша підписка:</strong>
         {% for lic in licenses %}{{ lic.get_scope_display }}{% if lic.plan %} «{{ lic.plan.name }}»{% endif %}{% if lic.is_trial %} (пробна){% endif %} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}.
         <a href="{% url 'cabinet' %}">До кабінету</a>
     </div>
+    {% endif %}
+
+    {% if trial_available %}
+    <div class="ft-trial" id="trial" style="margin: 28px 0 10px;">
+        <h2 style="margin-top: 0;">🎁 Пробний період — {{ trial_days }} днів</h2>
+        <p class="ft-note">Усі класи і НМТ, до {{ trial_students }} учнів. Без оплати й без прив'язки картки — гроші не списуються, а після {{ trial_days }} днів підписка сама не продовжується. Запросіть учня посиланням і проведіть справжнє заняття.</p>
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'tutor_trial' %}">{% csrf_token %}<button type="submit">Почати пробний період</button></form>
+        {% else %}
+        <a href="{% url 'login' %}?next={% url 'for_tutors' %}%23trial" class="btn-brand">Увійти або зареєструватися</a>
+        {% endif %}
+    </div>
+    {% elif trial_used %}
+    <p class="ft-note" id="trial">Безкоштовний пробний період на цьому акаунті вже використано — далі підписка за тарифом.</p>
     {% endif %}
 
     <h2>Тарифи «Школа 5–11»</h2>
@@ -89,16 +118,5 @@
     </div>
     {% endif %}
 
-    {% if trial_available %}
-    <div class="ft-trial" id="trial">
-        <h2 style="margin-top: 0;">🎁 Пробний період — {{ trial_days }} днів</h2>
-        <p class="ft-note">Усі класи і НМТ, до {{ trial_students }} учнів. Без оплати й без прив'язки картки. Запросіть учня посиланням і проведіть справжнє заняття.</p>
-        {% if user.is_authenticated %}
-        <form method="post" action="{% url 'tutor_trial' %}">{% csrf_token %}<button type="submit">Почати пробний період</button></form>
-        {% else %}
-        <a href="{% url 'login' %}?next={% url 'for_tutors' %}%23trial" class="btn-brand">Увійти або зареєструватися</a>
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

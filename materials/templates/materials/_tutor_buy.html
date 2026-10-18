@@ -1,16 +1,14 @@
 {% if user.is_authenticated %}
-    {% if plan.price_month %}
     <form method="post" action="{% url 'tutor_buy' plan.id 'month' %}">{% csrf_token %}
-        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}" target="_blank">умовами</a></label>
-        <button type="submit" class="btn-month">Оформити на місяць</button>
+        <label class="agree"><input type="checkbox" name="agree" required> <span>Погоджуюся з <a href="{% url 'offer' %}#subscription" target="_blank">умовами оферти</a> і прошу, щоб підписка почала діяти одразу після оплати</span></label>
+        {% for period, price, label, css in plan.buy_options %}
+            <button type="submit" name="method" value="card" class="{{ css }}" formaction="{% url 'tutor_buy' plan.id period %}">{{ label }} — карткою</button>
+            {% if user.balance >= price %}
+                <button type="submit" name="method" value="balance" class="btn-balance" formaction="{% url 'tutor_buy' plan.id period %}">{{ label }} — з балансу</button>
+            {% endif %}
+        {% endfor %}
     </form>
-    {% endif %}
-    {% if plan.price_year %}
-    <form method="post" action="{% url 'tutor_buy' plan.id 'year' %}">{% csrf_token %}
-        <label class="agree"><input type="checkbox" name="agree" required> Погоджуюся з <a href="{% url 'offer' %}" target="_blank">умовами</a></label>
-        <button type="submit" class="btn-year">Оформити на навчальний рік</button>
-    </form>
-    {% endif %}
+    {% if user.balance %}<p class="ft-note" style="margin: 0;">На балансі {{ user.balance }} ₴{% if not plan.balance_enough %} — не вистачає для цього тарифу, <a href="{% url 'cabinet' %}">поповнити</a>{% endif %}.</p>{% endif %}
 {% else %}
     <a href="{% url 'login' %}?next={% url 'for_tutors' %}" class="btn-brand">Увійти, щоб оформити</a>
 {% endif %}

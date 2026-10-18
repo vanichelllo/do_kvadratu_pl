@@ -27,7 +27,7 @@ def accept_terms_view(request):
     return render(request, 'account/accept_terms.html', {
         'next': next_url,
         'error': error,
-        # Уже придбане лишається доступним і без нової згоди (оферта, п. 23.3)
+        # Уже придбане лишається доступним і без нової згоди (оферта, п. 24.3)
         'owned_materials': request.user.purchased_materials.only('id', 'title').order_by('title'),
         'personal_presentations': request.user.personal_presentations.only('id', 'title').order_by('-id'),
     })

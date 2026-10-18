@@ -36,7 +36,7 @@ from .games import record_game_answer, short_answer_matches
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
 )
@@ -865,13 +865,26 @@ class ForTutorsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        plans = TeacherPlan.objects.filter(is_active=True)
+        plans = list(TeacherPlan.objects.filter(is_active=True))
+        balance = getattr(self.request.user, 'balance', 0) or 0
+        for plan in plans:
+            plan.buy_options = [(period, price, label, css) for period, price, label, css in (
+                ('month', plan.price_month, 'На місяць', 'btn-month'),
+                ('year', plan.price_year, 'На навчальний рік', 'btn-year')) if price]
+            plan.balance_enough = any(balance >= price for _, price, _, _ in plan.buy_options)
         context['school_plans'] = [p for p in plans if p.kind == 'school']
         context['nmt_plans'] = [p for p in plans if p.kind == 'nmt']
         user = self.request.user
         context['trial_available'] = not user.is_authenticated or teachers.trial_available(user)
         context['trial_days'] = teachers.TRIAL_DAYS
         context['trial_students'] = teachers.TRIAL_STUDENTS
+        context['trial_used'] = (user.is_authenticated and not teachers.is_owner(user)
+                                 and TeacherLicense.objects.filter(teacher=user, is_trial=True).exists())
+        if teachers.is_owner(user):
+            # Власнику підписка не потрібна; показуємо, що бачать інші й що ще не налаштовано
+            context['owner_view'] = True
+            context['plans_off'] = [p for p in TeacherPlan.objects.all()
+                                    if not p.is_active or not (p.price_month or p.price_year)]
         if user.is_authenticated:
             context['licenses'] = teachers.active_licenses(user).select_related('plan', 'grade')
             context['has_school'] = teachers.active_licenses(user).filter(scope='school', is_trial=False).exists()
@@ -902,7 +915,8 @@ def tutor_trial(request):
 @post_required('for_tutors')
 @terms_required('/for-tutors/')
 def tutor_buy(request, plan_id, period):
-    """Оплата тарифу через Monobank; підписку видає apply_mono_status після підтвердження оплати."""
+    """Оплата тарифу з балансу (підписка діє одразу) або через Monobank — тоді підписку видає apply_mono_status
+    після підтвердження оплати."""
     plan = get_object_or_404(TeacherPlan, id=plan_id, is_active=True)
     if period not in ('month', 'year'):
         raise Http404
@@ -916,6 +930,25 @@ def tutor_buy(request, plan_id, period):
     if request.POST.get('agree') != 'on':
         messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами.")
         return redirect('for_tutors')
+    if request.POST.get('method') == 'balance':
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if user.balance < price:
+                messages.error(request, f"На балансі {user.balance} ₴, а тариф коштує {price} ₴. "
+                                        f"Поповніть баланс у кабінеті або оплатіть карткою.")
+                return redirect('for_tutors')
+            user.balance -= price
+            user.save(update_fields=['balance'])
+            order = Order.objects.create(user=user, total_amount=price, status='paid', paid_at=timezone.now(),
+                                         mono_invoice_id='balance_payment', teacher_plan=plan, plan_period=period,
+                                         instant_access_agreed_at=timezone.now())
+            license_ = teachers.grant_plan(user, plan, period, note=f'Замовлення #{order.id} (з балансу)')
+        send_telegram_notification(
+            f"🧑‍🏫 Нова підписка репетитора (з балансу)!\n{html.escape(user.email)}: {html.escape(str(plan))}, "
+            f"{order.get_plan_period_display().lower()}, до {license_.valid_until:%d.%m.%Y}\nСписано: {price} ₴")
+        messages.success(request, f"✅ Підписку «{plan.name}» оформлено до {license_.valid_until:%d.%m.%Y}. "
+                                  f"З балансу списано {price} ₴.")
+        return redirect('cabinet')
     order = Order.objects.create(user=request.user, total_amount=price, status='pending', teacher_plan=plan,
                                  plan_period=period, instant_access_agreed_at=timezone.now())
     page_url = create_mono_invoice(order, price * 100)

@@ -1413,13 +1413,16 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 10.10.2026')
+        self.assertContains(offer, 'Редакція від 18.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
+        self.assertContains(offer, '16. Підписка для викладачів')
+        self.assertContains(offer, '25. Реквізити Продавця')
+        self.assertContains(offer, 'на умовах розділу 17;')
         self.assertNotContains(offer, '{%')
         privacy = self.client.get('/privacy/')
-        self.assertContains(privacy, 'Редакція від 10.10.2026')
+        self.assertContains(privacy, 'Редакція від 18.10.2026')
         self.assertContains(privacy, 'Google Analytics')
         self.assertContains(privacy, 'href="/offer/"')
 
@@ -3105,6 +3108,48 @@ class TutorPlansTests(BaseTestCase):
         with mock.patch('materials.views.send_telegram_notification'):
             apply_mono_status(order.mono_invoice_id, 'success')
         return response, order
+
+    def test_pay_plan_from_balance(self):
+        self.tutor.balance = 500
+        self.tutor.save()
+        self.client.force_login(self.tutor)
+        page = self.client.get('/for-tutors/')
+        self.assertContains(page, 'На місяць — з балансу')
+        self.assertNotContains(page, 'На навчальний рік — з балансу')   # 2400 ₴ > 500 ₴
+        response = self.client.post(f'/for-tutors/buy/{self.start.id}/month/', {'agree': 'on', 'method': 'balance'})
+        self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
+        self.tutor.refresh_from_db()
+        self.assertEqual(self.tutor.balance, 200)
+        license_ = TeacherLicense.objects.get(teacher=self.tutor, plan=self.start)
+        self.assertFalse(license_.is_trial)
+        self.assertTrue(Order.objects.filter(user=self.tutor, teacher_plan=self.start, status='paid').exists())
+
+    def test_balance_too_small_charges_nothing(self):
+        self.tutor.balance = 100
+        self.tutor.save()
+        self.client.force_login(self.tutor)
+        self.client.post(f'/for-tutors/buy/{self.start.id}/month/', {'agree': 'on', 'method': 'balance'})
+        self.tutor.refresh_from_db()
+        self.assertEqual(self.tutor.balance, 100)
+        self.assertFalse(TeacherLicense.objects.filter(teacher=self.tutor).exists())
+        self.assertFalse(Order.objects.filter(user=self.tutor).exists())
+
+    def test_trial_is_offered_before_paid_plans_and_explained_when_used(self):
+        self.client.force_login(self.tutor)
+        html = self.client.get('/for-tutors/').content.decode()
+        self.assertLess(html.index('Почати пробний період'), html.index('Тарифи «Школа 5–11»'))
+        self.client.post('/for-tutors/trial/')
+        self.assertContains(self.client.get('/for-tutors/'), 'пробний період на цьому акаунті вже використано')
+
+    def test_owner_sees_why_there_is_nothing_to_buy(self):
+        owner = self.make_user('owner-plans@example.com')
+        owner.is_staff = True
+        owner.save()
+        self.client.force_login(owner)
+        page = self.client.get('/for-tutors/')
+        self.assertContains(page, 'Ви власник сайту')
+        self.assertContains(page, 'налаштувати тарифи')
+        self.assertNotContains(page, 'Почати пробний період')
 
     def test_school_plan_opens_every_school_grade_but_not_nmt(self):
         from .teachers import can_teach
