@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.db import models
 
 from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, DiagnosticOffer, CurriculumGrade, CurriculumSubject,
-                     CurriculumTopic, GameMistake, Homework, MatchItem, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
+                     CurriculumTopic, GameMistake, Homework, MatchItem, TeacherLicense, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
                      StudyMaterial, TutorStudentRequest)
 
 User = get_user_model()
@@ -2762,3 +2762,126 @@ class SummaryAndDiagnosticTests(BaseTestCase):
                                 due_date=timezone.localdate())
         self.client.force_login(self.pupil)
         self.assertEqual(self.client.get(f'/practice/{self.diagnostic.id}/').status_code, 200)
+
+
+class TutorAccountTests(BaseTestCase):
+    """Репетитор з підпискою на клас: свої учні, свої класи — і нічого чужого."""
+
+    def setUp(self):
+        self.owner = self.make_user('owner@example.com', is_staff=True)
+        self.tutor = self.make_user('tutor@example.com', role='teacher')
+        self.other_tutor = self.make_user('tutor2@example.com', role='teacher')
+        self.topic5 = make_school_topic('1.1. Натуральні', 5, 101)
+        self.topic8 = make_school_topic('1.1. Дроби', 8, 101, subject='Алгебра (7-9 класи)')
+        self.lesson5 = StudyMaterial.objects.create(title='5 кл', price=100, is_published=True, curriculum_topic=self.topic5)
+        self.lesson8 = StudyMaterial.objects.create(title='8 кл', price=100, is_published=True, curriculum_topic=self.topic8)
+        for topic in (self.topic5, self.topic8):
+            q = Question.objects.create(text=f'q{topic.id}', question_type='CHOICE', curriculum_topic=topic, difficulty=1)
+            AnswerOption.objects.create(question=q, text='А) 1', is_correct=True)
+            AnswerOption.objects.create(question=q, text='Б) 2', is_correct=False)
+        today = timezone.localdate()
+        TeacherLicense.objects.create(teacher=self.tutor, grade=self.topic5.chapter.grade,
+                                      valid_until=today + datetime.timedelta(days=30))
+        TeacherLicense.objects.create(teacher=self.other_tutor, grade=self.topic5.chapter.grade,
+                                      valid_until=today + datetime.timedelta(days=30))
+        self.kid = self.make_user('kid5@example.com')
+        self.kid_request = TutorStudentRequest.objects.create(user=self.kid, real_name='Мій учень', course='grade_5',
+                                                              status='approved', teacher=self.tutor)
+        self.owners_kid = self.make_user('owners@example.com')
+        self.owners_request = TutorStudentRequest.objects.create(user=self.owners_kid, real_name='Учень власника',
+                                                                 status='approved')
+        self.others_kid = self.make_user('others@example.com')
+        self.others_request = TutorStudentRequest.objects.create(user=self.others_kid, real_name='Чужий учень',
+                                                                 status='approved', teacher=self.other_tutor)
+
+    def test_tutor_cabinet_shows_only_own_pupils_and_licensed_lessons(self):
+        self.client.force_login(self.tutor)
+        context = self.client.get('/cabinet/').context
+        self.assertEqual(list(context['my_students']), [self.kid_request])
+        self.assertIn('/join/', context['invite_url'])
+        self.assertEqual([m for g in context['tutor_lessons'] for m in g['materials']], [self.lesson5])
+        self.assertNotIn('nmt_materials', context)
+        self.assertEqual({m.id for m in context['school_materials']}, {self.lesson5.id})
+
+    def test_owner_keeps_own_pupils_only(self):
+        self.client.force_login(self.owner)
+        self.assertEqual(list(self.client.get('/cabinet/').context['my_students']), [self.owners_request])
+
+    def test_lesson_practice_cannot_target_someone_elses_pupil(self):
+        self.client.force_login(self.tutor)
+        page = self.client.get(f'/practice/{self.lesson5.id}/')
+        self.assertEqual(page.context['students'], [self.kid_request])
+        page = self.client.get(f'/practice/{self.lesson5.id}/?student={self.others_request.id}')
+        self.assertTemplateUsed(page, 'materials/practice_choose_student.html')   # не зараховується чужому
+        self.assertEqual(self.client.get(f'/practice/{self.lesson5.id}/?student={self.kid_request.id}').status_code, 200)
+
+    def test_tutor_shows_licensed_grade_only(self):
+        self.client.force_login(self.tutor)
+        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.lesson8.id}/').status_code, 404)
+        response = self.client.get(f'/practice/{self.lesson8.id}/')
+        self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
+
+    def test_tutor_sees_attempts_of_own_pupils_only(self):
+        mine = PracticeAttempt.objects.create(user=self.kid, material=self.lesson5, score=1, max_score=2,
+                                              answers_json={'mode': 'A', 'history': [], 'question_ids': ''})
+        theirs = PracticeAttempt.objects.create(user=self.others_kid, material=self.lesson5, score=1, max_score=2,
+                                                answers_json={'mode': 'A', 'history': [], 'question_ids': ''})
+        self.client.force_login(self.tutor)
+        self.assertEqual(self.client.get(f'/attempt/{mine.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/attempt/{theirs.id}/').status_code, 404)
+        self.assertEqual(list(self.client.get('/cabinet/').context['students_attempts']), [mine])
+        self.client.post(f'/attempt/{theirs.id}/manage/', {'action': 'delete'})
+        self.assertTrue(PracticeAttempt.objects.filter(id=theirs.id).exists())
+
+    def test_tutor_cannot_report_or_assign_to_others(self):
+        self.client.force_login(self.tutor)
+        response = self.client.post('/homework/assign/', {'student_id': self.others_request.id,
+                                                          'material_id': self.lesson5.id, 'due_date': '2030-01-01'})
+        self.assertEqual(response.status_code, 404)
+        response = self.client.post('/cabinet/add-report/', {'student_id': self.owners_request.id})
+        self.assertEqual(response.status_code, 404)
+        self.client.post('/homework/assign/', {'student_id': self.kid_request.id, 'material_id': self.lesson8.id,
+                                               'due_date': '2030-01-01'})
+        self.assertFalse(Homework.objects.exists())   # 8 клас — не в підписці
+
+    def test_pupil_of_tutor_practises_licensed_grade_for_free(self):
+        self.client.force_login(self.kid)
+        self.assertEqual(self.client.get(f'/practice/{self.lesson5.id}/').status_code, 200)
+        response = self.client.get(f'/practice/{self.lesson8.id}/')
+        self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
+        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 404)   # презентація — ні
+
+    def test_expired_license_turns_tutor_features_off(self):
+        TeacherLicense.objects.filter(teacher=self.tutor).update(valid_until=timezone.localdate() - datetime.timedelta(days=1))
+        self.client.force_login(self.tutor)
+        context = self.client.get('/cabinet/').context
+        self.assertTrue(context['tutor_offer'])
+        self.assertNotIn('my_students', context)
+        self.client.force_login(self.kid)
+        response = self.client.get(f'/practice/{self.lesson5.id}/')
+        self.assertRedirects(response, f'/material/{self.lesson5.id}/', fetch_redirect_response=False)
+
+    def test_teacher_role_alone_gives_no_full_game_access(self):
+        from .games import game_materials
+        nobody = self.make_user('wannabe@example.com', role='teacher')
+        materials, label = game_materials(nobody)
+        self.assertNotEqual(label, 'Повний доступ викладача')
+        self.assertFalse(materials.filter(id=self.lesson5.id).exists())
+        self.assertTrue(game_materials(self.tutor)[0].filter(id=self.lesson5.id).exists())
+
+    def test_invite_link_makes_a_pupil(self):
+        from .teachers import invite_for
+        code = invite_for(self.tutor).code
+        newbie = self.make_user('newbie@example.com')
+        self.client.force_login(newbie)
+        self.assertContains(self.client.get(f'/join/{code}/'), 'Запрошення від викладача')
+        self.client.post(f'/join/{code}/', {'real_name': 'Нова Учениця', 'course': 'grade_5'})
+        request = TutorStudentRequest.objects.get(user=newbie)
+        self.assertEqual((request.teacher, request.status), (self.tutor, 'approved'))
+        # Учень іншого викладача не перехоплюється
+        other_code = invite_for(self.other_tutor).code
+        self.client.post(f'/join/{other_code}/', {'real_name': 'X', 'course': 'grade_5'})
+        self.assertEqual(TutorStudentRequest.objects.get(user=newbie).teacher, self.tutor)
+        self.client.logout()
+        self.assertRedirects(self.client.get(f'/join/{code}/'), f'/login/?next=/join/{code}/', fetch_redirect_response=False)

@@ -299,6 +299,53 @@
 <div class="cabinet-grid">
     <!-- ЛІВА КОЛОНКА -->
     <div>
+        <!-- КАБІНЕТ ВИКЛАДАЧА: ПІДПИСКИ Й ЗАПРОШЕННЯ (РЕПЕТИТОР) -->
+        {% if invite_url %}
+        <details class="cab-section" data-section="tutor" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>🧑‍🏫 Кабінет викладача</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+                <p style="margin-top: 0;"><b>Ваша підписка:</b>
+                    {% for lic in licenses %}{{ lic.grade.short_label }} — до {{ lic.valid_until|date:"d.m.Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                </p>
+                <p style="margin-bottom: 6px;"><b>Запросити учня:</b> надішліть учневі це посилання. Після реєстрації він одразу стане вашим учнем і зможе практикуватися в темах вашої підписки безкоштовно.</p>
+                <div class="hw-form">
+                    <input type="text" id="invite-url" value="{{ invite_url }}" readonly style="flex: 1; min-width: 220px;" aria-label="Посилання-запрошення">
+                    <button type="button" class="hw-btn" onclick="navigator.clipboard.writeText(document.getElementById('invite-url').value); this.textContent='Скопійовано ✓';">Копіювати</button>
+                </div>
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- УРОКИ ЗА ПІДПИСКОЮ (ДЛЯ ПОКАЗУ НА ЗАНЯТТЯХ) -->
+        {% if tutor_lessons %}
+        <details class="cab-section" data-section="tutor-lessons">
+            <summary><h2 class="cab-section-title"><span>🖥 Уроки для занять</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            {% for group in tutor_lessons %}
+                <h3 style="font-size: 1rem; color: var(--brand-blue); margin: 12px 0 4px;">{{ group.label }}</h3>
+                {% for m in group.materials %}
+                <div class="hw-row">
+                    <span>{{ m.title }}</span>
+                    <span style="white-space: nowrap;">
+                        <a href="{% url 'download_material' m.id %}" target="_blank" class="hw-link">Презентація</a> ·
+                        <a href="{% url 'practice_session' m.id %}" class="hw-link">Практика</a>
+                    </span>
+                </div>
+                {% endfor %}
+            {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- ПРОПОЗИЦІЯ ДЛЯ ВЧИТЕЛЯ БЕЗ ПІДПИСКИ -->
+        {% if tutor_offer %}
+        <div class="cab-section" style="border: 2px dashed var(--brand-blue); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+            <h2 class="cab-section-title" style="margin-top: 0;"><span>🧑‍🏫 Кабінет викладача</span></h2>
+            <p>Презентації для показу на заняттях, практика сходинками для ваших учнів, домашні завдання, групові заняття і звіти для батьків — за підпискою на клас.</p>
+            <p style="margin-bottom: 0;">Щоб підключити, напишіть нам: <a href="{% url 'about' %}">контакти</a>.</p>
+        </div>
+        {% endif %}
+
         <!-- 1. ПАНЕЛЬ ВЧИТЕЛЯ (ВИДНО ТІЛЬКИ АДМІНУ/ВЧИТЕЛЮ) -->
         {% if students_attempts %}
         <details class="cab-section" data-section="journal">
@@ -705,6 +752,7 @@
         </details>
 
         <!-- БЛОК: ЗАЯВКА НА СТАТУС УЧНЯ -->
+        {% if not is_tutor %}
         <div class="student-status-card" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
             {% if not tutor_request %}
                 <h3 style="margin-top: 0;">Навчаєтесь у мене особисто?</h3>
@@ -733,9 +781,10 @@
 
             {% elif tutor_request.status == 'approved' %}
                 <h3 style="margin-top: 0; color: #2ecc71;">✅ Статус учня підтверджено</h3>
-                <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Твій напрямок: <b>{{ tutor_request.get_course_display }}</b>. Твої матеріали доступні в бібліотеці.</p>
+                <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Твій напрямок: <b>{{ tutor_request.get_course_display }}</b>.{% if tutor_request.teacher %} Твій викладач: <b>{{ tutor_request.teacher.get_full_name|default:tutor_request.teacher.email }}</b>.{% endif %} Твої матеріали доступні в бібліотеці.</p>
             {% endif %}
         </div>
+        {% endif %}
 
         <!-- БЛОК: ЗАЛИШИТИ ВІДГУК -->
         <details class="topup-section cab-card" data-section="review">

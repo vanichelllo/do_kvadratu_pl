@@ -23,7 +23,7 @@ from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite
 )
 
 User = get_user_model()
@@ -138,9 +138,10 @@ def regenerate_parent_links(modeladmin, request, queryset):
 
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
-    list_display = ('user', 'real_name', 'course', 'status', 'created_at', 'parent_token')
-    list_select_related = ('user',)
-    list_filter = ('course', 'status', 'created_at')
+    list_display = ('user', 'real_name', 'course', 'teacher', 'status', 'created_at', 'parent_token')
+    list_select_related = ('user', 'teacher')
+    list_filter = ('course', 'status', ('teacher', admin.EmptyFieldListFilter), 'created_at')
+    raw_id_fields = ('teacher',)
     search_fields = ('user__email', 'real_name')
     readonly_fields = ('parent_token',)
     actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links]
@@ -743,4 +744,21 @@ class HomeworkAdmin(admin.ModelAdmin):
     list_filter = ('due_date',)
     search_fields = ('student__real_name', 'material__title')
     raw_id_fields = ('student', 'material', 'attempt', 'teacher')
+
+
+@admin.register(TeacherLicense)
+class TeacherLicenseAdmin(admin.ModelAdmin):
+    """Підписки репетиторів на класи. Поки оплату підключено не автоматично — видаються тут."""
+    list_display = ('teacher', 'grade', 'valid_until', 'note', 'created_at')
+    list_select_related = ('teacher', 'grade__subject')
+    list_filter = ('grade', 'valid_until')
+    search_fields = ('teacher__email', 'teacher__first_name', 'teacher__last_name', 'note')
+    raw_id_fields = ('teacher',)
+
+
+@admin.register(TeacherInvite)
+class TeacherInviteAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'code')
+    search_fields = ('teacher__email', 'code')
+    raw_id_fields = ('teacher',)
 

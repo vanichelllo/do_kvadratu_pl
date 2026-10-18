@@ -15,16 +15,19 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import GameMistake, Question, StudyMaterial
+from .teachers import active_licenses
 
 
 def game_materials(user):
     """Теми, завдання з яких можна давати в іграх цьому користувачеві, і підпис для списку тем."""
-    if user.is_authenticated and (user.is_staff or user.is_superuser or getattr(user, 'role', '') == 'teacher'):
+    if user.is_authenticated and (user.is_staff or user.is_superuser):
         return StudyMaterial.objects.filter(is_bundle=False), 'Повний доступ викладача'
-    # Як у практиці: безкоштовна тема — лише опублікована, куплена — завжди
+    # Як у практиці: безкоштовна тема — лише опублікована, куплена — завжди; репетитор — класи своєї підписки
     free = Q(is_free=True, is_published=True)
     if user.is_authenticated:
-        return (StudyMaterial.objects.filter(free | Q(id__in=user.purchased_materials.values('id')), is_bundle=False),
+        licensed = Q(curriculum_topic__chapter__grade_id__in=active_licenses(user).values('grade_id'))
+        return (StudyMaterial.objects.filter(free | licensed | Q(id__in=user.purchased_materials.values('id')),
+                                             is_bundle=False),
                 'Ваші відкриті та безкоштовні теми')
     return StudyMaterial.objects.filter(free, is_bundle=False), 'Безкоштовні демо-теми'
 

@@ -537,6 +537,9 @@ class TutorStudentRequest(models.Model):
     )
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_request')
+    # Викладач учня. Порожньо — учень власника сайту (заявки «Навчаєтесь у мене особисто?» і всі давніші учні)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='students', verbose_name="Викладач")
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
@@ -656,6 +659,38 @@ class PracticeRun(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.material} ({'завершено' if self.finished_at else 'в процесі'})"
+
+
+class TeacherLicense(models.Model):
+    """Підписка викладача на клас (напр. «Математика · 5 клас»): показ усіх уроків класу на заняттях, практика,
+    ДЗ і звіти для його учнів. Учні викладача практикуються в цих темах без окремої оплати."""
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licenses',
+                                verbose_name="Викладач")
+    grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='licenses', verbose_name="Клас")
+    valid_until = models.DateField(verbose_name="Діє до (включно)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    note = models.CharField(max_length=200, blank=True, verbose_name="Примітка (оплата, промо…)")
+
+    class Meta:
+        ordering = ['-valid_until']
+        verbose_name = "Підписка викладача"
+        verbose_name_plural = "Підписки викладачів"
+
+    def __str__(self):
+        return f"{self.teacher} — {self.grade} до {self.valid_until:%d.%m.%Y}"
+
+
+class TeacherInvite(models.Model):
+    """Посилання-запрошення викладача: учень відкриває його й стає учнем цього викладача."""
+    teacher = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='invite')
+    code = models.CharField(max_length=12, unique=True)
+
+    class Meta:
+        verbose_name = "Запрошення викладача"
+        verbose_name_plural = "Запрошення викладачів"
+
+    def __str__(self):
+        return f"{self.teacher}: {self.code}"
 
 
 class Homework(models.Model):
