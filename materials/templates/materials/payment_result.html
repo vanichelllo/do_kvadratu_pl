@@ -8,7 +8,9 @@
         <div style="font-size: 3.5rem;">🎉</div>
         <h2 style="margin: 10px 0;">Оплата пройшла успішно!</h2>
         <p style="font-weight: 600; line-height: 1.5;">
-            {% if is_topup %}
+            {% if is_plan %}
+                Підписку репетитора «{{ order.teacher_plan.name }}» оформлено. Сплачено <strong>{{ order.total_amount|floatformat:0 }} ₴</strong>.
+            {% elif is_topup %}
                 Баланс поповнено на <strong>{{ order.total_amount|floatformat:0 }} ₴</strong>.
             {% else %}
                 Матеріали вже у вашому кабінеті. Сплачено <strong>{{ order.total_amount|floatformat:0 }} ₴</strong>.
@@ -19,7 +21,7 @@
             // Подія «покупка» для аналітики — один раз на замовлення (третій аргумент)
             window.dkTrack('purchase', {
                 transaction_id: '{{ order.id }}', value: {{ order.total_amount|stringformat:"s" }}, currency: 'UAH',
-                items: [{item_name: '{% if is_topup %}Поповнення балансу{% else %}Конспекти{% endif %}'}]
+                items: [{item_name: '{% if is_plan %}Підписка репетитора{% elif is_topup %}Поповнення балансу{% else %}Конспекти{% endif %}'}]
             }, 'dk_purchase_{{ order.id }}');
         </script>
 
@@ -62,10 +64,10 @@
         </p>
         <p style="color: #6c757d; font-size: 0.9rem; line-height: 1.5;">
             Якщо гроші все ж списано, нічого не робіть повторно: щойно банк підтвердить оплату,
-            {% if is_topup %}баланс поповниться{% else %}матеріали з'являться в кабінеті{% endif %} автоматично.
+            {% if is_plan %}підписка з'явиться в кабінеті{% elif is_topup %}баланс поповниться{% else %}матеріали з'являться в кабінеті{% endif %} автоматично.
             Питання — dokvadratu@gmail.com
         </p>
-        <a href="{% if is_topup %}{% url 'cabinet' %}{% else %}{% url 'cart_detail' %}{% endif %}" class="btn-brand" style="margin-top: 15px;">Спробувати ще раз</a>
+        <a href="{% if is_plan %}{% url 'for_tutors' %}{% elif is_topup %}{% url 'cabinet' %}{% else %}{% url 'cart_detail' %}{% endif %}" class="btn-brand" style="margin-top: 15px;">Спробувати ще раз</a>
     {% endif %}
 </div>
 {% endblock %}

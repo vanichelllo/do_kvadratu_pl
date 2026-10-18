@@ -24,7 +24,7 @@ from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan
 )
 
 User = get_user_model()
@@ -770,12 +770,19 @@ class HomeworkAdmin(admin.ModelAdmin):
     raw_id_fields = ('student', 'material', 'attempt', 'teacher')
 
 
+@admin.register(TeacherPlan)
+class TeacherPlanAdmin(admin.ModelAdmin):
+    """Тарифи для сторінки «Для репетиторів». Тариф продається, коли він увімкнений і має ціну."""
+    list_display = ('name', 'kind', 'max_students', 'price_month', 'price_year', 'is_active', 'order')
+    list_editable = ('price_month', 'price_year', 'is_active', 'order')
+
+
 @admin.register(TeacherLicense)
 class TeacherLicenseAdmin(admin.ModelAdmin):
-    """Підписки репетиторів на класи. Поки оплату підключено не автоматично — видаються тут."""
-    list_display = ('teacher', 'grade', 'valid_until', 'note', 'created_at')
-    list_select_related = ('teacher', 'grade__subject')
-    list_filter = ('grade', 'valid_until')
+    """Підписки репетиторів. Оплачені через сайт створюються самі; тут — видати вручну, продовжити, подарувати."""
+    list_display = ('teacher', 'scope', 'grade', 'plan', 'max_students', 'is_trial', 'valid_until', 'note', 'created_at')
+    list_select_related = ('teacher', 'grade__subject', 'plan')
+    list_filter = ('scope', 'is_trial', 'plan', 'valid_until')
     search_fields = ('teacher__email', 'teacher__first_name', 'teacher__last_name', 'note')
     raw_id_fields = ('teacher',)
 

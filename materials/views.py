@@ -36,7 +36,7 @@ from .games import record_game_answer, short_answer_matches
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
 )
@@ -829,6 +829,10 @@ def join_teacher(request, code):
     if existing and existing.status == 'approved':
         messages.error(request, "Ви вже навчаєтеся в іншого викладача. Напишіть нам, якщо хочете перейти.")
         return redirect('cabinet')
+    if not teachers.can_accept_student(invite.teacher):
+        messages.error(request, f"У викладача {teacher_name(invite.teacher)} зараз немає вільних місць для учнів. "
+                                f"Напишіть йому — він може змінити тариф.")
+        return redirect('cabinet')
     if request.method == 'POST':
         real_name = request.POST.get('real_name', '').strip()[:100]
         course = request.POST.get('course', '')
@@ -845,6 +849,72 @@ def join_teacher(request, code):
 
 def teacher_name(user):
     return user.get_full_name() or user.email or user.username
+
+
+class ForTutorsView(TemplateView):
+    """Сторінка «Для репетиторів»: що входить, тарифи, пробний період."""
+    template_name = 'materials/for_tutors.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        plans = TeacherPlan.objects.filter(is_active=True)
+        context['school_plans'] = [p for p in plans if p.kind == 'school']
+        context['nmt_plans'] = [p for p in plans if p.kind == 'nmt']
+        user = self.request.user
+        context['trial_available'] = not user.is_authenticated or teachers.trial_available(user)
+        context['trial_days'] = teachers.TRIAL_DAYS
+        context['trial_students'] = teachers.TRIAL_STUDENTS
+        if user.is_authenticated:
+            context['licenses'] = teachers.active_licenses(user).select_related('plan', 'grade')
+            context['has_school'] = teachers.active_licenses(user).filter(scope='school', is_trial=False).exists()
+        context['demo_lesson'] = (StudyMaterial.objects.filter(is_free=True, is_published=True, is_bundle=False,
+                                                               curriculum_topic__isnull=False)
+                                  .exclude(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
+                                  .defer('html_content').first())
+        return context
+
+
+@login_required
+@post_required('for_tutors')
+def tutor_trial(request):
+    """Пробний період: 14 днів, усі класи й НМТ, до 2 учнів — один раз."""
+    if not teachers.trial_available(request.user):
+        messages.info(request, "Пробний період уже використано — оберіть тариф.")
+        return redirect('for_tutors')
+    until = teachers.start_trial(request.user)
+    if not request.user.role:
+        request.user.role = 'teacher'
+        request.user.save(update_fields=['role'])
+    messages.success(request, f"✅ Пробний період діє до {until:%d.%m.%Y}. Запросіть учня посиланням нижче "
+                              f"і проведіть перше заняття.")
+    return redirect('cabinet')
+
+
+@login_required
+@post_required('for_tutors')
+@terms_required('/for-tutors/')
+def tutor_buy(request, plan_id, period):
+    """Оплата тарифу через Monobank; підписку видає apply_mono_status після підтвердження оплати."""
+    plan = get_object_or_404(TeacherPlan, id=plan_id, is_active=True)
+    if period not in ('month', 'year'):
+        raise Http404
+    price = plan.price_month if period == 'month' else plan.price_year
+    if not price:
+        messages.error(request, "Цей тариф поки не продається.")
+        return redirect('for_tutors')
+    if plan.kind == 'nmt' and not teachers.active_licenses(request.user).filter(scope='school', is_trial=False).exists():
+        messages.error(request, "НМТ — додаток до шкільної підписки: спершу оформіть тариф «Школа».")
+        return redirect('for_tutors')
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами.")
+        return redirect('for_tutors')
+    order = Order.objects.create(user=request.user, total_amount=price, status='pending', teacher_plan=plan,
+                                 plan_period=period, instant_access_agreed_at=timezone.now())
+    page_url = create_mono_invoice(order, price * 100)
+    if page_url:
+        return redirect(page_url)
+    messages.error(request, "Помилка платіжної системи. Спробуйте пізніше.")
+    return redirect('for_tutors')
 
 
 @login_required
@@ -1351,7 +1421,9 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                     lesson_groups.append({'label': label, 'materials': []})
                 lesson_groups[-1]['materials'].append(m)
             context['tutor_lessons'] = lesson_groups
-            context['licenses'] = teachers.active_licenses(user).select_related('grade__subject')
+            context['licenses'] = teachers.active_licenses(user).select_related('grade__subject', 'plan')
+            context['student_limit'] = teachers.student_limit(user)
+            context['student_count'] = teachers.student_count(user)
             context['invite_url'] = self.request.build_absolute_uri(
                 reverse('join_teacher', args=[teachers.invite_for(user).code]))
             context['students_attempts'] = PracticeAttempt.objects.filter(
@@ -1370,6 +1442,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 'chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order')
         elif getattr(user, 'role', '') == 'teacher':
             context['tutor_offer'] = True
+            context['trial_available'] = teachers.trial_available(user)
 
         return context
 
@@ -1631,7 +1704,13 @@ def apply_mono_status(invoice_id, status):
             order.save(update_fields=['status', 'paid_at'])
 
             order_items = list(order.items.select_related('material').defer('material__html_content'))
-            if order_items:
+            if order.teacher_plan_id:
+                license_ = teachers.grant_plan(order.user, order.teacher_plan, order.plan_period,
+                                               note=f'Замовлення #{order.id}')
+                msg = (f"🧑‍🏫 Нова підписка репетитора!\n{email}: {html.escape(str(order.teacher_plan))}, "
+                       f"{order.get_plan_period_display().lower()}, до {license_.valid_until:%d.%m.%Y}\n"
+                       f"Оплачено: {order.total_amount} ₴")
+            elif order_items:
                 materials = [item.material for item in order_items if item.material]
                 for material in materials:
                     if material.is_bundle:
@@ -1655,7 +1734,8 @@ def apply_mono_status(invoice_id, status):
             order.status = 'refunded'
             order.save(update_fields=['status'])
             if was_paid:
-                what = "матеріали з замовлення" if order.items.exists() else "суму поповнення з балансу"
+                what = ("підписку репетитора" if order.teacher_plan_id else
+                        "матеріали з замовлення" if order.items.exists() else "суму поповнення з балансу")
                 msg = (f"↩️ <b>Повернення коштів через Monobank</b>\nЗамовлення #{order.id}, {email}, "
                        f"{order.total_amount} ₴.\nАвтоматично нічого не змінено — за потреби заберіть {what} в адмінці.")
 
@@ -1683,9 +1763,11 @@ def payment_result(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status in ('pending', 'cancelled'):
         order = check_mono_invoice(order)
+    is_plan = order.teacher_plan_id is not None
     return render(request, 'materials/payment_result.html', {
         'order': order,
-        'is_topup': not order.items.exists(),
+        'is_plan': is_plan,
+        'is_topup': not is_plan and not order.items.exists(),
     })
 
 

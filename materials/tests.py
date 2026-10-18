@@ -3032,3 +3032,108 @@ TASKS = [{"type": "SHORT", "difficulty": 1, "skill": "SOLVE", "text": "Скіл�
         response = self.client.post(url, data, follow=True)
         text = ' '.join(str(m) for m in response.context['messages'])
         self.assertIn('Презентація: зображення <img> заборонені', text)
+
+
+class TutorPlansTests(BaseTestCase):
+    """Тарифи репетиторів: «Школа» на всі класи з лімітом учнів, НМТ-додаток, пробний період, оплата."""
+
+    def setUp(self):
+        from .models import TeacherPlan
+        self.tutor = self.make_user('plans-tutor@example.com')
+        self.topic5 = make_school_topic('1.1. Натуральні', 5, 101)
+        self.topic8 = make_school_topic('1.1. Дроби', 8, 101, subject='Алгебра (7-9 класи)')
+        self.nmt = make_nmt_topic('7. Квадратні рівняння')
+        self.lesson5 = StudyMaterial.objects.create(title='5', price=50, is_published=True, curriculum_topic=self.topic5)
+        self.lesson8 = StudyMaterial.objects.create(title='8', price=50, is_published=True, curriculum_topic=self.topic8)
+        self.lesson_nmt = StudyMaterial.objects.create(title='7. КР', price=50, is_published=True, curriculum_topic=self.nmt)
+        TeacherPlan.objects.all().delete()   # стартові тарифи з міграції
+        self.start = TeacherPlan.objects.create(name='Старт', kind='school', max_students=1, price_month=300,
+                                                price_year=2400, is_active=True)
+        self.pro = TeacherPlan.objects.create(name='Профі', kind='school', max_students=15, price_month=600,
+                                              is_active=True)
+        self.nmt_plan = TeacherPlan.objects.create(name='НМТ', kind='nmt', price_month=200, is_active=True)
+        TeacherPlan.objects.create(name='Прихований', kind='school', price_month=1, is_active=False)
+
+    def pay(self, plan, period='month'):
+        with mock.patch('materials.views.create_mono_invoice', return_value='https://pay.example/1'):
+            response = self.client.post(f'/for-tutors/buy/{plan.id}/{period}/', {'agree': 'on'})
+        order = Order.objects.filter(teacher_plan=plan).latest('id')
+        from .views import apply_mono_status
+        order.mono_invoice_id = f'inv-{order.id}'
+        order.save()
+        with mock.patch('materials.views.send_telegram_notification'):
+            apply_mono_status(order.mono_invoice_id, 'success')
+        return response, order
+
+    def test_school_plan_opens_every_school_grade_but_not_nmt(self):
+        from .teachers import can_teach
+        self.client.force_login(self.tutor)
+        self.pay(self.start)
+        self.assertTrue(can_teach(self.tutor, self.lesson5))
+        self.assertTrue(can_teach(self.tutor, self.lesson8))
+        self.assertFalse(can_teach(self.tutor, self.lesson_nmt))
+        self.pay(self.nmt_plan)
+        self.assertTrue(can_teach(self.tutor, self.lesson_nmt))
+
+    def test_nmt_addon_needs_a_school_plan(self):
+        self.client.force_login(self.tutor)
+        with mock.patch('materials.views.create_mono_invoice', return_value='https://pay.example/1'):
+            self.client.post(f'/for-tutors/buy/{self.nmt_plan.id}/month/', {'agree': 'on'})
+        self.assertFalse(Order.objects.exists())
+
+    def test_payment_grants_and_renewal_extends(self):
+        from .teachers import add_months
+        self.client.force_login(self.tutor)
+        response, order = self.pay(self.start)
+        self.assertRedirects(response, 'https://pay.example/1', fetch_redirect_response=False)
+        self.assertEqual(order.total_amount, 300)
+        license_ = TeacherLicense.objects.get(teacher=self.tutor)
+        today = timezone.localdate()
+        self.assertEqual((license_.scope, license_.max_students, license_.valid_until),
+                         ('school', 1, add_months(today, 1)))
+        self.pay(self.start)   # продовження — після кінця чинної
+        latest = TeacherLicense.objects.filter(teacher=self.tutor).latest('valid_until')
+        self.assertEqual(latest.valid_until, add_months(license_.valid_until + datetime.timedelta(days=1), 1))
+        self.pay(self.pro)     # інший тариф — діє одразу
+        from .teachers import student_limit
+        self.assertEqual(student_limit(self.tutor), 15)
+        self.assertContains(self.client.get(f'/payment/result/{order.id}/'), 'Підписку репетитора «Старт» оформлено')
+
+    def test_school_year_period(self):
+        from .teachers import period_end
+        self.assertEqual(period_end(datetime.date(2026, 10, 18), 'year'), datetime.date(2027, 6, 30))
+        self.assertEqual(period_end(datetime.date(2027, 5, 1), 'year'), datetime.date(2028, 6, 30))
+        self.assertEqual(period_end(datetime.date(2027, 1, 31), 'month'), datetime.date(2027, 2, 28))
+
+    def test_student_limit_blocks_new_pupils_and_nmt_addon_adds_none(self):
+        from .teachers import invite_for, student_limit
+        self.client.force_login(self.tutor)
+        self.pay(self.start)
+        self.pay(self.nmt_plan)
+        self.assertEqual(student_limit(self.tutor), 1)
+        code = invite_for(self.tutor).code
+        for email in ('first@example.com', 'second@example.com'):
+            self.client.force_login(self.make_user(email))
+            self.client.post(f'/join/{code}/', {'real_name': email, 'course': 'grade_5'})
+        self.assertEqual(TutorStudentRequest.objects.filter(teacher=self.tutor).count(), 1)
+        self.client.force_login(self.tutor)
+        self.assertContains(self.client.get('/cabinet/'), 'ліміт вичерпано')
+
+    def test_trial_once_with_two_pupils_and_everything(self):
+        from .teachers import can_teach, student_limit
+        self.client.force_login(self.tutor)
+        self.assertContains(self.client.get('/for-tutors/'), 'Пробний період')
+        self.client.post('/for-tutors/trial/')
+        self.assertTrue(can_teach(self.tutor, self.lesson8) and can_teach(self.tutor, self.lesson_nmt))
+        self.assertEqual(student_limit(self.tutor), 2)
+        self.tutor.refresh_from_db()
+        self.assertEqual(self.tutor.role, 'teacher')
+        self.client.post('/for-tutors/trial/')
+        self.assertEqual(TeacherLicense.objects.filter(teacher=self.tutor).count(), 2)
+        self.assertNotContains(self.client.get('/for-tutors/'), 'Почати пробний період')
+
+    def test_page_shows_only_active_plans(self):
+        response = self.client.get('/for-tutors/')
+        self.assertContains(response, 'Старт')
+        self.assertNotContains(response, 'Прихований')
+        self.assertContains(response, 'Увійти, щоб оформити')

@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import GameMistake, Question, StudyMaterial
-from .teachers import active_licenses
+from .teachers import licensed_grade_ids
 
 
 def game_materials(user):
@@ -25,7 +25,7 @@ def game_materials(user):
     # Як у практиці: безкоштовна тема — лише опублікована, куплена — завжди; репетитор — класи своєї підписки
     free = Q(is_free=True, is_published=True)
     if user.is_authenticated:
-        licensed = Q(curriculum_topic__chapter__grade_id__in=active_licenses(user).values('grade_id'))
+        licensed = Q(curriculum_topic__chapter__grade_id__in=licensed_grade_ids(user) or [])
         return (StudyMaterial.objects.filter(free | licensed | Q(id__in=user.purchased_materials.values('id')),
                                              is_bundle=False),
                 'Ваші відкриті та безкоштовні теми')

@@ -8,12 +8,14 @@
 
 Чужих учнів, їхніх спроб, ДЗ і звітів викладач не бачить ніде.
 """
+import calendar
+import datetime
 import secrets
 
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import TeacherInvite, TeacherLicense, TutorStudentRequest
+from .models import NMT_SUBJECT_NAME, CurriculumGrade, TeacherInvite, TeacherLicense, TutorStudentRequest
 
 INVITE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'   # без схожих символів (l/1, o/0)
 
@@ -29,10 +31,20 @@ def active_licenses(user):
 
 
 def licensed_grade_ids(user):
-    """None — усі класи (власник); інакше множина id класів з активною підпискою."""
+    """None — усі класи (власник); інакше множина id класів з активної підписки: «Школа» — усі шкільні класи,
+    «НМТ» — курс НМТ, «Один клас» — лише він."""
     if is_owner(user):
         return None
-    return set(active_licenses(user).values_list('grade_id', flat=True))
+    grades = set()
+    for scope, grade_id in active_licenses(user).values_list('scope', 'grade_id'):
+        if scope == 'grade' and grade_id:
+            grades.add(grade_id)
+        elif scope == 'school':
+            grades |= set(CurriculumGrade.objects.exclude(subject__name=NMT_SUBJECT_NAME)
+                          .exclude(number__isnull=True).values_list('id', flat=True))
+        elif scope == 'nmt':
+            grades |= set(CurriculumGrade.objects.filter(subject__name=NMT_SUBJECT_NAME).values_list('id', flat=True))
+    return grades
 
 
 def is_tutor(user):
@@ -70,7 +82,7 @@ def covered_by_teacher(pupil, material):
         return False
     request = TutorStudentRequest.objects.filter(user=pupil, status='approved', teacher__isnull=False).first()
     grade = material.curriculum_grade
-    return bool(request and grade and active_licenses(request.teacher).filter(grade=grade).exists())
+    return bool(request and grade and grade.id in (licensed_grade_ids(request.teacher) or set()))
 
 
 def invite_for(user):
@@ -79,3 +91,74 @@ def invite_for(user):
         code = ''.join(secrets.choice(INVITE_ALPHABET) for _ in range(8))
         invite = TeacherInvite.objects.create(teacher=user, code=code)
     return invite
+
+
+# ---------- Ліміт учнів, пробний період, продовження ----------
+
+TRIAL_DAYS = 14
+TRIAL_STUDENTS = 2
+
+
+def student_limit(user):
+    """Скільки учнів може мати викладач: None — без обмежень (власник або тариф без ліміту)."""
+    if is_owner(user):
+        return None
+    # Ліміт задає шкільна підписка; додаток НМТ своїх учнів не додає (крім випадку, коли є лише він)
+    licenses = active_licenses(user)
+    base = licenses.exclude(scope='nmt') if licenses.exclude(scope='nmt').exists() else licenses
+    limits = list(base.values_list('max_students', flat=True))
+    if not limits or None in limits:
+        return None
+    return max(limits)
+
+
+def student_count(user):
+    return TutorStudentRequest.objects.filter(teacher=user, status='approved').count()
+
+
+def can_accept_student(user):
+    limit = student_limit(user)
+    return limit is None or student_count(user) < limit
+
+
+def trial_available(user):
+    """Пробний період — один раз, лише тому, хто ще ніколи не мав підписки."""
+    return user.is_authenticated and not is_owner(user) and not TeacherLicense.objects.filter(teacher=user).exists()
+
+
+def start_trial(user):
+    until = timezone.localdate() + datetime.timedelta(days=TRIAL_DAYS)
+    for scope in ('school', 'nmt'):
+        TeacherLicense.objects.create(teacher=user, scope=scope, valid_until=until, max_students=TRIAL_STUDENTS,
+                                      is_trial=True, note='Пробний період')
+    return until
+
+
+def add_months(day, months):
+    month = day.month - 1 + months
+    year, month = day.year + month // 12, month % 12 + 1
+    return datetime.date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+
+def period_end(start, period):
+    """Місяць — до того самого числа наступного місяця. Навчальний рік — до 30 червня; якщо до нього лишилося
+    менше трьох місяців, — до 30 червня наступного року (покупка навесні покриває й наступний рік)."""
+    if period == 'month':
+        return add_months(start, 1)
+    end = datetime.date(start.year if start.month <= 6 else start.year + 1, 6, 30)
+    if (end - start).days < 92:
+        end = datetime.date(end.year + 1, 6, 30)
+    return end
+
+
+def grant_plan(user, plan, period, note=''):
+    """Оплачено тариф. Продовження того самого тарифу починається після кінця чинного (дні, що лишилися,
+    не пропадають); інший тариф (наприклад, перехід зі «Старту» на «Профі») діє одразу."""
+    today = timezone.localdate()
+    current = (TeacherLicense.objects.filter(teacher=user, plan=plan, is_trial=False, valid_until__gte=today)
+               .order_by('-valid_until').values_list('valid_until', flat=True).first())
+    start = current + datetime.timedelta(days=1) if current else today
+    return TeacherLicense.objects.create(
+        teacher=user, scope=plan.kind, plan=plan, valid_until=period_end(start, period),
+        max_students=plan.max_students if plan.kind == 'school' else None, note=note)
+

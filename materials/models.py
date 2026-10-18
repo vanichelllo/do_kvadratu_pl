@@ -358,6 +358,12 @@ class Order(models.Model):
     # одразу після оплати (оферта, п. 14.1–14.2). Порожньо — у старих замовленнях і поповненнях балансу
     instant_access_agreed_at = models.DateTimeField(blank=True, null=True,
                                                     verbose_name="Галочка в Кошику (п. 14.1 оферти)")
+    # Оплата підписки репетитора (замість матеріалів у кошику)
+    teacher_plan = models.ForeignKey('TeacherPlan', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='orders', verbose_name="Тариф репетитора")
+    plan_period = models.CharField(max_length=10, blank=True, default='',
+                                   choices=(('month', 'Місяць'), ('year', 'Навчальний рік')),
+                                   verbose_name="Період підписки")
 
     def save(self, *args, **kwargs):
         if not self.customer_email and self.user_id:
@@ -661,12 +667,43 @@ class PracticeRun(models.Model):
         return f"{self.user} — {self.material} ({'завершено' if self.finished_at else 'в процесі'})"
 
 
+class TeacherPlan(models.Model):
+    """Тариф для репетиторів (ціни задаються в адмінці). «Школа» — усі шкільні класи 5–11, ціна залежить від
+    кількості учнів; «НМТ» — додаток до шкільної підписки."""
+    KIND_CHOICES = (('school', 'Школа 5–11 класи'), ('nmt', 'НМТ (додаток)'))
+
+    name = models.CharField(max_length=60, verbose_name="Назва (напр. «Старт»)")
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default='school', verbose_name="Що відкриває")
+    max_students = models.PositiveSmallIntegerField(null=True, blank=True,
+                                                    verbose_name="Учнів не більше (порожньо — без обмежень)")
+    price_month = models.PositiveIntegerField(default=0, verbose_name="Ціна за місяць, грн")
+    price_year = models.PositiveIntegerField(default=0, verbose_name="Ціна за навчальний рік, грн")
+    is_active = models.BooleanField(default=False, verbose_name="Продається (видно на сторінці «Для репетиторів»)")
+    order = models.PositiveSmallIntegerField(default=0, verbose_name="Сортування")
+
+    class Meta:
+        ordering = ['kind', 'order']
+        verbose_name = "Тариф репетитора"
+        verbose_name_plural = "Тарифи репетиторів"
+
+    def __str__(self):
+        return f"{self.get_kind_display()}: {self.name}"
+
+
 class TeacherLicense(models.Model):
-    """Підписка викладача на клас (напр. «Математика · 5 клас»): показ усіх уроків класу на заняттях, практика,
-    ДЗ і звіти для його учнів. Учні викладача практикуються в цих темах без окремої оплати."""
+    """Підписка викладача: на всі шкільні класи («Школа»), на курс НМТ або (давні, видані вручну) на один клас.
+    Дає показ уроків на заняттях, практику, ДЗ і звіти для його учнів; учні практикуються в цих темах без оплати."""
+    SCOPE_CHOICES = (('school', 'Усі шкільні класи 5–11'), ('nmt', 'Курс НМТ'), ('grade', 'Один клас'))
+
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licenses',
                                 verbose_name="Викладач")
-    grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='licenses', verbose_name="Клас")
+    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES, default='grade', verbose_name="Що відкриває")
+    grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='licenses', null=True, blank=True,
+                              verbose_name="Клас (лише для «Один клас»)")
+    max_students = models.PositiveSmallIntegerField(null=True, blank=True,
+                                                    verbose_name="Учнів не більше (порожньо — без обмежень)")
+    plan = models.ForeignKey(TeacherPlan, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Тариф")
+    is_trial = models.BooleanField(default=False, verbose_name="Пробний період")
     valid_until = models.DateField(verbose_name="Діє до (включно)")
     created_at = models.DateTimeField(auto_now_add=True)
     note = models.CharField(max_length=200, blank=True, verbose_name="Примітка (оплата, промо…)")
@@ -677,7 +714,8 @@ class TeacherLicense(models.Model):
         verbose_name_plural = "Підписки викладачів"
 
     def __str__(self):
-        return f"{self.teacher} — {self.grade} до {self.valid_until:%d.%m.%Y}"
+        what = self.grade if self.scope == 'grade' else self.get_scope_display()
+        return f"{self.teacher} — {what} до {self.valid_until:%d.%m.%Y}"
 
 
 class TeacherInvite(models.Model):
