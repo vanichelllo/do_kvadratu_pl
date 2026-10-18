@@ -65,8 +65,8 @@ def check_presentation(html):
             problems.append(f'у формулі «${formula[:40]}$» є < або > — пишіть \\lt / \\gt')
             break
     slides = len(re.findall(r'class="slide-card[ "]', html))
-    if not 5 <= slides <= 9:
-        warnings.append(f'слайдів {slides} (за методикою 5–9)')
+    if not 5 <= slides <= 10:   # 5–9 за профілем + підсумковий слайд «Коротко про тему»
+        warnings.append(f'слайдів {slides} (за методикою 5–10)')
     return problems, warnings
 
 

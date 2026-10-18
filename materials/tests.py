@@ -3223,3 +3223,71 @@ class TutorPlansTests(BaseTestCase):
         self.assertContains(response, 'Старт')
         self.assertNotContains(response, 'Прихований')
         self.assertContains(response, 'Увійти, щоб оформити')
+
+
+class CurriculumTreeUpdateTests(BaseTestCase):
+    """Доповнення дерева тем: нові теми й перенумерування наявних без втрати прив'язаних уроків."""
+
+    def old_chapter(self, subject, grade_name, number, chapter_name, topics):
+        subject_obj, _ = CurriculumSubject.objects.get_or_create(name=subject)
+        grade, _ = CurriculumGrade.objects.get_or_create(subject=subject_obj, name=grade_name, defaults={'number': number})
+        chapter = CurriculumChapter.objects.create(grade=grade, name=chapter_name, order=10)
+        for order, name in enumerate(topics, start=1):
+            CurriculumTopic.objects.create(chapter=chapter, name=name, order=order)
+        return chapter
+
+    def test_renumbers_existing_topics_keeps_lessons_and_adds_new_ones(self):
+        from .curriculum import apply_tree_update, ensure_special_topics
+        geo = self.old_chapter('Геометрія (7-9 класи)', '8 клас', 8, 'Розділ 1. Чотирикутники', [
+            '1.1. Чотирикутник та його елементи. Сума кутів', '1.2. Паралелограм. Означення, властивості та ознаки',
+            '1.3. Прямокутник, ромб, квадрат', '1.4. Трапеція. Середня лінія трапеції',
+            '1.5. Вписані та описані чотирикутники'])
+        alg = self.old_chapter('Алгебра (7-9 класи)', '9 клас', 9,
+                               'Розділ 4. Основи комбінаторики, теорії ймовірностей та статистики', [
+                                   '4.1. Комбінаторні правила суми та добутку', '4.2. Ймовірність випадкової події',
+                                   '4.3. Початкові відомості про статистику'])
+        ensure_special_topics(CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial)
+        trapezoid = CurriculumTopic.objects.get(chapter=geo, name='1.4. Трапеція. Середня лінія трапеції')
+        lesson = StudyMaterial.objects.create(title=trapezoid.name, price=0, is_free=True, curriculum_topic=trapezoid)
+
+        args = (CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial)
+        self.assertGreater(apply_tree_update(*args), 0)
+        self.assertEqual(apply_tree_update(*args), 0)   # повторний запуск нічого не змінює
+
+        names = list(CurriculumTopic.objects.filter(chapter=geo, kind='lesson').order_by('order').values_list('name', flat=True))
+        self.assertEqual(names, ['1.1. Чотирикутник та його елементи. Сума кутів',
+                                 '1.2. Паралелограм. Означення, властивості та ознаки', '1.3. Прямокутник, ромб, квадрат',
+                                 '1.4. Середня лінія трикутника', '1.5. Трапеція. Середня лінія трапеції',
+                                 '1.6. Центральні та вписані кути', '1.7. Вписані та описані чотирикутники'])
+        lesson.refresh_from_db()
+        self.assertEqual(lesson.curriculum_topic_id, trapezoid.id)   # той самий запис теми — урок не загубився
+        self.assertEqual(lesson.title, '1.5. Трапеція. Середня лінія трапеції')
+
+        alg.refresh_from_db()
+        self.assertEqual(alg.name, 'Розділ 4. Елементи прикладної математики')
+        summary = CurriculumTopic.objects.get(chapter=alg, kind='summary')
+        self.assertEqual(summary.name, 'Узагальнення: Розділ 4. Елементи прикладної математики')
+        self.assertEqual(StudyMaterial.objects.get(curriculum_topic=summary).title, summary.name)
+        self.assertEqual(CurriculumTopic.objects.filter(chapter=alg, kind='lesson').count(), 6)
+
+    def test_prompt_tree_matches_site_classifier(self):
+        """Дерево тем у промпті — дослівно те, що створює import_curriculum (інакше банк не знайде тему)."""
+        import re
+        from pathlib import Path
+        from materials.management.commands.import_curriculum import ALL_CURRICULUMS
+        expected = [t['topic_name'] for course in ALL_CURRICULUMS for grade in course['grades']
+                    for chapter in grade['chapters'] for t in chapter['topics']]
+        tree = (Path(settings.BASE_DIR) / 'docs' / 'html_prompt.md').read_text().split('## 7. ДЕРЕВО')[1]
+        self.assertEqual(re.findall(r'^  - (.+)$', tree, flags=re.M), expected)
+        chapters = [c['chapter_name'] for course in ALL_CURRICULUMS for g in course['grades'] for c in g['chapters']]
+        self.assertEqual(re.findall(r'^- \*\*(.+)\*\*$', tree, flags=re.M), chapters)
+
+    def test_lesson_prompt_is_built_from_sources(self):
+        import importlib.util
+        from pathlib import Path
+        path = Path(settings.BASE_DIR) / 'docs' / 'build_lesson_prompt.py'
+        spec = importlib.util.spec_from_file_location('build_lesson_prompt', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual((path.parent / 'lesson_prompt.md').read_text(), module.OUT,
+                         'запустіть python docs/build_lesson_prompt.py')
