@@ -324,37 +324,64 @@
         <section class="slide-card" data-slide="7">
             <div class="slide-header">
                 <span class="slide-tag">Перевір себе</span>
-                <h2 class="slide-title">Ще трохи складніше 🚀</h2>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
             </div>
             <div class="slide-body grid-2">
                 <div>
-                    <p class="quiz-q">3. Яке найменше натуральне число?</p>
-                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $0$</div>
-                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $1$</div>
-                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $10$</div>
-                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) такого немає</div>
+                    <p class="quiz-q">3. Скільки натуральних чисел від $15$ до $30$ включно?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $16$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $14$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $30$</div>
                     <div class="box hack quiz-hint" id="quiz-3-hint">
                         <div class="box-title">Підказка 💡</div>
-                        <p>З якого числа починаєш лічити яблука? Подивись на першу сходинку.</p>
+                        <p>«Включно» — отже, $15$ і $30$ теж рахуємо. Від $1$ до $30$ — $30$ чисел. Скільки з них менші за $15$?</p>
                     </div>
                     <div class="box theorem quiz-explanation" id="quiz-3-explanation">
                         <div class="box-title">Так! 🎉</div>
-                        <p>Натуральний ряд починається з $1$. А от найбільшого числа немає.</p>
+                        <p>Від $1$ до $30$ — $30$ чисел, з них $14$ менші за $15$. Лишається $30 - 14 = 16$. Або так: $30 - 15 + 1 = 16$.</p>
                     </div>
                 </div>
                 <div>
-                    <p class="quiz-q">4. Скільки натуральних чисел стоїть між $5$ і $10$?</p>
-                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $5$</div>
-                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $6$</div>
-                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $4$</div>
-                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $3$</div>
+                    <p class="quiz-q">4. Сашко стоїть у черзі шостим від початку і четвертим від кінця. Скільки людей у черзі?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $10$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $9$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $11$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $8$</div>
                     <div class="box hack quiz-hint" id="quiz-4-hint">
                         <div class="box-title">Підказка 💡</div>
-                        <p>Випиши їх: $6,\ 7,\ \ldots$ Самі числа $5$ і $10$ не рахуй. Спробуй ще раз!</p>
+                        <p>Намалюй чергу кружечками. Чи не порахував ти Сашка двічі?</p>
                     </div>
                     <div class="box theorem quiz-explanation" id="quiz-4-explanation">
                         <div class="box-title">Супер! 🎉</div>
-                        <p>Між ними числа $6,\ 7,\ 8,\ 9$ — усього $4$.</p>
+                        <p>Перед Сашком $5$ людей, за ним — $3$, і він сам: $5 + 1 + 3 = 9$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Натуральні числа — ними <b>лічимо</b> і <b>нумеруємо</b>: $1,\ 2,\ 3,\ \ldots$</p>
+                    <p>Найменше — $1$. Найбільшого немає: до будь-якого числа можна додати $1$.</p>
+                    <p>Сусіди числа: попереднє на $1$ менше, наступне на $1$ більше. У числа $1$ попереднього натурального немає.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як рахувати числа 🧮</div>
+                        <p>Від $5$ до $10$ <b>включно</b>: $10 - 5 + 1 = 6$ чисел.</p>
+                        <p><b>Між</b> $5$ і $10$: $6,\ 7,\ 8,\ 9$ — лише $4$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$0$ — <b>не</b> натуральне число: нулем предмети не лічать.</p>
                     </div>
                 </div>
             </div>
@@ -362,7 +389,7 @@
     </main>
 
     <footer class="controls-footer">
-        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
         <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
         <div class="nav-buttons">
             <button class="btn-secondary" id="btn-prev">← Назад</button>
