@@ -397,6 +397,16 @@ class Question(models.Model):
         ('CHOICE', 'Один з п\'яти (1 бал)'),
         ('MATCH', 'Відповідність (до 3 балів)'),
         ('SHORT', 'Коротка відповідь (2 бали)'),
+        # Типи лише для шкільної практики (5–11 кл.); їхні дані — у полі spec
+        ('MULTI', 'Кілька правильних'),
+        ('TF', 'Так / ні'),
+        ('FIELDS', 'Кілька полів'),
+        ('ERROR', 'Знайди помилку'),
+        ('ORDER', 'Впорядкувати'),
+        ('GROUP', 'Розподілити на групи'),
+        ('EXPR', 'Вираз'),
+        ('POINT', 'Точка на прямій'),
+        ('COORD', 'Точка на площині'),
     )
 
     DIFFICULTY_CHOICES = (
@@ -438,6 +448,8 @@ class Question(models.Model):
     nush_skill = models.CharField(max_length=10, choices=SKILL_CHOICES, default='SOLVE',
                                   verbose_name="Критерій НУШ")
     hint = models.TextField(blank=True, default='', verbose_name="Підказка (показується після першої помилки, 5–6 кл.)")
+    spec = models.JSONField(blank=True, default=dict,
+                            verbose_name="Дані завдання (для типів шкільної практики: варіанти, кроки, групи…)")
     solution = models.TextField(blank=True, default='', verbose_name="Розв'язання (показується після відповіді)")
 
     def __str__(self):
@@ -613,6 +625,25 @@ class PracticeAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
+class PracticeRun(models.Model):
+    """Незавершена шкільна практика «сходинками»: учень може піти й продовжити пізніше з того самого місця.
+    Після завершення з неї створюється PracticeAttempt."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_runs')
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='practice_runs')
+    profile = models.CharField(max_length=1, verbose_name="Профіль (A/B/C)")
+    state = models.JSONField(default=dict, verbose_name="Стан (сходинка, історія завдань)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Практика в процесі"
+        verbose_name_plural = "Практики в процесі"
+
+    def __str__(self):
+        return f"{self.user} — {self.material} ({'завершено' if self.finished_at else 'в процесі'})"
+
+
 class StudentPresentation(models.Model):
     objects = WithoutHtmlManager()
 

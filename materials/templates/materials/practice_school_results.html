@@ -23,6 +23,8 @@
         .summary { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; text-align: center; margin-bottom: 20px; }
         .summary h1 { margin: 0 0 6px; color: var(--brand-blue); font-size: 1.4rem; }
         .score { color: var(--text-muted); font-weight: 700; }
+        .reached { font-weight: 800; color: var(--brand-green); margin-bottom: 4px; }
+        .grade-note { color: var(--text-muted); font-size: 0.8rem; margin-top: 10px; }
         .grades { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
         .grade { background: var(--bg-light); border-radius: 10px; padding: 12px 8px; }
         .grade b { display: block; font-size: 2rem; color: var(--brand-blue); }
@@ -57,7 +59,11 @@
     <div class="container">
         <div class="summary">
             <h1>{{ material.title }}</h1>
-            <div class="score">Набрано {{ attempt.score }} з {{ attempt.max_score }} балів ({{ attempt.get_percent }}%)</div>
+            <div class="reached">
+                {% if status == 'mastered' %}🏆 Тему опановано: пройдено всі три сходинки
+                {% elif level %}Найвища сходинка з правильною відповіддю: {{ level }} з {{ levels|length }}{% endif %}
+            </div>
+            <div class="score">Розв'язано завдань: {{ results|length }} · набрано {{ attempt.score }} з {{ attempt.max_score }} балів</div>
             <div class="grades">
                 {% for name, grade in attempt.nush_grades %}
                 <div class="grade {% if grade and grade >= 10 %}high{% elif grade and grade <= 3 %}low{% endif %}">
@@ -66,14 +72,15 @@
                 </div>
                 {% endfor %}
             </div>
+            <div class="grade-note">Оцінка залежить від того, на якій сходинці ти впорався: 1 — середній рівень (4–6), 2 — достатній (7–9), 3 — високий (10–12). «—» — завдань цього критерію не було.</div>
             {% if not attempt.nush_grades %}<p class="score">Оцінки за критеріями для цієї спроби не збережено.</p>{% endif %}
             {% with p=attempt.get_percent %}
             <div class="praise">
-                {% if p >= 90 %}Блискуче! 🏆{% elif p >= 70 %}Дуже добре! 💪{% elif p >= 40 %}Непогано — переглянь розбір помилок нижче.{% else %}Повтори урок і спробуй ще раз — у тебе вийде!{% endif %}
+                {% if status == 'mastered' %}Блискуче! 🏆{% elif p >= 70 %}Дуже добре! 💪 Наступного разу спробуй дійти до вершини.{% elif p >= 40 %}Непогано — переглянь розбір помилок нижче.{% else %}Повтори урок і спробуй ще раз — у тебе вийде!{% endif %}
             </div>
             {% endwith %}
             <div class="actions">
-                <a href="{% url 'practice_session' material.id %}" class="btn btn-primary">🔁 Ще раз (нові завдання)</a>
+                <a href="{% url 'practice_session' material.id %}" class="btn btn-primary">🔁 Ще раз</a>
                 <a href="{% url 'cabinet' %}" class="btn btn-secondary">До кабінету</a>
             </div>
         </div>
@@ -81,7 +88,7 @@
         {% for r in results %}
         <div class="result-card {% if r.is_correct %}correct{% elif r.earned %}partial{% endif %}">
             <div class="r-head">
-                <span>{% if r.is_correct %}✅{% elif r.earned %}🟡{% else %}❌{% endif %} Завдання {{ forloop.counter }} · {{ r.earned }} з {{ r.max_points }}</span>
+                <span>{% if r.is_correct %}✅{% elif r.earned %}🟡{% else %}❌{% endif %} Завдання {{ forloop.counter }} · сходинка {{ r.level }} · {{ r.earned }} з {{ r.max_points }}</span>
                 <span class="skill-chip">{{ r.question.get_nush_skill_display }}</span>
             </div>
             <div class="r-text">{{ r.question.text|safe }}</div>

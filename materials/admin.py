@@ -16,7 +16,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from users.models import PurchaseHistory
-from .bank_import import MAX_FILE_BYTES, BankFormatError, build_report, import_tasks, parse_bank_source
+from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
+                          validate_school_spec)
+from .practice import describe_correct
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
@@ -298,7 +300,7 @@ class QuestionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('text', 'question_type', 'difficulty', 'curriculum_topic', 'materials', 'image',
                            'svg_code', 'correct_short_answer')}),
-        ('Шкільна практика (5–11 класи)', {'fields': ('nush_skill', 'hint', 'solution')}),
+        ('Шкільна практика (5–11 класи)', {'fields': ('nush_skill', 'hint', 'solution', 'spec')}),
         ('Попередній перегляд (збережена версія)', {'fields': ('preview',)}),
     )
     filter_horizontal = ('materials',)
@@ -393,6 +395,7 @@ class QuestionAdmin(admin.ModelAdmin):
             'pairs': obj.match_items.select_related('correct_option'),
             'problem': question_problem(obj, obj.options.count(), obj.options.filter(is_correct=True).count(),
                                         obj.match_items.count()),
+            'school_answer': describe_correct(obj) if obj.question_type in SPEC_KEYS else '',
         })
 
 
@@ -410,6 +413,10 @@ def question_problem(question, n_options, n_correct, n_pairs):
             return 'варіантів менше, ніж пар'
     elif question.question_type == 'SHORT' and not (question.correct_short_answer or '').strip():
         return 'немає правильної відповіді'
+    elif question.question_type in SPEC_KEYS:
+        spec = question.spec if isinstance(question.spec, dict) else {}
+        problems = validate_school_spec(question.question_type, spec)
+        return problems[0] if problems else None
     return None
 
 

@@ -1,9 +1,11 @@
 import ast
+import json
 import re
 from dataclasses import dataclass, field
 from django.db import transaction
 
 # ВИДАЛИЛИ DiagnosticTopic, ДОДАЛИ CurriculumTopic
+from .expr import ExprError, parse as parse_expression
 from .models import AnswerOption, MatchItem, Question, StudyMaterial, CurriculumTopic
 
 MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -12,7 +14,13 @@ TAG_ALIASES = {
     '34. Теореми косинусів та теорема синусів': '34. Теорема косинусів та теорема синусів',
 }
 
-TYPES = ('CHOICE', 'MATCH', 'SHORT')
+TYPES = ('CHOICE', 'MATCH', 'SHORT', 'MULTI', 'TF', 'FIELDS', 'ERROR', 'ORDER', 'GROUP', 'EXPR', 'POINT', 'COORD')
+# Ключі завдання, що зберігаються в Question.spec для типів шкільної практики
+SPEC_KEYS = {
+    'MULTI': ('options',), 'TF': ('statements',), 'FIELDS': ('fields', 'unordered'), 'ERROR': ('steps', 'wrong'),
+    'ORDER': ('items',), 'GROUP': ('groups', 'items'), 'EXPR': ('answer', 'vars'),
+    'POINT': ('min', 'max', 'step', 'answer'), 'COORD': ('xmin', 'xmax', 'ymin', 'ymax', 'step', 'answer'),
+}
 SKILLS = ('MODEL', 'SOLVE', 'ANALYZE')
 SHORT_ANSWER_MAX = 50
 OPTION_TEXT_MAX = 255
@@ -100,9 +108,100 @@ def validate_task(task):
         matches = task.get('matches')
         if not isinstance(options, (list, tuple)) or len(options) < 2: problems.append('options: помилка MATCH')
         if not isinstance(matches, (list, tuple)) or not matches: problems.append('matches: помилка MATCH')
-    else:
+    elif q_type == 'SHORT':
         if not str(task.get('answer', '')).strip(): problems.append('answer: порожня відповідь')
+    else:
+        problems += validate_school_spec(q_type, task)
     return problems
+
+
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _on_grid(value, start, step):
+    k = (value - start) / step
+    return abs(k - round(k)) < 1e-9
+
+
+def _texts(value, minimum=2):
+    return isinstance(value, (list, tuple)) and len(value) >= minimum and all(isinstance(v, str) and v.strip() for v in value)
+
+
+def validate_school_spec(q_type, task):
+    """Перевірка даних нових типів (кілька правильних, так/ні, поля, кроки, порядок, групи, вираз, точки)."""
+    if q_type == 'MULTI':
+        options = task.get('options')
+        if not isinstance(options, (list, tuple)) or len(options) < 2 or not all(_is_pair(o, bool) for o in options):
+            return ['options: список пар (текст, True/False)']
+        return [] if any(ok for _, ok in options) else ['options: потрібен хоча б один правильний варіант']
+    if q_type == 'TF':
+        statements = task.get('statements')
+        if not isinstance(statements, (list, tuple)) or not statements or not all(_is_pair(s, bool) for s in statements):
+            return ['statements: список пар (твердження, True/False)']
+        return []
+    if q_type == 'FIELDS':
+        fields = task.get('fields')
+        if not isinstance(fields, (list, tuple)) or not fields or not all(
+                isinstance(f, (list, tuple)) and len(f) == 2 and isinstance(f[0], str) and str(f[1]).strip() for f in fields):
+            return ['fields: список пар (підпис поля, відповідь)']
+        return []
+    if q_type == 'ERROR':
+        steps, wrong = task.get('steps'), task.get('wrong')
+        if not _texts(steps):
+            return ['steps: щонайменше 2 кроки розв\'язання']
+        if not (isinstance(wrong, int) and not isinstance(wrong, bool) and 0 <= wrong < len(steps)):
+            return ['wrong: номер хибного кроку, рахуючи з 0']
+        return []
+    if q_type == 'ORDER':
+        return [] if _texts(task.get('items')) else ['items: щонайменше 2 елементи в правильному порядку']
+    if q_type == 'GROUP':
+        groups, items = task.get('groups'), task.get('items')
+        if not _texts(groups):
+            return ['groups: щонайменше 2 назви груп']
+        if not isinstance(items, (list, tuple)) or len(items) < 2 or not all(
+                _is_pair(i, int) and 0 <= i[1] < len(groups) for i in items):
+            return ['items: список пар (елемент, номер групи з 0)']
+        return []
+    if q_type == 'EXPR':
+        variables = task.get('vars', [])
+        if not isinstance(variables, (list, tuple)) or not all(isinstance(v, str) and len(v) == 1 and v.isalpha() for v in variables):
+            return ['vars: список однолітерних змінних, напр. ["a", "b"]']
+        try:
+            parse_expression(task.get('answer', ''), variables)
+        except ExprError as exc:
+            return [f'answer: вираз не розібрано ({exc})']
+        return []
+    if q_type == 'POINT':
+        values = [task.get(k) for k in ('min', 'max', 'step', 'answer')]
+        if not all(_is_number(v) for v in values) or not values[0] <= values[3] <= values[1] or values[2] <= 0 \
+                or values[0] >= values[1]:
+            return ['min, max, step, answer: числа, min ≤ answer ≤ max, step > 0']
+        if not _on_grid(values[3], values[0], values[2]):
+            return ['answer: точка має лежати на поділці (min + k·step)']
+        return []
+    if q_type == 'COORD':
+        bounds = [task.get(k) for k in ('xmin', 'xmax', 'ymin', 'ymax')]
+        answer, step = task.get('answer'), task.get('step', 1)
+        if not all(_is_number(v) for v in bounds) or bounds[0] >= bounds[1] or bounds[2] >= bounds[3] \
+                or not _is_number(step) or step <= 0:
+            return ['xmin, xmax, ymin, ymax, step: числа, min < max, step > 0']
+        if not (isinstance(answer, (list, tuple)) and len(answer) == 2 and all(_is_number(v) for v in answer)
+                and bounds[0] <= answer[0] <= bounds[1] and bounds[2] <= answer[1] <= bounds[3]):
+            return ['answer: точка (x, y) у межах площини']
+        if not (_on_grid(answer[0], bounds[0], step) and _on_grid(answer[1], bounds[2], step)):
+            return ['answer: точка має лежати у вузлі сітки (min + k·step)']
+        return []
+    return []
+
+
+def task_spec(task):
+    spec = {}
+    for key in SPEC_KEYS.get(task['type'], ()):
+        if key in task:
+            value = task[key]
+            spec[key] = [list(v) if isinstance(v, tuple) else v for v in value] if isinstance(value, (list, tuple)) else value
+    return spec
 
 def _normalize(text):
     return ' '.join(str(text).split())
@@ -116,6 +215,8 @@ def _key(text, options=(), lefts=(), answer=''):
 
 
 def task_key(task):
+    if task.get('type') in SPEC_KEYS:
+        return _key(task['text'], [json.dumps(task_spec(task), sort_keys=True, ensure_ascii=False)])
     options = task.get('options') or []
     if task.get('type') == 'CHOICE':
         options = [text for text, _ in options]
@@ -124,6 +225,8 @@ def task_key(task):
 
 
 def question_key(question):
+    if question.question_type in SPEC_KEYS:
+        return _key(question.text, [json.dumps(question.spec, sort_keys=True, ensure_ascii=False)])
     return _key(question.text, [o.text for o in question.options.all()],
                 [m.text for m in question.match_items.all()], question.correct_short_answer)
 
@@ -202,6 +305,7 @@ def import_tasks(topic_name, tasks):
             nush_skill=data.get('skill', 'SOLVE'),
             hint=data.get('hint', ''),
             solution=data.get('solution', ''),
+            spec=task_spec(data),
         )
         if 'grade' in data:
             # Шкільне завдання належить усім урокам цієї теми
@@ -219,7 +323,7 @@ def import_tasks(topic_name, tasks):
             created = {text: AnswerOption.objects.create(question=q, text=text, is_correct=False) for text in data['options']}
             for left_text, right_text in data['matches']:
                 MatchItem.objects.create(question=q, text=left_text, correct_option=created[right_text])
-        else:
+        elif data['type'] == 'SHORT':
             q.correct_short_answer = str(data['answer'])
             q.save()
             

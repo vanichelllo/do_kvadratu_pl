@@ -8,7 +8,9 @@
         <img src="{{ question.image.url }}" alt="" style="max-width: 360px; border-radius: 8px;">
     {% endif %}
 
-    {% if question.question_type == 'SHORT' %}
+    {% if school_answer %}
+        <p>Тип: <strong>{{ question.get_question_type_display }}</strong>. Правильна відповідь: <strong>{{ school_answer }}</strong></p>
+    {% elif question.question_type == 'SHORT' %}
         <p>Правильна відповідь: <strong>{{ question.correct_short_answer|default:"—" }}</strong></p>
     {% else %}
         <ul style="padding-left: 20px;">
@@ -23,4 +25,6 @@
             </ul>
         {% endif %}
     {% endif %}
+    {% if question.hint %}<p><strong>Підказка:</strong> {{ question.hint|safe }}</p>{% endif %}
+    {% if question.solution %}<p><strong>Розв'язання:</strong> {{ question.solution|safe }}</p>{% endif %}
 </div>

@@ -36,7 +36,7 @@ from .games import record_game_answer, short_answer_matches
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
+    PracticeAttempt, PracticeRun, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
 )
@@ -613,88 +613,127 @@ def practice_access(request, material):
     return (material.is_published or has_access) and (material.is_free or has_access)
 
 
+def active_run(user, material):
+    return (PracticeRun.objects.filter(user=user, material=material, finished_at__isnull=True)
+            .order_by('-id').first())
+
+
 def school_practice(request, material, profile):
-    cfg = practice.PROFILES[profile]
-    key = practice.session_key(material)
-
+    """Практика «сходинками»: сторінка показує одне поточне завдання; відповіді перевіряє practice_check_view."""
+    run = active_run(request.user, material)
+    if run is None or run.profile != profile:
+        run = PracticeRun.objects.create(user=request.user, material=material, profile=profile,
+                                         state=practice.new_state())
     if request.method == 'POST':
-        state = request.session.get(key)
-        ids = (state or {}).get('ids') or []
-        questions = list(questions_in_order(ids))
-        if not questions:
-            messages.info(request, "Цю практику вже завершено або вона застаріла — почніть нову.")
-            return redirect('practice_session', material_id=material.id)
+        return finish_run(request, run)
 
-        if cfg['step_by_step']:
-            tries = state.get('tries') or {}
+    state = run.state
+    entry = practice.current_entry(state)
+    if entry is None and state['status'] == 'active':
+        own, review = practice.question_pools(material, profile)
+        if not state['history']:
+            state['top_skills'] = sorted(practice.top_skills(own))
+        question = practice.next_question(state, own, review, seen_question_ids(request.user))
+        if question is None and not state['history']:
+            run.delete()
+            messages.info(request, "Для цієї теми ще не додано практичних завдань.")
+            return redirect('cabinet')
+        if question is None:
+            state['status'] = 'empty'
         else:
-            tries = {str(q.id): [practice.answer_from_post(q, request.POST)] for q in questions}
-            for q in questions:
-                practice.record_mistakes(request.user, q, tries[str(q.id)])
+            entry = practice.start_task(state, question)
+        run.save(update_fields=['state', 'updated_at'])
 
-        results, total, maximum, grades = practice.build_results(questions, tries, profile)
-        attempt = PracticeAttempt.objects.create(
-            user=request.user, material=material, score=total, max_score=maximum, **grades,
-            answers_json={'mode': profile, 'question_ids': ','.join(str(q.id) for q in questions), 'tries': tries})
-        request.session.pop(key, None)
-        return render(request, 'materials/practice_school_results.html', school_results_context(attempt, results))
-
-    questions = practice.select_questions(material, profile, seen_question_ids(request.user))
-    if not questions:
-        messages.info(request, "Для цієї теми ще не додано практичних завдань.")
-        return redirect('cabinet')
-
-    request.session[key] = {'ids': [q.id for q in questions], 'tries': {}}
+    question = None
+    if entry is not None:
+        question = (Question.objects.prefetch_related('options', 'match_items')
+                    .filter(id=entry['qid']).first())
     return render(request, 'materials/practice_school.html', {
-        'material': material, 'questions': questions, 'profile': profile, 'cfg': cfg,
+        'material': material, 'profile': profile, 'cfg': practice.PROFILES[profile], 'state': state,
+        'question': question, 'spec': practice.public_spec(question, entry) if question else {},
+        'task_number': len(state['history']), 'max_tasks': practice.MAX_TASKS, 'levels': practice.LEVELS,
+        'solved_count': sum(1 for e in state['history'] if e.get('tries')),
         'check_url': reverse('practice_check', args=[material.id]),
     })
 
 
+def finish_run(request, run):
+    """Завершити практику: зберегти спробу з оцінками й показати розбір (через redirect — без повторної відправки)."""
+    material, state = run.material, run.state
+    history = [entry for entry in state['history'] if entry.get('tries')]
+    if not history:
+        run.delete()
+        messages.info(request, "Ще немає жодної відповіді — практику не збережено.")
+        return redirect('cabinet')
+    questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
+    _, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
+    attempt = PracticeAttempt.objects.create(
+        user=request.user, material=material, score=total, max_score=maximum, **grades,
+        answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
+                      'history': history, 'level': state['level'], 'status': state['status']})
+    run.finished_at = timezone.now()
+    run.save(update_fields=['finished_at', 'updated_at'])
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+def answer_is_empty(answer):
+    if answer in (None, '', [], {}):
+        return True
+    if isinstance(answer, list):
+        return any(item is None or item == '' for item in answer)
+    if isinstance(answer, dict):
+        return any(value == '' for value in answer.values())
+    return False
+
+
 @login_required
 def practice_check_view(request, material_id):
-    """Перевірка однієї відповіді в покроковій практиці (5–9 кл.). Правильну відповідь і розв'язання
-    повертаємо лише тоді, коли спроби на це завдання закінчились."""
+    """Перевірка відповіді на поточне завдання. Правильну відповідь і розв'язання повертаємо лише тоді,
+    коли спроби на це завдання закінчились; тоді ж учень рухається сходинками."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST only'}, status=405)
     material = get_object_or_404(StudyMaterial, id=material_id)
     profile = practice.practice_profile(material)
-    if not profile or not practice.PROFILES[profile]['step_by_step'] or not practice_access(request, material):
+    if not profile or not practice_access(request, material):
         raise Http404
     try:
         data = json.loads(request.body)
         question_id = int(data.get('question_id'))
-    except (ValueError, TypeError, json.JSONDecodeError):
+    except (ValueError, TypeError, AttributeError, json.JSONDecodeError):
         return JsonResponse({'error': 'bad request'}, status=400)
 
-    key = practice.session_key(material)
-    state = request.session.get(key)
-    if not state or question_id not in state.get('ids', []):
+    run = active_run(request.user, material)
+    entry = practice.current_entry(run.state) if run else None
+    if entry is None or entry['qid'] != question_id:
         return JsonResponse({'error': 'stale'}, status=409)
     question = get_object_or_404(Question.objects.prefetch_related('options', 'match_items'), id=question_id)
 
-    tries = state['tries'].setdefault(str(question_id), [])
-    if practice.is_finished(question, [practice.clean_answer(question, t) for t in tries], profile):
-        return JsonResponse({'error': 'finished'}, status=409)
-    answer = practice.clean_answer(question, data.get('answer'))
-    tries.append(answer)
-    request.session.modified = True
-
-    points = practice.answer_points(question, answer)
-    finished = practice.is_finished(question, tries, profile)
-    response = {'correct': points == practice.POINTS[question.question_type], 'finished': finished}
-    if finished:
-        practice.record_mistakes(request.user, question, tries)
-        response.update(practice.correct_answer(question), solution=question.solution)
+    answer = practice.clean_answer(question, data.get('answer'), entry)
+    if answer_is_empty(answer):
+        return JsonResponse({'error': 'empty'}, status=400)
+    entry['tries'].append(answer)
+    state = run.state
+    response = {'correct': practice.is_correct(question, answer),
+                'finished': practice.is_finished(question, entry['tries'], profile)}
+    if response['finished']:
+        level_before = state['level']
+        first_ok = practice.finish_task(state, question, entry)
+        practice.record_mistake(request.user, question, first_ok)
+        response.update(practice.reveal(question, entry), solution=question.solution, level=state['level'],
+                        level_change=state['level'] - level_before, status=state['status'])
     else:
         response['hint'] = question.hint or practice.DEFAULT_HINT
+    run.save(update_fields=['state', 'updated_at'])
     return JsonResponse(response)
 
 
 def school_results_context(attempt, results):
+    saved = attempt.answers_json or {}
     return {
-        'material': attempt.material, 'attempt': attempt, 'results': results,
-        'profile': (attempt.answers_json or {}).get('mode'),
+        'material': attempt.material, 'attempt': attempt, 'results': results, 'profile': saved.get('mode'),
+        # Найвища складність, на якій учень розв'язав завдання (сходинка учня може бути вищою, якщо банк неповний)
+        'level': max((r['level'] for r in results if r['earned']), default=0),
+        'status': saved.get('status'), 'levels': practice.LEVELS,
     }
 
 
@@ -1497,7 +1536,8 @@ def view_attempt_details(request, attempt_id):
 
     mode = saved_answers.get('mode')
     if mode in practice.PROFILES:
-        results = practice.build_results(questions, saved_answers.get('tries') or {}, mode)[0]
+        questions_by_id = {q.id: q for q in questions}
+        results = practice.build_results(questions_by_id, saved_answers.get('history') or [], mode)[0]
         return render(request, 'materials/practice_school_results.html', school_results_context(attempt, results))
 
     results_data = []
