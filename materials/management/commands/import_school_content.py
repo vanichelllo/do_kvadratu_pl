@@ -14,8 +14,10 @@
     python manage.py import_school_content --all --keep-going                # усі класи (так робить деплой)
 
 Деплой (build.sh) запускає команду з --all --keep-going: усе, що злито в main, саме з'являється на сайті.
-Файл із помилками пропускається й не зупиняє деплой. Презентація перезаписується, лише якщо файл змінився.
+Файл із помилками пропускається й не зупиняє деплой. Презентація перезаписується, лише якщо змінився сам файл,
+тож правки уроку в адмінці лишаються до наступної зміни файлу.
 """
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -84,18 +86,23 @@ class Command(BaseCommand):
             if problems or topic is None or check:
                 continue
             html = path.read_text(encoding='utf-8')
+            digest = hashlib.sha256(html.encode('utf-8')).hexdigest()
             with transaction.atomic():
                 material = StudyMaterial.objects.filter(curriculum_topic=topic, is_bundle=False).first()
                 if material is None:
                     material = StudyMaterial(curriculum_topic=topic, title=topic.name, price=price or 0,
                                              is_free=not price)
-                elif material.html_content == html and (not publish or material.is_published):
-                    continue   # нічого не змінилося — повторний деплой не чіпає урок
-                material.html_content = html
+                changed = material.html_source_hash != digest
+                if not changed and (not publish or material.is_published):
+                    continue   # файл не змінився — урок (разом із правками в адмінці) не чіпаємо
+                if changed:
+                    material.html_content = html
+                    material.html_source_hash = digest
                 if publish:
                     material.is_published = True
                 material.save()
-                self.stdout.write(f'   → презентацію записано: {topic.name}')
+                if changed:
+                    self.stdout.write(f'   → презентацію записано: {topic.name}')
 
         for path in sorted(root.glob('bank_*.py'), key=lambda p: natural_key(p.stem)):
             try:

@@ -148,6 +148,9 @@ class StudyMaterial(models.Model):
         blank=True,
         null=True
     )
+    # Відбиток файлу з content/school, з якого презентацію востаннє завантажено (import_school_content):
+    # деплой перезаписує урок лише тоді, коли змінився сам файл, тож правки в адмінці лишаються
+    html_source_hash = models.CharField(max_length=64, blank=True, default='', editable=False)
     is_published = models.BooleanField(default=False, verbose_name="Опубліковано на вітрині")
 
     tags = models.ManyToManyField(Tag, blank=True, verbose_name="Теги")
