@@ -106,6 +106,7 @@ def seen_question_ids(user):
     for answers in PracticeAttempt.objects.filter(user=user).values_list('answers_json', flat=True):
         if isinstance(answers, dict):
             seen.update(parse_id_list(str(answers.get('question_ids') or '')))
+            seen.update(parse_id_list(str(answers.get('boss_ids') or '')))
     return seen
 
 
@@ -712,6 +713,16 @@ def school_practice(request, material, profile):
 
     state = run.state
     entry = practice.current_entry(state)
+    if request.GET.get('boss') == '1':
+        # Виклик боса після «Тему опановано»; redirect — щоб оновлення сторінки не викликало ще одного
+        stage = practice.next_boss(state)
+        if stage:
+            own, _ = practice.question_pools(material, profile)
+            question = practice.boss_question(state, own, seen_question_ids(actor.user), stage)
+            if question:
+                practice.start_boss(state, question, stage)
+                run.save(update_fields=['state', 'updated_at'])
+        return redirect(request.path + actor.query)
     if entry is None and state['status'] == 'active':
         own, review = practice.question_pools(material, profile)
         seen = seen_question_ids(actor.user)
@@ -735,6 +746,12 @@ def school_practice(request, material, profile):
         question = (Question.objects.prefetch_related('options', 'match_items')
                     .filter(id=entry['qid']).first())
     return render(request, 'materials/practice_school.html', {
+        'boss_name': practice.BOSS_NAMES.get(entry.get('boss')) if entry else None,
+        'boss_tries': practice.BOSS_TRIES.get(entry.get('boss')) if entry else None,
+        'boss_next_name': practice.BOSS_NAMES.get(boss_available(state, material, profile)),
+        'boss_url': (actor.query + '&' if actor.query else '?') + 'boss=1',
+        'trophy_name': practice.BOSS_NAMES.get(practice.boss_trophy(state.get('bosses'))),
+        'boss_lost': (state.get('bosses') or {}).get(str(practice.BOSS)) == 'lost',
         'material': material, 'profile': profile, 'cfg': practice.PROFILES[profile], 'state': state,
         'question': question, 'spec': practice.public_spec(question, entry) if question else {},
         'task_number': len(state['history']), 'levels': practice.LEVELS,
@@ -747,10 +764,22 @@ def school_practice(request, material, profile):
     })
 
 
+def boss_available(state, material, profile):
+    """Наступний бос (BOSS / ULTRA), якщо його можна викликати і в банку теми є для нього завдання."""
+    stage = practice.next_boss(state)
+    if stage is None:
+        return None
+    own, _ = practice.question_pools(material, profile)
+    used = {entry['qid'] for entry in state['history']}
+    return stage if any(q.difficulty == stage and q.id not in used for q in own) else None
+
+
 def build_attempt(run, actor):
     """Спроба з розв'язаних завдань практики (ще не збережена) і розбір; None — відповідей немає."""
     state = run.state
-    history = [entry for entry in state['history'] if entry.get('tries')]
+    # Боси — окремо: на оцінку, сходинки й розклад по темах не впливають
+    history = [entry for entry in state['history'] if entry.get('tries') and not entry.get('boss')]
+    boss_ids = [entry['qid'] for entry in state['history'] if entry.get('boss') and entry.get('tries')]
     if not history:
         return None, []
     questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
@@ -763,7 +792,8 @@ def build_attempt(run, actor):
         answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
                       'history': history, 'level': state['level'], 'status': state['status'],
                       'stuck': not diagnostic and practice.is_stuck(history), 'gaps': practice.gap_topics(history),
-                      'kind': state.get('kind', 'lesson'), 'topic_map': practice.topic_map(history)})
+                      'kind': state.get('kind', 'lesson'), 'topic_map': practice.topic_map(history),
+                      'bosses': state.get('bosses') or {}, 'boss_ids': ','.join(map(str, boss_ids))})
     return attempt, results
 
 
@@ -1054,14 +1084,26 @@ def practice_check_view(request, material_id):
         entry['assisted'] = True
     state = run.state
     response = {'correct': practice.is_correct(question, answer),
-                'finished': practice.is_finished(question, entry['tries'], practice.max_tries(state, profile))}
+                'finished': practice.is_finished(question, entry['tries'], practice.max_tries(state, profile, entry))}
+    if entry.get('boss'):
+        response['boss'] = entry['boss']
+        if response['finished']:
+            won = practice.finish_boss(state, question, entry)
+            response.update(practice.reveal(question, entry), solution=question.solution, level=state['level'],
+                            level_change=0, status=state['status'], boss_won=won,
+                            boss_next=practice.BOSS_NAMES.get(boss_available(state, material, profile)))
+        else:
+            response['hint'] = practice.BOSS_HINT
+        run.save(update_fields=['state', 'updated_at'])
+        return JsonResponse(response)
     if response['finished']:
         level_before = state['level']
         first_ok = practice.finish_task(state, question, entry)
         if not actor.demo:
             practice.record_mistake(actor.user, question, first_ok)
         response.update(practice.reveal(question, entry), solution=question.solution, level=state['level'],
-                        level_change=state['level'] - level_before, status=state['status'])
+                        level_change=state['level'] - level_before, status=state['status'],
+                        boss_next=practice.BOSS_NAMES.get(boss_available(state, material, profile)))
     else:
         response['hint'] = question.hint or practice.DEFAULT_HINT
     run.save(update_fields=['state', 'updated_at'])
@@ -1127,6 +1169,7 @@ def school_results_context(request, attempt, results):
         # Найвища складність, на якій учень розв'язав завдання (сходинка учня може бути вищою, якщо банк неповний)
         'level': max((r['level'] for r in results if r['earned']), default=0),
         'status': saved.get('status'), 'levels': practice.LEVELS,
+        'trophy_name': practice.BOSS_NAMES.get(practice.boss_trophy(saved.get('bosses'))),
         'again_url': reverse('practice_session', args=[attempt.material.id]),
         'stuck': saved.get('stuck'), 'gaps': gap_materials(saved.get('gaps') or []),
         'kind': saved.get('kind', 'lesson'), 'topic_rows': topic_rows(saved.get('topic_map') or {}),

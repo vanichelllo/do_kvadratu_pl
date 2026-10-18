@@ -2252,6 +2252,76 @@ class SchoolPracticeTests(BaseTestCase):
         self.assertEqual(resume_level({'kind': 'lesson', 'level': 2, 'history': [{}]}), 2)
         self.assertEqual(resume_level({'kind': 'lesson', 'level': 3, 'status': 'mastered', 'history': [{}]}), 3)
 
+    def master_with_bosses(self):
+        topic, lesson = self.algebra8()
+        self.fill_bank(topic)
+        self.boss = self.make_choice('Бос', topic, difficulty=4)
+        self.ultra = self.make_choice('Ультра', topic, difficulty=5)
+        statuses = [self.answer(lesson)[1]['status'] for _ in range(7)]
+        self.assertEqual(statuses[-1], 'mastered')
+        return lesson
+
+    def test_boss_and_ultra_boss_give_trophies_without_touching_grades(self):
+        lesson = self.master_with_bosses()
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertContains(page, '⚔️ Бос — прийняти виклик')
+        self.assertRedirects(self.client.get(f'/practice/{lesson.id}/?boss=1'), f'/practice/{lesson.id}/',
+                             fetch_redirect_response=False)
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertEqual(page.context['question'], self.boss)
+        self.assertContains(page, 'Спроб: 2, підказок немає')
+        q, data = self.answer(lesson, correct=False)          # перша спроба — без підказки, друга лишається
+        from .practice import BOSS_HINT
+        self.assertEqual((data['finished'], data['hint']), (False, BOSS_HINT))
+        data = self.check(q, str(q.options.get(is_correct=True).id), lesson).json()
+        self.assertTrue(data['boss_won'])
+        self.assertEqual((data['status'], data['boss_next']), ('mastered', '👑 Ультра-бос'))
+
+        self.client.get(f'/practice/{lesson.id}/?boss=1')
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertEqual(page.context['question'], self.ultra)
+        self.assertContains(page, 'Спроб: 1')
+        _, data = self.answer(lesson)
+        self.assertTrue(data['boss_won'])
+        self.assertIsNone(data['boss_next'])
+        self.assertNotContains(self.client.get(f'/practice/{lesson.id}/'), 'прийняти виклик</a>')
+
+        self.client.post(f'/practice/{lesson.id}/')
+        attempt = PracticeAttempt.objects.get(user=self.user)
+        self.assertEqual((attempt.nush_modeling, attempt.nush_solving, attempt.nush_analysis), (12, 12, 12))
+        self.assertEqual((attempt.score, attempt.max_score), (14, 14))     # боси — не в балах
+        self.assertNotIn(str(self.boss.id), attempt.answers_json['question_ids'].split(','))
+        self.assertEqual(attempt.boss_trophy, '👑 Ультра-бос')
+        self.assertContains(self.client.get(f'/attempt/{attempt.id}/'), '👑 Ультра-бос переможений')
+        self.assertFalse(GameMistake.objects.filter(user=self.user, question=self.boss).exists())
+
+    def test_lost_boss_changes_nothing_and_closes_ultra(self):
+        lesson = self.master_with_bosses()
+        self.client.get(f'/practice/{lesson.id}/?boss=1')
+        self.answer(lesson, correct=False)
+        _, data = self.answer(lesson, correct=False)
+        self.assertFalse(data['boss_won'])
+        self.assertIsNone(data['boss_next'])
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertContains(page, 'бос виявився сильнішим')
+        self.client.get(f'/practice/{lesson.id}/?boss=1')   # повторний виклик у цій практиці не дає боса
+        self.assertIsNone(self.client.get(f'/practice/{lesson.id}/').context['question'])
+        self.client.post(f'/practice/{lesson.id}/')
+        attempt = PracticeAttempt.objects.get(user=self.user)
+        self.assertEqual((attempt.nush_modeling, attempt.nush_solving, attempt.nush_analysis), (12, 12, 12))
+        self.assertEqual(attempt.boss_trophy, '')
+
+    def test_bosses_never_appear_on_the_ladder_and_need_mastery(self):
+        topic, lesson = self.algebra8()
+        self.make_choice('Легке', topic, difficulty=1)
+        self.make_choice('Бос', topic, difficulty=4)
+        self.assertEqual(self.current(lesson).difficulty, 1)
+        self.client.get(f'/practice/{lesson.id}/?boss=1')    # тему ще не опановано — бос не відкривається
+        self.answer(lesson)
+        page = self.client.get(f'/practice/{lesson.id}/')
+        self.assertIsNone(page.context['question'])          # завдання скінчились, боса не підсунуто
+        self.assertEqual(self.run_state(lesson)['status'], 'empty')
+
     def test_slow_pupil_gets_grade_of_the_level_reached(self):
         topic, lesson = self.algebra8()
         self.fill_bank(topic)

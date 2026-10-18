@@ -22,7 +22,8 @@ FORBIDDEN = {
 ALLOWED_SCRIPT = 'https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js'
 MAX_BYTES = 100 * 1024
 
-BANK_SIZE = 45            # рекомендовано: по 15 на сходинку
+BANK_SIZE = 45            # рекомендовано: по 15 на сходинку (без босів)
+BOSSES = {4: 5, 5: 2}     # рекомендовано: 5 босів і 2 ультра-боси
 MIN_PER_CELL = 3          # мінімум завдань на «сходинку × критерій», щоб практика могла чергувати критерії
 MAX_CHOICE_SHARE = 0.4
 MIN_TYPES = 6
@@ -80,13 +81,19 @@ def check_bank(tasks, profile='A'):
             continue
         if not str(task.get('solution', '')).strip():
             problems.append(f'№{index}: немає розв\'язання (solution)')
-        if profile == 'A' and not str(task.get('hint', '')).strip():
+        if profile == 'A' and task.get('difficulty') in (1, 2, 3) and not str(task.get('hint', '')).strip():
             problems.append(f'№{index}: для 5–6 класів потрібна підказка (hint)')
         if profile == 'A' and task.get('type') == 'MATCH':
             problems.append(f'№{index}: MATCH не використовується в 5–6 класах')
     valid = [t for t in tasks if isinstance(t, dict)]
-    if len(valid) < BANK_SIZE:
-        warnings.append(f'завдань {len(valid)}, рекомендовано {BANK_SIZE}')
+    ladder = [t for t in valid if t.get('difficulty') in (1, 2, 3)]
+    if len(ladder) < BANK_SIZE:
+        warnings.append(f'завдань на сходинках {len(ladder)}, рекомендовано {BANK_SIZE}')
+    for stage, wanted in BOSSES.items():
+        have = sum(1 for t in valid if t.get('difficulty') == stage)
+        if have < wanted:
+            name = 'босів (difficulty 4)' if stage == 4 else 'ультра-босів (difficulty 5)'
+            warnings.append(f'{name}: {have}, рекомендовано {wanted}')
     cells = Counter((t.get('difficulty'), t.get('skill', 'SOLVE')) for t in valid)
     for level in (1, 2, 3):
         for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
