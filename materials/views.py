@@ -872,6 +872,11 @@ class ForTutorsView(TemplateView):
         context['trial_available'] = not user.is_authenticated or teachers.trial_available(user)
         context['trial_days'] = teachers.TRIAL_DAYS
         context['trial_students'] = teachers.TRIAL_STUDENTS
+        if teachers.is_owner(user):
+            # Власнику підписка не потрібна; показуємо, що бачать інші й що ще не налаштовано
+            context['owner_view'] = True
+            context['plans_off'] = [p for p in TeacherPlan.objects.all()
+                                    if not p.is_active or not (p.price_month or p.price_year)]
         if user.is_authenticated:
             context['licenses'] = teachers.active_licenses(user).select_related('plan', 'grade')
             context['has_school'] = teachers.active_licenses(user).filter(scope='school', is_trial=False).exists()

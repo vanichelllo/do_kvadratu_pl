@@ -3106,6 +3106,16 @@ class TutorPlansTests(BaseTestCase):
             apply_mono_status(order.mono_invoice_id, 'success')
         return response, order
 
+    def test_owner_sees_why_there_is_nothing_to_buy(self):
+        owner = self.make_user('owner-plans@example.com')
+        owner.is_staff = True
+        owner.save()
+        self.client.force_login(owner)
+        page = self.client.get('/for-tutors/')
+        self.assertContains(page, 'Ви власник сайту')
+        self.assertContains(page, 'налаштувати тарифи')
+        self.assertNotContains(page, 'Почати пробний період')
+
     def test_school_plan_opens_every_school_grade_but_not_nmt(self):
         from .teachers import can_teach
         self.client.force_login(self.tutor)

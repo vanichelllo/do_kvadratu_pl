@@ -47,6 +47,18 @@
         <p class="ft-note">Подивитися, як виглядає урок: <a href="{% url 'material_detail' demo_lesson.id %}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
     {% endif %}
 
+    {% if owner_view %}
+    <div class="ft-mine" style="background: #fff8e1;">
+        <strong>Ви власник сайту:</strong> у вас повний доступ без підписки, тому пробний період і кнопки оплати
+        вам не показуються — так цю сторінку бачать репетитори, але без них.
+        {% if plans_off %}
+            <br>Не продаються (вимкнено або без ціни): {% for plan in plans_off %}«{{ plan.name }}»{% if not forloop.last %}, {% endif %}{% endfor %}.
+            Репетитори бачать «Ціни незабаром», доки ви не вкажете ціну й не позначите «Активний»:
+            <a href="{% url 'admin:materials_teacherplan_changelist' %}">налаштувати тарифи</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+
     {% if licenses %}
     <div class="ft-mine">
         <strong>Ваша підписка:</strong>
