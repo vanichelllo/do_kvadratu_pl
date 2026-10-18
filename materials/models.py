@@ -301,11 +301,16 @@ class DiagnosticOffer(models.Model):
 
     @classmethod
     def offer_for(cls, user, materials):
-        """Чинна пропозиція користувача, або нова — якщо за REPEAT_AFTER нової ще не було."""
+        """Чинна пропозиція користувача, або нова — якщо за REPEAT_AFTER нової ще не було. Повторна діагностика,
+        поки знижка діє, додає до пропозиції уроки своїх слабких тем (строк дії не продовжується)."""
         now = timezone.now()
         recent = cls.objects.filter(user=user, created_at__gte=now - cls.REPEAT_AFTER).first()
         if recent:
-            return recent if recent.is_active else None
+            if not recent.is_active:
+                return None
+            if materials:
+                recent.materials.add(*materials)
+            return recent
         if not materials:
             return None
         offer = cls.objects.create(user=user, expires_at=now + cls.DURATION)

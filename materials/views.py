@@ -262,8 +262,12 @@ def diagnostic_test_view(request):
 
         weak_topics, recommendations, sorted_stats = diagnostic_summary(topics_stats)
         offer_materials = offer_candidates(request.user, recommendations)
+        offer_next = None
         if request.user.is_authenticated:
             offer = DiagnosticOffer.offer_for(request.user, offer_materials)
+            if offer is None and offer_materials:
+                last = DiagnosticOffer.objects.filter(user=request.user).first()
+                offer_next = last and last.created_at + DiagnosticOffer.REPEAT_AFTER
         else:
             # Гість побачить пакет і знижку; отримає її, коли увійде (уроки запам'ятовуємо в сесії)
             offer = None
@@ -274,6 +278,7 @@ def diagnostic_test_view(request):
             'previous_percent': previous_percent,
             'percent_change': None if previous_percent is None else percent_total - previous_percent,
             **offer_context(offer, offer_materials),
+            'offer_next': offer_next,
             'countdown': nmt_countdown(len(weak_topics)),
         })
 
@@ -313,8 +318,9 @@ def offer_candidates(user, recommendations):
 
 
 def offer_context(offer, materials):
-    """Ціни пакета для сторінки: повна сума, сума зі знижкою, економія і до коли діє знижка."""
-    materials = list(offer.materials.all()) if offer else list(materials)
+    """Ціни пакета для сторінки: повна сума, сума зі знижкою, економія і до коли діє знижка.
+    materials — уроки слабких тем щойно пройденої діагностики; без них (сторінка пропозиції) — усі уроки пропозиції."""
+    materials = list(materials) or (list(offer.materials.all()) if offer else [])
     if not materials:
         return {}
     full = sum(m.price for m in materials)
@@ -348,7 +354,9 @@ def diagnostic_offer_view(request):
     if request.method == 'POST' and offer:
         cart, _ = Cart.objects.get_or_create(user=request.user)
         added = 0
-        for material in offer.materials.all():
+        # Кнопка зі сторінки результату додає уроки саме цієї діагностики; без переліку — усю пропозицію
+        chosen = offer.materials.filter(id__in=[i for i in request.POST.getlist('material') if i.isdigit()])
+        for material in chosen if chosen.exists() else offer.materials.all():
             if not user_owns_material(request.user, material):
                 _, created = CartItem.objects.get_or_create(cart=cart, material=material)
                 added += created

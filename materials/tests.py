@@ -2064,6 +2064,32 @@ class DiagnosticOfferTests(BaseTestCase):
         CartItem.objects.create(cart=cart, material=self.paid)
         self.assertEqual(cart.get_total_price(), 200)
 
+    def test_repeat_diagnostic_on_other_topics_gets_discount_for_its_own_lessons(self):
+        # Перша діагностика — одна тема, друга (поки знижка діє) — інша: пакет показує уроки саме другої
+        topic2 = make_nmt_topic('42. Циліндр')
+        paid2 = StudyMaterial.objects.create(title='42. Циліндр', price=100, is_published=True, curriculum_topic=topic2)
+        q2 = Question.objects.create(text='V циліндра', question_type='CHOICE', curriculum_topic=topic2)
+        AnswerOption.objects.create(question=q2, text='А) 1', is_correct=True)
+        wrong2 = AnswerOption.objects.create(question=q2, text='Б) 2', is_correct=False)
+        self.client.force_login(self.kid)
+        self.take()
+        response = self.client.post('/diagnostic/', {'question_ids': str(q2.id), f'question_{q2.id}': str(wrong2.id)})
+        self.assertEqual(response.context['offer_materials'], [paid2])
+        self.assertEqual((response.context['offer_full'], response.context['offer_price']), (100, 85))
+        self.assertContains(response, 'Купити пакет зі знижкою')
+        offer = DiagnosticOffer.objects.get(user=self.kid)
+        self.assertEqual(set(offer.materials.all()), {self.paid, paid2})
+        self.client.post('/diagnostic/offer/', {'material': [str(paid2.id)]})
+        cart = Cart.objects.get(user=self.kid)
+        self.assertEqual([i.material for i in cart.items.all()], [paid2])
+        self.assertEqual(cart.get_total_price(), 85)
+
+    def test_after_expiry_page_says_when_next_discount_is_possible(self):
+        self.client.force_login(self.kid)
+        self.take()
+        DiagnosticOffer.objects.update(expires_at=timezone.now() - datetime.timedelta(minutes=1))
+        self.assertContains(self.take(), 'наступна буде можлива з')
+
     def test_guest_sees_offer_and_gets_it_after_login(self):
         response = self.take()
         self.assertContains(response, 'Зареєструватися й отримати знижку')
