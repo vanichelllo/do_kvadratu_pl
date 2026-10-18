@@ -3122,6 +3122,32 @@ class SchoolContentTests(BaseTestCase):
         self.assertFalse(lesson.is_published)
         self.assertGreaterEqual(Question.objects.filter(materials=lesson).count(), 45)
 
+    def test_deploy_import_is_repeatable_and_does_not_stop_on_errors(self):
+        """Деплой запускає імпорт усіх класів щоразу: повторний запуск нічого не дублює, змінений файл
+        оновлює урок, а папка з помилкою не зупиняє решту."""
+        import json
+        import tempfile
+        from pathlib import Path
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        call_command('import_curriculum', stdout=open('/dev/null', 'w'))
+        quiet = {'stdout': open('/dev/null', 'w')}
+        call_command('import_school_content', all_folders=True, keep_going=True, **quiet)
+        questions = Question.objects.count()
+        lesson = StudyMaterial.objects.get(curriculum_topic__name__startswith='1.1. ',
+                                           curriculum_topic__chapter__grade__name='5 клас')
+        StudyMaterial.objects.filter(pk=lesson.pk).update(html_content='стара версія')
+
+        with tempfile.TemporaryDirectory() as broken:
+            (Path(broken) / 'meta.json').write_text(json.dumps({'course': 'Немає', 'grade': '5 клас'}))
+            with self.assertRaises(CommandError):
+                call_command('import_school_content', broken, **quiet)
+            call_command('import_school_content', broken, all_folders=True, keep_going=True, **quiet)
+
+        self.assertEqual(Question.objects.count(), questions)
+        lesson.refresh_from_db()
+        self.assertTrue(lesson.html_content.startswith('<!DOCTYPE html>'))
+
     def test_checker_rejects_broken_files(self):
         from .content_check import check_bank, check_presentation
         problems, _ = check_presentation('<!DOCTYPE html><html><head></head><body><img src="x.png"></body></html>')

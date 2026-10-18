@@ -32,7 +32,8 @@ python manage.py test
 ## Деплой (Render)
 
 - Build Command: `./build.sh && python manage.py import_materials`
-  - `build.sh` встановлює залежності, збирає статику й застосовує міграції;
+  - `build.sh` встановлює залежності, збирає статику, застосовує міграції й завантажує шкільні уроки та банки
+    завдань з `content/school` (`import_school_content --all --keep-going`; як готувати уроки — `CLAUDE.md`);
   - `import_materials` додає **нові** конспекти з `matrix.xlsx` і `import_files/` (наявні не змінює).
 - Gunicorn бере налаштування з `gunicorn.conf.py` (потоки, тайм-аут).
 - Версія Python — у `.python-version`.
