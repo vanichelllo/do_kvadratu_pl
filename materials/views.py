@@ -29,13 +29,14 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
+from . import homework, practice, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    PracticeAttempt, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME,
 )
@@ -457,13 +458,19 @@ def diagnostic_choose_topics(request, nmt_topics):
 @login_required
 def practice_session_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
-    has_access = is_teacher(request.user) or user_owns_material(request.user, material)
+    has_access = (is_teacher(request.user) or teachers.can_teach(request.user, material)
+                  or user_owns_material(request.user, material) or homework.grants_access(request.user, material)
+                  or teachers.covered_by_teacher(request.user, material))
 
     if not material.is_published and not has_access:
         raise Http404("Матеріал не знайдено.")
     if not (material.is_free or has_access):
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
         return redirect('material_detail', pk=material.id)
+
+    profile = practice.practice_profile(material)
+    if profile:
+        return school_practice(request, material, profile)
 
     if request.method == 'POST':
         total_score = 0
@@ -600,6 +607,428 @@ def practice_session_view(request, material_id):
         'q_short': q_short, 'question_ids_str': question_ids_str, 'total_selected': len(selected_questions)
     }
     return render(request, 'materials/practice_session.html', context)
+
+
+def practice_access(request, material):
+    """Шкільну практику бачить той, хто може відкрити саму тему (як і в practice_session_view)."""
+    has_access = (is_teacher(request.user) or teachers.can_teach(request.user, material)
+                  or user_owns_material(request.user, material) or homework.grants_access(request.user, material)
+                  or teachers.covered_by_teacher(request.user, material))
+    return (material.is_published or has_access) and (material.is_free or has_access)
+
+
+class PracticeActor:
+    """Для кого йде практика. Учень практикується сам (домашнє завдання). Вчитель на уроці показує екран і сам
+    натискає: обирає учня (?student=<id заявки>) — спроба й оцінки зараховуються учневі, — групу учнів
+    (?g=…&g=…&student=<хто відповідає зараз>; у кожного свої сходинки), або демонстрацію без збереження (?demo=1)."""
+
+    def __init__(self, user, teacher=None, student=None, demo=False, group=()):
+        self.user, self.teacher, self.student, self.demo, self.group = user, teacher, student, demo, list(group)
+
+    @property
+    def lesson(self):
+        return self.teacher is not None
+
+    def query_for(self, student):
+        group = ''.join(f'g={s.id}&' for s in self.group)
+        return f'?{group}student={student.id}'
+
+    @property
+    def query(self):
+        if self.demo:
+            return '?demo=1'
+        return self.query_for(self.student) if self.student else ''
+
+    @property
+    def next_query(self):
+        """У групі після завдання відповідає наступний учень."""
+        if not self.group:
+            return self.query
+        index = next((i for i, s in enumerate(self.group) if s.id == self.student.id), -1)
+        return self.query_for(self.group[(index + 1) % len(self.group)])
+
+    @classmethod
+    def from_request(cls, request):
+        """None — вчитель ще не обрав, для кого практика."""
+        if not teachers.is_tutor(request.user):
+            return cls(request.user)
+        if request.GET.get('demo') == '1':
+            return cls(request.user, teacher=request.user, demo=True)
+        approved = teachers.students_of(request.user).select_related('user')
+        ids = [i for i in (to_int(v) for v in request.GET.getlist('g')) if i is not None][:10]
+        by_id = {s.id: s for s in approved.filter(id__in=ids)}
+        group = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+        wanted = to_int(request.GET.get('student'))
+        if group:
+            student = next((s for s in group if s.id == wanted), group[0])
+            return cls(student.user, teacher=request.user, student=student, group=group)
+        student = approved.filter(id=wanted).first()
+        return cls(student.user, teacher=request.user, student=student) if student else None
+
+
+def active_run(actor, material):
+    return (PracticeRun.objects.filter(user=actor.user, teacher=actor.teacher, material=material,
+                                       finished_at__isnull=True)
+            .order_by('-id').first())
+
+
+def choose_student_page(request, material):
+    """Вчитель відкрив практику: для кого вона? Спершу учні того класу, що й тема."""
+    grade_number = material.curriculum_grade.number if material.curriculum_grade else None
+    students = list(teachers.students_of(request.user).order_by('real_name'))
+    students.sort(key=lambda s: s.course != f'grade_{grade_number}')
+    in_progress = set(PracticeRun.objects.filter(teacher=request.user, material=material, finished_at__isnull=True)
+                      .values_list('user_id', flat=True))
+    return render(request, 'materials/practice_choose_student.html', {
+        'material': material, 'students': students, 'in_progress': in_progress,
+        'grade_course': f'grade_{grade_number}',
+    })
+
+
+def school_practice(request, material, profile):
+    """Практика «сходинками»: сторінка показує одне поточне завдання; відповіді перевіряє practice_check_view."""
+    actor = PracticeActor.from_request(request)
+    if actor is None:
+        return choose_student_page(request, material)
+    run = active_run(actor, material)
+    if run is None or run.profile != profile:
+        run = PracticeRun.objects.create(user=actor.user, teacher=actor.teacher, material=material, profile=profile,
+                                         state=practice.new_state(kind=practice.topic_kind(material)))
+    if request.method == 'POST':
+        if actor.group and request.POST.get('scope') == 'group':
+            return finish_group(request, material, actor)
+        return finish_run(request, run, actor)
+
+    state = run.state
+    entry = practice.current_entry(state)
+    if entry is None and state['status'] == 'active':
+        own, review = practice.question_pools(material, profile)
+        seen = seen_question_ids(actor.user)
+        if not state['history']:
+            state['top_skills'] = sorted(practice.top_skills(own))
+            if state.get('kind') == 'diagnostic':
+                state['plan'] = practice.diagnostic_plan(own, seen)
+        question, is_review = practice.next_question(state, own, review, seen)
+        if question is None and not state['history']:
+            run.delete()
+            messages.info(request, "Для цієї теми ще не додано практичних завдань.")
+            return redirect('cabinet')
+        if question is None:
+            state['status'] = 'empty'
+        else:
+            entry = practice.start_task(state, question, review=is_review)
+        run.save(update_fields=['state', 'updated_at'])
+
+    question = None
+    if entry is not None:
+        question = (Question.objects.prefetch_related('options', 'match_items')
+                    .filter(id=entry['qid']).first())
+    return render(request, 'materials/practice_school.html', {
+        'material': material, 'profile': profile, 'cfg': practice.PROFILES[profile], 'state': state,
+        'question': question, 'spec': practice.public_spec(question, entry) if question else {},
+        'task_number': len(state['history']), 'levels': practice.LEVELS,
+        'max_tasks': len(state['plan']) if state.get('plan') is not None else practice.MAX_TASKS,
+        'kind': state.get('kind', 'lesson'),
+        'solved_count': sum(1 for e in state['history'] if e.get('tries')),
+        'check_url': reverse('practice_check', args=[material.id]) + actor.query,
+        'actor': actor, 'next_query': actor.next_query,
+        'group_tabs': [(s, actor.query_for(s), s.id == actor.student.id) for s in actor.group],
+    })
+
+
+def build_attempt(run, actor):
+    """Спроба з розв'язаних завдань практики (ще не збережена) і розбір; None — відповідей немає."""
+    state = run.state
+    history = [entry for entry in state['history'] if entry.get('tries')]
+    if not history:
+        return None, []
+    questions_by_id = {q.id: q for q in questions_in_order([entry['qid'] for entry in history])}
+    results, total, maximum, grades = practice.build_results(questions_by_id, history, run.profile)
+    diagnostic = state.get('kind') == 'diagnostic'
+    if diagnostic:   # діагностика — карта прогалин, а не оцінка
+        grades = {field: None for field in grades}
+    attempt = PracticeAttempt(
+        user=actor.user, conducted_by=actor.teacher, material=run.material, score=total, max_score=maximum, **grades,
+        answers_json={'mode': run.profile, 'question_ids': ','.join(str(entry['qid']) for entry in history),
+                      'history': history, 'level': state['level'], 'status': state['status'],
+                      'stuck': not diagnostic and practice.is_stuck(history), 'gaps': practice.gap_topics(history),
+                      'kind': state.get('kind', 'lesson'), 'topic_map': practice.topic_map(history)})
+    return attempt, results
+
+
+def save_attempt(run, attempt):
+    attempt.save()
+    run.finished_at = timezone.now()
+    run.save(update_fields=['finished_at', 'updated_at'])
+    if attempt.conducted_by_id is None:
+        homework.link_attempt(attempt)
+
+
+def finish_run(request, run, actor):
+    """Завершити практику: зберегти спробу з оцінками й показати розбір (через redirect — без повторної відправки).
+    Демонстрацію не зберігаємо — розбір показуємо одразу."""
+    attempt, results = build_attempt(run, actor)
+    if attempt is None:
+        run.delete()
+        messages.info(request, "Ще немає жодної відповіді — практику не збережено.")
+        return redirect('cabinet')
+    if actor.demo:
+        run.delete()
+        context = school_results_context(request, attempt, results)
+        context['again_url'] = reverse('practice_session', args=[run.material_id]) + actor.query
+        return render(request, 'materials/practice_school_results.html', context)
+    save_attempt(run, attempt)
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+def finish_group(request, material, actor):
+    """Групове заняття закінчено: зберегти спроби всіх учнів групи, які щось розв'язали."""
+    rows = []
+    for student in actor.group:
+        member = PracticeActor(student.user, teacher=actor.teacher, student=student)
+        run = active_run(member, material)
+        attempt = build_attempt(run, member)[0] if run else None
+        if attempt is not None:
+            save_attempt(run, attempt)
+        elif run is not None:
+            run.delete()
+        rows.append((student, attempt))
+    return render(request, 'materials/practice_group_results.html', {'material': material, 'rows': rows})
+
+
+@login_required
+@post_required('cabinet')
+def attempt_manage(request, attempt_id):
+    """Вчитель виправляє промах: спробу записано не тому учневі (перенести) або випадково (видалити)."""
+    attempt = get_object_or_404(PracticeAttempt.objects.select_related('material'), id=attempt_id)
+    if not teachers.teaches(request.user, attempt.user):
+        return redirect('cabinet')
+    if request.POST.get('action') == 'delete':
+        attempt.delete()
+        messages.success(request, f"🗑 Спробу «{attempt.material.title}» видалено.")
+        return redirect('cabinet')
+    student = get_object_or_404(teachers.students_of(request.user), id=to_int(request.POST.get('student_id')))
+    Homework.objects.filter(attempt=attempt).update(attempt=None)
+    attempt.user = student.user
+    attempt.save(update_fields=['user'])
+    if attempt.conducted_by_id is None:
+        homework.link_attempt(attempt)
+    messages.success(request, f"↪ Спробу перенесено: {student.real_name}.")
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+def join_teacher(request, code):
+    """Посилання-запрошення репетитора: учень стає його учнем (одразу підтвердженим — код знає лише викладач)."""
+    invite = get_object_or_404(TeacherInvite.objects.select_related('teacher'), code=code)
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('login')}?next={request.path}")
+    existing = TutorStudentRequest.objects.filter(user=request.user).first()
+    if request.user == invite.teacher or (existing and existing.teacher_id == invite.teacher_id
+                                          and existing.status == 'approved'):
+        return redirect('cabinet')
+    if existing and existing.status == 'approved':
+        messages.error(request, "Ви вже навчаєтеся в іншого викладача. Напишіть нам, якщо хочете перейти.")
+        return redirect('cabinet')
+    if request.method == 'POST':
+        real_name = request.POST.get('real_name', '').strip()[:100]
+        course = request.POST.get('course', '')
+        if not real_name or course not in dict(TutorStudentRequest.COURSE_CHOICES):
+            messages.error(request, "Вкажіть прізвище й ім'я та клас.")
+        else:
+            TutorStudentRequest.objects.update_or_create(user=request.user, defaults={
+                'real_name': real_name, 'course': course, 'teacher': invite.teacher, 'status': 'approved'})
+            messages.success(request, f"✅ Тепер ви учень викладача {teacher_name(invite.teacher)}.")
+            return redirect('cabinet')
+    return render(request, 'materials/join_teacher.html', {
+        'teacher_name': teacher_name(invite.teacher), 'course_choices': TutorStudentRequest.COURSE_CHOICES})
+
+
+def teacher_name(user):
+    return user.get_full_name() or user.email or user.username
+
+
+@login_required
+def practice_start(request):
+    """Кабінет вчителя: почати узагальнення розділу чи діагностику за клас (обрано зі списку)."""
+    material = get_object_or_404(StudyMaterial, id=to_int(request.GET.get('material_id')))
+    if not teachers.can_teach(request.user, material) or practice.practice_profile(material) is None:
+        return redirect('cabinet')
+    return redirect('practice_session', material_id=material.id)
+
+
+@login_required
+@post_required('cabinet')
+def homework_assign(request):
+    """Задати учневі практику з теми додому до дати."""
+    if not teachers.is_tutor(request.user):
+        return redirect('cabinet')
+    student = get_object_or_404(teachers.students_of(request.user), id=to_int(request.POST.get('student_id')))
+    material = get_object_or_404(StudyMaterial, id=to_int(request.POST.get('material_id')))
+    if not teachers.can_teach(request.user, material):
+        messages.error(request, "Ця тема не входить у вашу підписку.")
+        return redirect(safe_back_url(request))
+    try:
+        due_date = datetime.date.fromisoformat(request.POST.get('due_date', ''))
+    except ValueError:
+        messages.error(request, "Вкажіть дату, до якої виконати ДЗ.")
+        return redirect(safe_back_url(request))
+    if practice.practice_profile(material) is None:
+        messages.error(request, "Домашню практику можна задати лише з теми шкільного курсу.")
+        return redirect(safe_back_url(request))
+    Homework.objects.create(teacher=request.user, student=student, material=material, due_date=due_date)
+    messages.success(request, f"✅ {student.real_name}: задано «{material.title}» до {due_date:%d.%m.%Y}.")
+    return redirect(safe_back_url(request))
+
+
+@login_required
+@post_required('cabinet')
+def homework_credit(request, homework_id):
+    """Учень почав ДЗ і не завершив — зарахувати те, що вже розв'язано."""
+    hw = get_object_or_404(Homework.objects.select_related('student__user', 'material'), id=homework_id,
+                           attempt__isnull=True, student__in=teachers.students_of(request.user))
+    run = (PracticeRun.objects.filter(user=hw.student.user, material=hw.material, teacher__isnull=True,
+                                      finished_at__isnull=True, created_at__gte=hw.created_at).order_by('-id').first())
+    attempt = build_attempt(run, PracticeActor(hw.student.user))[0] if run else None
+    if attempt is None:
+        messages.info(request, "Учень ще не розв'язав жодного завдання.")
+        return redirect('cabinet')
+    save_attempt(run, attempt)
+    messages.success(request, f"✅ Зараховано розв'язане: {hw.student.real_name}, «{hw.material.title}».")
+    return redirect('view_attempt_details', attempt_id=attempt.id)
+
+
+def answer_is_empty(answer):
+    if answer in (None, '', [], {}):
+        return True
+    if isinstance(answer, list):
+        return any(item is None or item == '' for item in answer)
+    if isinstance(answer, dict):
+        return any(value == '' for value in answer.values())
+    return False
+
+
+@login_required
+def practice_check_view(request, material_id):
+    """Перевірка відповіді на поточне завдання. Правильну відповідь і розв'язання повертаємо лише тоді,
+    коли спроби на це завдання закінчились; тоді ж учень рухається сходинками."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+    material = get_object_or_404(StudyMaterial, id=material_id)
+    profile = practice.practice_profile(material)
+    if not profile or not practice_access(request, material):
+        raise Http404
+    try:
+        data = json.loads(request.body)
+        question_id = int(data.get('question_id'))
+    except (ValueError, TypeError, AttributeError, json.JSONDecodeError):
+        return JsonResponse({'error': 'bad request'}, status=400)
+
+    actor = PracticeActor.from_request(request)
+    if actor is None:
+        raise Http404
+    run = active_run(actor, material)
+    entry = practice.current_entry(run.state) if run else None
+    if entry is None or entry['qid'] != question_id:
+        return JsonResponse({'error': 'stale'}, status=409)
+    question = get_object_or_404(Question.objects.prefetch_related('options', 'match_items'), id=question_id)
+
+    answer = practice.clean_answer(question, data.get('answer'), entry)
+    if answer_is_empty(answer):
+        return JsonResponse({'error': 'empty'}, status=400)
+    entry['tries'].append(answer)
+    if actor.lesson and data.get('assisted') is True:
+        entry['assisted'] = True
+    state = run.state
+    response = {'correct': practice.is_correct(question, answer),
+                'finished': practice.is_finished(question, entry['tries'], practice.max_tries(state, profile))}
+    if response['finished']:
+        level_before = state['level']
+        first_ok = practice.finish_task(state, question, entry)
+        if not actor.demo:
+            practice.record_mistake(actor.user, question, first_ok)
+        response.update(practice.reveal(question, entry), solution=question.solution, level=state['level'],
+                        level_change=state['level'] - level_before, status=state['status'])
+    else:
+        response['hint'] = question.hint or practice.DEFAULT_HINT
+    run.save(update_fields=['state', 'updated_at'])
+    return JsonResponse(response)
+
+
+def next_material(material):
+    """Наступна тема того самого класу за деревом тем — для учня, який опанував поточну."""
+    topic = material.curriculum_topic
+    if topic is None:   # тему прибрали з класифікатора — розбір має відкриватися й так
+        return None
+    chapter = topic.chapter
+    later = (Q(curriculum_topic__chapter__order__gt=chapter.order)
+             | Q(curriculum_topic__chapter__order=chapter.order, curriculum_topic__order__gt=topic.order))
+    return (StudyMaterial.objects.filter(later, is_published=True, is_bundle=False,
+                                         curriculum_topic__chapter__grade=chapter.grade)
+            .order_by('curriculum_topic__chapter__order', 'curriculum_topic__order').defer('html_content').first())
+
+
+def gap_materials(topic_ids):
+    """[(тема, урок або None)] — що повторити за помилками в завданнях на повторення."""
+    topics = {t.id: t for t in CurriculumTopic.objects.filter(id__in=topic_ids).select_related('chapter')}
+    lessons = {}
+    for m in StudyMaterial.objects.filter(curriculum_topic_id__in=topic_ids, is_published=True, is_bundle=False) \
+            .defer('html_content'):
+        lessons.setdefault(m.curriculum_topic_id, m)
+    return [(topics[t], lessons.get(t)) for t in topic_ids if t in topics]
+
+
+def topic_rows(topic_map):
+    """Розклад по темах для узагальнення й діагностики: [(тема, урок, правильно, усього, стан)] у порядку програми."""
+    ids = [int(t) for t in topic_map]
+    rows = []
+    for topic, lesson in gap_materials(ids):
+        right, total = topic_map[str(topic.id)]
+        state = 'ok' if right == total else ('partial' if right else 'repeat')
+        rows.append({'topic': topic, 'lesson': lesson, 'right': right, 'total': total, 'state': state})
+    rows.sort(key=lambda r: (r['topic'].chapter.order, r['topic'].order))
+    return rows
+
+
+def attention_list(students, since_days=30):
+    """Учні викладача, на яких варто звернути увагу: застрягли або помиляються в повторенні попередніх тем."""
+    since = timezone.now() - datetime.timedelta(days=since_days)
+    rows = []
+    for attempt in (PracticeAttempt.objects.filter(created_at__gte=since, user__tutor_request__in=students)
+                    .select_related('user__tutor_request', 'material').defer('material__html_content')
+                    .order_by('-created_at')[:200]):
+        saved = attempt.answers_json or {}
+        if saved.get('mode') in practice.PROFILES and (saved.get('stuck') or saved.get('gaps')):
+            rows.append({'attempt': attempt, 'stuck': saved.get('stuck'), 'gaps': saved.get('gaps') or []})
+    topic_names = dict(CurriculumTopic.objects.filter(id__in={t for r in rows for t in r['gaps']})
+                       .values_list('id', 'name'))
+    for row in rows:
+        row['gap_names'] = [topic_names[t] for t in row['gaps'] if t in topic_names]
+    return rows[:20]
+
+
+def school_results_context(request, attempt, results):
+    saved = attempt.answers_json or {}
+    context = {
+        'material': attempt.material, 'attempt': attempt, 'results': results, 'profile': saved.get('mode'),
+        # Найвища складність, на якій учень розв'язав завдання (сходинка учня може бути вищою, якщо банк неповний)
+        'level': max((r['level'] for r in results if r['earned']), default=0),
+        'status': saved.get('status'), 'levels': practice.LEVELS,
+        'again_url': reverse('practice_session', args=[attempt.material.id]),
+        'stuck': saved.get('stuck'), 'gaps': gap_materials(saved.get('gaps') or []),
+        'kind': saved.get('kind', 'lesson'), 'topic_rows': topic_rows(saved.get('topic_map') or {}),
+        'next_material': next_material(attempt.material) if saved.get('status') == 'mastered' else None,
+    }
+    # Вчитель після уроку: оцінки одразу в звіт заняття учня
+    if attempt.pk and attempt.user_id != request.user.id:
+        student = teachers.students_of(request.user).filter(user_id=attempt.user_id).first()
+        if student:
+            context['report_student'] = student
+            context['hw_choices'] = StudentReport.HW_CHOICES
+            context['hw_default'] = homework.report_status(student)
+            context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
+            context['again_url'] += f'?student={student.id}'
+            context['other_students'] = teachers.students_of(request.user).exclude(id=student.id).order_by('real_name')
+    return context
 
 
 # ==========================================
@@ -790,7 +1219,8 @@ class MaterialDetailView(DetailView):
     def get_object(self, queryset=None):
         material = super().get_object(queryset)
         user = self.request.user
-        if not (material.is_published or is_teacher(user) or user_owns_material(user, material)):
+        if not (material.is_published or is_teacher(user) or teachers.can_teach(user, material)
+                or user_owns_material(user, material)):
             raise Http404("Матеріал не знайдено.")
         return material
 
@@ -885,19 +1315,61 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 .select_related('curriculum_topic').distinct(),
                 key=lambda m: m.curriculum_topic.order)
 
-        if is_teacher(self.request.user):
+        tutor_request = context['tutor_request']
+        if tutor_request and tutor_request.status == 'approved':
+            context['my_homeworks'] = homework.annotate(
+                Homework.objects.filter(student=tutor_request).select_related('student', 'material', 'attempt')
+                .defer('material__html_content')[:10])
+
+        user = self.request.user
+        if teachers.is_tutor(user):
+            students = teachers.students_of(user)
+            grades = teachers.licensed_grade_ids(user)   # None — власник: усі класи
+            context['is_tutor'] = True
+            context['attention'] = attention_list(students)
+            context['homeworks'] = homework.annotate(
+                Homework.objects.filter(student__in=students).select_related('student', 'material', 'attempt')
+                .defer('material__html_content')[:40])
+            school = (StudyMaterial.objects.filter(is_bundle=False, curriculum_topic__isnull=False)
+                      .select_related('curriculum_topic__chapter__grade__subject').defer('html_content'))
+            if grades is not None:
+                school = school.filter(curriculum_topic__chapter__grade_id__in=grades)
+            context['school_materials'] = sorted(
+                (m for m in school if practice.practice_profile(m)),
+                key=lambda m: (m.curriculum_grade.subject.order, m.curriculum_grade.order,
+                               m.curriculum_topic.chapter.order, m.curriculum_topic.order))
+            context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
+            context['special_materials'] = [m for m in context['school_materials']
+                                            if m.curriculum_topic.kind in ('summary', 'diagnostic')]
+            # Уроки для показу на заняттях: опубліковані теми ліцензованих класів, згруповані за класом
+            lesson_groups = []
+            for m in context['school_materials']:
+                if m.curriculum_topic.kind != 'lesson' or not m.is_published:
+                    continue
+                label = m.curriculum_grade.short_label
+                if not lesson_groups or lesson_groups[-1]['label'] != label:
+                    lesson_groups.append({'label': label, 'materials': []})
+                lesson_groups[-1]['materials'].append(m)
+            context['tutor_lessons'] = lesson_groups
+            context['licenses'] = teachers.active_licenses(user).select_related('grade__subject')
+            context['invite_url'] = self.request.build_absolute_uri(
+                reverse('join_teacher', args=[teachers.invite_for(user).code]))
             context['students_attempts'] = PracticeAttempt.objects.filter(
-                user__tutor_request__status='approved'
+                user__tutor_request__in=students
             ).select_related('user', 'user__tutor_request', 'material').defer(
                 'material__html_content').order_by('-created_at')[:50]
-            context['my_students'] = TutorStudentRequest.objects.filter(status='approved').order_by('-created_at')
-            context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
+            context['my_students'] = students.order_by('-created_at')
+            if teachers.is_owner(user):
+                context['nmt_materials'] = StudyMaterial.objects.filter(is_published=True).order_by('title')
 
-            # ОНОВЛЕНО: Теми для звітів НУШ
-            context['all_curriculum_topics'] = CurriculumTopic.objects.exclude(
-                chapter__grade__subject__name="Підготовка до НМТ / ЗНО"
-            ).select_related('chapter__grade').order_by('chapter__grade__subject__order', 'chapter__grade__order',
-                                                        'chapter__order', 'order')
+            # Теми для звітів НУШ
+            topics = CurriculumTopic.objects.exclude(chapter__grade__subject__name="Підготовка до НМТ / ЗНО")
+            if grades is not None:
+                topics = topics.filter(chapter__grade_id__in=grades)
+            context['all_curriculum_topics'] = topics.select_related('chapter__grade').order_by(
+                'chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order')
+        elif getattr(user, 'role', '') == 'teacher':
+            context['tutor_offer'] = True
 
         return context
 
@@ -916,7 +1388,9 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
-    if not request.user.purchased_materials.filter(id=material.id).exists() and not is_teacher(request.user):
+    # Репетитор показує на занятті будь-який урок класу, на який у нього підписка
+    if not (request.user.purchased_materials.filter(id=material.id).exists() or is_teacher(request.user)
+            or teachers.can_teach(request.user, material)):
         raise Http404("У вас немає доступу до цього матеріалу.")
 
     return render(request, 'materials/reader.html', {'material': material})
@@ -1389,7 +1863,7 @@ def view_student_presentation(request, presentation_id):
 def view_attempt_details(request, attempt_id):
     attempt = get_object_or_404(PracticeAttempt, id=attempt_id)
 
-    if attempt.user != request.user and not is_teacher(request.user):
+    if attempt.user != request.user and not is_teacher(request.user) and not teachers.teaches(request.user, attempt.user):
         raise Http404("У вас немає доступу до цієї статистики.")
 
     saved_answers = attempt.answers_json
@@ -1398,6 +1872,13 @@ def view_attempt_details(request, attempt_id):
         return redirect('cabinet')
 
     questions = questions_in_order(parse_id_list(saved_answers.get('question_ids', '')))
+
+    mode = saved_answers.get('mode')
+    if mode in practice.PROFILES:
+        questions_by_id = {q.id: q for q in questions}
+        results = practice.build_results(questions_by_id, saved_answers.get('history') or [], mode)[0]
+        return render(request, 'materials/practice_school_results.html',
+                      school_results_context(request, attempt, results))
 
     results_data = []
     for q in questions:
@@ -1524,6 +2005,15 @@ def parent_dashboard_view(request, parent_token):
         reports = StudentReport.objects.filter(student=student_request).order_by('-date')
         context['reports'] = reports
         context['is_nmt'] = False
+        context['training'] = practice.topic_progress(
+            PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
+            .defer('material__html_content'))
+        diagnostic = next((a for a in PracticeAttempt.objects.filter(user=student_request.user)
+                           .select_related('material').defer('material__html_content').order_by('-created_at')
+                           if (a.answers_json or {}).get('kind') == 'diagnostic'), None)
+        if diagnostic:
+            context['diagnostic'] = diagnostic
+            context['diagnostic_rows'] = topic_rows(diagnostic.answers_json.get('topic_map') or {})
 
     return render(request, 'materials/parent_dashboard.html', context)
 
@@ -1566,10 +2056,10 @@ def parent_view_presentation(request, parent_token, presentation_id):
 @login_required
 @post_required('cabinet')
 def add_quick_report(request):
-    if not is_teacher(request.user):
+    if not teachers.is_tutor(request.user):
         return redirect('cabinet')
 
-    student = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')))
+    student = get_object_or_404(teachers.students_of(request.user), id=to_int(request.POST.get('student_id')))
     form = StudentReportForm(request.POST)
     if form.is_valid():
         report = form.save(commit=False)
@@ -1588,7 +2078,7 @@ def add_nmt_score(request):
     if not is_teacher(request.user):
         return redirect('cabinet')
 
-    student_req = get_object_or_404(TutorStudentRequest, id=to_int(request.POST.get('student_id')))
+    student_req = get_object_or_404(teachers.students_of(request.user), id=to_int(request.POST.get('student_id')))
     material = get_object_or_404(StudyMaterial, id=to_int(request.POST.get('material_id')))
     score = to_int(request.POST.get('score'))
     max_score = to_int(request.POST.get('max_score', 18))

@@ -1,6 +1,7 @@
 import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from materials.curriculum import ensure_special_topics
 from materials.models import CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial
 
 # Класифікатор математики для 5-6 класів (НУШ)
@@ -853,7 +854,8 @@ class Command(BaseCommand):
                                 defaults={'order': topic_data['topic_order']}
                             )
 
-            self.stdout.write(self.style.SUCCESS("✅ Дерево тем успішно завантажено!"))
+            special = ensure_special_topics(CurriculumGrade, CurriculumChapter, CurriculumTopic, StudyMaterial)
+            self.stdout.write(self.style.SUCCESS(f"✅ Дерево тем успішно завантажено! Нових тем узагальнення й діагностики: {special}"))
 
             # 2. Магія: Лінкуємо існуючі конспекти НМТ до нового класифікатора
             self.stdout.write("Лінкуємо поточні конспекти НМТ...")

@@ -100,7 +100,7 @@
                     <span class="badge bg-primary rounded-pill">{{ attempt.get_percent }}%</span>
                 </div>
                 <div class="report-card-body">
-                    <h5 class="fw-bold text-dark mb-3">{{ attempt.material.title }}</h5>
+                    <h5 class="fw-bold text-dark mb-3">{{ attempt.material.title }}{% if attempt.conducted_by_id %} <span class="badge bg-success">на уроці</span>{% endif %}</h5>
 
                     <div class="d-flex align-items-center mb-2">
                         <div class="flex-grow-1">
@@ -111,6 +111,12 @@
                             <div class="progress">
                                 <div class="progress-bar" role="progressbar" style="width: {{ attempt.get_percent }}%;"></div>
                             </div>
+                            {% if attempt.nush_grades %}
+                            <div class="stat-row mt-2">
+                                <span>Оцінки НУШ:</span>
+                                <strong>{% for name, grade in attempt.nush_grades %}{{ name }} {{ grade|default:"—" }}{% if not forloop.last %} · {% endif %}{% endfor %}</strong>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -124,6 +130,42 @@
 
     <!-- БЛОК 2: ДЛЯ ШКОЛЯРІВ НУШ (РУЧНІ ЗВІТИ) -->
     {% else %}
+        {% if diagnostic_rows %}
+            <h6 class="text-muted text-uppercase fw-bold mb-2 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Діагностика: з чого починаємо</h6>
+            <div class="card report-card mb-3" style="border-left: 4px solid #f39c12;">
+                <div class="report-card-body p-3">
+                    <div class="d-flex justify-content-between gap-2 mb-2">
+                        <strong>{{ diagnostic.material.title }}</strong>
+                        <small class="text-muted text-nowrap">{{ diagnostic.created_at|date:"d.m.Y" }}</small>
+                    </div>
+                    {% for row in diagnostic_rows %}
+                        <div class="small">{% if row.state == 'ok' %}✅{% elif row.state == 'partial' %}🟡{% else %}❌{% endif %} {{ row.topic.name }}{% if row.state == 'repeat' %} — <strong>повторюємо</strong>{% endif %}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        {% if training %}
+            <h6 class="text-muted text-uppercase fw-bold mb-2 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Тренування на платформі</h6>
+            <p class="text-muted small mb-3">Це тренувальні вправи: показуємо рівень і як він змінюється. Оцінки за тему ставить вчитель у звіті заняття нижче.</p>
+            {% for row in training %}
+            <div class="card report-card mb-3" style="border-left: 4px solid #27ae60;">
+                <div class="report-card-body p-3">
+                    <div class="d-flex justify-content-between gap-2">
+                        <h6 class="fw-bold mb-1 text-dark">{{ row.material.title }}</h6>
+                        <small class="text-muted text-nowrap">{{ row.date|date:"d.m.Y" }}</small>
+                    </div>
+                    <div class="mb-1">
+                        Рівень: {% if row.count > 1 and row.first != row.last %}{{ row.first }} → {% endif %}<strong>{{ row.last }}</strong>
+                        {% if row.grew %} 📈{% elif row.fell %} — було краще, варто повторити{% endif %}
+                        {% if row.mastered %} · 🏆 тему опановано{% endif %}
+                    </div>
+                    <small class="text-muted">Тренувань: {{ row.count }}{% if row.criteria %} · {% for name, level in row.criteria %}{{ name|lower }} — {{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</small>
+                </div>
+            </div>
+            {% endfor %}
+            <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
+            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Звіти занять</h6>
+        {% endif %}
         {% if reports %}
             {% for report in reports %}
             <div class="card report-card">

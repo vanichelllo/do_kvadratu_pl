@@ -16,12 +16,15 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 from users.models import PurchaseHistory
-from .bank_import import MAX_FILE_BYTES, BankFormatError, build_report, import_tasks, parse_bank_source
+from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
+                          validate_school_spec)
+from .content_check import check_bank, check_presentation
+from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite
 )
 
 User = get_user_model()
@@ -136,9 +139,10 @@ def regenerate_parent_links(modeladmin, request, queryset):
 
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
-    list_display = ('user', 'real_name', 'course', 'status', 'created_at', 'parent_token')
-    list_select_related = ('user',)
-    list_filter = ('course', 'status', 'created_at')
+    list_display = ('user', 'real_name', 'course', 'teacher', 'status', 'created_at', 'parent_token')
+    list_select_related = ('user', 'teacher')
+    list_filter = ('course', 'status', ('teacher', admin.EmptyFieldListFilter), 'created_at')
+    raw_id_fields = ('teacher',)
     search_fields = ('user__email', 'real_name')
     readonly_fields = ('parent_token',)
     actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links]
@@ -289,7 +293,7 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ('short_text', 'id', 'topic_name', 'question_type', 'difficulty', 'health')
     list_select_related = ('curriculum_topic',)
     list_filter = ('curriculum_topic__chapter__grade', TopicOfGradeFilter,
-                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', HasPictureFilter, DuplicateTextFilter)
+                   ('curriculum_topic', HasTopicFilter), 'question_type', 'difficulty', 'nush_skill', HasPictureFilter, DuplicateTextFilter)
     # Пошук і за назвою теми: «21» або «логарифм»
     search_fields = ('text', 'curriculum_topic__name')
     autocomplete_fields = ['curriculum_topic']
@@ -298,6 +302,7 @@ class QuestionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('text', 'question_type', 'difficulty', 'curriculum_topic', 'materials', 'image',
                            'svg_code', 'correct_short_answer')}),
+        ('Шкільна практика (5–11 класи)', {'fields': ('nush_skill', 'hint', 'solution', 'spec')}),
         ('Попередній перегляд (збережена версія)', {'fields': ('preview',)}),
     )
     filter_horizontal = ('materials',)
@@ -334,15 +339,19 @@ class QuestionAdmin(admin.ModelAdmin):
             return redirect('admin:materials_question_changelist')
 
         if request.method == 'POST':
+            # Банк можна завантажити файлом або просто вставити код у поле
             upload = request.FILES.get('bank_file')
+            pasted = request.POST.get('bank_text', '').strip()
+            name = upload.name if upload else 'вставлений код'
             error = None
-            if not upload:
-                error = 'Оберіть файл.'
-            elif upload.size > MAX_FILE_BYTES:
-                error = f'Файл завеликий (максимум {MAX_FILE_BYTES // (1024 * 1024)} МБ).'
+            source = ''
+            if not upload and not pasted:
+                error = 'Оберіть файл або вставте код банку.'
+            elif (upload.size if upload else len(pasted.encode('utf-8'))) > MAX_FILE_BYTES:
+                error = f'Банк завеликий (максимум {MAX_FILE_BYTES // (1024 * 1024)} МБ).'
             else:
                 try:
-                    source = upload.read().decode('utf-8-sig')
+                    source = upload.read().decode('utf-8-sig') if upload else pasted
                     topic_name, tasks = parse_bank_source(source)
                 except UnicodeDecodeError:
                     error = 'Файл має бути у кодуванні UTF-8.'
@@ -351,10 +360,24 @@ class QuestionAdmin(admin.ModelAdmin):
             if error:
                 request.session.pop(session_key, None)
                 context['error'] = error
+                context['bank_text'] = pasted
             else:
-                request.session[session_key] = {'name': upload.name, 'source': source}
-                context.update(report=build_report(topic_name, tasks), file_name=upload.name)
+                request.session[session_key] = {'name': name, 'source': source}
+                context.update(report=build_report(topic_name, tasks), file_name=name)
+                # Шкільний банк — ще й перевірка якості за docs/bank_prompt.md (не блокує імпорт)
+                if any(isinstance(t, dict) and 'grade' in t for t in tasks):
+                    grade = next(t['grade'] for t in tasks if isinstance(t, dict) and 'grade' in t)
+                    problems, warnings = check_bank(tasks, 'A' if grade.startswith(('5', '6')) else 'B')
+                    context.update(quality_problems=problems, quality_warnings=warnings)
         return render(request, 'admin/materials/question/import_bank.html', context)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if change:
+            # Виправили відповідь чи варіанти — перерахувати оцінки учнів, яким це завдання траплялося
+            updated = recalculate_attempts(form.instance)
+            if updated:
+                self.message_user(request, f'Перераховано оцінки в спробах учнів: {updated}.')
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         request._admin_question_id = object_id
@@ -392,6 +415,7 @@ class QuestionAdmin(admin.ModelAdmin):
             'pairs': obj.match_items.select_related('correct_option'),
             'problem': question_problem(obj, obj.options.count(), obj.options.filter(is_correct=True).count(),
                                         obj.match_items.count()),
+            'school_answer': describe_correct(obj) if obj.question_type in SPEC_KEYS else '',
         })
 
 
@@ -409,6 +433,10 @@ def question_problem(question, n_options, n_correct, n_pairs):
             return 'варіантів менше, ніж пар'
     elif question.question_type == 'SHORT' and not (question.correct_short_answer or '').strip():
         return 'немає правильної відповіді'
+    elif question.question_type in SPEC_KEYS:
+        spec = question.spec if isinstance(question.spec, dict) else {}
+        problems = validate_school_spec(question.question_type, spec)
+        return problems[0] if problems else None
     return None
 
 
@@ -500,6 +528,19 @@ class StudyMaterialAdmin(admin.ModelAdmin):
                              'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
         ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Вставлену презентацію шкільної теми одразу перевіряємо за вимогами docs/html_prompt.md
+        if obj.html_content and not obj.is_nmt and (
+                'html_content' in form.changed_data or form.cleaned_data.get('html_file')):
+            problems, warnings = check_presentation(obj.html_content)
+            for problem in problems:
+                self.message_user(request, f'Презентація: {problem}', messages.ERROR)
+            for warning in warnings:
+                self.message_user(request, f'Презентація: {warning}', messages.WARNING)
+            if not problems:
+                self.message_user(request, 'Презентація пройшла перевірку ✓', messages.SUCCESS)
 
     def get_fieldsets(self, request, obj=None):
         # Склад пакета згорнутий для звичайних матеріалів, але одразу видно, коли редагуємо пакет
@@ -718,3 +759,30 @@ def index_with_attention(request, extra_context=None):
 
 
 admin.site.index = index_with_attention
+
+
+@admin.register(Homework)
+class HomeworkAdmin(admin.ModelAdmin):
+    list_display = ('student', 'material', 'due_date', 'created_at', 'attempt')
+    list_select_related = ('student', 'material', 'attempt')
+    list_filter = ('due_date',)
+    search_fields = ('student__real_name', 'material__title')
+    raw_id_fields = ('student', 'material', 'attempt', 'teacher')
+
+
+@admin.register(TeacherLicense)
+class TeacherLicenseAdmin(admin.ModelAdmin):
+    """Підписки репетиторів на класи. Поки оплату підключено не автоматично — видаються тут."""
+    list_display = ('teacher', 'grade', 'valid_until', 'note', 'created_at')
+    list_select_related = ('teacher', 'grade__subject')
+    list_filter = ('grade', 'valid_until')
+    search_fields = ('teacher__email', 'teacher__first_name', 'teacher__last_name', 'note')
+    raw_id_fields = ('teacher',)
+
+
+@admin.register(TeacherInvite)
+class TeacherInviteAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'code')
+    search_fields = ('teacher__email', 'code')
+    raw_id_fields = ('teacher',)
+

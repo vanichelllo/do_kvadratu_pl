@@ -82,9 +82,17 @@ class CurriculumChapter(models.Model):
         return f"{self.grade.short_label} | {self.name}"
 
 class CurriculumTopic(models.Model):
+    # Узагальнення розділу — практика за всіма темами розділу; діагностика — повторення всього класу (карта прогалин)
+    KIND_CHOICES = (
+        ('lesson', 'Урок'),
+        ('summary', 'Узагальнення розділу'),
+        ('diagnostic', 'Діагностика за клас'),
+    )
+
     chapter = models.ForeignKey(CurriculumChapter, on_delete=models.CASCADE, related_name='topics', verbose_name="Розділ")
     name = models.CharField(max_length=255, verbose_name="Тема уроку")
     order = models.PositiveIntegerField(default=0, verbose_name="Сортування")
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default='lesson', verbose_name="Тип")
 
     class Meta:
         ordering = ['chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order']
@@ -397,6 +405,16 @@ class Question(models.Model):
         ('CHOICE', 'Один з п\'яти (1 бал)'),
         ('MATCH', 'Відповідність (до 3 балів)'),
         ('SHORT', 'Коротка відповідь (2 бали)'),
+        # Типи лише для шкільної практики (5–11 кл.); їхні дані — у полі spec
+        ('MULTI', 'Кілька правильних'),
+        ('TF', 'Так / ні'),
+        ('FIELDS', 'Кілька полів'),
+        ('ERROR', 'Знайди помилку'),
+        ('ORDER', 'Впорядкувати'),
+        ('GROUP', 'Розподілити на групи'),
+        ('EXPR', 'Вираз'),
+        ('POINT', 'Точка на прямій'),
+        ('COORD', 'Точка на площині'),
     )
 
     DIFFICULTY_CHOICES = (
@@ -428,6 +446,19 @@ class Question(models.Model):
 
     correct_short_answer = models.CharField(max_length=50, blank=True, null=True,
                                             verbose_name="Відповідь (тільки для 19-22 завдань)")
+
+    # Критерії оцінювання НУШ: у шкільній практиці (5–11 класи) за кожним учень отримує окрему оцінку 1–12
+    SKILL_CHOICES = (
+        ('MODEL', 'Моделювання'),
+        ('SOLVE', "Розв'язування"),
+        ('ANALYZE', 'Аналіз результатів'),
+    )
+    nush_skill = models.CharField(max_length=10, choices=SKILL_CHOICES, default='SOLVE',
+                                  verbose_name="Критерій НУШ")
+    hint = models.TextField(blank=True, default='', verbose_name="Підказка (показується після першої помилки, 5–6 кл.)")
+    spec = models.JSONField(blank=True, default=dict,
+                            verbose_name="Дані завдання (для типів шкільної практики: варіанти, кроки, групи…)")
+    solution = models.TextField(blank=True, default='', verbose_name="Розв'язання (показується після відповіді)")
 
     def __str__(self):
         return f"[{self.get_question_type_display()}] {self.text[:40]}..."
@@ -506,6 +537,9 @@ class TutorStudentRequest(models.Model):
     )
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_request')
+    # Викладач учня. Порожньо — учень власника сайту (заявки «Навчаєтесь у мене особисто?» і всі давніші учні)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='students', verbose_name="Викладач")
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
@@ -580,6 +614,13 @@ class PracticeAttempt(models.Model):
     # НОВЕ ПОЛЕ: Зберігає всі обрані учнем варіанти
     answers_json = models.JSONField(null=True, blank=True, verbose_name="Збережені відповіді")
 
+    # Оцінки 1–12 за критеріями НУШ — лише для шкільної практики (5–11 класи); у НМТ-практиці порожні
+    nush_modeling = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Моделювання (1-12)")
+    nush_solving = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Розв'язування (1-12)")
+    nush_analysis = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Аналіз результатів (1-12)")
+    conducted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='conducted_attempts', verbose_name="Провів на уроці (вчитель)")
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Спроба проходження"
@@ -588,8 +629,92 @@ class PracticeAttempt(models.Model):
     def get_percent(self):
         return int((self.score / self.max_score) * 100) if self.max_score > 0 else 0
 
+    @property
+    def nush_grades(self):
+        """[(назва критерію, оцінка або None)] — для шкільної практики; порожній список для НМТ."""
+        grades = [('Моделювання', self.nush_modeling), ("Розв'язування", self.nush_solving),
+                  ('Аналіз', self.nush_analysis)]
+        return grades if any(g is not None for _, g in grades) else []
+
     def __str__(self):
         return f"{self.user.email} - {self.material.title} ({self.score}/{self.max_score})"
+class PracticeRun(models.Model):
+    """Незавершена шкільна практика «сходинками»: учень може піти й продовжити пізніше з того самого місця.
+    Після завершення з неї створюється PracticeAttempt."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_runs')
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='practice_runs')
+    profile = models.CharField(max_length=1, verbose_name="Профіль (A/B/C)")
+    # Вчитель, який веде практику на уроці (показує екран і сам натискає): user — учень, якому вона зараховується.
+    # У демонстрації без збереження user і teacher — сам вчитель
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='conducted_runs', verbose_name="Провів на уроці")
+    state = models.JSONField(default=dict, verbose_name="Стан (сходинка, історія завдань)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Практика в процесі"
+        verbose_name_plural = "Практики в процесі"
+
+    def __str__(self):
+        return f"{self.user} — {self.material} ({'завершено' if self.finished_at else 'в процесі'})"
+
+
+class TeacherLicense(models.Model):
+    """Підписка викладача на клас (напр. «Математика · 5 клас»): показ усіх уроків класу на заняттях, практика,
+    ДЗ і звіти для його учнів. Учні викладача практикуються в цих темах без окремої оплати."""
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licenses',
+                                verbose_name="Викладач")
+    grade = models.ForeignKey(CurriculumGrade, on_delete=models.CASCADE, related_name='licenses', verbose_name="Клас")
+    valid_until = models.DateField(verbose_name="Діє до (включно)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    note = models.CharField(max_length=200, blank=True, verbose_name="Примітка (оплата, промо…)")
+
+    class Meta:
+        ordering = ['-valid_until']
+        verbose_name = "Підписка викладача"
+        verbose_name_plural = "Підписки викладачів"
+
+    def __str__(self):
+        return f"{self.teacher} — {self.grade} до {self.valid_until:%d.%m.%Y}"
+
+
+class TeacherInvite(models.Model):
+    """Посилання-запрошення викладача: учень відкриває його й стає учнем цього викладача."""
+    teacher = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='invite')
+    code = models.CharField(max_length=12, unique=True)
+
+    class Meta:
+        verbose_name = "Запрошення викладача"
+        verbose_name_plural = "Запрошення викладачів"
+
+    def __str__(self):
+        return f"{self.teacher}: {self.code}"
+
+
+class Homework(models.Model):
+    """Практика з теми, задана учневі додому до дати. Результат — перша спроба учня після видачі (attempt)."""
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='given_homeworks', verbose_name="Задав")
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='homeworks',
+                                verbose_name="Учень")
+    material = models.ForeignKey('StudyMaterial', on_delete=models.CASCADE, related_name='homeworks',
+                                 verbose_name="Тема (урок)")
+    due_date = models.DateField(verbose_name="Виконати до")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Задано")
+    attempt = models.ForeignKey(PracticeAttempt, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='homeworks', verbose_name="Результат (перша спроба після видачі)")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Домашнє завдання"
+        verbose_name_plural = "Домашні завдання"
+
+    def __str__(self):
+        return f"{self.student.real_name}: {self.material.title} до {self.due_date:%d.%m.%Y}"
+
+
 class StudentPresentation(models.Model):
     objects = WithoutHtmlManager()
 

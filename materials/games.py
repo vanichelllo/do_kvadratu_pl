@@ -4,6 +4,7 @@
 для учня, що увійшов, кожна відповідь оновлює список його помилок (GameMistake)."""
 import json
 import random
+import re
 from fractions import Fraction
 
 from django.contrib.auth.decorators import login_required
@@ -14,16 +15,19 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import GameMistake, Question, StudyMaterial
+from .teachers import active_licenses
 
 
 def game_materials(user):
     """Теми, завдання з яких можна давати в іграх цьому користувачеві, і підпис для списку тем."""
-    if user.is_authenticated and (user.is_staff or user.is_superuser or getattr(user, 'role', '') == 'teacher'):
+    if user.is_authenticated and (user.is_staff or user.is_superuser):
         return StudyMaterial.objects.filter(is_bundle=False), 'Повний доступ викладача'
-    # Як у практиці: безкоштовна тема — лише опублікована, куплена — завжди
+    # Як у практиці: безкоштовна тема — лише опублікована, куплена — завжди; репетитор — класи своєї підписки
     free = Q(is_free=True, is_published=True)
     if user.is_authenticated:
-        return (StudyMaterial.objects.filter(free | Q(id__in=user.purchased_materials.values('id')), is_bundle=False),
+        licensed = Q(curriculum_topic__chapter__grade_id__in=active_licenses(user).values('grade_id'))
+        return (StudyMaterial.objects.filter(free | licensed | Q(id__in=user.purchased_materials.values('id')),
+                                             is_bundle=False),
                 'Ваші відкриті та безкоштовні теми')
     return StudyMaterial.objects.filter(free, is_bundle=False), 'Безкоштовні демо-теми'
 
@@ -88,12 +92,19 @@ def _number(text):
         return None
 
 
+# Одиниці виміру, які учні дописують до числа: «5 см», «12 кг», «30 %» — та сама відповідь, що й «5»
+UNIT_SUFFIX = re.compile(r'^\s*(.*?\d)\s*(?:мм|см|дм|км|м|мг|кг|г|т|мл|л|с|хв|год|грн|коп|шт|%|°)\.?[²³23]?\s*$')
+
+
 def short_answer_matches(answer, correct):
-    """«0,5», «0.50» і «1/2» — та сама відповідь; нечислові відповіді порівнюємо як текст."""
+    """«0,5», «0.50» і «1/2» — та сама відповідь; «5 см» зараховується як «5»; нечислові — порівнюємо як текст."""
     answer, correct = str(answer or '').strip(), str(correct or '').strip()
     if not answer:
         return False
     a, c = _number(answer), _number(correct)
+    if a is None and c is not None:
+        unit = UNIT_SUFFIX.match(answer)
+        a = _number(unit.group(1)) if unit else None
     if a is not None and c is not None:
         return a == c
     return answer.replace(',', '.').replace(' ', '').lower() == correct.replace(',', '.').replace(' ', '').lower()

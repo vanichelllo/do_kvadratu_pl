@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Приєднатися до викладача | ДО КВАДРАТУ{% endblock %}
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto; padding: 0 16px;">
+    <div style="background: #fff; border: 2px solid var(--brand-blue); border-radius: 14px; padding: 26px;">
+        <h1 style="margin-top: 0; font-size: 1.4rem; color: var(--brand-blue);">🧑‍🏫 Запрошення від викладача</h1>
+        <p><b>{{ teacher_name }}</b> запрошує вас на заняття. Після приєднання викладач зможе давати вам практику й домашні завдання, бачити ваші результати й надсилати звіти батькам.</p>
+        <form method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+            {% csrf_token %}
+            <input type="text" name="real_name" placeholder="Прізвище та ім'я учня" required maxlength="100" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px;">
+            <select name="course" required style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; background: white;">
+                <option value="" disabled selected>-- Клас / напрямок --</option>
+                {% for value, label in course_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+            <button type="submit" style="background: var(--brand-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">Приєднатися</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -19,8 +19,10 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <input type="hidden" name="action" value="preview">
-    <p><input type="file" name="bank_file" accept=".py,text/x-python,text/plain" required>
+    <p><input type="file" name="bank_file" accept=".py,text/x-python,text/plain">
       <small>до {{ max_mb }} МБ</small></p>
+    <p><strong>або вставте код банку:</strong><br>
+      <textarea name="bank_text" rows="12" style="width: 100%; max-width: 900px; font-family: monospace;" placeholder='TOPIC_NAME = "1.2. …"&#10;COURSE = "Математика (5-6 класи)"&#10;GRADE = "5 клас"&#10;TASKS = [ … ]'>{{ bank_text }}</textarea></p>
     <input type="submit" class="default" value="Пробний звіт">
   </form>
 
@@ -35,6 +37,15 @@
       <tr><th>З помилками</th><td>{{ report.errors|length }}</td></tr>
     </tbody>
   </table>
+
+  {% if quality_problems or quality_warnings %}
+  <h3>Перевірка якості шкільного банку</h3>
+  <ul>
+    {% for p in quality_problems %}<li style="color: var(--error-fg);">помилка: {{ p }}</li>{% endfor %}
+    {% for w in quality_warnings %}<li>увага: {{ w }}</li>{% endfor %}
+  </ul>
+  <p><small>Завдання без помилок у таблиці вище імпортуються; пункти з цього списку варто виправити в банку й завантажити ще раз — дублікати пропускаються.</small></p>
+  {% endif %}
 
   {% if report.errors %}
   <h3>Помилки (ці завдання не імпортуються)</h3>
