@@ -2996,3 +2996,39 @@ class SchoolContentTests(BaseTestCase):
         problems, warnings = check_bank(bad)
         self.assertTrue(any('hint' in p for p in problems))
         self.assertTrue(any('рекомендовано 45' in w for w in warnings))
+
+
+class AdminContentPasteTests(BaseTestCase):
+    """Вставляння контенту в адмінку: банк кодом у поле, перевірка презентації після збереження."""
+
+    def setUp(self):
+        self.admin = self.make_user('paste-admin@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(self.admin)
+        self.topic = make_school_topic('1.2. Цифри', 5, 102)
+
+    def test_bank_can_be_pasted_and_gets_quality_report(self):
+        source = '''TOPIC_NAME = "1.2. Цифри"
+COURSE = "Математика (5-6 класи)"
+GRADE = "5 клас"
+TASKS = [{"type": "SHORT", "difficulty": 1, "skill": "SOLVE", "text": "Скільки цифр?", "answer": "10",
+          "solution": "Десять: від 0 до 9."}]
+'''
+        url = '/do-kvadratu-secret-control/materials/question/import-bank/'
+        response = self.client.post(url, {'action': 'preview', 'bank_text': source})
+        self.assertEqual(response.context['report'].to_add, [1])
+        self.assertTrue(any('hint' in p for p in response.context['quality_problems']))
+        self.client.post(url, {'action': 'import'})
+        self.assertEqual(Question.objects.get().curriculum_topic, self.topic)
+
+    def test_presentation_is_checked_after_save(self):
+        material = StudyMaterial.objects.create(title='1.2', price=0, curriculum_topic=self.topic)
+        url = f'/do-kvadratu-secret-control/materials/studymaterial/{material.id}/change/'
+        form = self.client.get(url).context['adminform'].form
+        data = {k: v for k, v in form.initial.items()
+                if v is not None and not isinstance(v, (list, tuple)) and k not in ('image', 'file')}
+        data.update({'title': '1.2', 'price': 0, 'curriculum_topic': self.topic.id,
+                     'html_content': '<!DOCTYPE html><html><head></head><body><img src="a.png"></body></html>',
+                     'description': 'x'})
+        response = self.client.post(url, data, follow=True)
+        text = ' '.join(str(m) for m in response.context['messages'])
+        self.assertIn('Презентація: зображення <img> заборонені', text)

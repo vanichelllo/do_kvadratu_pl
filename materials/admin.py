@@ -18,6 +18,7 @@ from django.contrib.auth import get_user_model
 from users.models import PurchaseHistory
 from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
                           validate_school_spec)
+from .content_check import check_bank, check_presentation
 from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
@@ -338,15 +339,19 @@ class QuestionAdmin(admin.ModelAdmin):
             return redirect('admin:materials_question_changelist')
 
         if request.method == 'POST':
+            # Банк можна завантажити файлом або просто вставити код у поле
             upload = request.FILES.get('bank_file')
+            pasted = request.POST.get('bank_text', '').strip()
+            name = upload.name if upload else 'вставлений код'
             error = None
-            if not upload:
-                error = 'Оберіть файл.'
-            elif upload.size > MAX_FILE_BYTES:
-                error = f'Файл завеликий (максимум {MAX_FILE_BYTES // (1024 * 1024)} МБ).'
+            source = ''
+            if not upload and not pasted:
+                error = 'Оберіть файл або вставте код банку.'
+            elif (upload.size if upload else len(pasted.encode('utf-8'))) > MAX_FILE_BYTES:
+                error = f'Банк завеликий (максимум {MAX_FILE_BYTES // (1024 * 1024)} МБ).'
             else:
                 try:
-                    source = upload.read().decode('utf-8-sig')
+                    source = upload.read().decode('utf-8-sig') if upload else pasted
                     topic_name, tasks = parse_bank_source(source)
                 except UnicodeDecodeError:
                     error = 'Файл має бути у кодуванні UTF-8.'
@@ -355,9 +360,15 @@ class QuestionAdmin(admin.ModelAdmin):
             if error:
                 request.session.pop(session_key, None)
                 context['error'] = error
+                context['bank_text'] = pasted
             else:
-                request.session[session_key] = {'name': upload.name, 'source': source}
-                context.update(report=build_report(topic_name, tasks), file_name=upload.name)
+                request.session[session_key] = {'name': name, 'source': source}
+                context.update(report=build_report(topic_name, tasks), file_name=name)
+                # Шкільний банк — ще й перевірка якості за docs/bank_prompt.md (не блокує імпорт)
+                if any(isinstance(t, dict) and 'grade' in t for t in tasks):
+                    grade = next(t['grade'] for t in tasks if isinstance(t, dict) and 'grade' in t)
+                    problems, warnings = check_bank(tasks, 'A' if grade.startswith(('5', '6')) else 'B')
+                    context.update(quality_problems=problems, quality_warnings=warnings)
         return render(request, 'admin/materials/question/import_bank.html', context)
 
     def save_related(self, request, form, formsets, change):
@@ -517,6 +528,19 @@ class StudyMaterialAdmin(admin.ModelAdmin):
                              'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
         ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Вставлену презентацію шкільної теми одразу перевіряємо за вимогами docs/html_prompt.md
+        if obj.html_content and not obj.is_nmt and (
+                'html_content' in form.changed_data or form.cleaned_data.get('html_file')):
+            problems, warnings = check_presentation(obj.html_content)
+            for problem in problems:
+                self.message_user(request, f'Презентація: {problem}', messages.ERROR)
+            for warning in warnings:
+                self.message_user(request, f'Презентація: {warning}', messages.WARNING)
+            if not problems:
+                self.message_user(request, 'Презентація пройшла перевірку ✓', messages.SUCCESS)
 
     def get_fieldsets(self, request, obj=None):
         # Склад пакета згорнутий для звичайних матеріалів, але одразу видно, коли редагуємо пакет
