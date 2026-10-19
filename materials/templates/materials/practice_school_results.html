@@ -89,7 +89,7 @@
                 {% if status == 'mastered' %}🏆 Тему опановано: пройдено всі три сходинки{% if trophy_name %} · {{ trophy_name }} переможений!{% endif %}
                 {% elif level %}Найвища сходинка з правильною відповіддю: {{ level }} з {{ levels|length }}{% endif %}
             </div>
-            <div class="score">Розв'язано завдань: {{ results|length }} · набрано {{ attempt.score }} з {{ attempt.max_score }} балів</div>
+            <div class="score">Розв'язано завдань: {{ results|length }}{% if not parent_back %} · набрано {{ attempt.score }} з {{ attempt.max_score }} балів{% endif %}</div>
             {% else %}
             <div class="score">Завдань: {{ results|length }}, правильно з першої спроби: {{ attempt.get_percent }}%</div>
             {% endif %}
@@ -108,13 +108,17 @@
             <p class="score">Діагностика без оцінки: карта нижче показує, що вже знаємо і що варто повторити.</p>
             {% endif %}
             {% with p=attempt.get_percent %}
-            {% if kind != 'diagnostic' %}<div class="praise">
+            {% if kind != 'diagnostic' and not parent_back %}<div class="praise">
                 {% if status == 'mastered' %}Блискуче! 🏆{% elif p >= 70 %}Дуже добре! 💪 Наступного разу спробуй дійти до вершини.{% elif p >= 40 %}Непогано — переглянь розбір помилок нижче.{% else %}Повтори урок і спробуй ще раз — у тебе вийде!{% endif %}
             </div>{% endif %}
             {% endwith %}
             <div class="actions">
+                {% if parent_back %}
+                <a href="{{ parent_back }}" class="btn btn-secondary">← До звіту</a>
+                {% else %}
                 <a href="{{ again_url }}" class="btn btn-primary">🔁 Ще раз</a>
                 <a href="{% url 'cabinet' %}" class="btn btn-secondary">До кабінету</a>
+                {% endif %}
             </div>
         </div>
 

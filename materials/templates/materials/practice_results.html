@@ -115,6 +115,6 @@
         </div>
     {% endfor %}
 
-    <a href="{% url 'cabinet' %}" class="btn-cabinet">Повернутися в кабінет</a>
+    <a href="{% if parent_back %}{{ parent_back }}{% else %}{% url 'cabinet' %}{% endif %}" class="btn-cabinet">{% if parent_back %}← До звіту{% else %}Повернутися в кабінет{% endif %}</a>
 </div>
 {% endblock %}
