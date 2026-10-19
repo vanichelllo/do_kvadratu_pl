@@ -134,6 +134,9 @@ def user_owns_material(user, material):
         return False
     if user.purchased_materials.filter(id=material.id).exists():
         return True
+    # Учень власника сайту бачить усі теми свого класу без купівлі
+    if teachers.in_own_class(user, material):
+        return True
     if material.is_bundle:
         included_ids = list(material.included_materials.values_list('id', flat=True))
         return bool(included_ids) and \
@@ -1426,9 +1429,20 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
 
+        # Учень власника сайту бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
+        library_list = purchased_list
+        class_grades = teachers.own_class_grade_ids(self.request.user)
+        if class_grades:
+            owned = {m.id for m in purchased_list}
+            class_materials = StudyMaterial.objects.filter(
+                Q(html_content__gt='') | Q(practice_questions__isnull=False),
+                curriculum_topic__chapter__grade_id__in=class_grades, is_bundle=False,
+            ).exclude(id__in=owned).distinct().select_related(with_tree)
+            library_list = sorted(purchased_list + list(class_materials), key=get_number)
+
         # Бібліотека: окремі теми групуємо за курсом і класом (список уже відсортовано за деревом тем)
         library_groups = []
-        for material in purchased_list:
+        for material in library_list:
             if material.is_bundle:
                 continue
             grade = material.curriculum_grade
@@ -1556,7 +1570,7 @@ def download_material_view(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id)
 
     # Репетитор показує на занятті будь-який урок класу, на який у нього підписка
-    if not (request.user.purchased_materials.filter(id=material.id).exists() or is_teacher(request.user)
+    if not (user_owns_material(request.user, material) or is_teacher(request.user)
             or teachers.can_teach(request.user, material)):
         raise Http404("У вас немає доступу до цього матеріалу.")
 

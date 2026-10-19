@@ -936,6 +936,42 @@ class CourseChoicesTests(BaseTestCase):
         self.assertEqual(TutorStudentRequest.objects.get(user=user).course, 'grade_5')
 
 
+class OwnClassAccessTests(BaseTestCase):
+    """Учень власника сайту, підтверджений у класі, бачить усі теми свого класу (і лише їх) без купівлі."""
+
+    def setUp(self):
+        from django.core.management import call_command
+        call_command('import_curriculum', stdout=open('/dev/null', 'w'))
+        topic = lambda grade, subject, start: CurriculumTopic.objects.get(
+            chapter__grade__name=grade, chapter__grade__subject__name=subject, name__startswith=start)
+        lesson = lambda t: StudyMaterial.objects.create(title=t.name, curriculum_topic=t, html_content='<p>урок</p>')
+        self.algebra9 = lesson(topic('9 клас', 'Алгебра (7-9 класи)', '1.3. '))
+        self.geometry9 = lesson(topic('9 клас', 'Геометрія (7-9 класи)', '2.4. '))
+        self.algebra8 = lesson(topic('8 клас', 'Алгебра (7-9 класи)', '1.1. '))
+        self.pupil = self.make_user('pupil9@example.com')
+        self.request = TutorStudentRequest.objects.create(user=self.pupil, real_name='Соломія', course='grade_9',
+                                                          status='approved')
+        self.client.force_login(self.pupil)
+
+    def test_approved_pupil_opens_every_course_of_own_grade_only(self):
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.geometry9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.algebra8.id}/').status_code, 404)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn(self.algebra9.title, html)
+        self.assertIn(self.geometry9.title, html)
+        self.assertNotIn(self.algebra8.title, html)
+
+    def test_pending_request_or_other_teachers_pupil_gets_nothing(self):
+        self.request.status = 'pending'
+        self.request.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+        self.request.status = 'approved'
+        self.request.teacher = self.make_user('tutor@example.com')
+        self.request.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+
+
 class AdminLoginRateLimitTests(BaseTestCase):
     def setUp(self):
         cache.clear()
