@@ -2151,19 +2151,26 @@ def view_attempt_details(request, attempt_id):
     if attempt.user != request.user and not is_teacher(request.user) and not teachers.teaches(request.user, attempt.user):
         raise Http404("У вас немає доступу до цієї статистики.")
 
-    saved_answers = attempt.answers_json
-    if not saved_answers:
+    if not attempt.answers_json:
         messages.info(request, "Цей тест був пройдений до оновлення системи. Деталі не збережено.")
         return redirect('cabinet')
+    return attempt_details_page(request, attempt)
 
+
+def attempt_details_page(request, attempt, parent_back=None):
+    """Розбір спроби: кожне завдання, відповідь учня й правильна. parent_back — сторінка для батьків (лише перегляд,
+    з посиланням назад на звіт)."""
+    saved_answers = attempt.answers_json
     questions = questions_in_order(parse_id_list(saved_answers.get('question_ids', '')))
 
     mode = saved_answers.get('mode')
     if mode in practice.PROFILES:
         questions_by_id = {q.id: q for q in questions}
         results = practice.build_results(questions_by_id, saved_answers.get('history') or [], mode)[0]
-        return render(request, 'materials/practice_school_results.html',
-                      school_results_context(request, attempt, results))
+        context = school_results_context(request, attempt, results)
+        if parent_back:
+            context.update({'parent_back': parent_back, 'report_student': None})
+        return render(request, 'materials/practice_school_results.html', context)
 
     results_data = []
     for q in questions:
@@ -2217,6 +2224,7 @@ def view_attempt_details(request, attempt_id):
         'total_score': attempt.score,
         'max_score': attempt.max_score,
         'results_data': results_data,
+        'parent_back': parent_back,
     }
     return render(request, 'materials/practice_results.html', context)
 
@@ -2274,19 +2282,31 @@ def parent_dashboard_view(request, parent_token):
         'presentations': presentations,
     }
 
+    # Презентації тем, які учень уже практикував, — батьки можуть їх відкрити
+    passed = list(parent_viewable_materials(student_request).select_related(
+        'curriculum_topic__chapter__grade__subject').defer('html_content'))
+
+    def topic_order(material):
+        topic = material.curriculum_topic
+        if topic:
+            return (0, topic.chapter.grade.subject.order, topic.chapter.grade.order, topic.chapter.order, topic.order)
+        match = re.match(r'^(\d+)', material.title)
+        return (1, int(match.group(1)) if match else 99999, 0, 0, 0)
+
+    context['passed_materials'] = sorted(passed, key=topic_order)
     if student_request.course == 'nmt':
         attempts = (PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
                     .defer('material__html_content').order_by('-created_at'))
         context['attempts'] = attempts
         context['is_nmt'] = True
-        passed = list(parent_viewable_materials(student_request))
-
-        def topic_number(material):
-            match = re.match(r'^(\d+)', material.title)
-            return int(match.group(1)) if match else 99999
-
-        context['passed_materials'] = sorted(passed, key=topic_number)
     else:
+        # Шкільним батькам показуємо рівень, а не бали (бали — внутрішня механіка сходинок)
+        school_attempts = list(parent_attempts(student_request)[:30])
+        for attempt in school_attempts:
+            grade = practice.overall_grade(attempt)
+            attempt.level_label = (f'рівень: {practice.level_name(grade)}' if grade else
+                                   'діагностика' if attempt.answers_json.get('kind') == 'diagnostic' else '')
+        context['school_attempts'] = school_attempts
         reports = StudentReport.objects.filter(student=student_request).order_by('-date')
         context['reports'] = reports
         context['is_nmt'] = False
@@ -2304,15 +2324,33 @@ def parent_dashboard_view(request, parent_token):
 
 
 def parent_viewable_materials(student_request):
-    return (StudyMaterial.objects.filter(attempts__user_id=student_request.user_id)
-            .filter(Q(is_published=True) | Q(id__in=student_request.user.purchased_materials.values('id')))
-            .exclude(html_content__isnull=True).exclude(html_content='')
-            .exclude(title=DIAGNOSTIC_MATERIAL_TITLE).distinct())
+    """Презентації тем, які учень уже практикував (і які йому відкриті: опубліковані, куплені чи свого класу)."""
+    user = student_request.user
+    practiced = (StudyMaterial.objects.filter(attempts__user_id=user.id, is_bundle=False)
+                 .exclude(html_content__isnull=True).exclude(html_content='')
+                 .exclude(title=DIAGNOSTIC_MATERIAL_TITLE).distinct())
+    open_ids = [m.id for m in practiced.select_related('curriculum_topic__chapter__grade__subject')
+                if m.is_published or teachers.in_own_class(user, m)]
+    return StudyMaterial.objects.filter(
+        Q(id__in=open_ids) | Q(id__in=practiced.filter(id__in=user.purchased_materials.values('id')).values('id')))
+
+
+def parent_attempts(student_request):
+    """Спроби учня, які батьки можуть розібрати (з відповідями), — нові вгорі."""
+    return (PracticeAttempt.objects.filter(user=student_request.user).exclude(answers_json__isnull=True)
+            .select_related('material').defer('material__html_content').order_by('-created_at'))
+
+
+def parent_view_attempt(request, parent_token, attempt_id):
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+    attempt = get_object_or_404(parent_attempts(student_request), id=attempt_id)
+    response = attempt_details_page(request, attempt, parent_back=reverse('parent_dashboard', args=[parent_token]))
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
 
 
 def parent_view_material(request, parent_token, material_id):
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved',
-                                        course='nmt')
+    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
     material = get_object_or_404(parent_viewable_materials(student_request), id=material_id)
 
     response = render(request, 'materials/reader.html', {

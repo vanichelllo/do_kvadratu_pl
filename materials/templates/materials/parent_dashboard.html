@@ -74,11 +74,9 @@
 
         <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
     {% endif %}
-    <!-- БЛОК 1: ДЛЯ УЧНІВ НМТ (АВТОМАТИЧНІ ТЕСТИ) -->
-    {% if is_nmt %}
-        <!-- Конспекти тем, які учень уже проходив -->
+    <!-- Презентації тем, які учень уже практикував (НМТ і школа) -->
         {% if passed_materials %}
-            <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Конспекти пройдених тем</h6>
+            <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Пройдені презентації</h6>
             {% for material in passed_materials %}
             <div class="card report-card mb-3" style="border-left: 4px solid #4f46e5;">
                 <div class="report-card-body d-flex justify-content-between align-items-center p-3 gap-2">
@@ -90,9 +88,11 @@
             </div>
             {% endfor %}
             <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
-            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Результати</h6>
         {% endif %}
+    <!-- БЛОК 1: ДЛЯ УЧНІВ НМТ (АВТОМАТИЧНІ ТЕСТИ) -->
+    {% if is_nmt %}
         {% if attempts %}
+            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Результати тестів</h6>
             {% for attempt in attempts %}
             <div class="card report-card">
                 <div class="report-card-header d-flex justify-content-between align-items-center">
@@ -101,6 +101,7 @@
                 </div>
                 <div class="report-card-body">
                     <h5 class="fw-bold text-dark mb-3">{{ attempt.material.title }}{% if attempt.conducted_by_id %} <span class="badge bg-success">на уроці</span>{% endif %}</h5>
+                    {% if attempt.answers_json %}<a href="{% url 'parent_view_attempt' student.parent_token attempt.id %}" target="_blank" class="small fw-bold">🔍 Переглянути відповіді</a>{% endif %}
 
                     <div class="d-flex align-items-center mb-2">
                         <div class="flex-grow-1">
@@ -165,6 +166,23 @@
                 </div>
             </div>
             {% endfor %}
+        {% endif %}
+        {% if school_attempts %}
+            <h6 class="text-muted text-uppercase fw-bold mb-2 mt-3" style="font-size: 0.85rem; letter-spacing: 1px;">Як проходив тренування й тести</h6>
+            <p class="text-muted small mb-3">Кожна спроба: які завдання, що відповів учень і правильна відповідь з поясненням.</p>
+            {% for attempt in school_attempts %}
+            <div class="card report-card mb-2">
+                <div class="report-card-body d-flex justify-content-between align-items-center p-3 gap-2">
+                    <div>
+                        <div class="fw-bold text-dark">{{ attempt.material.title }}{% if attempt.conducted_by_id %} <span class="badge bg-success">на уроці</span>{% endif %}</div>
+                        <small class="text-muted">{{ attempt.created_at|date:"d.m.Y H:i" }}{% if attempt.level_label %} · {{ attempt.level_label }}{% endif %}</small>
+                    </div>
+                    <a href="{% url 'parent_view_attempt' student.parent_token attempt.id %}" target="_blank" class="btn btn-sm text-white rounded-pill px-3" style="background-color: #27ae60; font-weight: bold; white-space: nowrap;">Відповіді</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% if training or school_attempts %}
             <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
             <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Звіти занять</h6>
         {% endif %}

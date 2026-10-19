@@ -336,7 +336,7 @@ class ParentMaterialTests(BaseTestCase):
 
     def test_dashboard_lists_notes_of_passed_topics_once(self):
         response = self.client.get(f'/parents/{self.student.parent_token}/')
-        self.assertContains(response, 'Конспекти пройдених тем')
+        self.assertContains(response, 'Пройдені презентації')
         self.assertContains(response, self.url(self.passed), count=1)
         for material in (self.not_passed, self.no_html, self.empty_html, self.diag):
             self.assertNotContains(response, self.url(material))
@@ -356,10 +356,28 @@ class ParentMaterialTests(BaseTestCase):
         other = TutorStudentRequest.objects.create(user=self.make_user('other@example.com'), real_name='Інший',
                                                    course='nmt', status='approved')
         self.assertEqual(self.client.get(self.url(self.passed, other.parent_token)).status_code, 404)
-        for field, value in (('status', 'pending'), ('course', 'grade_7')):
-            TutorStudentRequest.objects.filter(pk=self.student.pk).update(**{field: value})
-            self.assertEqual(self.client.get(self.url(self.passed)).status_code, 404, value)
-            TutorStudentRequest.objects.filter(pk=self.student.pk).update(status='approved', course='nmt')
+        TutorStudentRequest.objects.filter(pk=self.student.pk).update(status='pending')
+        self.assertEqual(self.client.get(self.url(self.passed)).status_code, 404)
+        # Батьки школяра теж бачать пройдені презентації
+        TutorStudentRequest.objects.filter(pk=self.student.pk).update(status='approved', course='grade_7')
+        self.assertEqual(self.client.get(self.url(self.passed)).status_code, 200)
+
+    def test_parent_sees_how_the_test_went(self):
+        question = Question.objects.create(text='Скільки буде 2 + 2?', question_type='SHORT', correct_short_answer='4')
+        attempt = PracticeAttempt.objects.create(
+            user=self.kid, material=self.passed, score=0, max_score=2,
+            answers_json={'question_ids': str(question.id), 'q_short': {str(question.id): '5'}})
+        dashboard = self.client.get(f'/parents/{self.student.parent_token}/')
+        detail_url = f'/parents/{self.student.parent_token}/attempt/{attempt.id}/'
+        self.assertContains(dashboard, detail_url)
+        response = self.client.get(detail_url)
+        self.assertContains(response, 'Скільки буде 2 + 2?')
+        self.assertContains(response, '← До звіту')
+        self.assertEqual(response['Referrer-Policy'], 'no-referrer')
+        # Чужу спробу за своїм посиланням не відкрити
+        other = TutorStudentRequest.objects.create(user=self.make_user('other2@example.com'), real_name='Інший',
+                                                   course='nmt', status='approved')
+        self.assertEqual(self.client.get(f'/parents/{other.parent_token}/attempt/{attempt.id}/').status_code, 404)
 
     def test_parent_reader_hides_pdf_link(self):
         StudyMaterial.objects.filter(pk=self.passed.pk).update(file='documents/7.pdf')
@@ -2718,6 +2736,15 @@ class LearningSituationsTests(BaseTestCase):
         self.assertContains(response, 'початковий → <strong>високий</strong>')
         self.assertContains(response, 'тему опановано')
         self.assertNotContains(response, 'балів')
+        # Батьки розбирають кожну спробу: завдання й відповіді, без кнопок учня і без балів
+        self.assertContains(response, 'Як проходив тренування й тести')
+        attempt = PracticeAttempt.objects.filter(user=self.request.user).latest('created_at')
+        detail = self.client.get(f'/parents/{self.request.parent_token}/attempt/{attempt.id}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, '← До звіту')
+        self.assertNotContains(detail, '🔁 Ще раз')
+        self.assertNotContains(detail, 'балів')
+        self.assertNotContains(detail, 'add-report')
 
     def test_assisted_task_does_not_move_the_ladder_or_count(self):
         self.client.force_login(self.teacher)
