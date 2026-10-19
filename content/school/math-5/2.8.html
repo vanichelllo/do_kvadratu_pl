@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Площа прямокутника і квадрата | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        /* Клітинки й площа */
+        .room { fill: var(--brand-blue); fill-opacity: 0.12; stroke: var(--brand-blue); stroke-width: 3.5; }
+        .room.b { fill: var(--brand-green); fill-opacity: 0.16; stroke: var(--brand-green); }
+        .cell-line { stroke: currentColor; stroke-opacity: 0.35; stroke-width: 1.2; }
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .cell { fill: var(--brand-yellow); fill-opacity: 0.55; stroke: var(--card-bg); stroke-width: 1.5; }
+        .outline { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; }
+        .cut { fill: var(--card-bg); stroke: var(--warning-red); stroke-width: 2.5; stroke-dasharray: 6 5; }
+        .len { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .fill-count { font-size: 1.25rem; font-weight: 800; text-align: center; min-height: 2.6em; margin-top: 6px; }
+        .fill-count.done { color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        .vs { display: flex; gap: 10px; flex-wrap: wrap; }
+        .vs > .box { flex: 1; min-width: 200px; }
+        @media (max-width: 760px) { .fill-count { font-size: 1.05rem; } }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Чия кімната більша? 🏠</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Моя кімната — $4$ м на $3$ м.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А моя — $6$ м на $2$ м. Вона довша, тож більша!</div>
+                    <p class="big-question">Чиєю підлогою більше місця — на чию треба більше квадратних плиток $1$ м на $1$ м? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Порівну — по $12$ плиток! 🎉</div>
+                        <p>У Олі $3$ ряди по $4$ плитки, у Тараса — $2$ ряди по $6$: $4 \cdot 3 = 6 \cdot 2 = 12$. Кількість таких плиток — це <b>площа</b> підлоги: $12$ м². А довжина плінтусів (периметр) різна: $14$ м і $16$ м.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 380 240" id="rooms-scene" role="img" aria-label="Дві кімнати на клітинках: 4 на 3 і 6 на 2 метри"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Скільки квадратиків уміститься? 🟨</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Обираємо довжину й ширину. Кожна клітинка — квадрат $1$ см на $1$ см. Учні рахують, скільки клітинок поміститься, — потім заповнюємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Довжина</label><input type="range" id="w-a" min="1" max="8" step="1" value="5" oninput="renderFill()"><span id="w-a-val">5 см</span></div>
+                    <div class="slider-control"><label for="w-b">Ширина</label><input type="range" id="w-b" min="1" max="5" step="1" value="3" oninput="renderFill()"><span id="w-b-val">3 см</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="fillCells()">▶ Заповнити квадратиками</button></p>
+                    <div class="fill-count" id="fill-count"></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 240" id="fill-scene" role="img" aria-label="Прямокутник на клітинках, який заповнюють одиничними квадратами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Площа</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Площа</b> фігури показує, скільки одиничних квадратів у ній уміщується. Позначають буквою $S$.</p>
+                    <p><b>1 см²</b> (квадратний сантиметр) — площа квадрата зі стороною $1$ см. Так само мм², дм², м², км².</p>
+                    <p>Прямокутник: $S = a \cdot b$. &nbsp; Квадрат: $S = a \cdot a = a^2$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Властивості площі</div>
+                    <p>Рівні фігури мають рівні площі.</p>
+                    <p>Якщо фігуру розрізати на частини, її площа дорівнює сумі площ частин.</p>
+                    <p>$1$ дм² $= 10 \cdot 10 = 100$ см², &nbsp; $1$ м² $= 100 \cdot 100 = 10\,000$ см².</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скільки лінолеуму купити? ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Довжина кімнати — $5$ м, а ширина на $2$ м менша. Скільки квадратних метрів лінолеуму потрібно на всю підлогу?</p>
+                    </div>
+                    <svg viewBox="0 0 380 200" class="mini-fig" role="img" aria-label="Прямокутна кімната: довжина 5 м, ширина невідома">
+                        <rect x="40" y="25" width="300" height="140" class="room"/>
+                        <text x="190" y="190" class="len">5 м</text><text x="358" y="100" class="len">?</text>
+                    </svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: площа — не периметр ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Прямокутник $4$ см на $3$ см. Периметр — довжина краю: $P = 2 \cdot (4 + 3) = 14$ <b>см</b>. Площа — місце всередині: $S = 4 \cdot 3 = 12$ <b>см²</b>.</p>
+                        <p>Ще пастка: $1$ м $= 100$ см, але $1$ м² $= 10\,000$ см², а не $100$ см²!</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Паркан, рамка, стрічка — периметр (см, м). Плитка, фарба, лінолеум — площа (см², м²).</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" id="trap-scene" role="img" aria-label="Прямокутник 4 на 3: край — периметр, клітинки всередині — площа"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Довжина прямокутника — $6$ см, ширина — $3$ см. Знайди площу.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $18$ см²</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $18$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $9$ см²</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Площу міряють у квадратних одиницях, і довжину множать на ширину.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$S = 6 \cdot 3 = 18$ см². ($18$ см — це периметр, і одиниці не ті.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Сторона квадрата — $5$ см. Знайди площу.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $20$ см²</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $25$ см²</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $10$ см²</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$S = a \cdot a$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$S = 5 \cdot 5 = 25$ см². ($20$ — це периметр.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Площа прямокутника — $24$ см², довжина — $6$ см. Яка ширина?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $4$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $18$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $144$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$6 \cdot ? = 24$. Невідомий множник знаходимо діленням.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$24 : 6 = 4$ см. ($18$ — відняли замість поділити.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. З прямокутника $5$ см на $4$ см вирізали квадрат зі стороною $2$ см. Яка площа фігури, що лишилася?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $20$ см²</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $18$ см²</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $16$ см²</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знайди площу прямокутника і відніми площу квадрата.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$5 \cdot 4 - 2 \cdot 2 = 20 - 4 = 16$ см². ($18$ — відняли сторону $2$, а не площу.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Площа — скільки одиничних квадратів уміщується у фігурі.</p>
+                    <p>Прямокутник: $S = a \cdot b$. Квадрат: $S = a^2$.</p>
+                    <p>Одиниці: мм², см², дм², м², км².</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>Ширина $5 - 2 = 3$ м, тоді $S = 5 \cdot 3 = 15$ м².</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Не плутай: периметр — у см, площа — у см². $1$ м² $= 10\,000$ см².</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderRooms();
+                if (currentSlide === 2) renderFill();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // Прямокутник a × b клітинок з лініями сітки всередині
+            function cellsRect(x0, y0, a, b, s, cls) {
+                let svg = `<rect x="${x0}" y="${y0}" width="${a * s}" height="${b * s}" class="${cls}"/>`;
+                for (let i = 1; i < a; i++) svg += `<line x1="${x0 + i * s}" y1="${y0}" x2="${x0 + i * s}" y2="${y0 + b * s}" class="cell-line"/>`;
+                for (let j = 1; j < b; j++) svg += `<line x1="${x0}" y1="${y0 + j * s}" x2="${x0 + a * s}" y2="${y0 + j * s}" class="cell-line"/>`;
+                return svg;
+            }
+
+            // --- Слайд 1: дві кімнати ---
+            window.renderRooms = function () {
+                document.getElementById('rooms-scene').innerHTML =
+                    cellsRect(30, 20, 4, 3, 30, 'room') + `<text x="90" y="135" class="svg-caption">Оля: 4 м × 3 м</text>`
+                    + cellsRect(170, 140, 6, 2, 30, 'room b') + `<text x="260" y="228" class="svg-caption">Тарас: 6 м × 2 м</text>`;
+            };
+
+            // --- Слайд 2: заповнюємо прямокутник квадратиками 1 см (1 см = 40 px) ---
+            const CELL = 40, OX = 40, OY = 20;
+            let fillTimer = null;
+            function fillVals() {
+                return [parseInt(document.getElementById('w-a').value, 10) || 1, parseInt(document.getElementById('w-b').value, 10) || 1];
+            }
+            function fillSvg(a, b, n) {
+                let svg = '';
+                for (let x = 0; x <= 8; x++) svg += `<line x1="${OX + x * CELL}" y1="${OY}" x2="${OX + x * CELL}" y2="${OY + 5 * CELL}" class="grid-line"/>`;
+                for (let y = 0; y <= 5; y++) svg += `<line x1="${OX}" y1="${OY + y * CELL}" x2="${OX + 8 * CELL}" y2="${OY + y * CELL}" class="grid-line"/>`;
+                const y0 = OY + (5 - b) * CELL;
+                for (let k = 0; k < n; k++) {
+                    const r = Math.floor(k / a), c = k % a;
+                    svg += `<rect x="${OX + c * CELL}" y="${y0 + (b - 1 - r) * CELL}" width="${CELL}" height="${CELL}" class="cell"/>`;
+                }
+                svg += `<rect x="${OX}" y="${y0}" width="${a * CELL}" height="${b * CELL}" class="outline"/>`;
+                return svg;
+            }
+            function fillText(a, b, n) {
+                if (n === 0) return '';
+                if (n < a * b) return `Квадратиків: ${n}`;
+                const rows = b === 1 ? 'ряд' : b < 5 ? 'ряди' : 'рядів';
+                return `${b} ${rows} по ${a}: ${a} · ${b} = ${a * b} см²`;
+            }
+            function showFill(a, b, n) {
+                document.getElementById('fill-scene').innerHTML = fillSvg(a, b, n);
+                const el = document.getElementById('fill-count');
+                el.textContent = fillText(a, b, n);
+                el.classList.toggle('done', n === a * b);
+            }
+            window.renderFill = function () {
+                clearInterval(fillTimer);
+                const [a, b] = fillVals();
+                document.getElementById('w-a-val').textContent = a + ' см';
+                document.getElementById('w-b-val').textContent = b + ' см';
+                showFill(a, b, 0);
+            };
+            window.fillCells = function () {
+                renderFill();
+                const [a, b] = fillVals();
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) { showFill(a, b, a * b); return; }
+                let n = 0;
+                fillTimer = setInterval(() => {
+                    n++;
+                    showFill(a, b, n);
+                    if (n >= a * b) clearInterval(fillTimer);
+                }, Math.max(60, Math.round(2400 / (a * b))));
+            };
+
+            // --- Слайд 5: периметр і площа на одному рисунку ---
+            window.renderTrap = function () {
+                const c = 40, x0 = 120, y0 = 20;
+                document.getElementById('trap-scene').innerHTML = cellsRect(x0, y0, 4, 3, c, 'room')
+                    + `<rect x="${x0}" y="${y0}" width="${4 * c}" height="${3 * c}" fill="none" stroke="var(--warning-red)" stroke-width="5"/>`
+                    + `<text x="${x0 + 2 * c}" y="${y0 + 3 * c + 22}" class="len">4 см</text><text x="${x0 + 4 * c + 26}" y="${y0 + 1.5 * c + 5}" class="len">3 см</text>`
+                    + `<text x="200" y="192" class="svg-caption" style="fill:var(--warning-red)">червоний край: P = 14 см</text>`
+                    + `<text x="200" y="218" class="svg-caption" style="fill:var(--brand-blue)">12 клітинок усередині: S = 12 см²</text>`;
+            };
+
+            // --- Слайд 4: площа підлоги ---
+            const STEPS = [
+                ['Ширина: $5 - 2 = $ [[$3$ м]].', '«На $2$ м менша» — віднімаємо'],
+                ['$S = 5 \\cdot 3 = $ [[$15$]] м².', 'Площа прямокутника — довжина на ширину'],
+                ['Відповідь: потрібно $15$ м² лінолеуму.', 'Одиниці — квадратні метри!'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
