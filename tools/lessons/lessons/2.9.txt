@@ -1,0 +1,337 @@
+@@TITLE Прямокутний паралелепіпед. Куб. Піраміда
+@@CSS
+@@INCLUDE steps.css
+        /* Просторові фігури (коса проекція) */
+        .face { fill: var(--brand-blue); fill-opacity: 0.1; stroke: none; }
+        .face.f1 { fill: var(--brand-blue); fill-opacity: 0.32; }
+        .face.f2 { fill: var(--brand-green); fill-opacity: 0.32; }
+        .face.f3 { fill: var(--brand-yellow); fill-opacity: 0.4; }
+        .edge { stroke: var(--brand-blue); stroke-width: 3; stroke-linecap: round; }
+        .edge.hidden { stroke-dasharray: 6 6; stroke-width: 2; opacity: 0.8; }
+        .edge.ga { stroke: var(--brand-blue); stroke-width: 5; }
+        .edge.gb { stroke: var(--brand-green); stroke-width: 5; }
+        .edge.gc { stroke: var(--brand-yellow); stroke-width: 5; }
+        .vert { fill: var(--warning-red); stroke: var(--card-bg); stroke-width: 2; }
+        .vnum { fill: currentColor; font-size: 13px; font-weight: 800; text-anchor: middle; }
+        .len { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 80px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки граней у коробки? 🧃</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> На рисунку коробки соку я бачу $3$ грані. Отже, їх $3$.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я думаю, що $4$: передня, задня й дві бічні.</div>
+                    <p class="big-question">Скільки граней, ребер і вершин у коробки насправді? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown'); renderJuice(true)">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$6$ граней, $12$ ребер, $8$ вершин! 🎉</div>
+                        <p>Не забуваємо про невидимі грані: верх і низ, перед і зад, ліва й права. Така фігура — <b>прямокутний паралелепіпед</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 360 260" id="juice-scene" role="img" aria-label="Коробка соку — прямокутний паралелепіпед"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Конструюємо коробку 📦</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Змінюємо довжину, ширину й висоту. Чи змінюється кількість вершин, ребер, граней? Коли коробка стає кубом? Учні кажуть, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Довжина</label><input type="range" id="w-a" min="1" max="5" step="1" value="4" oninput="renderBox()"><span id="w-a-val">4 см</span></div>
+                    <div class="slider-control"><label for="w-b">Ширина</label><input type="range" id="w-b" min="1" max="4" step="1" value="2" oninput="renderBox()"><span id="w-b-val">2 см</span></div>
+                    <div class="slider-control"><label for="w-c">Висота</label><input type="range" id="w-c" min="1" max="4" step="1" value="3" oninput="renderBox()"><span id="w-c-val">3 см</span></div>
+                    <div class="modes">
+                        <button class="btn-secondary" id="mode-v" onclick="setBoxMode('v')">Вершини</button>
+                        <button class="btn-secondary" id="mode-e" onclick="setBoxMode('e')">Ребра</button>
+                        <button class="btn-secondary" id="mode-f" onclick="setBoxMode('f')">Грані</button>
+                    </div>
+                    <div class="readout" id="box-text"></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="box-scene" role="img" aria-label="Прямокутний паралелепіпед з вимірами довжина, ширина, висота"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Паралелепіпед, куб, піраміда</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Прямокутний паралелепіпед</b> має $6$ граней — прямокутників, $12$ ребер і $8$ вершин. Протилежні грані рівні.</p>
+                    <p>Його <b>виміри</b> — довжина, ширина й висота. Ребер кожної довжини — по $4$.</p>
+                    <p><b>Куб</b> — прямокутний паралелепіпед, у якого всі виміри рівні: $6$ рівних квадратів і $12$ рівних ребер.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Піраміда</div>
+                    <p>В основі піраміди — многокутник, бічні грані — трикутники зі спільною вершиною.</p>
+                    <p>Трикутна піраміда: $4$ грані, $6$ ребер, $4$ вершини.</p>
+                    <p>Чотирикутна піраміда: $5$ граней, $8$ ребер, $5$ вершин.</p>
+                    <svg viewBox="0 0 300 120" class="mini-fig" role="img" aria-label="Трикутна і чотирикутна піраміди">
+                        <polygon points="20,105 110,105 70,80" class="face"/><line x1="20" y1="105" x2="110" y2="105" class="edge"/><line x1="20" y1="105" x2="70" y2="80" class="edge hidden"/><line x1="70" y1="80" x2="110" y2="105" class="edge hidden"/>
+                        <line x1="20" y1="105" x2="65" y2="12" class="edge"/><line x1="110" y1="105" x2="65" y2="12" class="edge"/><line x1="70" y1="80" x2="65" y2="12" class="edge hidden"/>
+                        <polygon points="165,105 255,105 285,80 195,80" class="face"/><line x1="165" y1="105" x2="255" y2="105" class="edge"/><line x1="255" y1="105" x2="285" y2="80" class="edge"/><line x1="285" y1="80" x2="195" y2="80" class="edge hidden"/><line x1="195" y1="80" x2="165" y2="105" class="edge hidden"/>
+                        <line x1="165" y1="105" x2="225" y2="12" class="edge"/><line x1="255" y1="105" x2="225" y2="12" class="edge"/><line x1="285" y1="80" x2="225" y2="12" class="edge"/><line x1="195" y1="80" x2="225" y2="12" class="edge hidden"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скільки дроту на каркас? ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Каркас прямокутного паралелепіпеда з вимірами $5$ см, $3$ см і $2$ см роблять із дроту. Скільки сантиметрів дроту потрібно?</p>
+                    </div>
+                    <svg viewBox="0 0 380 230" class="mini-fig" id="wire-scene" role="img" aria-label="Каркас паралелепіпеда 5 на 3 на 2 см"></svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: невидимі ребра теж рахуються ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>На рисунку куба суцільними лініями видно лише $9$ ребер і $3$ грані. Але ребер — $12$, граней — $6$: невидимі ребра малюють <b>пунктиром</b>.</p>
+                        <p>У піраміди граней на $1$ більше, ніж сторін в основі: чотирикутна — $4 + 1 = 5$ граней.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Ребра паралелепіпеда рахуй трійками: $4$ довжини, $4$ ширини, $4$ висоти — $12$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 240" id="trap-scene" role="img" aria-label="Куб: видимі ребра суцільні, невидимі — пунктир"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Скільки граней у куба?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $8$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Згадай кубик: верх, низ, перед, зад, ліво, право.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>У куба $6$ граней — рівних квадратів. ($8$ — це вершини.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Скільки ребер у прямокутного паралелепіпеда?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $12$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $8$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $9$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Порахуй трійками: скільки довжин, ширин і висот?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$4 + 4 + 4 = 12$ ребер. ($9$ — лише видимі на рисунку.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Ребро куба — $3$ см. Яка сума довжин усіх його ребер?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $12$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $18$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $36$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки ребер у куба, і які вони?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$12$ рівних ребер: $12 \cdot 3 = 36$ см. ($18 = 6 \cdot 3$ — помножили на кількість граней.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Скільки вершин у чотирикутної піраміди?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $8$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Вершини основи — і ще одна нагорі.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$4$ вершини основи і $1$ спільна вершина: $5$. ($8$ — це ребра.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Прямокутний паралелепіпед: $6$ граней, $12$ ребер, $8$ вершин; виміри — довжина, ширина, висота.</p>
+                    <p>Куб — усі виміри рівні.</p>
+                    <p>Піраміда: основа — многокутник, бічні грані — трикутники.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>Сума ребер $5 \times 3 \times 2$: $4 \cdot (5 + 3 + 2) = 4 \cdot 10 = 40$ см.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Рахуй і невидимі ребра й грані — на рисунку їх не все видно.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderJuice(document.getElementById('answer-1').classList.contains('shown'));
+                if (currentSlide === 2) renderBox();
+                if (currentSlide === 4) { renderWire(); renderEval(); }
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // Паралелепіпед у косій проекції: a — довжина (вправо), b — ширина (углиб), c — висота (вгору)
+            function boxPts(x0, y0, a, b, c, s) {
+                const dx = b * s * 0.45, dy = -b * s * 0.45;
+                const A = [x0, y0], B = [x0 + a * s, y0], C = [x0 + a * s, y0 - c * s], D = [x0, y0 - c * s];
+                const sh = (p) => [p[0] + dx, p[1] + dy];
+                return { A, B, C, D, A1: sh(A), B1: sh(B), C1: sh(C), D1: sh(D) };
+            }
+            const ln = (p, q, cls) => `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" class="edge${cls ? ' ' + cls : ''}"/>`;
+            const poly = (ps, cls) => `<polygon points="${ps.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" class="face${cls ? ' ' + cls : ''}"/>`;
+            // Ребра з групою вимірів: a — довжина, b — ширина, c — висота; hidden — невидиме
+            function boxEdges(P) {
+                return [
+                    [P.A, P.B, 'a', 0], [P.D, P.C, 'a', 0], [P.D1, P.C1, 'a', 0], [P.A1, P.B1, 'a', 1],
+                    [P.A, P.D, 'c', 0], [P.B, P.C, 'c', 0], [P.B1, P.C1, 'c', 0], [P.A1, P.D1, 'c', 1],
+                    [P.B, P.B1, 'b', 0], [P.C, P.C1, 'b', 0], [P.D, P.D1, 'b', 0], [P.A, P.A1, 'b', 1],
+                ];
+            }
+            function boxSvg(x0, y0, a, b, c, s, mode) {
+                const P = boxPts(x0, y0, a, b, c, s);
+                let svg = poly([P.A, P.B, P.C, P.D], mode === 'f' ? 'f1' : '')
+                    + poly([P.D, P.C, P.C1, P.D1], mode === 'f' ? 'f2' : '')
+                    + poly([P.B, P.B1, P.C1, P.C], mode === 'f' ? 'f3' : '');
+                boxEdges(P).forEach(([p, q, g, h]) => { svg += ln(p, q, (h ? 'hidden' : '') + (mode === 'e' ? ' g' + g : '')); });
+                if (mode === 'v') ['A', 'B', 'C', 'D', 'A1', 'B1', 'C1', 'D1'].forEach((k, i) => {
+                    const p = P[k];
+                    svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="7" class="vert"/><text x="${(p[0] + (k.startsWith('A') || k.startsWith('D') ? -14 : 14)).toFixed(1)}" y="${(p[1] + 5).toFixed(1)}" class="vnum">${i + 1}</text>`;
+                });
+                return svg;
+            }
+
+            // --- Слайд 1: коробка соку ---
+            window.renderJuice = function (shown) {
+                document.getElementById('juice-scene').innerHTML = (shown ? boxSvg(110, 225, 3, 2, 5, 36, 'f') : boxSvg(110, 225, 3, 2, 5, 36, ''))
+                    + `<text x="164" y="130" class="svg-caption">🧃 СІК</text>`;
+            };
+
+            // --- Слайд 2: конструктор коробки ---
+            let boxMode = '';
+            function boxVals() { return ['w-a', 'w-b', 'w-c'].map(id => parseInt(document.getElementById(id).value, 10) || 1); }
+            window.renderBox = function () {
+                const [a, b, c] = boxVals();
+                document.getElementById('w-a-val').textContent = a + ' см';
+                document.getElementById('w-b-val').textContent = b + ' см';
+                document.getElementById('w-c-val').textContent = c + ' см';
+                document.getElementById('box-scene').innerHTML = boxSvg(70, 235, a, b, c, 40, boxMode)
+                    + `<text x="${70 + a * 20}" y="256" class="len">${a} см</text>`;
+                const cube = a === b && b === c ? 'Усі виміри рівні — це куб!' : '';
+                const texts = { v: '8 вершин', e: '12 ребер: по 4 довжини, 4 ширини, 4 висоти', f: '6 граней: видно 3, ще 3 — ззаду' };
+                document.getElementById('box-text').textContent = boxMode ? texts[boxMode] + (cube ? '. ' + cube : '') : cube;
+            };
+            window.setBoxMode = function (m) {
+                boxMode = boxMode === m ? '' : m;
+                ['v', 'e', 'f'].forEach(k => document.getElementById('mode-' + k).classList.toggle('on', k === boxMode));
+                renderBox();
+            };
+
+            // --- Слайд 4: каркас 5 × 3 × 2 ---
+            window.renderWire = function () {
+                document.getElementById('wire-scene').innerHTML = boxSvg(50, 190, 5, 3, 2, 48, 'e')
+                    + `<text x="170" y="216" class="len">5 см</text><text x="26" y="147" class="len">2 см</text><text x="342" y="168" class="len">3 см</text>`;
+            };
+
+            // --- Слайд 5: куб з невидимими ребрами ---
+            window.renderTrap = function () {
+                document.getElementById('trap-scene').innerHTML = boxSvg(120, 205, 3, 3, 3, 44, '')
+                    + `<text x="200" y="232" class="svg-caption" style="fill:var(--warning-red)">пунктир — невидимі ребра</text>`;
+            };
+
+            // --- Слайд 4: сума довжин ребер ---
+            const STEPS = [
+                ['Ребер кожного виміру — по $4$: [[$4$ по $5$ см, $4$ по $3$ см, $4$ по $2$ см]].', 'Рахуємо ребра трійками'],
+                ['$4 \\cdot 5 + 4 \\cdot 3 + 4 \\cdot 2 = 20 + 12 + 8 = $ [[$40$ см]].', 'Додаємо всі $12$ ребер'],
+                ['Швидше: $4 \\cdot (5 + 3 + 2) = 4 \\cdot 10 = $ [[$40$ см]].', 'Розподільна властивість'],
+                ['Відповідь: потрібно $40$ см дроту.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
