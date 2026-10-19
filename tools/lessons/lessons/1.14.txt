@@ -1,0 +1,306 @@
+@@TITLE Спрощення виразів
+@@CSS
+@@INCLUDE steps.css
+        /* Слайд 2: «a-брусочки» об'єднуються */
+        .brick { stroke: var(--card-bg); stroke-width: 2; }
+        .bk { transition: transform 0.9s ease; }
+        .brick.m { fill: var(--brand-blue); }
+        .brick.n { fill: var(--brand-yellow); }
+        .brick-t { font-size: 15px; font-weight: 800; text-anchor: middle; pointer-events: none; }
+        .brick-t.m { fill: #fff; }
+        .brick-t.n { fill: #1b1b1b; }
+        .row-label { fill: currentColor; font-size: 17px; font-weight: 800; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .readout { font-size: 1.35rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .svg-caption { fill: currentColor; font-size: 18px; font-weight: 700; text-anchor: middle; }
+        .expr-text { fill: currentColor; font-size: 26px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .eval-line { font-size: 1.35rem; }
+        @media (prefers-reduced-motion: reduce) { .bk { transition: none; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Хто порахує швидше? ⚡</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> Знайди значення виразу $37a + 63a$, якщо $a = 245$. Хто швидше?</div>
+                <div class="bubble right"><span class="who">Тарас:</span> Два множення на $245$, потім додати… Це ж довго! Може, є хитрість?</div>
+                <p class="big-question">Як обчислити це за кілька секунд? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">$24\,500$ — і майже без обчислень! 🎉</div>
+                    <p>$37a + 63a = (37 + 63) \cdot a = 100a$. Це <b>спрощення виразу</b>.</p>
+                    <p>При $a = 245$: $100 \cdot 245 = 24\,500$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Складаємо однакові брусочки 🧱</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Кожен брусочок має довжину $a$. Скільки брусочків разом? Учні кажуть відповідь, потім об'єднуємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-m">Сині</label><input type="range" id="w-m" min="1" max="6" step="1" value="3" oninput="renderBricks()"><span id="w-m-val">3</span></div>
+                    <div class="slider-control"><label for="w-n">Жовті</label><input type="range" id="w-n" min="1" max="6" step="1" value="5" oninput="renderBricks()"><span id="w-n-val">5</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="joinBricks()">▶ Об'єднати</button></p>
+                    <div class="hidden-answer" id="bricks-answer"><div class="readout" id="bricks-sum"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 230" id="bricks-scene" role="img" aria-label="Сині й жовті брусочки довжини a об'єднуються в один ряд"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як спрощувати вирази</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Спростити вираз</b> — записати його коротше, щоб він мав те саме значення.</p>
+                    <p>Розподільна властивість: $\;5a + 3a = (5 + 3)a = 8a$, $\;\;9b - 4b = (9 - 4)b = 5b$.</p>
+                    <p>$a = 1 \cdot a$, тому $a + 6a = 7a$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Множники переставляємо</div>
+                    <p>Переставна і сполучна властивості: $\;4 \cdot a \cdot 25 = (4 \cdot 25) \cdot a = 100a$.</p>
+                    <p>Число пишемо <b>перед</b> буквою: $a \cdot 7 = 7a$.</p>
+                    <p>Знак множення між числом і буквою не пишемо: $7 \cdot a = 7a$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Спрощуємо й обчислюємо ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Завдання</div>
+                        <p>Спрости вираз $25 \cdot x \cdot 4 + 17x - 7x$ і знайди його значення при $x = 3$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Як спрощувати</div>
+                        <p>1) Добутки: переставляємо множники й множимо числа.</p>
+                        <p>2) Доданки з тією самою буквою: додаємо чи віднімаємо числа перед буквою.</p>
+                        <p>3) Підставляємо значення букви.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: самотня буква і різні букви ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$a + 5a = 5a$? <b>Ні!</b> $a$ — це $1a$, тому $a + 5a = 6a$. І $9m - m = 8m$, а не $9$.</p>
+                        <p>$3a + 4b = 7ab$? <b>Ні!</b> Різні букви не об'єднуємо: $3a + 4b$ коротше не запишеш.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перевір підстановкою: при $a = 2$ маємо $2 + 5 \cdot 2 = 12$ і $6 \cdot 2 = 12$ ✓, а $5 \cdot 2 = 10$ ✗.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" role="img" aria-label="a плюс 5a дорівнює 6a, а не 5a">
+                        <text x="200" y="45" class="expr-text">a + 5a = ?</text>
+                        <text x="110" y="100" class="svg-caption" style="fill:var(--warning-red)">5a</text>
+                        <line x1="80" y1="85" x2="140" y2="110" class="cross"/>
+                        <text x="290" y="100" class="svg-caption" style="fill:var(--brand-green)">6a ✓</text>
+                        <g id="trap-bricks"></g>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Спрости вираз: $4a + 9a$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $13a$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $36a$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $13$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$4$ брусочки $a$ і ще $9$ таких самих — скільки всього брусочків? Буква лишається.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$4a + 9a = (4 + 9)a = 13a$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Спрости вираз: $5 \cdot y \cdot 8$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $13y$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $40y$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $58y$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Тут лише множення: переставимо множники й помножимо числа.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$5 \cdot y \cdot 8 = (5 \cdot 8) \cdot y = 40y$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Спрости вираз: $15m - m + 6m$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $21m$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $22m$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $20m$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$m$ — це $1m$. Що з ним роблять: додають чи віднімають?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$15m - 1m + 6m = (15 - 1 + 6)m = 20m$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Розв'яжи рівняння: $3x + 7x = 120$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $x = 12$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $x = 40$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $x = 1\,200$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Спершу спрости ліву частину: $3x + 7x = ?$</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$10x = 120$, $x = 12$. Перевірка: $36 + 84 = 120$ ✓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$ma + na = (m + n)a$, $\;\;ma - na = (m - n)a$.</p>
+                    <p>$4 \cdot a \cdot 25 = 100a$ — множимо числа, буква лишається.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як спрощувати ✍️</div>
+                        <p>$37a + 63a = 100a$; при $a = 245$ — це $24\,500$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$a + 5a = 6a$, бо $a = 1a$. $3a + 4b$ — не $7ab$: різні букви не об'єднуємо.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderBricks();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // --- Слайд 2: m синіх і n жовтих брусочків «a» з'єднуються в один ряд «Разом» ---
+            const BW = 28, STEP = 30, X0 = 60;
+            function brick(col, y, cls) {
+                return `<g class="bk"><rect x="${X0 + col * STEP}" y="${y}" width="${BW}" height="40" rx="4" class="brick ${cls}"/>`
+                     + `<text x="${X0 + col * STEP + BW / 2}" y="${y + 26}" class="brick-t ${cls}">a</text></g>`;
+            }
+            function bricksVals() {
+                return [parseInt(document.getElementById('w-m').value, 10) || 1, parseInt(document.getElementById('w-n').value, 10) || 1];
+            }
+            window.renderBricks = function () {
+                const [m, n] = bricksVals();
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('bricks-answer').classList.remove('shown');
+                let svg = `<text x="4" y="56" class="row-label">${m}a</text><text x="4" y="126" class="row-label">${n}a</text>`
+                        + `<text x="4" y="196" class="row-label" style="font-size:13px">Разом</text>`;
+                for (let i = 0; i < m; i++) svg += brick(i, 30, 'm');
+                for (let j = 0; j < n; j++) svg += brick(j, 100, 'n');
+                document.getElementById('bricks-scene').innerHTML = svg;
+            };
+            window.joinBricks = function () {
+                const [m, n] = bricksVals();
+                renderBricks();
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const groups = document.querySelectorAll('#bricks-scene .bk');
+                requestAnimationFrame(() => requestAnimationFrame(() => groups.forEach((g, k) => {
+                    // сині опускаються на 140 px, жовті — на 70 px і стають у ряд після синіх
+                    g.style.transform = k < m ? 'translate(0px, 140px)' : `translate(${m * STEP}px, 70px)`;
+                    if (reduce) g.style.transition = 'none';
+                })));
+                document.getElementById('bricks-sum').textContent = `${m}a + ${n}a = ${m + n}a`;
+                setTimeout(() => document.getElementById('bricks-answer').classList.add('shown'), reduce ? 0 : 950);
+            };
+
+            // --- Слайд 4: спрощення й обчислення ---
+            const STEPS = [
+                ['[[$25 \\cdot x \\cdot 4$]] $+ 17x - 7x$', 'Переставляємо множники: $25 \\cdot 4 = 100$'],
+                ['$=$ [[$100x$]] $+ 17x - 7x$', 'Тепер доданки з тією самою буквою $x$'],
+                ['$=$ [[$110x$]]', '$100 + 17 - 7 = 110$'],
+                ['При $x = 3$: [[$110 \\cdot 3 = 330$]]', 'Підставляємо в короткий вираз — швидко!'],
+                ['Відповідь: $110x$; при $x = 3$ значення $330$.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
+
+            // --- Слайд 5: один брусочок a і ще п'ять — це шість ---
+            window.renderTrap = function () {
+                let svg = '';
+                for (let i = 0; i < 6; i++) {
+                    const cls = i === 0 ? 'm' : 'n';
+                    svg += `<rect x="${65 + i * 46}" y="140" width="42" height="36" rx="4" class="brick ${cls}"/>`
+                         + `<text x="${86 + i * 46}" y="164" class="brick-t ${cls}">a</text>`;
+                }
+                svg += `<text x="200" y="210" class="svg-caption" style="font-size:15px">1a + 5a = 6a</text>`;
+                document.getElementById('trap-bricks').innerHTML = svg;
+            };
