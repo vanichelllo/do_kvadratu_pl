@@ -1008,9 +1008,14 @@ class ClassSubscriptionView(TemplateView):
         active = {}
         for sub in subscriptions.active_subscriptions(self.request.user):
             active[sub.number] = max(active.get(sub.number, sub.valid_until), sub.valid_until)
+        user = self.request.user
         for plan in plans:
             plan.grades = grades.get(plan.number, [])
             plan.active_until = active.get(plan.number)
+            plan.options = [(period, subscriptions.price_for(user, plan, period), label)
+                            for period, _, label in plan.buy_options]
+            plan.year_price = subscriptions.price_for(user, plan, 'year')
+            plan.credit = plan.price_year - plan.year_price if plan.price_year else 0
         context['plans'] = plans
         context['selected'] = to_int(self.request.GET.get('class'))
         context['balance'] = getattr(self.request.user, 'balance', 0) or 0
@@ -1025,7 +1030,8 @@ def class_buy(request, plan_id, period):
     plan = get_object_or_404(ClassPlan, id=plan_id, is_active=True)
     if period not in ('month', 'year'):
         raise Http404
-    price = plan.price_month if period == 'month' else plan.price_year
+    base = plan.price_month if period == 'month' else plan.price_year
+    price = subscriptions.price_for(request.user, plan, period) if base else 0
     if not price:
         messages.error(request, "Ця підписка поки не продається.")
         return redirect('class_subscribe')

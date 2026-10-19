@@ -3619,6 +3619,22 @@ class ClassSubscriptionTests(BaseTestCase):
         self.pupil.class_subscriptions.update(valid_until=timezone.localdate() - datetime.timedelta(days=1))
         self.assertEqual(self.download(self.algebra7), 404)
 
+    def test_month_paid_is_credited_to_year_once(self):
+        self.plan7.is_active = True
+        self.plan7.save()
+        User.objects.filter(pk=self.pupil.pk).update(balance=1000)
+        buy = lambda period: self.client.post(f'/subscribe/buy/{self.plan7.id}/{period}/',
+                                              {'agree': 'on', 'method': 'balance'})
+        with mock.patch('materials.views.send_telegram_notification'):
+            buy('month')
+            self.assertContains(self.client.get('/subscribe/'), 'рік для вас — <strong>430 ₴</strong>')
+            buy('year')
+        self.pupil.refresh_from_db()
+        self.assertEqual(self.pupil.balance, 1000 - 119 - 430)
+        self.assertEqual(int(Order.objects.get(class_plan=self.plan7, plan_period='year').total_amount), 430)
+        # Ту саму місячну оплату вдруге не зараховуємо
+        self.assertNotContains(self.client.get('/subscribe/'), 'рік для вас')
+
     def test_card_payment_grants_after_monobank_confirms(self):
         from .views import apply_mono_status
         self.plan7.is_active = True
