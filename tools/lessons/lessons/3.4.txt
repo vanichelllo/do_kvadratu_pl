@@ -1,0 +1,386 @@
+@@TITLE Додавання і віднімання звичайних дробів з однаковими знаменниками
+@@CSS
+@@INCLUDE steps.css
+        /* Піца й смужки */
+        .slice { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .slice.on { fill: var(--brand-yellow); }
+        .crust { fill: none; stroke: #c98a2b; stroke-width: 6; }
+        .frac-num, .frac-den { fill: currentColor; font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .frac-num { fill: var(--brand-blue); }
+        .frac-den { fill: var(--brand-green); }
+        .frac-bar { stroke: currentColor; stroke-width: 4; stroke-linecap: round; }
+        .frac-cap { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: start; }
+        .cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .cell.on { fill: var(--brand-yellow); }
+        .bad { fill: var(--card-bg); stroke: var(--warning-red); stroke-width: 2.5; }
+        .bad.on { fill: var(--warning-red); fill-opacity: 0.35; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 110px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+        .strip-a { fill: var(--brand-blue); fill-opacity: 0.55; }
+        .strip-b { fill: var(--brand-green); fill-opacity: 0.55; }
+        .strip-cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .sign-big { fill: var(--warning-red); font-size: 46px; font-weight: 900; text-anchor: middle; }
+        .ray { stroke: currentColor; stroke-width: 2.5; }
+        .tick { stroke: currentColor; stroke-width: 2; }
+        .ray-lbl { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .ray-pt { fill: var(--warning-red); }
+        .strip-gone { fill: url(#hatch); }
+        .hatch-line { stroke: var(--warning-red); stroke-width: 3; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки піци з'їли разом? 🍕</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я з'їла $\dfrac{2}{8}$ піци, а ти — $\dfrac{3}{8}$.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> Разом $\dfrac{5}{16}$ — додаємо і верх, і низ!</div>
+                    <p class="big-question">Чи правий Тарас? Подумай, а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Ні! Разом $\dfrac{5}{8}$ піци 🎉</div>
+                        <p>$2$ восьмі й $3$ восьмі — це $5$ восьмих. Піцу ніхто не перерізав на $16$ шматків, тож знаменник лишається $8$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 380 220" id="pizza-1" role="img" aria-label="Піца з 8 шматків: 2 шматки Олі й 3 шматки Тараса"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Додаємо й віднімаємо частини 📏</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Обираємо дію й дроби. Учні кажуть результат — потім перевіряємо на смужці.</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="op-0" onclick="setOp(0)">Додавання</button>
+                        <button class="btn-secondary" id="op-1" onclick="setOp(1)">Віднімання</button>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Знаменник</label><input type="range" id="w-n" min="2" max="12" step="1" value="9" oninput="renderOps()"><span id="w-n-val">9</span></div>
+                    <div class="slider-control"><label for="w-a">Перший</label><input type="range" id="w-a" min="0" max="12" step="1" value="4" oninput="renderOps()"><span id="w-a-val">4</span></div>
+                    <div class="slider-control"><label for="w-b">Другий</label><input type="range" id="w-b" min="0" max="12" step="1" value="3" oninput="renderOps()"><span id="w-b-val">3</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealOps()">Показати результат</button></p>
+                    <div class="hidden-answer" id="ops-answer"><div class="readout" id="ops-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" id="ops-scene" role="img" aria-label="Смужка: перший дріб, другий дріб і результат"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Дроби з однаковими знаменниками</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Щоб додати дроби з однаковими знаменниками, додаємо <b>чисельники</b>, а знаменник <b>залишаємо</b>:</p>
+                    <p style="text-align:center">$\dfrac{a}{n} + \dfrac{b}{n} = \dfrac{a + b}{n}$</p>
+                    <p>Так само віднімаємо:</p>
+                    <p style="text-align:center">$\dfrac{a}{n} - \dfrac{b}{n} = \dfrac{a - b}{n}$</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Ціле як дріб</div>
+                    <p>$1 = \dfrac{n}{n}$, тому $1 - \dfrac{3}{8} = \dfrac{8}{8} - \dfrac{3}{8} = \dfrac{5}{8}$.</p>
+                    <p>$\dfrac{2}{9} + \dfrac{3}{9} = \dfrac{5}{9}$ — «дві дев'ятих і три дев'ятих — п'ять дев'ятих», як $2$ яблука і $3$ яблука.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скільки торта лишилося? ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Торт розрізали на $7$ рівних шматків. Оля з'їла $\dfrac{3}{7}$ торта, Тарас — $\dfrac{2}{7}$. Яка частина торта лишилася?</p>
+                    </div>
+                    <svg viewBox="0 0 380 120" class="mini-fig" id="cake-scene" role="img" aria-label="Смужка-торт з 7 частин"></svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: знаменники не додаємо ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$\dfrac{2}{8} + \dfrac{3}{8} = \dfrac{5}{16}$? <b>Ні!</b> $\dfrac{5}{16}$ навіть менше, ніж $\dfrac{3}{8}$, — а ми ж додавали.</p>
+                        <p>Правильно: $\dfrac{2}{8} + \dfrac{3}{8} = \dfrac{5}{8}$. Так само $\dfrac{5}{6} - \dfrac{1}{6} = \dfrac{4}{6}$, а не $\dfrac{4}{0}$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Знаменник — «назва» частин: восьмі, шості. Вісім яблук + три яблука — це яблука, а не «шістнадцяті яблука».</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" id="trap-scene" role="img" aria-label="Смужки: 2/8 + 3/8 = 5/8, а не 5/16"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $\dfrac{3}{9} + \dfrac{4}{9}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\dfrac{7}{9}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{7}{18}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{12}{9}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знаменник не змінюється.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{3 + 4}{9} = \dfrac{7}{9}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $\dfrac{5}{6} - \dfrac{1}{6}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{4}{0}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $\dfrac{4}{6}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{6}{6}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Віднімаємо лише чисельники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$\dfrac{5 - 1}{6} = \dfrac{4}{6}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли: $1 - \dfrac{2}{5}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $\dfrac{3}{5}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{1}{5}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{2}{5}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$1 = \dfrac{5}{5}$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{5}{5} - \dfrac{2}{5} = \dfrac{3}{5}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Розв'яжи рівняння: $x + \dfrac{3}{10} = \dfrac{7}{10}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $\dfrac{10}{10}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $\dfrac{4}{10}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $\dfrac{4}{20}$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Невідомий доданок $=$ сума $-$ відомий доданок.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$x = \dfrac{7}{10} - \dfrac{3}{10} = \dfrac{4}{10}$. Перевірка: $\dfrac{4}{10} + \dfrac{3}{10} = \dfrac{7}{10}$ ✓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{n} + \dfrac{b}{n} = \dfrac{a + b}{n}$, $\;\dfrac{a}{n} - \dfrac{b}{n} = \dfrac{a - b}{n}$.</p>
+                    <p>Знаменник не змінюється. $1 = \dfrac{n}{n}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>З'їли $\dfrac{3}{7} + \dfrac{2}{7} = \dfrac{5}{7}$; лишилося $\dfrac{7}{7} - \dfrac{5}{7} = \dfrac{2}{7}$ торта.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Знаменники не додаємо й не віднімаємо: $\dfrac{2}{8} + \dfrac{3}{8} \ne \dfrac{5}{16}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderPizza1();
+                if (currentSlide === 2) renderOps();
+                if (currentSlide === 4) { renderCake(); renderEval(); }
+                if (currentSlide === 5) renderTrapFig();
+@@JS
+            // Піца з n рівних шматків, перші m зафарбовано
+            function pizzaSvg(cx, cy, r, n, m) {
+                let svg = '';
+                for (let k = 0; k < n; k++) {
+                    const a0 = -Math.PI / 2 + 2 * Math.PI * k / n, a1 = -Math.PI / 2 + 2 * Math.PI * (k + 1) / n;
+                    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                    const big = a1 - a0 > Math.PI ? 1 : 0;
+                    svg += `<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${big} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" class="slice${k < m ? ' on' : ''}"/>`;
+                }
+                return svg + `<circle cx="${cx}" cy="${cy}" r="${r}" class="crust"/>`;
+            }
+            // Дріб, намальований у SVG: чисельник, риска, знаменник
+            function fracSvg(x, y, m, n, captions) {
+                let svg = `<text x="${x}" y="${y - 12}" class="frac-num">${m}</text><line x1="${x - 34}" y1="${y}" x2="${x + 34}" y2="${y}" class="frac-bar"/><text x="${x}" y="${y + 46}" class="frac-den">${n}</text>`;
+                if (captions) svg += `<text x="${x + 44}" y="${y - 24}" class="frac-cap" style="fill:var(--brand-blue)">чисельник</text><text x="${x + 44}" y="${y + 34}" class="frac-cap" style="fill:var(--brand-green)">знаменник</text>`;
+                return svg;
+            }
+
+            // «1 частина», «3 частини», «5 частин»
+            function partsWord(k) {
+                const d = k % 10, h = k % 100;
+                const w = (d === 1 && h !== 11) ? 'частина' : (d >= 2 && d <= 4 && (h < 12 || h > 14)) ? 'частини' : 'частин';
+                return k + ' ' + w;
+            }
+            // Смужка з n частин, перші m зафарбовано
+            function stripSvg(x, y, w, h, n, m, cls) {
+                let svg = '';
+                for (let k = 0; k < n; k++) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="strip-cell"/>`;
+                for (let k = 0; k < Math.min(m, n); k++) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="${cls}" style="stroke:var(--text-dark);stroke-width:2"/>`;
+                return svg;
+            }
+
+            const HATCH = '<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="10" class="hatch-line"/></pattern></defs>';
+            // Смужка з n частин; parts — масив класів для кожної клітинки ('' — порожня)
+            function stripCells(x, y, w, h, n, parts) {
+                let svg = '';
+                for (let k = 0; k < n; k++) {
+                    const cls = parts[k] || '';
+                    svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="strip-cell"/>`;
+                    if (cls) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="${cls}" style="stroke:var(--text-dark);stroke-width:2"/>`;
+                }
+                return svg;
+            }
+            const lbl = (x, y, t, col) => `<text x="${x}" y="${y}" class="frac-cap" style="fill:${col};font-size:20px;text-anchor:middle">${t}</text>`;
+
+            // --- Слайд 1 ---
+            window.renderPizza1 = function () {
+                let svg = pizzaSvg(110, 105, 90, 8, 0);
+                // Шматки Олі (сині) і Тараса (зелені) поверх піци
+                for (let k = 0; k < 5; k++) {
+                    const a0 = -Math.PI / 2 + 2 * Math.PI * k / 8, a1 = -Math.PI / 2 + 2 * Math.PI * (k + 1) / 8, r = 90;
+                    svg += `<path d="M110 105 L${(110 + r * Math.cos(a0)).toFixed(1)} ${(105 + r * Math.sin(a0)).toFixed(1)} A${r} ${r} 0 0 1 ${(110 + r * Math.cos(a1)).toFixed(1)} ${(105 + r * Math.sin(a1)).toFixed(1)} Z" class="${k < 2 ? 'strip-a' : 'strip-b'}" style="stroke:var(--text-dark);stroke-width:2"/>`;
+                }
+                svg += `<circle cx="110" cy="105" r="90" class="crust"/>`
+                    + lbl(290, 70, 'Оля: 2/8', 'var(--brand-blue)') + lbl(290, 110, 'Тарас: 3/8', 'var(--brand-green)') + lbl(290, 150, 'разом: 5/8', 'var(--warning-red)');
+                document.getElementById('pizza-1').innerHTML = svg;
+            };
+
+            // --- Слайд 2: додавання й віднімання на смужці ---
+            let op = 0;
+            function opsVals() {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 2, A = document.getElementById('w-a'), B = document.getElementById('w-b');
+                A.max = n; if (parseInt(A.value, 10) > n) A.value = n;
+                const a = parseInt(A.value, 10) || 0, bmax = op === 0 ? n - a : a;
+                B.max = bmax; if (parseInt(B.value, 10) > bmax) B.value = bmax;
+                return [a, parseInt(B.value, 10) || 0, n];
+            }
+            function opsScene(a, b, n, show) {
+                const parts = [];
+                if (op === 0) { for (let k = 0; k < a; k++) parts[k] = 'strip-a'; for (let k = a; k < a + b; k++) parts[k] = 'strip-b'; }
+                else { for (let k = 0; k < a; k++) parts[k] = k >= a - b ? 'strip-gone' : 'strip-a'; }
+                const r = op === 0 ? a + b : a - b, sign = op === 0 ? '+' : '−';
+                return HATCH + stripCells(20, 40, 380, 60, n, parts)
+                    + lbl(210, 30, `${a}/${n} ${sign} ${b}/${n} = ${show ? r + '/' + n : '?'}`, 'currentColor')
+                    + (show ? lbl(210, 140, op === 0 ? `сині й зелені — ${partsWord(r)}` : `лишилися сині — ${partsWord(r)}`, 'var(--brand-green)') : '');
+            }
+            window.setOp = function (k) {
+                op = k;
+                [0, 1].forEach(j => document.getElementById('op-' + j).classList.toggle('on', j === k));
+                renderOps();
+            };
+            window.renderOps = function () {
+                const [a, b, n] = opsVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('ops-answer').classList.remove('shown');
+                document.getElementById('ops-scene').innerHTML = opsScene(a, b, n, false);
+            };
+            window.revealOps = function () {
+                const [a, b, n] = opsVals(), r = op === 0 ? a + b : a - b;
+                document.getElementById('ops-scene').innerHTML = opsScene(a, b, n, true);
+                document.getElementById('ops-text').textContent = op === 0
+                    ? `${a}/${n} + ${b}/${n} = ${a} + ${b} = ${partsWord(r)}: ${r}/${n}` + (r === n ? ' = 1' : '')
+                    : `${a}/${n} − ${b}/${n} = ${a} − ${b} = ${partsWord(r)}: ${r}/${n}`;
+                document.getElementById('ops-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: торт ---
+            window.renderCake = function () {
+                const parts = ['strip-a', 'strip-a', 'strip-a', 'strip-b', 'strip-b'];
+                document.getElementById('cake-scene').innerHTML = stripCells(20, 20, 340, 60, 7, parts)
+                    + `<text x="190" y="108" class="svg-caption">сині — Оля, зелені — Тарас</text>`;
+            };
+
+            // --- Слайд 5: 2/8 + 3/8 ---
+            window.renderTrapFig = function () {
+                const p8 = ['strip-a', 'strip-a', 'strip-b', 'strip-b', 'strip-b'], p16 = [];
+                for (let k = 0; k < 5; k++) p16[k] = 'strip-gone';
+                document.getElementById('trap-scene').innerHTML = HATCH + stripCells(20, 30, 300, 50, 8, p8) + stripCells(20, 120, 300, 50, 16, p16)
+                    + lbl(372, 64, '5/8 ✓', 'var(--brand-green)') + lbl(372, 154, '5/16 ✗', 'var(--warning-red)')
+                    + `<text x="170" y="195" class="svg-caption">5/16 — менше за 3/8: так не буває!</text>`;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['З\'їли разом: $\\dfrac{3}{7} + \\dfrac{2}{7} = $ [[$\\dfrac{5}{7}$]].', 'Додаємо чисельники, знаменник — той самий'],
+                ['Увесь торт: $1 = $ [[$\\dfrac{7}{7}$]].', 'Ціле — усі $7$ частин'],
+                ['Лишилося: $\\dfrac{7}{7} - \\dfrac{5}{7} = $ [[$\\dfrac{2}{7}$]].', 'Віднімаємо чисельники'],
+                ['Відповідь: лишилося $\\dfrac{2}{7}$ торта.', 'Перевірка: $3 + 2 + 2 = 7$ шматків ✓'],
+            ];
+@@INCLUDE steps.js
