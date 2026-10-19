@@ -7,7 +7,8 @@
 
 Кожен файл спершу перевіряється (materials/content_check.py); файл із помилками пропускається.
 Презентація стає html_content уроку теми (урок створюється, якщо його ще немає). Завдання з банків додаються
-без дублікатів. Без --publish уроки лишаються неопублікованими (видно вам і репетиторам за підпискою). Ціни шкільних уроків
+без дублікатів. Новий урок одразу публікується на вітрині (--draft — лишити чернеткою); урок, знятий з
+публікації в адмінці, імпорт знову не публікує (--publish — опублікувати всі уроки папки). Ціни шкільних уроків
 ставлять правила цін (адмінка → «Правила цін шкільних уроків»); --price задає ручну ціну нових уроків.
 
     python manage.py import_school_content content/school/math-5 --check     # лише перевірити
@@ -42,10 +43,12 @@ class Command(BaseCommand):
         parser.add_argument('--keep-going', action='store_true',
                             help='Не зупинятися з помилкою (для деплою): лише вивести, які файли пропущено')
         parser.add_argument('--check', action='store_true', help='Лише перевірити, нічого не записувати')
-        parser.add_argument('--publish', action='store_true', help='Опублікувати уроки на вітрині')
+        parser.add_argument('--publish', action='store_true', help='Опублікувати всі уроки папки, зокрема зняті')
+        parser.add_argument('--draft', action='store_true', help='Нові уроки — неопублікованими (чернетками)')
         parser.add_argument('--price', type=int, default=None, help='Ручна ціна нових уроків, грн (за замовчуванням — за правилами цін)')
 
-    def handle(self, folders, all_folders=False, keep_going=False, check=False, publish=False, price=None, **options):
+    def handle(self, folders, all_folders=False, keep_going=False, check=False, publish=False, price=None,
+               draft=False, **options):
         roots = [Path(folder) for folder in folders]
         if all_folders:
             roots += sorted(p for p in (Path(settings.BASE_DIR) / 'content' / 'school').iterdir() if p.is_dir())
@@ -55,7 +58,7 @@ class Command(BaseCommand):
         for root in roots:
             self.stdout.write(self.style.MIGRATE_HEADING(str(root)))
             try:
-                failed += self.import_folder(root, check, publish, price)
+                failed += self.import_folder(root, check, publish, price, draft)
             except CommandError as exc:
                 if not keep_going:
                     raise
@@ -72,7 +75,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Готово.' if not check else 'Перевірку пройдено.'))
 
-    def import_folder(self, root, check, publish, price):
+    def import_folder(self, root, check, publish, price, draft=False):
         """Перевіряє й завантажує одну папку класу; повертає кількість файлів з помилками."""
         meta_path = root / 'meta.json'
         if not meta_path.exists():
@@ -96,8 +99,10 @@ class Command(BaseCommand):
             with transaction.atomic():
                 material = StudyMaterial.objects.filter(curriculum_topic=topic, is_bundle=False).first()
                 if material is None:
+                    # Новий урок з репозиторію одразу продається (ціна — за правилами цін)
                     material = StudyMaterial(curriculum_topic=topic, title=topic.name, price=price or 0,
-                                             is_free=not price, price_is_manual=price is not None)
+                                             is_free=not price, price_is_manual=price is not None,
+                                             is_published=not draft)
                 changed = material.html_source_hash != digest
                 if not changed and (not publish or material.is_published):
                     continue   # файл не змінився — урок (разом із правками в адмінці) не чіпаємо
