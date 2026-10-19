@@ -373,6 +373,9 @@ class Order(models.Model):
     # Оплата підписки репетитора (замість матеріалів у кошику)
     teacher_plan = models.ForeignKey('TeacherPlan', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='orders', verbose_name="Тариф репетитора")
+    # Оплата підписки учня на клас
+    class_plan = models.ForeignKey('ClassPlan', on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='orders', verbose_name="Підписка на клас")
     plan_period = models.CharField(max_length=10, blank=True, default='',
                                    choices=(('month', 'Місяць'), ('year', 'Навчальний рік')),
                                    verbose_name="Період підписки")
@@ -728,6 +731,52 @@ class SchoolPriceRule(models.Model):
 
     def __str__(self):
         return f"{self.grade or 'Усі інші класи'}: тема {self.topic_price} грн"
+
+
+class ClassPlan(models.Model):
+    """Підписка учня на клас (materials/subscriptions.py): усі уроки й практика класу в кожному шкільному курсі
+    (5–6 — математика, 7–11 — алгебра й геометрія) на місяць або навчальний рік. Продається, коли увімкнена й має
+    ціну; вмикайте клас, коли в ньому вже достатньо уроків."""
+    number = models.PositiveSmallIntegerField(unique=True, choices=[(n, f'{n} клас') for n in range(5, 12)],
+                                              verbose_name="Клас")
+    price_month = models.PositiveIntegerField(default=0, verbose_name="Ціна за місяць, грн")
+    price_year = models.PositiveIntegerField(default=0, verbose_name="Ціна за навчальний рік, грн")
+    is_active = models.BooleanField(default=False, verbose_name="Продається")
+    note = models.CharField(max_length=120, blank=True, verbose_name="Позначка на вітрині",
+                            help_text="Напр. «Ранній доступ: нові уроки щотижня». Порожньо — без позначки.")
+
+    class Meta:
+        ordering = ['number']
+        verbose_name = "Підписка учня на клас"
+        verbose_name_plural = "Підписки учнів: ціни класів"
+
+    def __str__(self):
+        return f"{self.number} клас"
+
+    @property
+    def buy_options(self):
+        """[(період, ціна, підпис)] — лише періоди з ціною."""
+        return [(period, price, label) for period, price, label in (
+            ('month', self.price_month, 'На місяць'), ('year', self.price_year, 'На навчальний рік')) if price]
+
+
+class ClassSubscription(models.Model):
+    """Оплачена (чи видана вручну) підписка учня на клас."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_subscriptions',
+                             verbose_name="Учень")
+    number = models.PositiveSmallIntegerField(choices=[(n, f'{n} клас') for n in range(5, 12)], verbose_name="Клас")
+    plan = models.ForeignKey(ClassPlan, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Тариф")
+    valid_until = models.DateField(verbose_name="Діє до (включно)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    note = models.CharField(max_length=200, blank=True, verbose_name="Примітка (оплата, подарунок…)")
+
+    class Meta:
+        ordering = ['-valid_until']
+        verbose_name = "Підписка учня"
+        verbose_name_plural = "Підписки учнів"
+
+    def __str__(self):
+        return f"{self.user} — {self.number} клас до {self.valid_until:%d.%m.%Y}"
 
 
 class TeacherLicense(models.Model):

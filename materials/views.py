@@ -29,7 +29,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, teachers
+from . import homework, practice, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -38,7 +38,7 @@ from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
     Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
-    NMT_SUBJECT_NAME,
+    NMT_SUBJECT_NAME, ClassPlan,
 )
 
 from rest_framework.decorators import api_view
@@ -994,6 +994,72 @@ def tutor_buy(request, plan_id, period):
     return redirect('for_tutors')
 
 
+class ClassSubscriptionView(TemplateView):
+    """Вітрина підписок учня на клас: класи, що продаються, з наповненням і кнопками оплати."""
+    template_name = 'materials/class_subscribe.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        plans = subscriptions.plans_on_sale()
+        grades = {}
+        for grade in (CurriculumGrade.objects.filter(number__in=[p.number for p in plans])
+                      .exclude(subject__name=NMT_SUBJECT_NAME).select_related('subject')):
+            grades.setdefault(grade.number, []).append(grade)
+        active = {}
+        for sub in subscriptions.active_subscriptions(self.request.user):
+            active[sub.number] = max(active.get(sub.number, sub.valid_until), sub.valid_until)
+        for plan in plans:
+            plan.grades = grades.get(plan.number, [])
+            plan.active_until = active.get(plan.number)
+        context['plans'] = plans
+        context['selected'] = to_int(self.request.GET.get('class'))
+        context['balance'] = getattr(self.request.user, 'balance', 0) or 0
+        return context
+
+
+@login_required
+@post_required('class_subscribe')
+@terms_required('/subscribe/')
+def class_buy(request, plan_id, period):
+    """Оплата підписки на клас з балансу (діє одразу) або через Monobank (видає apply_mono_status після оплати)."""
+    plan = get_object_or_404(ClassPlan, id=plan_id, is_active=True)
+    if period not in ('month', 'year'):
+        raise Http404
+    price = plan.price_month if period == 'month' else plan.price_year
+    if not price:
+        messages.error(request, "Ця підписка поки не продається.")
+        return redirect('class_subscribe')
+    if request.POST.get('agree') != 'on':
+        messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами.")
+        return redirect('class_subscribe')
+    if request.POST.get('method') == 'balance':
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(pk=request.user.pk)
+            if user.balance < price:
+                messages.error(request, f"На балансі {user.balance} ₴, а підписка коштує {price} ₴. "
+                                        f"Поповніть баланс у кабінеті або оплатіть карткою.")
+                return redirect('class_subscribe')
+            user.balance -= price
+            user.save(update_fields=['balance'])
+            order = Order.objects.create(user=user, total_amount=price, status='paid', paid_at=timezone.now(),
+                                         mono_invoice_id='balance_payment', class_plan=plan, plan_period=period,
+                                         instant_access_agreed_at=timezone.now())
+            subscription = subscriptions.grant_class(user, plan, period, note=f'Замовлення #{order.id} (з балансу)')
+        send_telegram_notification(
+            f"🎒 Нова підписка на клас (з балансу)!\n{html.escape(user.email)}: {plan}, "
+            f"{order.get_plan_period_display().lower()}, до {subscription.valid_until:%d.%m.%Y}\nСписано: {price} ₴")
+        messages.success(request, f"✅ Підписку на {plan} оформлено до {subscription.valid_until:%d.%m.%Y}: "
+                                  f"усі уроки класу вже в кабінеті. З балансу списано {price} ₴.")
+        return redirect('cabinet')
+    order = Order.objects.create(user=request.user, total_amount=price, status='pending', class_plan=plan,
+                                 plan_period=period, instant_access_agreed_at=timezone.now())
+    page_url = create_mono_invoice(order, price * 100)
+    if page_url:
+        return redirect(page_url)
+    messages.error(request, "Помилка платіжної системи. Спробуйте пізніше.")
+    return redirect('class_subscribe')
+
+
 @login_required
 def practice_start(request):
     """Кабінет вчителя: почати узагальнення розділу чи діагностику за клас (обрано зі списку)."""
@@ -1375,6 +1441,10 @@ class MaterialListView(ListView):
         context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
         context['nmt_countdown'] = nmt_countdown(0)
+        grade = CurriculumGrade.objects.filter(id=to_int(self.request.GET.get('grade'))).first()
+        if grade and grade.number and grade.subject.name != NMT_SUBJECT_NAME:
+            context['class_plan'] = next((p for p in ClassPlan.objects.filter(number=grade.number, is_active=True)
+                                          if p.buy_options), None)
         return context
 
 
@@ -1395,6 +1465,8 @@ class MaterialDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         material = self.object
         context['is_owned'] = user_owns_material(self.request.user, material)
+        if not context['is_owned'] and not material.is_free:
+            context['class_plan'] = subscriptions.plan_for_material(material)
         context['default_description'] = DEFAULT_MATERIAL_DESCRIPTION
         context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
 
@@ -1428,6 +1500,12 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
+        # Чинні підписки на клас — найпізніша дата для кожного класу
+        latest = {}
+        for sub in subscriptions.active_subscriptions(self.request.user):
+            if sub.number not in latest or sub.valid_until > latest[sub.number].valid_until:
+                latest[sub.number] = sub
+        context['class_subscriptions'] = sorted(latest.values(), key=lambda sub: sub.number)
 
         # Учень власника сайту чи репетитора з підпискою бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
         library_list = purchased_list
@@ -1818,6 +1896,12 @@ def apply_mono_status(invoice_id, status):
                 msg = (f"🧑‍🏫 Нова підписка репетитора!\n{email}: {html.escape(str(order.teacher_plan))}, "
                        f"{order.get_plan_period_display().lower()}, до {license_.valid_until:%d.%m.%Y}\n"
                        f"Оплачено: {order.total_amount} ₴")
+            elif order.class_plan_id:
+                subscription = subscriptions.grant_class(order.user, order.class_plan, order.plan_period,
+                                                         note=f'Замовлення #{order.id}')
+                msg = (f"🎒 Нова підписка на клас!\n{email}: {order.class_plan}, "
+                       f"{order.get_plan_period_display().lower()}, до {subscription.valid_until:%d.%m.%Y}\n"
+                       f"Оплачено: {order.total_amount} ₴")
             elif order_items:
                 materials = [item.material for item in order_items if item.material]
                 for material in materials:
@@ -1843,6 +1927,7 @@ def apply_mono_status(invoice_id, status):
             order.save(update_fields=['status'])
             if was_paid:
                 what = ("підписку репетитора" if order.teacher_plan_id else
+                        "підписку на клас" if order.class_plan_id else
                         "матеріали з замовлення" if order.items.exists() else "суму поповнення з балансу")
                 msg = (f"↩️ <b>Повернення коштів через Monobank</b>\nЗамовлення #{order.id}, {email}, "
                        f"{order.total_amount} ₴.\nАвтоматично нічого не змінено — за потреби заберіть {what} в адмінці.")
@@ -1871,11 +1956,12 @@ def payment_result(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status in ('pending', 'cancelled'):
         order = check_mono_invoice(order)
-    is_plan = order.teacher_plan_id is not None
+    is_plan, is_class = order.teacher_plan_id is not None, order.class_plan_id is not None
     return render(request, 'materials/payment_result.html', {
         'order': order,
         'is_plan': is_plan,
-        'is_topup': not is_plan and not order.items.exists(),
+        'is_class': is_class,
+        'is_topup': not is_plan and not is_class and not order.items.exists(),
     })
 
 

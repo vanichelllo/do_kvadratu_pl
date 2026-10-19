@@ -125,6 +125,7 @@ TEMPLATES = [
                 'materials.context_processors.promo',
                 'materials.context_processors.seasonal',
                 'materials.context_processors.seo',
+                'materials.context_processors.class_subscriptions',
             ],
         },
     },
@@ -221,7 +222,7 @@ ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.TermsSignupForm'  # обов'язков
 
 # Редакція оферти й політики конфіденційності. Якщо змінити це значення, кожен користувач
 # під час наступного візиту побачить сторінку «Підтвердіть згоду» (/accept-terms/).
-TERMS_VERSION = '2026-10-19'
+TERMS_VERSION = '2026-10-20'
 
 # НАЙГОЛОВНІШЕ: Обов'язкове підтвердження пошти
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'

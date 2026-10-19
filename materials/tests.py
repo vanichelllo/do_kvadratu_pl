@@ -1469,7 +1469,7 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 19.10.2026')
+        self.assertContains(offer, 'Редакція від 20.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -3540,3 +3540,92 @@ class SchoolPriceRuleTests(BaseTestCase):
         self.client.post(changelist, {'action': 'unpublish', '_selected_action': [second.pk]})
         second.refresh_from_db()
         self.assertFalse(second.is_published)
+
+
+class ClassSubscriptionTests(BaseTestCase):
+    """Підписка учня на клас: вітрина, оплата з балансу й карткою, доступ до всіх уроків класу на строк."""
+
+    def setUp(self):
+        from .models import ClassPlan
+        self.algebra7 = StudyMaterial.objects.create(
+            title='1.1. Алгебра', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic('1.1. Алгебра', 7, 1, subject='Алгебра (7-9 класи)'))
+        self.geometry7 = StudyMaterial.objects.create(
+            title='1.2. Геометрія', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic('1.2. Геометрія', 7, 2, subject='Геометрія (7-9 класи)'))
+        self.algebra8 = StudyMaterial.objects.create(
+            title='1.1. Вісім', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic('1.1. Вісім', 8, 1, subject='Алгебра (7-9 класи)'))
+        self.plan7 = ClassPlan.objects.get(number=7)   # стартові ціни з міграції: 119 / 549, вимкнено
+        self.pupil = self.make_user('pupil7@example.com', balance=400)
+        self.client.force_login(self.pupil)
+
+    def download(self, material):
+        return self.client.get(f'/download/{material.id}/').status_code
+
+    def test_storefront_shows_only_classes_on_sale(self):
+        self.assertNotContains(self.client.get('/subscribe/'), '7 клас</h3>')
+        self.assertNotContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        self.assertEqual(self.client.post(f'/subscribe/buy/{self.plan7.id}/month/',
+                                          {'agree': 'on', 'method': 'balance'}).status_code, 404)
+        self.plan7.is_active = True
+        self.plan7.save()
+        page = self.client.get('/subscribe/')
+        self.assertContains(page, '7 клас</h3>')
+        self.assertContains(page, 'Алгебра і геометрія')
+        self.assertContains(page, 'Уже готово уроків: 2 з 2')
+        self.assertContains(page, 'На місяць — з балансу')        # 119 ₴ ≤ 400 ₴
+        self.assertNotContains(page, 'На навчальний рік — з балансу')   # 549 ₴ > 400 ₴
+        self.assertContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        grade = self.algebra7.curriculum_topic.chapter.grade
+        self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), 'Увесь 7 клас')
+        self.assertContains(self.client.get(f'/material/{self.algebra7.id}/'), 'Або весь 7 клас за підпискою')
+
+    def test_pay_from_balance_opens_whole_class_until_end_of_period(self):
+        from .teachers import period_end
+        self.plan7.is_active = True
+        self.plan7.save()
+        self.assertEqual(self.download(self.algebra7), 404)
+        with mock.patch('materials.views.send_telegram_notification'):
+            response = self.client.post(f'/subscribe/buy/{self.plan7.id}/month/', {'agree': 'on', 'method': 'balance'})
+        self.assertRedirects(response, '/cabinet/', fetch_redirect_response=False)
+        self.pupil.refresh_from_db()
+        self.assertEqual(self.pupil.balance, 281)
+        order = Order.objects.get(class_plan=self.plan7)
+        self.assertEqual((order.status, order.plan_period, int(order.total_amount)), ('paid', 'month', 119))
+        subscription = self.pupil.class_subscriptions.get()
+        self.assertEqual(subscription.valid_until, period_end(timezone.localdate(), 'month'))
+        self.assertEqual(self.download(self.algebra7), 200)
+        self.assertEqual(self.download(self.geometry7), 200)
+        self.assertEqual(self.download(self.algebra8), 404)
+        cabinet = self.client.get('/cabinet/').content.decode()
+        self.assertIn('Підписка: 7 клас', cabinet)
+        self.assertIn(self.geometry7.title, cabinet)
+        # Продовження до кінця чинної — новий період після неї; закінчилась — доступ зник
+        with mock.patch('materials.views.send_telegram_notification'):
+            self.client.post(f'/subscribe/buy/{self.plan7.id}/month/', {'agree': 'on', 'method': 'balance'})
+        latest = self.pupil.class_subscriptions.order_by('-valid_until').first()
+        self.assertEqual(latest.valid_until,
+                         period_end(subscription.valid_until + datetime.timedelta(days=1), 'month'))
+        self.pupil.class_subscriptions.update(valid_until=timezone.localdate() - datetime.timedelta(days=1))
+        self.assertEqual(self.download(self.algebra7), 404)
+
+    def test_card_payment_grants_after_monobank_confirms(self):
+        from .views import apply_mono_status
+        self.plan7.is_active = True
+        self.plan7.save()
+        self.assertRedirects(self.client.post(f'/subscribe/buy/{self.plan7.id}/year/', {'method': 'card'}),
+                             '/subscribe/', fetch_redirect_response=False)   # без галочки згоди
+        with mock.patch('materials.views.create_mono_invoice', return_value='https://pay.example/1'):
+            response = self.client.post(f'/subscribe/buy/{self.plan7.id}/year/', {'agree': 'on', 'method': 'card'})
+        self.assertRedirects(response, 'https://pay.example/1', fetch_redirect_response=False)
+        order = Order.objects.get(class_plan=self.plan7)
+        self.assertEqual((order.status, int(order.total_amount)), ('pending', 549))
+        self.assertEqual(self.download(self.algebra7), 404)
+        order.mono_invoice_id = 'inv-class'
+        order.save()
+        with mock.patch('materials.views.send_telegram_notification') as notify:
+            apply_mono_status('inv-class', 'success')
+        self.assertIn('Нова підписка на клас', notify.call_args[0][0])
+        self.assertEqual(self.download(self.algebra7), 200)
+        self.assertContains(self.client.get(f'/payment/result/{order.id}/'), 'Підписку на 7 клас оформлено')

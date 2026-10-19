@@ -16,7 +16,8 @@ import secrets
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import NMT_SUBJECT_NAME, CurriculumGrade, TeacherInvite, TeacherLicense, TutorStudentRequest
+from .models import (NMT_SUBJECT_NAME, ClassSubscription, CurriculumGrade, TeacherInvite, TeacherLicense,
+                     TutorStudentRequest)
 
 INVITE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'   # без схожих символів (l/1, o/0)
 
@@ -89,7 +90,8 @@ def covered_by_teacher(pupil, material):
 def own_class_grade_ids(user):
     """Учень (заявку «N клас» підтверджено) бачить усі уроки й практику свого класу в кожному шкільному курсі
     (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається: учень власника сайту — завжди, учень
-    репетитора — у тих курсах свого класу, які покриває чинна підписка репетитора.
+    репетитора — у тих курсах свого класу, які покриває чинна підписка репетитора; а також усі класи, на які в учня
+    чинна підписка на клас (ClassSubscription).
     Повертає множину id класів; результат кешується на об'єкті користувача на час запиту."""
     if not user.is_authenticated:
         return set()
@@ -104,6 +106,12 @@ def own_class_grade_ids(user):
             licensed = licensed_grade_ids(request.teacher) if request.teacher is not None else None
             if licensed is not None:
                 grades &= licensed
+        # Оплачена підписка на клас (materials/subscriptions.py) — так само всі уроки й практика класу
+        numbers = set(ClassSubscription.objects.filter(user=user, valid_until__gte=timezone.localdate())
+                      .values_list('number', flat=True))
+        if numbers:
+            grades |= set(CurriculumGrade.objects.filter(number__in=numbers).exclude(subject__name=NMT_SUBJECT_NAME)
+                          .values_list('id', flat=True))
         user._own_class_grade_ids = grades
     return user._own_class_grade_ids
 
