@@ -1,0 +1,341 @@
+@@TITLE Многокутники. Трикутник та його види
+@@CSS
+@@INCLUDE steps.css
+        /* Многокутники й трикутники */
+        .poly { fill: var(--brand-blue); fill-opacity: 0.12; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linejoin: round; }
+        .poly.alt { fill: var(--brand-green); fill-opacity: 0.15; stroke: var(--brand-green); }
+        .seg { stroke: var(--brand-blue); stroke-width: 3; stroke-linecap: round; }
+        .vx { fill: var(--warning-red); }
+        .runner { fill: var(--brand-yellow); stroke: currentColor; stroke-width: 2; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .len { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .ang { fill: var(--brand-green); font-size: 13px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .tick-mark { stroke: currentColor; stroke-width: 2.2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .types-table { width: 100%; border-collapse: collapse; font-size: 0.98rem; }
+        .types-table td { padding: 5px 6px; border-bottom: 1.5px solid var(--border-color); }
+        .types-table td:first-child { font-weight: 800; white-space: nowrap; }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки тут трикутників? 🔺</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я намалювала трикутник і провела з вершини $A$ два відрізки до сторони $BC$.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> Бачу три трикутники! Чи більше?</div>
+                    <p class="big-question">Скільки всього трикутників на малюнку? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$6$ трикутників! 🎉</div>
+                        <p>Кожен трикутник має вершину $A$ і сторону на $BC$. На $BC$ — точки $B, D, E, C$: відрізки $BD, BE, BC, DE, DC, EC$ — $6$ трикутників.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 360 230" role="img" aria-label="Трикутник ABC, з вершини A проведено відрізки AD і AE до сторони BC">
+                        <polygon points="180,25 30,200 330,200" class="poly"/>
+                        <line x1="180" y1="25" x2="130" y2="200" class="seg"/>
+                        <line x1="180" y1="25" x2="245" y2="200" class="seg"/>
+                        <circle cx="180" cy="25" r="5" class="vx"/><circle cx="30" cy="200" r="5" class="vx"/><circle cx="330" cy="200" r="5" class="vx"/>
+                        <circle cx="130" cy="200" r="5" class="vx"/><circle cx="245" cy="200" r="5" class="vx"/>
+                        <text x="180" y="16" class="pt-name">A</text><text x="22" y="222" class="pt-name">B</text><text x="338" y="222" class="pt-name">C</text>
+                        <text x="130" y="222" class="pt-name">D</text><text x="245" y="222" class="pt-name">E</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Будуємо многокутники 🔷</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Обираємо кількість вершин. Скільки сторін і кутів у фігури, як вона називається? Учні кажуть, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Вершин</label><input type="range" id="w-n" min="3" max="8" step="1" value="5" oninput="renderPoly()"><span id="w-n-val">5</span></div>
+                    <p style="text-align:center">
+                        <button class="btn-secondary" onclick="walkPoly()">▶ Обійти по сторонах</button>
+                        <button class="btn-primary" onclick="revealPoly()">Що це за фігура?</button>
+                    </p>
+                    <div class="hidden-answer" id="poly-answer"><div class="readout" id="poly-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 240" id="poly-scene" role="img" aria-label="Многокутник з обраною кількістю вершин"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Многокутник і трикутник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Многокутник</b> — фігура, обмежена замкненою ламаною. Її ланки — <b>сторони</b>, кінці ланок — <b>вершини</b>.</p>
+                    <p>Скільки вершин — стільки сторін і кутів. Називають за вершинами по порядку: $ABCDE$.</p>
+                    <p><b>Трикутник</b> $ABC$ — многокутник з трьома вершинами.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Види трикутників</div>
+                    <table class="types-table">
+                        <tr><td>Гострокутний</td><td>усі кути гострі</td></tr>
+                        <tr><td>Прямокутний</td><td>один кут прямий</td></tr>
+                        <tr><td>Тупокутний</td><td>один кут тупий</td></tr>
+                        <tr><td>Різносторонній</td><td>усі сторони різні</td></tr>
+                        <tr><td>Рівнобедрений</td><td>дві сторони рівні</td></tr>
+                        <tr><td>Рівносторонній</td><td>усі сторони рівні</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Визначаємо вид трикутника ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Визнач вид трикутника $KLM$ за кутами й за сторонами.</p>
+                    </div>
+                    <svg viewBox="0 0 380 200" class="mini-fig" role="img" aria-label="Трикутник KLM: KL = KM = 5 см, LM = 8 см, кути 37°, 37°, 106°">
+                        <polygon points="190,50 40,170 340,170" class="poly"/>
+                        <text x="190" y="38" class="pt-name">K</text><text x="30" y="190" class="pt-name">L</text><text x="350" y="190" class="pt-name">M</text>
+                        <text x="100" y="100" class="len">5 см</text><text x="282" y="100" class="len">5 см</text><text x="190" y="192" class="len">8 см</text>
+                        <text x="190" y="80" class="ang">106°</text><text x="85" y="162" class="ang">37°</text><text x="296" y="162" class="ang">37°</text>
+                        <line x1="110" y1="113" x2="122" y2="123" class="tick-mark"/><line x1="258" y1="123" x2="270" y2="113" class="tick-mark"/>
+                    </svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: «гострокутний» — це всі кути ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Кути $30°$, $60°$, $90°$. Тут є гострі кути — отже, гострокутний? <b>Ні!</b> Один кут прямий — трикутник <b>прямокутний</b>.</p>
+                        <p>Гострокутний — лише коли гострі <b>всі три</b> кути.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Дивись на <b>найбільший</b> кут: гострий — гострокутний, прямий — прямокутний, тупий — тупокутний.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 220" role="img" aria-label="Трикутник з кутами 30, 60 і 90 градусів — прямокутний">
+                        <polygon points="60,180 300,180 60,40" class="poly alt"/>
+                        <path d="M60 162 L78 162 L78 180" class="right-mark"/>
+                        <text x="88" y="155" class="ang">90°</text><text x="250" y="172" class="ang">30°</text><text x="78" y="78" class="ang">60°</text>
+                        <text x="300" y="60" class="svg-caption" style="fill:var(--warning-red)">гострокутний</text>
+                        <line x1="245" y1="45" x2="355" y2="70" class="cross"/>
+                        <text x="300" y="110" class="svg-caption" style="fill:var(--brand-green)">прямокутний ✓</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Скільки вершин у п'ятикутника?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $10$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Назва многокутника — за кількістю кутів (і вершин).</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>П'ятикутник: $5$ вершин, $5$ сторін, $5$ кутів.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Сторони трикутника — $4$ см, $4$ см і $4$ см. Який він?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) Рівносторонній</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) Різносторонній</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) Прямокутний</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки сторін рівні?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Усі три сторони рівні — рівносторонній.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Кути трикутника — $40°$, $50°$ і $90°$. Який він за кутами?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) Гострокутний</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) Прямокутний</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) Тупокутний</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Подивись на найбільший кут.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Є кут $90°$ — прямокутний трикутник.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Скільки трикутників на малюнку?</p>
+                    <svg viewBox="0 0 300 130" class="mini-fig" style="max-width:260px" role="img" aria-label="Трикутник ABC з відрізком AD до сторони BC">
+                        <polygon points="150,15 20,115 280,115" class="poly"/>
+                        <line x1="150" y1="15" x2="110" y2="115" class="seg"/>
+                        <text x="150" y="12" class="pt-name" dy="0">A</text><text x="12" y="128" class="pt-name">B</text><text x="110" y="128" class="pt-name">D</text><text x="288" y="128" class="pt-name">C</text>
+                    </svg>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $4$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Не забудь великий трикутник $ABC$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$ABD$, $ADC$ і $ABC$ — $3$ трикутники.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Многокутник — фігура, обмежена замкненою ламаною; вершин стільки ж, скільки сторін і кутів.</p>
+                    <p>За кутами: гострокутний, прямокутний, тупокутний. За сторонами: різносторонній, рівнобедрений, рівносторонній.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як визначати вид ✍️</div>
+                        <p>За кутами — дивись на найбільший кут. За сторонами — скільки рівних сторін.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Гострокутний — коли гострі <b>всі</b> кути. Кути $30°$, $60°$, $90°$ — це прямокутний.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderPoly();
+                if (currentSlide === 4) renderEval();
+@@JS
+            // --- Слайд 2: правильний многокутник з n вершинами й «бігунець» по сторонах ---
+            const NAMES = { 3: 'трикутник', 4: 'чотирикутник', 5: "п'ятикутник", 6: 'шестикутник', 7: 'семикутник', 8: 'восьмикутник' };
+            const LETTERS = 'ABCDEFGH';
+            function polyPoints(n) {
+                const cx = 210, cy = 118, r = 85, pts = [];
+                for (let k = 0; k < n; k++) {
+                    const a = -Math.PI / 2 + (2 * Math.PI * k) / n;
+                    pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+                }
+                return pts;
+            }
+            function polySvg(n, runner) {
+                const pts = polyPoints(n), cx = 210, cy = 118;
+                let svg = `<polygon points="${pts.map((p) => `${p.x},${p.y}`).join(' ')}" class="poly"/>`;
+                pts.forEach((p, k) => {
+                    const lx = cx + (p.x - cx) * 1.2, ly = cy + (p.y - cy) * 1.2 + 6;
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="5" class="vx"/><text x="${lx}" y="${ly}" class="pt-name">${LETTERS[k]}</text>`;
+                });
+                if (runner) svg += `<circle cx="${runner.x}" cy="${runner.y}" r="9" class="runner"/>`;
+                return svg;
+            }
+            function polyN() { return parseInt(document.getElementById('w-n').value, 10) || 3; }
+            let polyAnim = null;
+            window.renderPoly = function () {
+                cancelAnimationFrame(polyAnim);
+                const n = polyN();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('poly-answer').classList.remove('shown');
+                document.getElementById('poly-scene').innerHTML = polySvg(n);
+            };
+            // Бігунець обходить замкнену ламану й повертається у вершину A
+            window.walkPoly = function () {
+                renderPoly();
+                const n = polyN(), pts = polyPoints(n);
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) return;
+                const t0 = performance.now(), dur = 600 * n;
+                const step = (now) => {
+                    const k = Math.min(1, Math.max(0, (now - t0) / dur)), pos = k * n, i = Math.min(n - 1, Math.floor(pos)), f = pos - i;
+                    const a = pts[i], b = pts[(i + 1) % n];
+                    document.getElementById('poly-scene').innerHTML = polySvg(n, { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
+                    if (k < 1) polyAnim = requestAnimationFrame(step);
+                };
+                polyAnim = requestAnimationFrame(step);
+            };
+            window.revealPoly = function () {
+                const n = polyN();
+                const few = n <= 4;   // 3–4 вершини, 5–8 вершин
+                document.getElementById('poly-text').textContent = `${NAMES[n][0].toUpperCase() + NAMES[n].slice(1)} ${LETTERS.slice(0, n)}: ${n} ${few ? 'вершини' : 'вершин'}, `
+                    + `${n} ${few ? 'сторони' : 'сторін'}, ${n} ${few ? 'кути' : 'кутів'}`;
+                document.getElementById('poly-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: вид трикутника KLM ---
+            const STEPS = [
+                ['Найбільший кут — [[$106°$]].', 'Дивимось на найбільший кут'],
+                ['$106°$ — тупий, отже, трикутник [[тупокутний]].', 'Один тупий кут — уже тупокутний'],
+                ['$KL = KM = 5$ см — [[дві сторони рівні]].', 'Рисочки на малюнку теж показують рівні сторони'],
+                ['Отже, трикутник [[рівнобедрений]].', 'Третя сторона, $8$ см, інша'],
+                ['Відповідь: тупокутний рівнобедрений трикутник.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
