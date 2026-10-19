@@ -954,6 +954,12 @@ class OwnClassAccessTests(BaseTestCase):
                                                           status='approved')
         self.client.force_login(self.pupil)
 
+    def test_cabinet_library_has_filter_by_course_and_title(self):
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('id="lib-search"', html)
+        self.assertRegex(html, r'<option value="[^"]*9 клас[^"]*">')
+        self.assertIn(f'data-title="{self.algebra9.title.lower()}"', html)
+
     def test_approved_pupil_opens_every_course_of_own_grade_only(self):
         self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 200)
         self.assertEqual(self.client.get(f'/download/{self.geometry9.id}/').status_code, 200)
