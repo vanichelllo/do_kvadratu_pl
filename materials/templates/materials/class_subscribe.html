@@ -38,7 +38,7 @@
     <div class="cs-points">
         <div>📚 <strong>Усі теми класу</strong> — у 7–11 класах алгебра й геометрія разом.</div>
         <div>🪜 <strong>Практика до кожної теми</strong> — 50+ завдань, від простих до «босів».</div>
-        <div>📅 <strong>Місяць або навчальний рік</strong> (до 30 червня). Без автосписань: продовжуєте самі.</div>
+        <div>📅 <strong>Місяць або навчальний рік</strong> (до 30 червня). Без автосписань: продовжуєте самі. Взяли місяць і вирішили на рік — протягом 30 днів сплачене за місяць зарахуємо.</div>
         <div>🆓 <strong>Спершу спробуйте</strong> — перша тема кожного розділу безкоштовна.</div>
     </div>
 
@@ -53,12 +53,13 @@
             <div class="cs-note">Уже готово уроків: {{ plan.lessons_ready }}{% if plan.lessons_total %} з {{ plan.lessons_total }}{% endif %}. Нові з'являються в підписці без доплати.</div>
             {% if plan.price_month %}<div class="price">{{ plan.price_month }} ₴ <small>/ місяць</small></div>{% endif %}
             {% if plan.price_year %}<div class="cs-note">{% if plan.price_month %}або {% endif %}<strong>{{ plan.price_year }} ₴</strong> за навчальний рік</div>{% endif %}
+            {% if plan.credit %}<div class="mine">🎁 Сплачені {{ plan.credit }} ₴ за місяць зараховано: рік для вас — <strong>{{ plan.year_price }} ₴</strong> замість {{ plan.price_year }} ₴.</div>{% endif %}
             {% if plan.active_until %}<div class="mine">✅ Ваша підписка діє до {{ plan.active_until|date:"d.m.Y" }}. Оплата зараз продовжить її.</div>{% endif %}
             {% if user.is_authenticated %}
             <form method="post" action="{% url 'class_subscribe' %}">{% csrf_token %}
                 <label class="agree"><input type="checkbox" name="agree" required> <span>Погоджуюся з <a href="{% url 'offer' %}#class-subscription" target="_blank">умовами оферти</a> і прошу, щоб підписка почала діяти одразу після оплати</span></label>
-                {% for period, price, label in plan.buy_options %}
-                    <button type="submit" name="method" value="card" class="{% if period == 'year' %}btn-year{% else %}btn-month{% endif %}" formaction="{% url 'class_buy' plan.id period %}">{{ label }} — карткою</button>
+                {% for period, price, label in plan.options %}
+                    <button type="submit" name="method" value="card" class="{% if period == 'year' %}btn-year{% else %}btn-month{% endif %}" formaction="{% url 'class_buy' plan.id period %}">{{ label }} — карткою, {{ price }} ₴</button>
                     {% if balance >= price %}
                         <button type="submit" name="method" value="balance" class="btn-balance" formaction="{% url 'class_buy' plan.id period %}">{{ label }} — з балансу</button>
                     {% endif %}

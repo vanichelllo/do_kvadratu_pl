@@ -678,6 +678,19 @@ class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
     readonly_fields = ['instant_access_agreed_at']
+    change_list_template = 'admin/materials/order/change_list.html'
+
+    def get_urls(self):
+        custom = [path('report/', self.admin_site.admin_view(self.report_view), name='materials_order_report')]
+        return custom + super().get_urls()
+
+    def report_view(self, request):
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+        from .reports import sales_report
+        return render(request, 'admin/materials/order/report.html', {
+            **self.admin_site.each_context(request), 'opts': self.model._meta, 'title': 'Звіт продажів',
+            **sales_report()})
 
     @admin.action(description="🔄 Перевірити статус у Monobank (для «Очікує оплати» і «Скасовано»)")
     def check_monobank_status(self, request, queryset):

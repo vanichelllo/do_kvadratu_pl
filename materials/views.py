@@ -1008,9 +1008,14 @@ class ClassSubscriptionView(TemplateView):
         active = {}
         for sub in subscriptions.active_subscriptions(self.request.user):
             active[sub.number] = max(active.get(sub.number, sub.valid_until), sub.valid_until)
+        user = self.request.user
         for plan in plans:
             plan.grades = grades.get(plan.number, [])
             plan.active_until = active.get(plan.number)
+            plan.options = [(period, subscriptions.price_for(user, plan, period), label)
+                            for period, _, label in plan.buy_options]
+            plan.year_price = subscriptions.price_for(user, plan, 'year')
+            plan.credit = plan.price_year - plan.year_price if plan.price_year else 0
         context['plans'] = plans
         context['selected'] = to_int(self.request.GET.get('class'))
         context['balance'] = getattr(self.request.user, 'balance', 0) or 0
@@ -1025,7 +1030,8 @@ def class_buy(request, plan_id, period):
     plan = get_object_or_404(ClassPlan, id=plan_id, is_active=True)
     if period not in ('month', 'year'):
         raise Http404
-    price = plan.price_month if period == 'month' else plan.price_year
+    base = plan.price_month if period == 'month' else plan.price_year
+    price = subscriptions.price_for(request.user, plan, period) if base else 0
     if not price:
         messages.error(request, "Ця підписка поки не продається.")
         return redirect('class_subscribe')
@@ -1507,14 +1513,17 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 latest[sub.number] = sub
         context['class_subscriptions'] = sorted(latest.values(), key=lambda sub: sub.number)
 
-        # Учень власника сайту чи репетитора з підпискою бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
+        # Учень бачить у бібліотеці теми свого класу й класів з підпискою (уроки з презентацією чи практикою)
         library_list = purchased_list
-        class_grades = teachers.own_class_grade_ids(self.request.user)
-        if class_grades:
+        taught = teachers.taught_class_grade_ids(self.request.user)
+        subscribed = teachers.subscribed_grade_ids(self.request.user)
+        if taught or subscribed:
             owned = {m.id for m in purchased_list}
+            # Свій клас — усі теми, клас із підпискою на клас — лише опубліковані
+            in_class = (Q(curriculum_topic__chapter__grade_id__in=taught)
+                        | Q(curriculum_topic__chapter__grade_id__in=subscribed, is_published=True))
             class_materials = StudyMaterial.objects.filter(
-                Q(html_content__gt='') | Q(practice_questions__isnull=False),
-                curriculum_topic__chapter__grade_id__in=class_grades, is_bundle=False,
+                Q(html_content__gt='') | Q(practice_questions__isnull=False), in_class, is_bundle=False,
             ).exclude(id__in=owned).distinct().select_related(with_tree)
             library_list = sorted(purchased_list + list(class_materials), key=get_number)
 

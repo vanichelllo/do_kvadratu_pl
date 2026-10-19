@@ -60,7 +60,15 @@
         }
     }
 
-    /* Стилі для карток куплених матеріалів */
+    /* Фільтр бібліотеки */
+    .library-filter { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .library-filter .lib-input { flex: 1 1 220px; min-width: 0; padding: 10px 14px; border: 2px solid var(--brand-blue);
+        border-radius: 8px; font-family: inherit; font-weight: 600; font-size: 1rem; background: #fff; }
+    .library-filter .lib-input:focus { outline: none; border-color: var(--brand-yellow); }
+    .library-empty { color: #6c757d; font-weight: 600; }
+    .library-group[hidden], .mac-card[hidden] { display: none !important; }
+
+        /* Стилі для карток куплених матеріалів */
     .library-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -669,11 +677,22 @@
                 </p>
             {% endif %}
             {% if purchased_materials or library_groups %}
+                <!-- Фільтр бібліотеки: пошук за назвою й курс/клас (працює без перезавантаження сторінки) -->
+                <div class="library-filter" id="library-filter">
+                    <input type="search" id="lib-search" class="lib-input" placeholder="Пошук за назвою…" oninput="filterLibrary()" aria-label="Пошук конспекту за назвою">
+                    <select id="lib-group" class="lib-input" onchange="filterLibrary()" aria-label="Курс і клас">
+                        <option value="">Усі курси й класи</option>
+                        {% for group in library_groups %}<option value="{{ group.label }}">{{ group.label }}</option>{% endfor %}
+                        {% if library_bundles %}<option value="📦 Мої пакети">📦 Мої пакети</option>{% endif %}
+                    </select>
+                </div>
+                <p class="library-empty" id="lib-empty" hidden>Нічого не знайдено — змініть пошук або клас.</p>
                 {% for group in library_groups %}
+                    <div class="library-group" data-group="{{ group.label }}">
                     <h3 class="library-group-title">{{ group.label }}</h3>
                     <div class="library-grid">
                         {% for item in group.materials %}
-                        <div class="mac-card">
+                        <div class="mac-card" data-title="{{ item.title|lower }}">
                             <div class="mac-header-sm">
                                 <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
                                 <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
@@ -690,13 +709,15 @@
                         </div>
                         {% endfor %}
                     </div>
+                    </div>
                 {% endfor %}
 
                 {% if library_bundles %}
+                    <div class="library-group" data-group="📦 Мої пакети">
                     <h3 class="library-group-title">📦 Мої пакети</h3>
                     <div class="library-grid">
                         {% for entry in library_bundles %}
-                        <div class="mac-card">
+                        <div class="mac-card" data-title="{{ entry.bundle.title|lower }}">
                             <div class="mac-header-sm">
                                 <div class="mac-dot-sm" style="background-color: #ff5f56;"></div>
                                 <div class="mac-dot-sm" style="background-color: #ffbd2e;"></div>
@@ -725,6 +746,7 @@
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
                     </div>
                 {% endif %}
             {% else %}
@@ -964,6 +986,23 @@
 </div>
 
 <script>
+    // Фільтр бібліотеки: ховаємо картки, що не підходять, і групи, де нічого не лишилося
+    function filterLibrary() {
+        const text = (document.getElementById('lib-search').value || '').trim().toLowerCase();
+        const group = document.getElementById('lib-group').value;
+        let shown = 0;
+        document.querySelectorAll('.library-group').forEach((g) => {
+            let inGroup = 0;
+            g.querySelectorAll('.mac-card[data-title]').forEach((card) => {
+                const ok = (!group || g.dataset.group === group) && (!text || card.dataset.title.includes(text));
+                card.hidden = !ok;
+                inGroup += ok ? 1 : 0;
+            });
+            g.hidden = inGroup === 0;
+            shown += inGroup;
+        });
+        document.getElementById('lib-empty').hidden = shown > 0;
+    }
     // Розділи кабінету: браузер запам'ятовує, які з них ви відкрили (лише на цьому пристрої)
     (function () {
         const KEY = 'dk_cabinet_open';

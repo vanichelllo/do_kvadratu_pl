@@ -1,0 +1,5 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li><a href="{% url 'admin:materials_order_report' %}">📊 Звіт продажів</a></li>
+  {{ block.super }}
+{% endblock %}

@@ -9,6 +9,7 @@
 </style>
 {% endblock %}
 {% block content %}
+{% if perms.materials.view_order %}<p><a href="{% url 'admin:materials_order_report' %}" class="button">📊 Звіт продажів</a></p>{% endif %}
 {% if attention_items %}
 <div class="module attention">
     <table>
