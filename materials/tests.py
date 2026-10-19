@@ -3564,7 +3564,8 @@ class ClassSubscriptionTests(BaseTestCase):
         self.algebra8 = StudyMaterial.objects.create(
             title='1.1. Вісім', price=29, is_published=True, html_content='<p>урок</p>',
             curriculum_topic=make_school_topic('1.1. Вісім', 8, 1, subject='Алгебра (7-9 класи)'))
-        self.plan7 = ClassPlan.objects.get(number=7)   # стартові ціни з міграції: 119 / 549, вимкнено
+        ClassPlan.objects.update(is_active=False)   # міграція вмикає 5 клас — тут перевіряємо з нуля
+        self.plan7 = ClassPlan.objects.get(number=7)   # стартові ціни з міграції: 119 / 549
         self.pupil = self.make_user('pupil7@example.com', balance=400)
         self.client.force_login(self.pupil)
 
@@ -3637,3 +3638,31 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertIn('Нова підписка на клас', notify.call_args[0][0])
         self.assertEqual(self.download(self.algebra7), 200)
         self.assertContains(self.client.get(f'/payment/result/{order.id}/'), 'Підписку на 7 клас оформлено')
+
+
+class LaunchPricesMigrationTests(BaseTestCase):
+    """Міграція 0051 (рішення власника 19.10.2026): 5 клас продається, тарифи викладача мають ціни."""
+
+    def test_launch_state(self):
+        from .models import ClassPlan, TeacherPlan
+        plan5 = ClassPlan.objects.get(number=5)
+        self.assertTrue(plan5.is_active)
+        self.assertEqual(plan5.note, 'Ранній доступ: нові уроки щотижня')
+        self.assertFalse(ClassPlan.objects.filter(is_active=True).exclude(number=5).exists())
+        start = TeacherPlan.objects.get(name='Старт')
+        self.assertEqual((start.price_month, start.price_year, start.is_active), (249, 1790, True))
+        self.assertContains(self.client.get('/subscribe/'), '5 клас</h3>')
+        self.assertContains(self.client.get('/for-tutors/'), '249')
+
+    def test_publishes_repository_lessons_only(self):
+        import importlib
+        from django.apps import apps
+        launch = importlib.import_module('materials.migrations.0051_launch_prices').launch
+        topic = make_school_topic('1.1. Тема', 5, 1)
+        imported = StudyMaterial.objects.create(title='з репозиторію', curriculum_topic=topic, html_source_hash='x' * 64)
+        manual = StudyMaterial.objects.create(title='вручну', curriculum_topic=topic)
+        launch(apps, None)
+        imported.refresh_from_db()
+        manual.refresh_from_db()
+        self.assertTrue(imported.is_published)
+        self.assertFalse(manual.is_published)
