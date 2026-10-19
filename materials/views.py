@@ -1513,14 +1513,17 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 latest[sub.number] = sub
         context['class_subscriptions'] = sorted(latest.values(), key=lambda sub: sub.number)
 
-        # Учень власника сайту чи репетитора з підпискою бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
+        # Учень бачить у бібліотеці теми свого класу й класів з підпискою (уроки з презентацією чи практикою)
         library_list = purchased_list
-        class_grades = teachers.own_class_grade_ids(self.request.user)
-        if class_grades:
+        taught = teachers.taught_class_grade_ids(self.request.user)
+        subscribed = teachers.subscribed_grade_ids(self.request.user)
+        if taught or subscribed:
             owned = {m.id for m in purchased_list}
+            # Свій клас — усі теми, клас із підпискою на клас — лише опубліковані
+            in_class = (Q(curriculum_topic__chapter__grade_id__in=taught)
+                        | Q(curriculum_topic__chapter__grade_id__in=subscribed, is_published=True))
             class_materials = StudyMaterial.objects.filter(
-                Q(html_content__gt='') | Q(practice_questions__isnull=False),
-                curriculum_topic__chapter__grade_id__in=class_grades, is_bundle=False,
+                Q(html_content__gt='') | Q(practice_questions__isnull=False), in_class, is_bundle=False,
             ).exclude(id__in=owned).distinct().select_related(with_tree)
             library_list = sorted(purchased_list + list(class_materials), key=get_number)
 

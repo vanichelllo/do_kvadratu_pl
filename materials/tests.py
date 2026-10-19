@@ -3616,6 +3616,10 @@ class ClassSubscriptionTests(BaseTestCase):
         latest = self.pupil.class_subscriptions.order_by('-valid_until').first()
         self.assertEqual(latest.valid_until,
                          period_end(subscription.valid_until + datetime.timedelta(days=1), 'month'))
+        # Знятий з публікації урок підписка не відкриває (свій клас учня власника — відкривав би)
+        StudyMaterial.objects.filter(pk=self.geometry7.pk).update(is_published=False)
+        self.assertEqual(self.download(self.geometry7), 404)
+        self.assertNotIn(self.geometry7.title, self.client.get('/cabinet/').content.decode())
         self.pupil.class_subscriptions.update(valid_until=timezone.localdate() - datetime.timedelta(days=1))
         self.assertEqual(self.download(self.algebra7), 404)
 
@@ -3682,3 +3686,30 @@ class LaunchPricesMigrationTests(BaseTestCase):
         manual.refresh_from_db()
         self.assertTrue(imported.is_published)
         self.assertFalse(manual.is_published)
+
+
+class SalesReportTests(BaseTestCase):
+    def test_report_splits_sales_by_kind(self):
+        from decimal import Decimal
+        from .models import ClassPlan, OrderItem
+        boss = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        buyer = self.make_user('buyer@example.com')
+        now = timezone.now()
+        school = StudyMaterial.objects.create(title='1.2. Урок', price=29, curriculum_topic=make_school_topic('1.2. Урок', 5, 2))
+        nmt = StudyMaterial.objects.create(title='7. НМТ', price=19)
+        mixed = Order.objects.create(user=buyer, total_amount=48, status='paid', paid_at=now, mono_invoice_id='inv1')
+        OrderItem.objects.create(order=mixed, material=school, price=29)
+        OrderItem.objects.create(order=mixed, material=nmt, price=19)
+        plan5 = ClassPlan.objects.get(number=5)
+        Order.objects.create(user=buyer, total_amount=99, status='paid', paid_at=now, class_plan=plan5,
+                             plan_period='month', mono_invoice_id='balance_payment')
+        Order.objects.create(user=buyer, total_amount=200, status='paid', paid_at=now, mono_invoice_id='inv2')
+        from .reports import sales_report
+        row = sales_report(1)['rows'][0]
+        self.assertEqual((row['school'], row['nmt']), (Decimal(29), Decimal(19)))
+        self.assertEqual((row['class_sum'], row['class_new'], row['class_renew']), (Decimal(99), 1, 0))
+        self.assertEqual((row['topup'], row['card'], row['sold']), (Decimal(200), Decimal(248), Decimal(147)))
+        self.client.force_login(boss)
+        page = self.client.get('/do-kvadratu-secret-control/materials/order/report/')
+        self.assertContains(page, 'Продажі за місяцями')
+        self.assertContains(self.client.get('/do-kvadratu-secret-control/'), 'Звіт продажів')

@@ -1,5 +1,5 @@
 """Підписка учня на клас (ClassPlan / ClassSubscription): строки — як у підписки викладача (teachers.period_end),
-доступ — через teachers.own_class_grade_ids (усі уроки й практика класу, поки підписка чинна)."""
+доступ — через teachers.subscribed_grade_ids (усі опубліковані уроки й практика класу, поки підписка чинна)."""
 import datetime
 
 from django.db.models import Count, Q, Sum

@@ -1,0 +1,73 @@
+{% extends "admin/base_site.html" %}
+{% block extrastyle %}{{ block.super }}
+<style>
+    .report table { width: 100%; margin-bottom: 24px; }
+    .report td.num, .report th.num { text-align: right; white-space: nowrap; }
+    .report .muted { color: var(--body-quiet-color); }
+    .report h2 { margin-top: 28px; }
+</style>
+{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Головна</a> › <a href="{% url 'admin:materials_order_changelist' %}">Замовлення</a> › Звіт продажів
+</div>
+{% endblock %}
+{% block content %}
+<div class="report">
+    <h2>Продажі за місяцями, ₴</h2>
+    <p class="muted">Продано — усе, що купили (карткою чи з балансу). Надійшло карткою — гроші, що прийшли через Monobank (разом з поповненнями балансу).</p>
+    <table>
+        <thead><tr>
+            <th>Місяць</th>
+            <th class="num">НМТ</th><th class="num">Шкільні уроки</th>
+            <th class="num">Підписки учнів<br><span class="muted">нові / продовження</span></th>
+            <th class="num">Тарифи викладачів</th>
+            <th class="num">Продано всього</th>
+            <th class="num">Поповнення балансу</th><th class="num">Надійшло карткою</th><th class="num">Повернення</th>
+        </tr></thead>
+        <tbody>
+        {% for r in rows %}
+        <tr>
+            <td>{{ r.label }}</td>
+            <td class="num">{{ r.nmt|floatformat:0 }} <span class="muted">({{ r.nmt_n }})</span></td>
+            <td class="num">{{ r.school|floatformat:0 }} <span class="muted">({{ r.school_n }})</span></td>
+            <td class="num">{{ r.class_sum|floatformat:0 }} <span class="muted">({{ r.class_new }} / {{ r.class_renew }})</span></td>
+            <td class="num">{{ r.tutor_sum|floatformat:0 }} <span class="muted">({{ r.tutor_n }})</span></td>
+            <td class="num"><strong>{{ r.sold|floatformat:0 }}</strong></td>
+            <td class="num">{{ r.topup|floatformat:0 }}</td>
+            <td class="num">{{ r.card|floatformat:0 }}</td>
+            <td class="num">{{ r.refund_sum|floatformat:0 }} <span class="muted">({{ r.refund_n }})</span></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="muted">У дужках — кількість замовлень.</p>
+
+    <h2>Чинні підписки зараз</h2>
+    <table>
+        <thead><tr><th>Підписки учнів на клас</th><th class="num">Учнів</th></tr></thead>
+        <tbody>
+        {% for s in class_subscriptions %}<tr><td>{{ s.number }} клас</td><td class="num">{{ s.users }}</td></tr>
+        {% empty %}<tr><td colspan="2" class="muted">Поки немає</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    <table>
+        <thead><tr><th>Оплачені тарифи викладачів</th><th class="num">Викладачів</th></tr></thead>
+        <tbody>
+        {% for l in tutor_licenses %}<tr><td>{{ l.plan__name|default:"Видано вручну" }}</td><td class="num">{{ l.teachers }}</td></tr>
+        {% empty %}<tr><td colspan="2" class="muted">Поки немає</td></tr>{% endfor %}
+        <tr><td class="muted">Пробний період зараз</td><td class="num">{{ trials }}</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Шкільні теми, які найбільше практикують (30 днів)</h2>
+    <p class="muted">Сигнал, які уроки робити й просувати далі.</p>
+    <table>
+        <thead><tr><th>Тема</th><th>Клас</th><th class="num">Спроб</th><th class="num">Учнів</th></tr></thead>
+        <tbody>
+        {% for p in top_practice %}<tr><td>{{ p.material__title }}</td><td>{{ p.material__curriculum_topic__chapter__grade__name }}</td><td class="num">{{ p.n }}</td><td class="num">{{ p.users }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="muted">Поки немає</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

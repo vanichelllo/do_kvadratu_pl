@@ -87,15 +87,14 @@ def covered_by_teacher(pupil, material):
     return bool(request and grade and grade.id in (licensed_grade_ids(request.teacher) or set()))
 
 
-def own_class_grade_ids(user):
+def taught_class_grade_ids(user):
     """Учень (заявку «N клас» підтверджено) бачить усі уроки й практику свого класу в кожному шкільному курсі
-    (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається: учень власника сайту — завжди, учень
-    репетитора — у тих курсах свого класу, які покриває чинна підписка репетитора; а також усі класи, на які в учня
-    чинна підписка на клас (ClassSubscription).
+    (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається, зокрема ще не опубліковані: учень власника
+    сайту — завжди, учень репетитора — у тих курсах свого класу, які покриває чинна підписка репетитора.
     Повертає множину id класів; результат кешується на об'єкті користувача на час запиту."""
     if not user.is_authenticated:
         return set()
-    if not hasattr(user, '_own_class_grade_ids'):
+    if not hasattr(user, '_taught_class_grade_ids'):
         grades = set()
         request = TutorStudentRequest.objects.filter(user=user, status='approved', course__startswith='grade_') \
             .select_related('teacher').first()
@@ -106,22 +105,31 @@ def own_class_grade_ids(user):
             licensed = licensed_grade_ids(request.teacher) if request.teacher is not None else None
             if licensed is not None:
                 grades &= licensed
-        # Оплачена підписка на клас (materials/subscriptions.py) — так само всі уроки й практика класу
+        user._taught_class_grade_ids = grades
+    return user._taught_class_grade_ids
+
+
+def subscribed_grade_ids(user):
+    """Класи з чинною підпискою учня на клас (materials/subscriptions.py): усі опубліковані уроки й практика."""
+    if not user.is_authenticated:
+        return set()
+    if not hasattr(user, '_subscribed_grade_ids'):
         numbers = set(ClassSubscription.objects.filter(user=user, valid_until__gte=timezone.localdate())
                       .values_list('number', flat=True))
-        if numbers:
-            grades |= set(CurriculumGrade.objects.filter(number__in=numbers).exclude(subject__name=NMT_SUBJECT_NAME)
-                          .values_list('id', flat=True))
-        user._own_class_grade_ids = grades
-    return user._own_class_grade_ids
+        user._subscribed_grade_ids = set(
+            CurriculumGrade.objects.filter(number__in=numbers).exclude(subject__name=NMT_SUBJECT_NAME)
+            .values_list('id', flat=True)) if numbers else set()
+    return user._subscribed_grade_ids
 
 
 def in_own_class(user, material):
-    """Чи належить тема до класу, у якому навчається учень (див. own_class_grade_ids)."""
+    """Чи відкрита тема учневі без купівлі: свій клас — будь-яка, клас із підпискою — лише опублікована."""
     if material.is_bundle:
         return False
     grade = material.curriculum_grade
-    return grade is not None and grade.id in own_class_grade_ids(user)
+    if grade is None:
+        return False
+    return grade.id in taught_class_grade_ids(user) or (material.is_published and grade.id in subscribed_grade_ids(user))
 
 
 def invite_for(user):
