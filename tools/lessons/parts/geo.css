@@ -1,0 +1,11 @@
+        /* Геометричні креслення */
+        .geo-line { stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+        .geo-line.sec { stroke: var(--brand-blue); }
+        .geo-dot { fill: currentColor; }
+        .line-name { fill: currentColor; font-size: 18px; font-weight: 700; font-style: italic; text-anchor: middle; }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); }
+        .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; }
+        .angle-arc.r { fill: var(--warning-red); opacity: 0.45; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .angle-arc.none { fill: var(--border-color); opacity: 0.6; }

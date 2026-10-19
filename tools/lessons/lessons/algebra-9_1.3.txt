@@ -1,0 +1,424 @@
+@@TITLE Системи лінійних нерівностей
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+        /* Координатна пряма */
+        .axis { stroke: currentColor; stroke-width: 2; }
+        .tick-line { stroke: currentColor; stroke-width: 1.5; }
+        .tick { fill: var(--text-muted); font-size: 13px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .band-1 { fill: var(--brand-blue); opacity: 0.35; }
+        .band-2 { fill: var(--brand-yellow); opacity: 0.45; }
+        .band-edge-1 { stroke: var(--brand-blue); stroke-width: 3; }
+        .band-edge-2 { stroke: var(--brand-yellow); stroke-width: 3; }
+        .answer-band { stroke: var(--brand-green); stroke-width: 8; stroke-linecap: round; }
+        .pt { stroke-width: 2.5; }
+        .pt.closed { fill: currentColor; stroke: currentColor; }
+        .pt.open { fill: var(--widget-bg); stroke: currentColor; }
+        .band-label { font-size: 15px; font-weight: 800; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+
+        .ineq-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+        .ineq-row .sign-btn { min-width: 52px; font-size: 1.1rem; }
+        .ineq-row input[type=range] { flex: 1; min-width: 120px; }
+        .ineq-row .name { font-weight: 800; }
+        .ineq-row.r1 .name { color: var(--brand-blue); }
+        .ineq-row.r2 .name { color: var(--brand-yellow); }
+        .readout { font-size: 1.2rem; font-weight: 700; min-height: 1.6em; }
+
+        /* Таблиця випадків */
+        .case-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .case-table th, .case-table td { border-bottom: 1px solid var(--border-color); padding: 7px 6px; text-align: left; }
+        .case-table th { color: var(--brand-blue); }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Дві умови одночасно 🛒</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Оля має $140$ грн. Вона купує ручку за $20$ грн і $x$ зошитів по $15$ грн. Зошитів треба <b>більше ніж $5$</b>.</p>
+                    <p class="big-question">Скільки зошитів може купити Оля?</p>
+                    <p>Тут дві умови, і виконуватись вони мають <b>одночасно</b>. Як це записати й розв'язати?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Показати розв'язання</button></p>
+                </div>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Це система нерівностей</div>
+                    <p>$\begin{cases} 15x + 20 \le 140, \\ x \gt 5 \end{cases} \;\Rightarrow\; \begin{cases} x \le 8, \\ x \gt 5. \end{cases}$</p>
+                    <p>Обидві умови виконуються при $5 \lt x \le 8$. Зошитів — ціла кількість: $6$, $7$ або $8$.</p>
+                    <p>Сьогодні вчимося розв'язувати такі системи.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Система нерівностей та її розв'язок</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Система нерівностей</div>
+                        <p>Кілька нерівностей з однією змінною, які мають виконуватися <b>одночасно</b>. Їх об'єднують фігурною дужкою: $\begin{cases} 2x - 1 \gt 3, \\ x \le 5. \end{cases}$</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Розв'язок системи</div>
+                        <p>Значення змінної, яке є розв'язком <b>кожної</b> нерівності. Розв'язати систему — знайти всі розв'язки або довести, що їх немає.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Подвійна нерівність</div>
+                        <p>$a \lt x \lt b$ — це коротший запис системи $\begin{cases} x \gt a, \\ x \lt b. \end{cases}$</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Переріз проміжків</div>
+                        <p>Множина спільних точок двох проміжків, позначка $\cap$: $\;(1;\,+\infty) \cap (-\infty;\,4] = (1;\,4]$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Розв'язки системи — переріз проміжків</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box example">
+                        <div class="box-title">Чому переріз?</div>
+                        <p>Число — розв'язок системи, якщо воно задовольняє <b>і</b> першу, <b>і</b> другу нерівність. Тобто належить і першій множині розв'язків, і другій — їхньому перерізу.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Нехай $a \lt b$</div>
+                        <p>Тоді завжди одна з чотирьох ситуацій у таблиці. Знак «$\ge$» чи «$\le$» лише додає кінець проміжку.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <table class="case-table">
+                        <tr><th>Система</th><th>Розв'язки</th></tr>
+                        <tr><td>$x \gt a,\ x \gt b$</td><td>$x \gt b$ — «більше за більше»</td></tr>
+                        <tr><td>$x \lt a,\ x \lt b$</td><td>$x \lt a$ — «менше за менше»</td></tr>
+                        <tr><td>$x \gt a,\ x \lt b$</td><td>$a \lt x \lt b$ — проміжок між</td></tr>
+                        <tr><td>$x \lt a,\ x \gt b$</td><td>розв'язків немає</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Шукаємо переріз на координатній прямій 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо знаки й числа. Учень називає розв'язки системи, потім перевіряємо.</p>
+                    <div class="ineq-row r1"><span class="name">1)&nbsp;x</span><button class="btn-secondary sign-btn" id="sign-1" onclick="cycleSign(1)">&gt;</button><input type="range" id="num-1" min="-5" max="5" step="1" value="-2" oninput="lineInput()"><span id="num-1-val">−2</span></div>
+                    <div class="ineq-row r2"><span class="name">2)&nbsp;x</span><button class="btn-secondary sign-btn" id="sign-2" onclick="cycleSign(2)">≤</button><input type="range" id="num-2" min="-5" max="5" step="1" value="3" oninput="lineInput()"><span id="num-2-val">3</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealLine()">Які розв'язки?</button></p>
+                    <div class="hidden-answer box theorem" id="line-answer"><div class="readout" id="line-readout"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 210" id="line-scene" role="img" aria-label="Розв'язки двох нерівностей на координатній прямій і їхній переріз"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як розв'язати систему</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Розв'язати кожну нерівність окремо.</p>
+                    <p>2) Позначити розв'язки на одній координатній прямій.</p>
+                    <p>3) Знайти переріз — де штрихування перекриваються.</p>
+                    <p>4) Записати відповідь проміжком: нестрогий знак — квадратна дужка.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Розв'яжемо</b> $\begin{cases} 3x - 2 \gt 7, \\ 5 - x \ge 1. \end{cases}$</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Подвійна нерівність і область визначення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Розв'яжіть $-1 \le 2x + 3 \lt 9$ і вкажіть цілі розв'язки.</p>
+                    <div class="step">Віднімаємо $3$ від усіх трьох частин: $-4 \le 2x \lt 6$.</div>
+                    <div class="step">Ділимо всі частини на $2 \gt 0$: $-2 \le x \lt 3$, тобто $x \in [-2;\,3)$.</div>
+                    <div class="step">Цілі розв'язки: $-2,\ -1,\ 0,\ 1,\ 2$ — їх $5$ ($3$ не входить).</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Знайдіть область визначення $y = \sqrt{x + 2} + \sqrt{6 - 2x}$.</p>
+                    <div class="step">Обидва підкореневі вирази мають бути невід'ємні <b>одночасно</b>: $\begin{cases} x + 2 \ge 0, \\ 6 - 2x \ge 0. \end{cases}$</div>
+                    <div class="step">$x \ge -2$ і $-2x \ge -6 \Rightarrow x \le 3$ (ділимо на $-2$ — знак змінюється).</div>
+                    <div class="step">$D(y) = [-2;\,3]$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«І», а не «або»</div>
+                        <p>$\begin{cases} x \gt 1, \\ x \lt 4 \end{cases}$ — це $(1;\,4)$, а не «усі числа». Беремо лише спільну частину.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Ділення на від'ємне число</div>
+                        <p>$-3x \ge 6 \Rightarrow x \le -2$. Забули змінити знак — і вся відповідь хибна.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Порожній переріз</div>
+                        <p>$\begin{cases} x \gt 5, \\ x \lt 2 \end{cases}$ — розв'язків немає. Не пишіть $(2;\,5)$!</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Одна точка — теж відповідь</div>
+                        <p>$\begin{cases} x \ge 3, \\ x \le 3 \end{cases}$ має єдиний розв'язок $x = 3$. А $\begin{cases} x \gt 3, \\ x \le 3 \end{cases}$ — жодного.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Формат НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть систему $\begin{cases} x \gt -1, \\ x \le 4. \end{cases}$</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $(-1;\,4]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $[-1;\,4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(-\infty;\,4]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(-1;\,+\infty)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Спільна частина променів $(-1;\,+\infty)$ і $(-\infty;\,4]$ — це $(-1;\,4]$.</p>
+                            <p>$-1$ не входить (знак $\gt$), $4$ входить (знак $\le$).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Скільки цілих розв'язків має система $\begin{cases} 2x + 1 \ge -5, \\ 7 - x \gt 3? \end{cases}$</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $8$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2x \ge -6 \Rightarrow x \ge -3$; $\;-x \gt -4 \Rightarrow x \lt 4$.</p>
+                            <p>$x \in [-3;\,4)$: цілі $-3,\,-2,\,-1,\,0,\,1,\,2,\,3$ — їх $7$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">При яких значеннях $a$ система $\begin{cases} x \ge 2, \\ x \lt a \end{cases}$ має розв'язки?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $a \ge 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $a \gt 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $a \lt 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $a \le 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) при будь-яких $a$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Розв'язки — проміжок $[2;\,a)$. Він не порожній, якщо $a \gt 2$.</p>
+                            <p>При $a = 2$: $x \ge 2$ і $x \lt 2$ одночасно — неможливо. Тому $a \ge 2$ — пастка. Перевірте на слайді «Дослідження»!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Розв'язок системи задовольняє <b>кожну</b> нерівність — шукаємо <b>переріз</b> проміжків.</p>
+                    <p>$a \lt x \le b \iff \begin{cases} x \gt a, \\ x \le b. \end{cases}$</p>
+                    <p>Немає спільної частини — розв'язків немає.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Розв'язати кожну → позначити на одній прямій → переріз → відповідь проміжком.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Ділимо на від'ємне — змінюємо знак. Кінці: $\ge, \le$ — $[\ ]$, $\;\gt, \lt$ і $\infty$ — $(\ )$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderLine();
+                if (currentSlide === 5) renderEval();
+@@JS
+            // --- Слайд 4: дві нерівності на координатній прямій ---
+            const SIGNS = ['>', '≥', '<', '≤'];
+            const TEX = { '>': '\\gt', '≥': '\\ge', '<': '\\lt', '≤': '\\le' };
+            const signs = { 1: '>', 2: '≤' };
+            let revealed = false;
+            const minus = (v) => String(v).replace('-', '−');
+            window.cycleSign = function (k) {
+                signs[k] = SIGNS[(SIGNS.indexOf(signs[k]) + 1) % SIGNS.length];
+                document.getElementById(`sign-${k}`).textContent = signs[k];
+                revealed = false;
+                renderLine();
+            };
+            // Нерівність → проміжок {lo, loClosed, hi, hiClosed}
+            function ray(sign, a) {
+                if (sign === '>' || sign === '≥') return { lo: a, loC: sign === '≥', hi: Infinity, hiC: false };
+                return { lo: -Infinity, loC: false, hi: a, hiC: sign === '≤' };
+            }
+            function intersect(p, q) {
+                const lo = Math.max(p.lo, q.lo), hi = Math.min(p.hi, q.hi);
+                const loC = (p.lo === lo ? p.loC : true) && (q.lo === lo ? q.loC : true);
+                const hiC = (p.hi === hi ? p.hiC : true) && (q.hi === hi ? q.hiC : true);
+                if (lo > hi || (lo === hi && !(loC && hiC))) return null;
+                return { lo, loC, hi, hiC };
+            }
+            function intervalTex(r) {
+                if (r.lo === r.hi) return `x = ${r.lo}`;
+                const left = r.lo === -Infinity ? '(-\\infty' : `${r.loC ? '[' : '('}${r.lo}`;
+                const right = r.hi === Infinity ? '+\\infty)' : `${r.hi}${r.hiC ? ']' : ')'}`;
+                return `x \\in ${left};\\,${right}`;
+            }
+            window.renderLine = function () {
+                const a = parseInt(document.getElementById('num-1').value, 10), b = parseInt(document.getElementById('num-2').value, 10);
+                document.getElementById('num-1-val').textContent = minus(a);
+                document.getElementById('num-2-val').textContent = minus(b);
+                document.getElementById('line-answer').classList.remove('shown');
+                const X0 = -6.5, X1 = 6.5, sx = (x) => 20 + (Math.max(X0, Math.min(X1, x)) - X0) / (X1 - X0) * 380, Y = 170;
+                let svg = '';
+                // Смуги розв'язків кожної нерівності (над прямою) і переріз (на прямій)
+                [[1, a, 60], [2, b, 105]].forEach(([k, v, y]) => {
+                    const r = ray(signs[k], v), x1 = sx(r.lo), x2 = sx(r.hi);
+                    svg += `<rect x="${x1}" y="${y}" width="${x2 - x1}" height="26" class="band-${k}"/>`
+                         + `<line x1="${sx(v)}" y1="${y}" x2="${sx(v)}" y2="${Y}" class="band-edge-${k}" stroke-dasharray="4 4"/>`
+                         + `<text x="${r.lo === -Infinity ? x1 + 6 : x2 - 6}" y="${y - 6}" class="band-label" style="fill:var(${k === 1 ? '--brand-blue' : '--brand-yellow'});text-anchor:${r.lo === -Infinity ? 'start' : 'end'}">${k}) x ${signs[k]} ${minus(v)}</text>`;
+                });
+                const r = intersect(ray(signs[1], a), ray(signs[2], b));
+                svg += `<line x1="${sx(X0)}" y1="${Y}" x2="${sx(X1) + 6}" y2="${Y}" class="axis"/><path d="M${sx(X1) + 10} ${Y} l-10 -5 v10 z" fill="currentColor"/>`
+                     + `<text x="${sx(X1) + 4}" y="${Y + 22}" class="axis-name">x</text>`;
+                for (let x = -6; x <= 6; x++) svg += `<line x1="${sx(x)}" y1="${Y - 5}" x2="${sx(x)}" y2="${Y + 5}" class="tick-line"/><text x="${sx(x)}" y="${Y + 24}" class="tick">${minus(x)}</text>`;
+                if (r && revealed) svg += r.lo === r.hi ? '' : `<line x1="${sx(r.lo)}" y1="${Y}" x2="${sx(r.hi)}" y2="${Y}" class="answer-band"/>`;
+                [[a, ray(signs[1], a)], [b, ray(signs[2], b)]].forEach(([v, rr]) => {
+                    const closed = rr.lo === v ? rr.loC : rr.hiC;
+                    svg += `<circle cx="${sx(v)}" cy="${Y}" r="6" class="pt ${closed ? 'closed' : 'open'}"/>`;
+                });
+                if (r && revealed && r.lo === r.hi) svg += `<circle cx="${sx(r.lo)}" cy="${Y}" r="8" class="pt closed" style="fill:var(--brand-green);stroke:var(--brand-green)"/>`;
+                document.getElementById('line-scene').innerHTML = svg;
+                const text = r ? `$${intervalTex(r)}$` : 'Спільної частини немає — розв\'язків немає.';
+                const out = document.getElementById('line-readout');
+                out.innerHTML = `$\\begin{cases} x ${TEX[signs[1]]} ${a}, \\\\ x ${TEX[signs[2]]} ${b} \\end{cases}$ &nbsp;⇒&nbsp; ${text}`;
+                if (revealed) document.getElementById('line-answer').classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+            window.revealLine = function () { revealed = true; renderLine(); };
+            window.lineInput = function () { revealed = false; renderLine(); };
+
+            // --- Слайд 5: покроковий розв'язок системи ---
+            const STEPS = [
+                ['$3x - 2 \\gt 7 \\Rightarrow 3x \\gt 9 \\Rightarrow$ [[$x \\gt 3$]]', 'Перша нерівність'],
+                ['$5 - x \\ge 1 \\Rightarrow -x \\ge -4 \\Rightarrow$ [[$x \\le 4$]]', 'Друга: ділимо на $-1$ — знак змінюється'],
+                ['[[$3 \\lt x \\le 4$]]', 'Переріз променів $(3;\\,+\\infty)$ і $(-\\infty;\\,4]$'],
+                ['Відповідь: $(3;\\,4]$', '$3$ не входить, $4$ входить'],
+            ];
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Слайд 6: кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Слайд 8: перемикач завдань ---
+            window.showTask = function (n) {
+                [1, 2, 3].forEach((k) => {
+                    document.getElementById(`task-${k}`).classList.toggle('on', k === n);
+                    document.getElementById(`tab-${k}`).classList.toggle('on', k === n);
+                });
+            };

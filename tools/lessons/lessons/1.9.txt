@@ -1,0 +1,332 @@
+@@TITLE Числові та буквені вирази. Формули
+@@CSS
+        /* Машина «шлях = швидкість · час» */
+        .road { stroke: currentColor; stroke-width: 3; }
+        .road-tick { stroke: currentColor; stroke-width: 1.5; }
+        .road-label { fill: currentColor; font-size: 12px; text-anchor: middle; }
+        .car-body { fill: var(--brand-blue); }
+        .car-wheel { fill: currentColor; }
+        .trip { stroke: var(--brand-green); stroke-width: 6; stroke-linecap: round; }
+        .trip-cap { fill: var(--brand-green); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 120px; }
+        .slider-control span { font-weight: 700; min-width: 60px; text-align: right; }
+        .formula-answer { font-size: 1.3rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 8px 0; }
+
+        /* Порядок дій */
+        .expr-text { fill: currentColor; font-size: 30px; font-weight: 700; text-anchor: middle; }
+        .order-num { fill: var(--card-bg); font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .order-dot { fill: var(--brand-yellow); }
+        .order-res { fill: var(--brand-green); font-size: 18px; font-weight: 700; text-anchor: middle; }
+
+        /* Покрокове обчислення */
+        .eval-line { font-size: 1.5rem; font-weight: 700; text-align: center; padding: 6px 0; letter-spacing: 0.02em; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; text-align: center; min-height: 1.4em; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 18px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Хто рахує правильно? 🧮</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> $2 + 3 \cdot 4$ — це $5 \cdot 4 = 20$. Рахую по порядку!</div>
+                <div class="bubble right"><span class="who">Калькулятор у телефоні:</span> $2 + 3 \cdot 4 = 14$.</div>
+                <p class="big-question">Хто правий — Оля чи калькулятор? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Правий калькулятор! 🎉</div>
+                    <p>Множення виконують <b>раніше</b> за додавання: $3 \cdot 4 = 12$, а потім $2 + 12 = 14$.</p>
+                    <p>У математиці є правила порядку дій — щоб у всіх виходило однаково.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Формула шляху 🚗</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Шлях $s$ залежить від швидкості $v$ і часу $t$: $\;s = v \cdot t$. Обираємо $v$ і $t$ — скільки проїде машина?</p>
+                    </div>
+                    <div class="slider-control"><label for="w-v">Швидкість $v$</label><input type="range" id="w-v" min="10" max="90" step="10" value="60" oninput="renderTrip()"><span id="w-v-val">60 км/год</span></div>
+                    <div class="slider-control"><label for="w-t">Час $t$</label><input type="range" id="w-t" min="1" max="5" step="1" value="3" oninput="renderTrip()"><span id="w-t-val">3 год</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealTrip()">Який шлях?</button></p>
+                    <div class="hidden-answer" id="trip-answer">
+                        <div class="formula-answer" id="trip-s"></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 160" id="trip-scene" role="img" aria-label="Машина на дорозі зі шкалою кілометрів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Вирази, порядок дій, формули</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Порядок дій:</b> 1) дужки; 2) множення й ділення зліва направо; 3) додавання й віднімання зліва направо.</p>
+                    <p>$2a + 5$ — <b>буквений вираз</b>. Підставили $a = 3$ — отримали значення: $2 \cdot 3 + 5 = 11$.</p>
+                    <p><b>Формула</b> показує, як знайти величину: $s = v \cdot t$.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 210" role="img" aria-label="Порядок дій у виразі 48 мінус 6 помножити на дужки 3 плюс 4 поділити на 2">
+                        <text x="200" y="120" class="expr-text">48 − 6 · (3 + 4) : 2</text>
+                        <circle cx="236" cy="72" r="12" class="order-dot"/><text x="236" y="77" class="order-num">1</text>
+                        <circle cx="177" cy="72" r="12" class="order-dot"/><text x="177" y="77" class="order-num">2</text>
+                        <circle cx="290" cy="72" r="12" class="order-dot"/><text x="290" y="77" class="order-num">3</text>
+                        <circle cx="128" cy="72" r="12" class="order-dot"/><text x="128" y="77" class="order-num">4</text>
+                        <text x="110" y="165" class="order-res">① 3 + 4 = 7</text>
+                        <text x="290" y="165" class="order-res">② 6 · 7 = 42</text>
+                        <text x="110" y="195" class="order-res">③ 42 : 2 = 21</text>
+                        <text x="290" y="195" class="order-res">④ 48 − 21 = 27</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Обчислюємо крок за кроком ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Як обчислити вираз</div>
+                    <p>1) Знайди дужки — їх рахуємо першими.</p>
+                    <p>2) Далі множення й ділення — зліва направо.</p>
+                    <p>3) Наприкінці додавання й віднімання — зліва направо.</p>
+                    <p>Вираз з буквою? Спершу підстав число замість букви.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls" style="justify-content:center">
+                        <button class="btn-primary" onclick="evalStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="evalNext()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: «по порядку» ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$20 - 2 \cdot 5 = 90$? <b>Ні!</b> Спершу множення: $2 \cdot 5 = 10$, потім $20 - 10 = 10$.</p>
+                        <p>А $20 - 8 - 2$ — зліва направо: $12 - 2 = 10$, а не $20 - 6 = 14$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перед обчисленням постав над діями номери: $1, 2, 3, \ldots$ — і рахуй за номерами.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" role="img" aria-label="20 мінус 2 помножити на 5: неправильно 90, правильно 10">
+                        <text x="200" y="50" class="expr-text">20 − 2 · 5</text>
+                        <text x="110" y="120" class="svg-caption" style="fill:var(--warning-red)">18 · 5 = 90</text>
+                        <line x1="45" y1="100" x2="175" y2="130" class="cross"/>
+                        <text x="300" y="110" class="svg-caption" style="fill:var(--brand-green)">2 · 5 = 10</text>
+                        <text x="300" y="140" class="svg-caption" style="fill:var(--brand-green)">20 − 10 = 10 ✓</text>
+                        <text x="200" y="205" class="svg-caption">Множення — раніше за віднімання</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $30 - 10 : 2$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $10$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $25$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $5$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Ділення виконують раніше за віднімання. Спробуй ще раз!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$10 : 2 = 5$, потім $30 - 5 = 25$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Знайди значення виразу $3a + 7$ при $a = 5$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $42$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $22$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $36$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$3a$ — це $3 \cdot a$, а не число «$35$». Підстав $5$ і зроби множення першим.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$3 \cdot 5 + 7 = 15 + 7 = 22$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Тарас їхав $3$ год зі швидкістю $15$ км/год, а потім $2$ год — зі швидкістю $12$ км/год. Який вираз показує весь шлях?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $15 \cdot 3 + 12 \cdot 2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $(15 + 12) \cdot (3 + 2)$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $15 \cdot 3 \cdot 12 \cdot 2$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знайди за формулою $s = v \cdot t$ кожну частину шляху окремо.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Перша частина $15 \cdot 3 = 45$ км, друга $12 \cdot 2 = 24$ км. Весь шлях: $45 + 24 = 69$ км.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли: $96 : (4 + 4 \cdot 2) - 3$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $9$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $45$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>У дужках теж діє порядок: спершу $4 \cdot 2$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>У дужках: $4 \cdot 2 = 8$, $4 + 8 = 12$. Далі $96 : 12 = 8$ і $8 - 3 = 5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Порядок дій: дужки → множення й ділення → додавання й віднімання (зліва направо).</p>
+                    <p>Значення буквеного виразу: підстав число замість букви.</p>
+                    <p>Формули: $s = v \cdot t$, вартість $=$ ціна $\cdot$ кількість.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як обчислювати ✍️</div>
+                        <p>Постав над діями номери й рахуй за ними: $48 - 6 \cdot (3 + 4) : 2 = 27$.</p>
+                        <p>$3a$ — це $3 \cdot a$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Не рахуй «по порядку»: $20 - 2 \cdot 5 = 10$, а не $90$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderTrip();
+                if (currentSlide === 4) renderEval();
+@@JS
+            // --- Слайд 2: s = v · t ---
+            const val = (id) => parseInt(document.getElementById(id).value, 10) || 1;
+            window.renderTrip = function () {
+                const v = val('w-v'), t = val('w-t'), s = v * t;
+                document.getElementById('w-v-val').textContent = `${v} км/год`;
+                document.getElementById('w-t-val').textContent = `${t} год`;
+                document.getElementById('trip-answer').classList.remove('shown');
+                // Шкала до 500 км; машина стоїть у кінці шляху, але число шляху ховаємо до кліку
+                const x0 = 20, scale = 400 / 500, xEnd = x0 + s * scale;
+                let svg = `<line x1="${x0}" y1="110" x2="${x0 + 400}" y2="110" class="road"/>`;
+                for (let km = 0; km <= 500; km += 50) {
+                    const x = x0 + km * scale;
+                    svg += `<line x1="${x}" y1="104" x2="${x}" y2="116" class="road-tick"/><text x="${x}" y="134" class="road-label">${km}</text>`;
+                }
+                svg += `<text x="${x0 + 400}" y="152" class="road-label">км</text>`;
+                for (let h = 1; h <= t; h++) {
+                    const xa = x0 + (h - 1) * v * scale, xb = x0 + h * v * scale;
+                    svg += `<line x1="${xa + 2}" y1="92" x2="${xb - 2}" y2="92" class="trip"/><text x="${(xa + xb) / 2}" y="82" class="trip-cap">${h} год</text>`;
+                }
+                svg += `<rect x="${xEnd - 22}" y="40" width="44" height="20" rx="6" class="car-body"/><rect x="${xEnd - 12}" y="30" width="24" height="14" rx="4" class="car-body"/>`
+                     + `<circle cx="${xEnd - 12}" cy="62" r="6" class="car-wheel"/><circle cx="${xEnd + 12}" cy="62" r="6" class="car-wheel"/>`;
+                document.getElementById('trip-scene').innerHTML = svg;
+            };
+            window.revealTrip = function () {
+                const v = val('w-v'), t = val('w-t');
+                document.getElementById('trip-s').textContent = `s = ${v} · ${t} = ${v * t} км`;
+                document.getElementById('trip-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: покрокове обчислення виразів ---
+            // Кожен приклад — рядки обчислення; [[…]] — дія, яку виконуємо на цьому кроці; note — пояснення
+            const EXAMPLES = [
+                { lines: [
+                    ['120 : [[(17 − 5)]] · 3 + 4', 'Спершу дужки'],
+                    ['[[120 : 12]] · 3 + 4', 'Ділення й множення — зліва направо'],
+                    ['[[10 · 3]] + 4', 'Тепер множення'],
+                    ['[[30 + 4]]', 'Наостанок додавання'],
+                    ['34', 'Відповідь: 34'],
+                ] },
+                { lines: [
+                    ['5 + [[45 : 9]] · 2 − 3', 'Дужок немає — спершу ділення (воно лівіше)'],
+                    ['5 + [[5 · 2]] − 3', 'Потім множення'],
+                    ['[[5 + 10]] − 3', 'Додавання й віднімання — зліва направо'],
+                    ['[[15 − 3]]', ''],
+                    ['12', 'Відповідь: 12'],
+                ] },
+                { lines: [
+                    ['4a + 25, якщо a = 15', 'Вираз з буквою: спершу підставляємо число'],
+                    ['[[4 · 15]] + 25', '4a — це 4 · a'],
+                    ['[[60 + 25]]', ''],
+                    ['85', 'Відповідь: при a = 15 значення виразу 85'],
+                ] },
+            ];
+            let exIndex = 0, shownLines = 1;
+            const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            window.renderEval = function () {
+                const ex = EXAMPLES[exIndex], box = document.getElementById('eval-lines');
+                box.innerHTML = ex.lines.slice(0, shownLines).map(([line], k) => {
+                    const html = esc(line).replace(/\[\[(.+?)\]\]/g, k === shownLines - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === ex.lines.length - 1 ? ' done' : ''}">${k ? '= ' : ''}${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').textContent = ex.lines[shownLines - 1][1];
+            };
+            window.evalStep = function () { shownLines = Math.min(shownLines + 1, EXAMPLES[exIndex].lines.length); renderEval(); };
+            window.evalReset = function () { shownLines = 1; renderEval(); };
+            window.evalNext = function () { exIndex = (exIndex + 1) % EXAMPLES.length; shownLines = 1; renderEval(); };

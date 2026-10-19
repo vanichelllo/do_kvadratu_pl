@@ -1,0 +1,530 @@
+@@TITLE Скалярний добуток векторів
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .formula { font-size: 1.3rem; text-align: center; margin: 8px 0; }
+        .vec { stroke-width: 3.5; stroke-linecap: round; fill: none; }
+        .vec.a { stroke: var(--brand-blue); } .head.a { fill: var(--brand-blue); }
+        .vec.b { stroke: var(--brand-yellow); } .head.b { fill: var(--brand-yellow); }
+        .vec.c { stroke: var(--brand-green); } .head.c { fill: var(--brand-green); }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.6; }
+        .vec-name { font-size: 20px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .vec-name.a { fill: var(--brand-blue); } .vec-name.b { fill: var(--brand-yellow); } .vec-name.c { fill: var(--brand-green); }
+        .vec-mark { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .vec-mark.a { stroke: var(--brand-blue); } .vec-mark.b { stroke: var(--brand-yellow); } .vec-mark.c { stroke: var(--brand-green); }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .side { stroke: currentColor; stroke-width: 2; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 6 5; }
+        .drop { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 4 4; }
+        .shadow { stroke-width: 8; stroke-linecap: round; opacity: 0.75; }
+        .shadow.pos { stroke: var(--brand-green); } .shadow.neg { stroke: var(--warning-red); }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 2; }
+        .svg-note { fill: currentColor; font-size: 16px; font-weight: 700; }
+        .ground { stroke: currentColor; stroke-width: 2.5; }
+        .hatch { stroke: var(--text-muted); stroke-width: 1.5; }
+        .runner { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: round; }
+        .sled-body { fill: var(--brand-blue); fill-opacity: 0.25; stroke: currentColor; stroke-width: 2; }
+        .sl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.6em; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .btn-row .readout { margin-right: auto; }
+        .sign-table { width: 100%; border-collapse: collapse; }
+        .sign-table td { border-bottom: 1px solid var(--border-color); padding: 3px 6px; }
+        .small-svg svg { max-height: 230px; }
+        .proof-svg svg { max-height: 125px; }
+        .eq-svg svg { max-height: 125px; }
+        #dot-answer, #dot-rule { padding: 8px 14px; margin-bottom: 8px; }
+        #dot-rule .box-title { margin-bottom: 2px; }
+        #proof .step { margin: 5px 0; line-height: 1.4; }
+        .tri-svg svg { max-height: 165px; }
+        @media (max-width: 760px) { .sl-grid { grid-template-columns: 1fr; } .formula { font-size: 1.15rem; } }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Яку роботу виконує сила? 🛷</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Санки тягнуть за мотузку із силою $50$ Н під кутом $60^\circ$ до дороги. Санки проїхали $10$ м.</p>
+                    <p>З фізики: якщо сила діє вздовж руху, то робота $A = F \cdot s$.</p>
+                    <p class="big-question">А яку роботу виконала сила, напрямлена під кутом?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="showIdea()">Ідея</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Працює лише «тінь» сили на дорогу</div>
+                        <p>Санки рухає катет $F\cos 60^\circ = 50 \cdot \frac12 = 25$ Н, тож $A = 25 \cdot 10 = 250$ Дж.</p>
+                        <p>Отже, $A = F \cdot s \cdot \cos\varphi$: довжини двох векторів і косинус кута між ними. Це <b>скалярний добуток</b> векторів $\vec F$ і $\vec s$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 272" id="sled-scene" role="img" aria-label="Санки, сила під кутом 60 градусів до дороги і переміщення"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Кут між векторами. Скалярний добуток</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Кут між векторами</div>
+                        <p>Відкладемо ненульові вектори від однієї точки $O$: $\vec a = \overrightarrow{OA}$, $\vec b = \overrightarrow{OB}$. Кут $AOB$ — це <b>кут між векторами</b> $\angle(\vec a,\,\vec b) = \varphi$, $\;0^\circ \le \varphi \le 180^\circ$.</p>
+                        <p>Співнапрямлені вектори: $\varphi = 0^\circ$; протилежно напрямлені: $\varphi = 180^\circ$.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Скалярний добуток</div>
+                        <p class="formula">$\vec a \cdot \vec b = |\vec a| \cdot |\vec b| \cdot \cos\varphi$</p>
+                        <p>Результат — <b>число</b>, а не вектор. Якщо хоч один вектор нульовий, $\vec a \cdot \vec b = 0$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container small-svg">
+                        <svg viewBox="0 0 400 220" id="angle-scene" role="img" aria-label="Вектори a і b, відкладені від точки O, і кут між ними"></svg>
+                    </div>
+                    <div class="box example" style="margin-top:12px">
+                        <div class="box-title">Приклад</div>
+                        <p>$|\vec a| = 4$, $|\vec b| = 3$, $\varphi = 60^\circ$: $\;\vec a \cdot \vec b = 4 \cdot 3 \cdot \frac12 = 6$.</p>
+                    </div>
+                    <div class="box remark">
+                        <p style="margin:0">Для $\varphi = 0^\circ$, $90^\circ$, $180^\circ$ беруть $\cos\varphi = 1$, $0$, $-1$, а для тупого кута $\cos\varphi \lt 0$ (докладно — згодом).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Скалярний добуток у координатах</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Для векторів $\vec a(a_1;\,a_2)$ і $\vec b(b_1;\,b_2)$:</p>
+                        <p class="formula">$\vec a \cdot \vec b = a_1 b_1 + a_2 b_2$</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Наслідки</div>
+                        <p>1) <b>Скалярний квадрат:</b> $\vec a^{\,2} = \vec a \cdot \vec a = a_1^2 + a_2^2 = |\vec a|^2$.</p>
+                        <p>2) $\vec a \perp \vec b \iff a_1 b_1 + a_2 b_2 = 0$ (для ненульових векторів).</p>
+                        <p>3) $\cos\varphi = \dfrac{a_1 b_1 + a_2 b_2}{|\vec a| \cdot |\vec b|}$.</p>
+                    </div>
+                </div>
+                <div class="box example" id="proof">
+                    <div class="box-title">Чому так? (кут $\varphi$ гострий, $BH \perp OA$)</div>
+                    <div class="widget-svg-container proof-svg">
+                        <svg viewBox="0 0 380 190" id="proof-scene" role="img" aria-label="Трикутник OAB і висота BH"></svg>
+                    </div>
+                    <div class="step">1) За координатами $\overrightarrow{BA} = \vec a - \vec b$: $\;AB^2 = (a_1 - b_1)^2 + (a_2 - b_2)^2$ $= OA^2 + OB^2 - 2(a_1 b_1 + a_2 b_2)$.</div>
+                    <div class="step">2) За теоремою Піфагора: $AB^2 = BH^2 + AH^2$ $= (OB^2 - OH^2) + (OA - OH)^2$ $= OA^2 + OB^2 - 2\,OA \cdot OH$.</div>
+                    <div class="step">3) Отже, $a_1 b_1 + a_2 b_2 = OA \cdot OH$ $= |\vec a|\,|\vec b| \cos\varphi$, бо $OH = OB \cos\varphi$. При $\varphi = 90^\circ$: $H = O$, добуток $0$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('proof')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Знак скалярного добутку 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Змінюємо кінці векторів. Учень обчислює $\vec a \cdot \vec b$ і називає вид кута, потім перевіряємо.</p>
+                    <div class="sl-grid">
+                        <div class="slider-control"><label for="a1">$a_1$</label><input type="range" id="a1" min="-4" max="4" step="1" value="3" oninput="dotInput()"><span id="a1-val"></span></div>
+                        <div class="slider-control"><label for="a2">$a_2$</label><input type="range" id="a2" min="-4" max="4" step="1" value="1" oninput="dotInput()"><span id="a2-val"></span></div>
+                        <div class="slider-control"><label for="b1">$b_1$</label><input type="range" id="b1" min="-4" max="4" step="1" value="1" oninput="dotInput()"><span id="b1-val"></span></div>
+                        <div class="slider-control"><label for="b2">$b_2$</label><input type="range" id="b2" min="-4" max="4" step="1" value="3" oninput="dotInput()"><span id="b2-val"></span></div>
+                    </div>
+                    <div class="btn-row">
+                        <span class="readout" id="dot-coords"></span>
+                        <button class="btn-primary" onclick="revealDot()">Обчислити</button>
+                        <button class="btn-secondary" onclick="document.getElementById('dot-rule').classList.add('shown')">Висновок</button>
+                    </div>
+                    <div class="box theorem hidden-answer" id="dot-answer"><p id="dot-result" style="margin:0"></p></div>
+                    <div class="box hack hidden-answer" id="dot-rule">
+                        <div class="box-title">Висновок (і навпаки)</div>
+                        <table class="sign-table">
+                            <tr><td>$\vec a \cdot \vec b \gt 0$</td><td>кут гострий (або $0^\circ$)</td></tr>
+                            <tr><td>$\vec a \cdot \vec b = 0$</td><td>кут прямий: $\vec a \perp \vec b$</td></tr>
+                            <tr><td>$\vec a \cdot \vec b \lt 0$</td><td>кут тупий (або $180^\circ$)</td></tr>
+                        </table>
+                        <p style="margin-bottom:0">Тінь $\vec b$ на пряму $\vec a$ — уперед (зелена) чи назад (червона).</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 340 340" id="dot-scene" role="img" aria-label="Вектори a і b на координатній площині, кут між ними і тінь вектора b на пряму вектора a"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як знайти кут між векторами</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) $\vec a \cdot \vec b = a_1 b_1 + a_2 b_2$ (знак: гострий чи тупий).</p>
+                        <p>2) Модулі: $|\vec a| = \sqrt{a_1^2 + a_2^2}$, $\;|\vec b| = \sqrt{b_1^2 + b_2^2}$.</p>
+                        <p>3) $\cos\varphi = \dfrac{\vec a \cdot \vec b}{|\vec a| \cdot |\vec b|}$.</p>
+                        <p>4) Кут: $\frac{\sqrt3}{2} \to 30^\circ$, $\;\frac{\sqrt2}{2} \to 45^\circ$, $\;\frac12 \to 60^\circ$, $\;0 \to 90^\circ$.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container tri-svg">
+                        <svg viewBox="0 0 250 250" id="tri-scene" role="img" aria-label="Трикутник ABC на координатній площині і вектори AB та AC"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p style="margin-top:0"><b>Знайдіть кут $A$</b> трикутника з вершинами $A(1;\,1)$, $B(2;\,4)$, $C(3;\,2)$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Два приклади</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p style="margin-top:0"><b>а)</b> При якому $x$ вектори $\vec a(x;\,-2)$ і $\vec b(3;\,6)$ перпендикулярні?</p>
+                    <div class="step">$\vec a \perp \vec b \iff \vec a \cdot \vec b = 0$: $\;x \cdot 3 + (-2) \cdot 6 = 0$.</div>
+                    <div class="step">$3x - 12 = 0$, $\;x = 4$.</div>
+                    <div class="step">Перевірка: $\vec a(4;\,-2)$, $\;4 \cdot 3 + (-2) \cdot 6$ $= 12 - 12 = 0$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p style="margin-top:0"><b>б)</b> $ABC$ — рівносторонній трикутник зі стороною $4$. Знайдіть $\overrightarrow{AB} \cdot \overrightarrow{AC}$ і $\overrightarrow{AB} \cdot \overrightarrow{BC}$.</p>
+                    <div class="widget-svg-container eq-svg">
+                        <svg viewBox="0 0 400 215" id="eq-scene" role="img" aria-label="Рівносторонній трикутник ABC, вектори AB, AC, BC і кути 60 та 120 градусів"></svg>
+                    </div>
+                    <div class="step">$\overrightarrow{AB}$ і $\overrightarrow{AC}$ виходять з точки $A$, кут $60^\circ$: $\;4 \cdot 4 \cdot \frac12 = 8$.</div>
+                    <div class="step">$\overrightarrow{AB}$ і $\overrightarrow{BC}$ не виходять з однієї точки: кут між ними $120^\circ$, тупий. Замінимо $\overrightarrow{AB} = -\overrightarrow{BA}$.</div>
+                    <div class="step">Мінус виноситься (за координатною формулою): $\overrightarrow{AB} \cdot \overrightarrow{BC} = -\overrightarrow{BA} \cdot \overrightarrow{BC} = -8.$</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Добуток — число, а не вектор</div>
+                        <p>$\vec a(3;\,1)$, $\vec b(2;\,5)$: $\;\vec a \cdot \vec b = 3 \cdot 2 + 1 \cdot 5 = 11$. Не $(6;\,5)$ і не «навхрест» $3 \cdot 5 + 1 \cdot 2$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Вектори — з однієї точки</div>
+                        <p>Кут $B$ трикутника — це кут між $\overrightarrow{BA}$ і $\overrightarrow{BC}$. Між $\overrightarrow{AB}$ і $\overrightarrow{BC}$ кут $180^\circ - \angle B$, і знак добутку протилежний.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Перпендикулярність ≠ колінеарність</div>
+                        <p>$\vec a \perp \vec b$: $\;a_1 b_1 + a_2 b_2 = 0$. Пропорційні координати $\frac{a_1}{b_1} = \frac{a_2}{b_2}$ — це колінеарні вектори.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Модуль — з коренем</div>
+                        <p>У формулі косинуса ділимо на $|\vec a| = \sqrt{a_1^2 + a_2^2}$. Для $\vec a(3;\,-4)$: $\vec a^{\,2} = 25$, а $|\vec a| = 5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Формат НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть скалярний добуток векторів $\vec a(3;\,-2)$ і $\vec b(4;\,5)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $(12;\,-10)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $22$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Г) $2$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\vec a \cdot \vec b = 3 \cdot 4 + (-2) \cdot 5$ $= 12 - 10 = 2.$</p>
+                            <p>$(12;\,-10)$ — забули додати (добуток — число), $22$ — помилка в знаку, $7$ — множили «навхрест».</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть кут між векторами $\vec a(\sqrt3;\,1)$ і $\vec b(\sqrt3;\,-1)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $0^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $30^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $60^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $90^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\vec a \cdot \vec b = \sqrt3 \cdot \sqrt3 + 1 \cdot (-1)$ $= 2;$ $\;|\vec a| = |\vec b| = \sqrt{3 + 1} = 2$.</p>
+                            <p>$\cos\varphi = \frac{2}{2 \cdot 2} = \frac12$, тому $\varphi = 60^\circ$.</p>
+                            <p>$30^\circ$ — сплутали з $\sin 30^\circ = \frac12$; $0^\circ$ — помилка в знаку; $90^\circ$ — множили «навхрест».</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">$ABCD$ — квадрат зі стороною $4$. Знайдіть скалярний добуток $\overrightarrow{AC} \cdot \overrightarrow{CD}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $-16\sqrt2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $-16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $16\sqrt2$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Координати: $A(0;\,0)$, $C(4;\,4)$, $D(0;\,4)$. Тоді $\overrightarrow{AC}(4;\,4)$, $\overrightarrow{CD}(-4;\,0)$ і $\overrightarrow{AC} \cdot \overrightarrow{CD} = 4 \cdot (-4) + 4 \cdot 0$ $= -16.$</p>
+                            <p>Інакше: $\overrightarrow{AC} = -\overrightarrow{CA}$, кут між $\overrightarrow{CA}$ і $\overrightarrow{CD}$ дорівнює $45^\circ$: $\;-4\sqrt2 \cdot 4 \cdot \frac{\sqrt2}{2} = -16$.</p>
+                            <p>$16$ — узяли кут $45^\circ$, не відклавши вектори від однієї точки.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\vec a \cdot \vec b = |\vec a|\,|\vec b| \cos\varphi = a_1 b_1 + a_2 b_2$ — це число.</p>
+                    <p>$\vec a^{\,2} = |\vec a|^2$; $\quad \vec a \perp \vec b \iff \vec a \cdot \vec b = 0$.</p>
+                    <p>$\vec a \cdot \vec b \gt 0$ — кут гострий (або $0^\circ$), $\;\vec a \cdot \vec b \lt 0$ — тупий (або $180^\circ$).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Кут між векторами: $\vec a \cdot \vec b$ → модулі → $\cos\varphi = \dfrac{\vec a \cdot \vec b}{|\vec a|\,|\vec b|}$ → кут за таблицею.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Кут між векторами — коли вони виходять з однієї точки. Для кута $B$ трикутника — $\overrightarrow{BA}$ і $\overrightarrow{BC}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderSled();
+                if (currentSlide === 2) renderAngle();
+                if (currentSlide === 3) renderProof();
+                if (currentSlide === 4) renderDot();
+                if (currentSlide === 5) renderEval();
+                if (currentSlide === 6) renderEq();
+@@JS
+@@INCLUDE plot.js
+
+            // --- Спільні креслярські помічники (пікселі SVG; математичні кути — проти годинникової стрілки) ---
+            function arrow(x1, y1, x2, y2, cls) {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(15, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            // Назва вектора зі стрілкою над нею
+            function vecName(x, y, name, cls) {
+                const w = 7 * name.length;
+                return `<text x="${x}" y="${y}" class="vec-name ${cls}">${name}</text>`
+                     + `<path d="M${x - w} ${y - 18} h${2 * w} m-4 -3.5 l4 3.5 l-4 3.5" class="vec-mark ${cls}"/>`;
+            }
+            const norm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            function wedge(cx, cy, r, t1, t2, cls) {
+                const d = norm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            function rightMark(cx, cy, t1, t2, s) {
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${cx + ux * s} ${cy + uy * s} L${cx + (ux + vx) * s} ${cy + (uy + vy) * s} L${cx + vx * s} ${cy + vy * s}" class="right-mark"/>`;
+            }
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            const deg = Math.PI / 180;
+
+            // --- Слайд 1: санки ---
+            let ideaShown = false;
+            window.showIdea = function () { ideaShown = true; document.getElementById('answer-1').classList.add('shown'); renderSled(); };
+            window.renderSled = function () {
+                const px = 168, py = 188, L = 150, fx = px + L * Math.cos(60 * deg), fy = py - L * Math.sin(60 * deg);
+                let s = '<line x1="10" y1="214" x2="410" y2="214" class="ground"/>';
+                for (let x = 18; x <= 410; x += 20) s += `<line x1="${x}" y1="214" x2="${x - 8}" y2="223" class="hatch"/>`;
+                s += '<rect x="58" y="176" width="108" height="24" rx="6" class="sled-body"/>'
+                   + '<path d="M48 208 H164 Q178 208 182 196" class="runner"/><line x1="76" y1="200" x2="76" y2="208" class="runner"/><line x1="146" y1="200" x2="146" y2="208" class="runner"/>';
+                s += `<line x1="${px}" y1="${py}" x2="350" y2="${py}" class="guide"/>` + wedge(px, py, 38, 0, 60 * deg, '');
+                s += label(px + 56 * Math.cos(30 * deg), py - 56 * Math.sin(30 * deg) + 5, '60°', 'angle-label');
+                if (ideaShown) {
+                    s += `<line x1="${fx}" y1="${fy}" x2="${fx}" y2="${py}" class="drop"/>`
+                       + `<line x1="${px}" y1="${py}" x2="${fx}" y2="${py}" class="shadow pos"/>`
+                       + `<text x="${fx + 8}" y="${py + 20}" class="svg-note" style="fill:var(--brand-green)">25 Н</text>`;
+                }
+                s += arrow(px, py, fx, fy, 'b') + vecName(fx + 14, fy + 4, 'F', 'b') + `<text x="${fx + 26}" y="${fy + 4}" class="svg-note">= 50 Н</text>`;
+                s += arrow(58, 242, 318, 242, 'a') + `<text x="188" y="266" class="svg-note" text-anchor="middle">переміщення 10 м</text>`;
+                document.getElementById('sled-scene').innerHTML = s;
+            };
+
+            // --- Слайд 2: кут між векторами ---
+            window.renderAngle = function () {
+                const ox = 50, oy = 185, ta = 8 * deg, tb = 68 * deg;
+                const ax = ox + 250 * Math.cos(ta), ay = oy - 250 * Math.sin(ta), bx = ox + 150 * Math.cos(tb), by = oy - 150 * Math.sin(tb);
+                const sx = 300, sy = 205;   // справжнє положення вектора b
+                let s = arrow(sx, sy, sx + bx - ox, sy + by - oy, 'b dash') + vecName(sx + (bx - ox) / 2 + 22, sy + (by - oy) / 2 + 6, 'b', 'b');
+                s += wedge(ox, oy, 42, ta, tb, '') + label(ox + 60 * Math.cos(38 * deg), oy - 60 * Math.sin(38 * deg) + 6, 'φ', 'angle-label');
+                s += arrow(ox, oy, ax, ay, 'a') + arrow(ox, oy, bx, by, 'b');
+                s += vecName((ox + ax) / 2 + 4, (oy + ay) / 2 + 26, 'a', 'a') + vecName((ox + bx) / 2 - 18, (oy + by) / 2, 'b', 'b');
+                s += `<circle cx="${ox}" cy="${oy}" r="4" class="geo-dot"/>` + label(ox - 12, oy + 20, 'O') + label(ax + 4, ay + 26, 'A') + label(bx - 14, by - 2, 'B');
+                document.getElementById('angle-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: доведення ---
+            window.renderProof = function () {
+                const O = [30, 160], A = [350, 160], B = [220, 30], H = [220, 160];
+                let s = `<line x1="${O[0]}" y1="${O[1]}" x2="${H[0]}" y2="${H[1]}" class="shadow pos"/>`
+                      + `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" class="side"/>`
+                      + `<line x1="${B[0]}" y1="${B[1]}" x2="${H[0]}" y2="${H[1]}" class="drop"/>`
+                      + rightMark(H[0], H[1], 90 * deg, 0, 13) + wedge(O[0], O[1], 36, 0, Math.atan2(O[1] - B[1], B[0] - O[0]), '');
+                s += arrow(...O, ...A, 'a') + arrow(...O, ...B, 'b');
+                s += label(O[0] + 56, O[1] - 10, 'φ', 'angle-label') + vecName(300, 150, 'a', 'a') + vecName(108, 84, 'b', 'b');
+                s += label(O[0] - 8, O[1] + 24, 'O') + label(A[0] - 2, A[1] + 24, 'A') + label(B[0], B[1] - 10, 'B') + label(H[0], H[1] + 24, 'H');
+                document.getElementById('proof-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: знак скалярного добутку ---
+            let dotShown = false;
+            const mn = (v) => String(v).replace('-', '−');
+            const tp = (v) => (v < 0 ? `(${v})` : `${v}`);
+            window.dotInput = function () { dotShown = false; renderDot(); };
+            window.revealDot = function () { dotShown = true; renderDot(); };
+            window.renderDot = function () {
+                const val = (id) => parseInt(document.getElementById(id).value, 10);
+                const a1 = val('a1'), a2 = val('a2'), b1 = val('b1'), b2 = val('b2');
+                ['a1', 'a2', 'b1', 'b2'].forEach((id) => { document.getElementById(`${id}-val`).textContent = mn(val(id)); });
+                const dot = a1 * b1 + a2 * b2, cross = a1 * b2 - a2 * b1, la = Math.hypot(a1, a2), lb = Math.hypot(b1, b2);
+                const kind = (la === 0 || lb === 0) ? 'zero' : cross === 0 ? (dot > 0 ? 'same' : 'opp') : dot > 0 ? 'acute' : dot === 0 ? 'right' : 'obtuse';
+                const P = plane(-5, 5, -5, 5, 340, 340, 20), ox = P.sx(0), oy = P.sy(0), ta = Math.atan2(a2, a1), tb = Math.atan2(b2, b1);
+                let s = axesSvg(P);
+                if (kind !== 'zero' && dotShown) {
+                    const k = 8 / la, t = dot / (la * la);
+                    s += `<line x1="${P.sx(-a1 * k)}" y1="${P.sy(-a2 * k)}" x2="${P.sx(a1 * k)}" y2="${P.sy(a2 * k)}" class="guide"/>`;
+                    if (dot !== 0) s += `<line x1="${P.sx(b1)}" y1="${P.sy(b2)}" x2="${P.sx(a1 * t)}" y2="${P.sy(a2 * t)}" class="drop"/>`
+                        + `<line x1="${ox}" y1="${oy}" x2="${P.sx(a1 * t)}" y2="${P.sy(a2 * t)}" class="shadow ${dot > 0 ? 'pos' : 'neg'}"/>`;
+                }
+                if (kind !== 'zero' && kind !== 'same') {
+                    if (kind === 'right' && dotShown) s += rightMark(ox, oy, ta, tb, 15);
+                    else s += wedge(ox, oy, 26, ta, tb, !dotShown ? 'none' : kind === 'acute' ? 'g' : kind === 'right' ? '' : 'r');
+                    const mid = ta + norm(tb - ta) / 2;
+                    s += label(ox + 42 * Math.cos(mid), oy - 42 * Math.sin(mid) + 6, 'φ', 'angle-label');
+                }
+                s += arrow(ox, oy, P.sx(a1), P.sy(a2), 'a') + arrow(ox, oy, P.sx(b1), P.sy(b2), 'b') + `<circle cx="${ox}" cy="${oy}" r="4" class="geo-dot"/>`;
+                const tag = (x, y, t, name, side) => {
+                    const L = Math.hypot(x, y); if (L === 0) return '';
+                    const ux = x / L, uy = y / L;
+                    return vecName(P.sx(x) + ux * 16 - uy * side, P.sy(y) - uy * 16 - ux * side + 7, name, t);
+                };
+                s += tag(a1, a2, 'a', 'a', 0) + tag(b1, b2, 'b', 'b', a1 === b1 && a2 === b2 ? 22 : 0);
+                document.getElementById('dot-scene').innerHTML = s;
+
+                const coords = document.getElementById('dot-coords'), out = document.getElementById('dot-result');
+                coords.innerHTML = `$\\vec a(${a1};\\,${a2}), \\quad \\vec b(${b1};\\,${b2})$`;
+                let phi = '';
+                if (kind !== 'zero') {
+                    const d = Math.acos(Math.max(-1, Math.min(1, dot / (la * lb)))) / deg;
+                    phi = Math.abs(d - Math.round(d)) < 1e-6 ? `= ${Math.round(d)}^\\circ` : `\\approx ${d.toFixed(1).replace('.', '{,}')}^\\circ`;
+                }
+                const conclusion = {
+                    zero: 'є нульовий вектор, кут між векторами не визначають.',
+                    same: 'добуток додатний, вектори співнапрямлені: $\\varphi = 0^\\circ$.',
+                    opp: 'добуток від\'ємний, вектори протилежно напрямлені: $\\varphi = 180^\\circ$.',
+                    acute: `добуток додатний — кут гострий: $\\varphi ${phi}$.`,
+                    right: 'добуток нуль — вектори перпендикулярні: $\\varphi = 90^\\circ$.',
+                    obtuse: `добуток від'ємний — кут тупий: $\\varphi ${phi}$.`,
+                }[kind];
+                out.innerHTML = `$\\vec a \\cdot \\vec b = ${a1} \\cdot ${tp(b1)} + ${tp(a2)} \\cdot ${tp(b2)} = ${dot}$:<br>${conclusion}`;
+                document.getElementById('dot-answer').classList.toggle('shown', dotShown);
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([coords, out]);
+            };
+
+            // --- Слайд 5: кут трикутника за координатами ---
+            const STEPS = [
+                ['$\\overrightarrow{AB}(1;\\,3)$, $\\ \\overrightarrow{AC}(2;\\,1)$', 'Вектори з вершини $A$: від координат кінця віднімаємо координати початку'],
+                ['$\\overrightarrow{AB} \\cdot \\overrightarrow{AC} = 1 \\cdot 2 + 3 \\cdot 1 =$ [[$5$]]', 'Добуток додатний — кут $A$ гострий'],
+                ['$|\\overrightarrow{AB}| = \\sqrt{10}$, $\\ |\\overrightarrow{AC}| = \\sqrt5$', 'Модулі: $\\sqrt{1^2 + 3^2}$ і $\\sqrt{2^2 + 1^2}$'],
+                ['$\\cos A = \\dfrac{5}{\\sqrt{10} \\cdot \\sqrt5} = \\dfrac{5}{5\\sqrt2} =$ [[$\\dfrac{\\sqrt2}{2}$]]', '$\\sqrt{10} \\cdot \\sqrt5 = \\sqrt{50} = 5\\sqrt2$'],
+                ['$\\angle A = 45^\\circ$', 'За таблицею: $\\cos 45^\\circ = \\frac{\\sqrt2}{2}$'],
+            ];
+@@INCLUDE steps.js
+            window.renderTri = function () {
+                const P = plane(-0.5, 4.5, -0.5, 4.5, 250, 250, 20), pt = (x, y) => [P.sx(x), P.sy(y)];
+                const A = pt(1, 1), B = pt(2, 4), C = pt(3, 2), done = shown >= STEPS.length;
+                const tAB = Math.atan2(3, 1), tAC = Math.atan2(1, 2), mid = (tAB + tAC) / 2;
+                let s = axesSvg(P) + `<line x1="${B[0]}" y1="${B[1]}" x2="${C[0]}" y2="${C[1]}" class="side"/>`;
+                s += wedge(...A, 24, tAC, tAB, done ? 'g' : 'none') + label(A[0] + 44 * Math.cos(mid), A[1] - 44 * Math.sin(mid) + 6, done ? '45°' : '?', 'angle-label');
+                s += arrow(...A, ...B, 'a') + arrow(...A, ...C, 'b');
+                s += label(A[0] - 12, A[1] + 20, 'A') + label(B[0] - 14, B[1] + 2, 'B') + label(C[0] + 14, C[1] + 6, 'C');
+                document.getElementById('tri-scene').innerHTML = s;
+            };
+            const baseEval = window.renderEval;
+            window.renderEval = function () { baseEval(); renderTri(); };
+
+            // --- Слайд 6: рівносторонній трикутник ---
+            window.renderEq = function () {
+                const A = [40, 190], B = [200, 190], C = [120, 190 - 160 * Math.sin(60 * deg)];
+                let s = wedge(...A, 32, 0, 60 * deg, 'g') + label(A[0] + 50 * Math.cos(30 * deg), A[1] - 50 * Math.sin(30 * deg) + 6, '60°', 'angle-label');
+                s += wedge(...B, 28, 0, 120 * deg, 'r') + label(B[0] + 48 * Math.cos(60 * deg), B[1] - 48 * Math.sin(60 * deg) + 6, '120°', 'angle-label');
+                s += arrow(...B, B[0] + 150, B[1], 'a dash');
+                s += arrow(...A, ...B, 'a') + arrow(...A, ...C, 'c') + arrow(...B, ...C, 'b');
+                s += label(A[0] - 6, A[1] + 22, 'A') + label(B[0], B[1] + 22, 'B') + label(C[0], C[1] - 10, 'C') + vecName(B[0] + 120, B[1] - 12, 'AB', 'a');
+                document.getElementById('eq-scene').innerHTML = s;
+            };

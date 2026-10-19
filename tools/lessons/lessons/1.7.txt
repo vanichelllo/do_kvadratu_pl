@@ -1,0 +1,399 @@
+@@TITLE Ділення натуральних чисел
+@@CSS
+        /* Розкладаємо кружечки на групи */
+        .chip { fill: var(--brand-blue); }
+        .chip.g1 { fill: var(--brand-green); }
+        .chip.g2 { fill: var(--brand-yellow); }
+        .group-box { fill: none; stroke: var(--border-color); stroke-width: 2; stroke-dasharray: 5 4; }
+        .slider-control label { font-weight: 800; min-width: 60px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .div-answer { font-size: 1.3rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 8px 0; }
+
+        /* Назви компонентів */
+        .term { font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .term-a { fill: var(--brand-blue); }
+        .term-b { fill: var(--brand-green); }
+        .term-s { fill: var(--brand-yellow); }
+        .term-op { fill: currentColor; font-size: 40px; font-weight: 700; text-anchor: middle; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2; }
+        .term-name { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+
+        /* Ділення кутом */
+        .ld-digit { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-prod { fill: var(--brand-blue); font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-cur { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-quot { fill: var(--brand-green); font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .ld-line { stroke: currentColor; stroke-width: 2; }
+        .ld-minus { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-zero { fill: var(--brand-yellow); }
+        .col-steps { min-height: 6.5em; margin-top: 6px; }
+        .col-steps div { padding: 2px 0; animation: fade 0.3s ease; }
+        .col-steps div:last-child { font-weight: 700; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Порівну в кожен альбом 📒</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Тарас:</span> У мене $72$ наліпки. Хочу розкласти їх порівну в $6$ альбомів.</div>
+                <div class="bubble right"><span class="who">Оля:</span> А як дізнатися, скільки буде в кожному — і перевірити, що порівну?</div>
+                <p class="big-question">Скільки наліпок у кожному альбомі? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Ділимо! 🎉</div>
+                    <p>$72 : 6 = 12$ наліпок у кожному альбомі.</p>
+                    <p>Перевірка множенням: $12 \cdot 6 = 72$ ✓</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Ділимо порівну 🍬</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Розкладаємо цукерки порівну. На скільки груп ділимо? Скільки буде в кожній? Скажіть, а потім перевіримо.</p>
+                    </div>
+                    <div class="presets">
+                        <button class="btn-secondary" onclick="setTotal(12)">12 цукерок</button>
+                        <button class="btn-secondary" onclick="setTotal(24)">24 цукерки</button>
+                        <button class="btn-secondary" onclick="setTotal(36)">36 цукерок</button>
+                    </div>
+                    <div class="slider-control"><label for="w-g">Груп</label><input type="range" id="w-g" min="0" max="7" step="1" value="3" oninput="renderGroups()"><span id="w-g-val">4</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealGroups()">Скільки в кожній групі?</button></p>
+                    <div class="hidden-answer" id="group-answer">
+                        <div class="div-answer" id="group-div"></div>
+                        <p style="text-align:center" id="group-check"></p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="group-scene" role="img" aria-label="Цукерки, розкладені на рівні групи"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Ділене, дільник, частка</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Запам'ятай! ⭐</div>
+                        <p><b>Перевірка:</b> частка $\cdot$ дільник $=$ ділене.</p>
+                        <p>$a : 1 = a$, $\;a : a = 1$, $\;0 : a = 0$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">На нуль ділити не можна! 🚫</div>
+                        <p>Немає числа, яке при множенні на $0$ дає $5$. Тому $5 : 0$ не має змісту.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" role="img" aria-label="56 поділити на 8 дорівнює 7: ділене, дільник, частка">
+                        <text x="70" y="80" class="term term-a">56</text>
+                        <text x="140" y="76" class="term-op">:</text>
+                        <text x="210" y="80" class="term term-b">8</text>
+                        <text x="275" y="78" class="term-op">=</text>
+                        <text x="340" y="80" class="term term-s">7</text>
+                        <path d="M40 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M180 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M310 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <text x="70" y="150" class="term-name">ділене</text>
+                        <text x="210" y="150" class="term-name">дільник</text>
+                        <text x="340" y="150" class="term-name">частка</text>
+                        <text x="200" y="188" class="term-name" style="font-weight:600">перевірка: 7 · 8 = 56</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Ділимо кутом ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як ділити</div>
+                        <p>Беремо перше <b>неповне ділене</b> — найменше число зліва, що ділиться. Ділимо, множимо, віднімаємо, зносимо наступну цифру — і знову.</p>
+                    </div>
+                    <div class="col-steps" id="ld-steps"></div>
+                </div>
+                <div class="math-widget">
+                    <div class="widget-svg-container"><svg viewBox="0 0 320 300" id="ld-scene" role="img" aria-label="Ділення кутом"></svg></div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="ldStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="ldReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="ldPair()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: загублений нуль ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$816 : 8 = 12$? <b>Ні!</b> Знесли $1$ — а $1$ менше за $8$. У частку треба записати $0$!</p>
+                        <p>Правильно: $816 : 8 = 102$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перше неповне ділене — $8$ (сотні), тож у частці <b>три</b> цифри. Перевір: $12 \cdot 8 = 96$, а не $816$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 240" role="img" aria-label="Неправильно 816 поділити на 8 дорівнює 12, правильно 102">
+                        <text x="100" y="60" class="term term-a" style="font-size:34px">816 : 8</text>
+                        <text x="100" y="120" class="term" style="font-size:40px;fill:var(--warning-red)">12</text>
+                        <line x1="60" y1="80" x2="140" y2="130" class="cross"/>
+                        <text x="300" y="60" class="term term-a" style="font-size:34px">816 : 8</text>
+                        <text x="300" y="120" class="term" style="font-size:40px;fill:var(--brand-green)">1<tspan class="ld-zero">0</tspan>2</text>
+                        <text x="100" y="175" class="svg-caption" style="fill:var(--warning-red)">12 · 8 = 96</text>
+                        <text x="300" y="175" class="svg-caption" style="fill:var(--brand-green)">102 · 8 = 816 ✓</text>
+                        <text x="200" y="215" class="svg-caption" style="font-size:14px">Скільки неповних ділених —</text><text x="200" y="234" class="svg-caption" style="font-size:14px">стільки цифр у частці</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Яке число треба помножити на $7$, щоб отримати $84$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $11$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $12$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $13$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Ділення — обернене до множення: $84 : 7 = \,?$ Спробуй ще раз!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$84 : 7 = 12$, бо $12 \cdot 7 = 84$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Чому дорівнює $0 : 15$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $0$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) Ділити не можна</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Тут ділять <b>нуль</b> на $15$, а не на нуль. Скільки отримає кожен із $15$ дітей, якщо цукерок $0$?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$0 : 15 = 0$, бо $0 \cdot 15 = 0$. Не можна ділити <b>на</b> нуль, а нуль ділити можна.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Скільки цифр буде в частці $4\,816 : 8$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $4$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знайди перше неповне ділене: $4$ менше за $8$, тож беремо …</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Перше неповне ділене — $48$ (сотні), далі ще дві цифри: у частці три цифри. $4\,816 : 8 = 602$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли: $1\,428 : 14$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $12$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $102$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $120$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $112$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Перше неповне ділене — $14$. Що робимо, коли знесена цифра менша за $14$?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$14 : 14 = 1$; знесли $2$ — менше за $14$, пишемо $0$; $28 : 14 = 2$. Відповідь $102$. Перевірка: $102 \cdot 14 = 1\,428$ ✓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>ділене $:$ дільник $=$ частка</p>
+                    <p>Перевірка: частка $\cdot$ дільник $=$ ділене.</p>
+                    <p>$a : 1 = a$, $\;a : a = 1$, $\;0 : a = 0$. На $0$ ділити <b>не можна</b>.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як ділити кутом ✍️</div>
+                        <p>Неповне ділене → ділимо → множимо → віднімаємо → зносимо цифру. Цифр у частці стільки, скільки неповних ділених.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Знесена цифра замала — пиши в частку $0$: $816 : 8 = 102$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderGroups();
+                if (currentSlide === 4) renderLongDivision();
+@@JS
+            // --- Слайд 2: розкладаємо цукерки на рівні групи (лише дільники, щоб ділилось без остачі) ---
+            let total = 24;
+            const divisorsOf = (n) => Array.from({ length: n }, (_, i) => i + 1).filter(d => n % d === 0);
+            window.setTotal = function (n) {
+                total = n;
+                const slider = document.getElementById('w-g');
+                slider.max = divisorsOf(n).length - 1;
+                slider.value = Math.min(parseInt(slider.value, 10) || 0, slider.max);
+                renderGroups();
+            };
+            window.renderGroups = function () {
+                const divs = divisorsOf(total);
+                const groups = divs[Math.min(parseInt(document.getElementById('w-g').value, 10) || 0, divs.length - 1)];
+                const per = total / groups;
+                document.getElementById('w-g-val').textContent = groups;
+                document.getElementById('group-answer').classList.remove('shown');
+                // Групи — рядами по кілька штук; кожна група в пунктирній рамці
+                const cols = groups <= 4 ? groups : Math.ceil(Math.sqrt(groups * 1.4));
+                const rows = Math.ceil(groups / cols);
+                const gw = 380 / cols, gh = 280 / rows;
+                const inRow = Math.ceil(Math.sqrt(per * gw / gh));
+                const inCol = Math.ceil(per / inRow);
+                const r = Math.max(3, Math.min(14, (gw - 14) / inRow / 2.4, (gh - 14) / inCol / 2.4));
+                let svg = '';
+                for (let g = 0; g < groups; g++) {
+                    const gx = 10 + (g % cols) * gw, gy = 10 + Math.floor(g / cols) * gh;
+                    svg += `<rect x="${gx + 3}" y="${gy + 3}" width="${gw - 6}" height="${gh - 6}" rx="10" class="group-box"/>`;
+                    for (let k = 0; k < per; k++) {
+                        const cx = gx + gw / 2 + ((k % inRow) - (inRow - 1) / 2) * r * 2.4;
+                        const cy = gy + gh / 2 + (Math.floor(k / inRow) - (inCol - 1) / 2) * r * 2.4;
+                        svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="chip g${g % 3}"/>`;
+                    }
+                }
+                document.getElementById('group-scene').innerHTML = svg;
+            };
+            window.revealGroups = function () {
+                const divs = divisorsOf(total);
+                const groups = divs[Math.min(parseInt(document.getElementById('w-g').value, 10) || 0, divs.length - 1)];
+                document.getElementById('group-div').textContent = `${total} : ${groups} = ${total / groups}`;
+                document.getElementById('group-check').textContent = `Перевірка: ${total / groups} · ${groups} = ${total} ✓`;
+                document.getElementById('group-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: ділення кутом ---
+            const PAIRS = [[936, 4], [816, 8], [1512, 36]];
+            let pairIndex = 0, shownSteps = 0;
+            function divSteps(n, d) {
+                // Кожен крок: де закінчується неповне ділене, його значення, цифра частки, добуток, остача
+                const D = String(n).split('').map(Number);
+                let e = 0, cur = D[0];
+                while (cur < d && e < D.length - 1) { e++; cur = cur * 10 + D[e]; }
+                const steps = [];
+                for (;;) {
+                    const q = Math.floor(cur / d), prod = q * d, rem = cur - prod;
+                    steps.push({ end: e, cur, q, prod, rem });
+                    if (e === D.length - 1) break;
+                    e++;
+                    cur = rem * 10 + D[e];
+                }
+                return steps;
+            }
+            function stepText(s, k, steps, n, d) {
+                if (k === 0) return `Перше неповне ділене — ${s.cur}, тож у частці буде ${steps.length} цифр${steps.length < 5 ? 'и' : ''}. ${s.cur} : ${d} = ${s.q}; ${s.q} · ${d} = ${s.prod}; остача ${s.rem}.`;
+                if (s.q === 0) return `Зносимо цифру: ${s.cur} менше за ${d} — у частці пишемо 0.`;
+                return `Зносимо цифру: ${s.cur} : ${d} = ${s.q}; ${s.q} · ${d} = ${s.prod}; остача ${s.rem}.`;
+            }
+            window.renderLongDivision = function () {
+                const [n, d] = PAIRS[pairIndex];
+                const steps = divSteps(n, d), shown = steps.slice(0, shownSteps);
+                const D = String(n), w = 28, x0 = 40, rowH = 30;
+                const cx = (i) => x0 + i * w + w / 2;   // центр цифри з номером i (зліва)
+                const right = (str, end, y, cls) => str.split('').map((ch, k) =>
+                    `<text x="${cx(end - (str.length - 1 - k))}" y="${y}" class="${cls}">${ch}</text>`).join('');
+                const xBar = x0 + D.length * w + 8;
+                let svg = right(D, D.length - 1, 30, 'ld-digit')
+                        + `<line x1="${xBar}" y1="8" x2="${xBar}" y2="72" class="ld-line"/>`
+                        + `<text x="${xBar + 12}" y="30" class="ld-digit" style="text-anchor:start">${d}</text>`
+                        + `<line x1="${xBar}" y1="40" x2="${xBar + 90}" y2="40" class="ld-line"/>`;
+                const quot = shown.map(s => s.q).join('');
+                quot.split('').forEach((ch, k) => {
+                    svg += `<text x="${xBar + 12 + k * 16}" y="66" class="ld-quot${ch === '0' && k > 0 ? ' ld-zero' : ''}" style="text-anchor:start">${ch}</text>`;
+                });
+                let y = 30;
+                shown.forEach((s, k) => {
+                    if (k > 0) { y += rowH; svg += right(String(s.cur), s.end, y, 'ld-cur'); }
+                    if (s.q > 0) {
+                        y += rowH;
+                        const len = String(s.prod).length;
+                        svg += `<text x="${cx(s.end - len) + 6}" y="${y - 4}" class="ld-minus">−</text>` + right(String(s.prod), s.end, y, 'ld-prod');
+                        svg += `<line x1="${cx(s.end - len + 1) - w / 2}" y1="${y + 6}" x2="${cx(s.end) + w / 2}" y2="${y + 6}" class="ld-line"/>`;
+                    }
+                    if (k === steps.length - 1) { y += rowH; svg += right(String(s.rem), s.end, y, 'ld-cur'); }
+                });
+                document.getElementById('ld-scene').innerHTML = svg;
+                const box = document.getElementById('ld-steps');
+                box.innerHTML = '';
+                shown.forEach((s, k) => { const div = document.createElement('div'); div.textContent = stepText(s, k, steps, n, d); box.appendChild(div); });
+                if (shownSteps > steps.length) {
+                    const q = n / d, div = document.createElement('div');
+                    div.textContent = `Відповідь: ${fmt(n)} : ${d} = ${q}. Перевірка: ${q} · ${d} = ${fmt(n)} ✓`;
+                    box.appendChild(div);
+                }
+                if (!shownSteps) box.textContent = `Скільки буде ${fmt(n)} : ${d}? Спершу знайдіть перше неповне ділене.`;
+            };
+            window.ldStep = function () {
+                const [n, d] = PAIRS[pairIndex];
+                shownSteps = Math.min(shownSteps + 1, divSteps(n, d).length + 1);
+                renderLongDivision();
+            };
+            window.ldReset = function () { shownSteps = 0; renderLongDivision(); };
+            window.ldPair = function () { pairIndex = (pairIndex + 1) % PAIRS.length; shownSteps = 0; renderLongDivision(); };
+
+            setTotal(24);

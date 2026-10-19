@@ -1,0 +1,9 @@
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };

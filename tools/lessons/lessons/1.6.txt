@@ -1,0 +1,378 @@
+@@TITLE Множення натуральних чисел. Властивості множення
+@@CSS
+        /* Ряди крісел */
+        .seat { fill: var(--brand-blue); }
+        .seat.alt { fill: var(--brand-green); }
+        .slider-control label { font-weight: 800; min-width: 60px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .prod-answer { font-size: 1.3rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 8px 0; }
+
+        /* Назви компонентів */
+        .term { font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .term-a { fill: var(--brand-blue); }
+        .term-b { fill: var(--brand-green); }
+        .term-s { fill: var(--brand-yellow); }
+        .term-op { fill: currentColor; font-size: 40px; font-weight: 700; text-anchor: middle; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2; }
+        .term-name { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+
+        /* Множення в стовпчик */
+        .col-cell { fill: var(--card-bg); stroke: var(--border-color); stroke-width: 1.5; }
+        .col-cell.active { stroke: var(--brand-yellow); stroke-width: 3; }
+        .col-digit { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .col-part { fill: var(--brand-blue); font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .col-result { fill: var(--brand-green); font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .col-sign { fill: currentColor; font-size: 24px; font-weight: 700; text-anchor: middle; }
+        .col-line { stroke: currentColor; stroke-width: 2.5; }
+        .col-shift { fill: var(--brand-yellow); font-size: 13px; font-weight: 700; }
+        .col-steps { min-height: 6.5em; margin-top: 6px; }
+        .col-steps div { padding: 2px 0; animation: fade 0.3s ease; }
+        .col-steps div:last-child { font-weight: 700; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки місць у залі? 🎬</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> У кінозалі $12$ рядів, у кожному — $15$ крісел. Додаю: $15 + 15 + 15 + \ldots$ — і вже збилась!</div>
+                <div class="bubble right"><span class="who">Тарас:</span> А можна якось швидше?</div>
+                <p class="big-question">Як швидко дізнатися, скільки крісел? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Множимо! 🎉</div>
+                    <p>$12$ однакових доданків по $15$ — це $15 \cdot 12 = 180$ крісел.</p>
+                    <p>Множення — це швидке додавання однакових доданків.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Ряди крісел 💺</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Обираємо, скільки рядів і скільки крісел у ряду. Скільки всього? А якщо зал повернути?</p>
+                    </div>
+                    <div class="slider-control"><label for="w-r">Рядів</label><input type="range" id="w-r" min="1" max="8" step="1" value="4" oninput="renderSeats()"><span id="w-r-val">4</span></div>
+                    <div class="slider-control"><label for="w-c">У ряду</label><input type="range" id="w-c" min="1" max="10" step="1" value="6" oninput="renderSeats()"><span id="w-c-val">6</span></div>
+                    <div class="step-controls" style="justify-content:center">
+                        <button class="btn-secondary" onclick="turnHall()">Повернути зал ↻</button>
+                        <button class="btn-primary" onclick="revealSeats()">Скільки крісел?</button>
+                    </div>
+                    <div class="hidden-answer" id="seat-answer">
+                        <div class="prod-answer" id="seat-prod"></div>
+                        <p style="text-align:center" id="seat-why"></p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="seat-scene" role="img" aria-label="Прямокутник із крісел"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Множники, добуток і властивості</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Переставна:</b> $a \cdot b = b \cdot a$.</p>
+                    <p><b>Сполучна:</b> $(a \cdot b) \cdot c = a \cdot (b \cdot c)$.</p>
+                    <p><b>Розподільна:</b> $(a + b) \cdot c = a \cdot c + b \cdot c$.</p>
+                    <p>$a \cdot 1 = a$, $\;a \cdot 0 = 0$.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" role="img" aria-label="6 помножити на 4 дорівнює 24: множники і добуток">
+                        <text x="70" y="80" class="term term-a">6</text>
+                        <text x="140" y="78" class="term-op">·</text>
+                        <text x="210" y="80" class="term term-b">4</text>
+                        <text x="275" y="78" class="term-op">=</text>
+                        <text x="340" y="80" class="term term-s">24</text>
+                        <path d="M40 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M180 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <path d="M310 100 q0 12 15 12 q15 0 15 12 q0 -12 15 -12 q15 0 15 -12" class="brace"/>
+                        <text x="70" y="150" class="term-name">множник</text>
+                        <text x="210" y="150" class="term-name">множник</text>
+                        <text x="340" y="150" class="term-name">добуток</text>
+                        <text x="200" y="188" class="term-name" style="font-weight:600">6 · 4 = 6 + 6 + 6 + 6</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Множимо в стовпчик ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як множити на двоцифрове число</div>
+                        <p>1) Множимо на одиниці. 2) Множимо на десятки й пишемо <b>зі зсувом</b> на один розряд вліво. 3) Додаємо.</p>
+                    </div>
+                    <div class="col-steps" id="col-steps"></div>
+                </div>
+                <div class="math-widget">
+                    <div class="widget-svg-container"><svg viewBox="0 0 320 300" id="col-scene" role="img" aria-label="Множення в стовпчик"></svg></div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="colStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="colReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="colPair()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: забутий зсув ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$34 \cdot 23 = 170$? <b>Ні!</b> $34 \cdot 2 = 68$ — це $68$ <b>десятків</b>, тобто $680$.</p>
+                        <p>Правильно: $102 + 680 = 782$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Множиш на $10$ чи $100$ — допиши нулі: $25 \cdot 100 = 2\,500$. Шукай пари: $25 \cdot 4 = 100$, $\;125 \cdot 8 = 1\,000$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 270" role="img" aria-label="Неправильно без зсуву 170, правильно 782">
+                        <g id="trap-wrong"></g>
+                        <g id="trap-right" transform="translate(200 0)"></g>
+                        <text x="100" y="262" class="svg-caption" style="fill:var(--warning-red)">без зсуву — ні</text>
+                        <text x="300" y="262" class="svg-caption" style="fill:var(--brand-green)">зі зсувом</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли зручним способом: $25 \cdot 7 \cdot 4$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $175$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $700$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $750$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Переставимо множники: $25 \cdot 4$ — кругле число! Спробуй ще раз.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$(25 \cdot 4) \cdot 7 = 100 \cdot 7 = 700$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $0 \cdot 158 + 158 \cdot 1$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $0$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $158$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $316$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $159$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Чому дорівнює добуток на $0$? А на $1$?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$0 \cdot 158 = 0$, $\;158 \cdot 1 = 158$. Разом $0 + 158 = 158$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли зручним способом: $37 \cdot 15 + 37 \cdot 85$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $3\,600$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $3\,700$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $37\,000$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $370$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Множник $37$ є в обох добутках. Згадай розподільну властивість.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$37 \cdot (15 + 85) = 37 \cdot 100 = 3\,700$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли в стовпчик: $34 \cdot 23$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $170$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $782$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $692$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $772$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Не забудь зсув: $34 \cdot 2$ — це десятки. Прикинь: $30 \cdot 20 = 600$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$34 \cdot 3 = 102$, $\;34 \cdot 20 = 680$, $\;102 + 680 = 782$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>множник $\cdot$ множник $=$ добуток</p>
+                    <p>$a \cdot b = b \cdot a$, $\;(a \cdot b) \cdot c = a \cdot (b \cdot c)$</p>
+                    <p>$(a + b) \cdot c = a \cdot c + b \cdot c$</p>
+                    <p>$a \cdot 1 = a$, $\;a \cdot 0 = 0$</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як множити ✍️</div>
+                        <p>У стовпчик: на одиниці, на десятки (зі зсувом), додаємо. Усно — шукаємо пари: $25 \cdot 4 = 100$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Не забувай зсув: $34 \cdot 23 = 102 + 680 = 782$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderSeats();
+                if (currentSlide === 4) renderColumn();
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // --- Слайд 2: прямокутник із крісел ---
+            let turned = false;
+            const val = (id) => parseInt(document.getElementById(id).value, 10) || 1;
+            window.renderSeats = function () {
+                const r = val('w-r'), c = val('w-c');
+                document.getElementById('w-r-val').textContent = r;
+                document.getElementById('w-c-val').textContent = c;
+                document.getElementById('seat-answer').classList.remove('shown');
+                const rows = turned ? c : r, cols = turned ? r : c;
+                const size = Math.min(36, 360 / cols, 270 / rows);
+                const x0 = (400 - cols * size) / 2, y0 = (300 - rows * size) / 2;
+                let svg = '';
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        // Колір — за рядом початкового залу, щоб після повороту було видно, що ряди стали стовпчиками
+                        const origRow = turned ? j : i;
+                        svg += `<rect x="${x0 + j * size + 3}" y="${y0 + i * size + 3}" width="${size - 6}" height="${size - 6}" rx="${size / 5}" class="seat${origRow % 2 ? ' alt' : ''}"/>`;
+                    }
+                }
+                document.getElementById('seat-scene').innerHTML = svg;
+            };
+            window.turnHall = function () { turned = !turned; renderSeats(); };
+            window.revealSeats = function () {
+                const r = val('w-r'), c = val('w-c');
+                document.getElementById('seat-prod').textContent = turned ? `${r} · ${c} = ${r * c}` : `${c} · ${r} = ${r * c}`;
+                document.getElementById('seat-why').textContent = `Рядів: ${r}, у кожному по ${c}. ${c} · ${r} = ${r} · ${c} = ${r * c} — повертай як хочеш, крісел стільки ж.`;
+                document.getElementById('seat-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: множення в стовпчик на двоцифрове число ---
+            const PAIRS = [[47, 36], [125, 24], [308, 15]];
+            let pairIndex = 0, shownSteps = 0;
+            function mulSteps(a, b) {
+                const units = b % 10, tens = Math.floor(b / 10);
+                return [
+                    { text: `Множимо ${a} на одиниці: ${a} · ${units} = ${fmt(a * units)}.` },
+                    { text: `Множимо ${a} на десятки: ${a} · ${tens} = ${fmt(a * tens)} — це десятки, тому пишемо зі зсувом на розряд вліво (${fmt(a * tens * 10)}).` },
+                    { text: `Додаємо: ${fmt(a * units)} + ${fmt(a * tens * 10)} = ${fmt(a * b)}.` },
+                    { text: `Відповідь: ${a} · ${b} = ${fmt(a * b)}.` },
+                ];
+            }
+            // Числа в клітинках, вирівняні праворуч; shift — зсув вліво на кількість розрядів
+            function rowCells(str, y, n, w, x0, cls, shift) {
+                let svg = '';
+                str.split('').forEach((d, k) => {
+                    const i = n - 1 - shift - (str.length - 1 - k);
+                    svg += `<text x="${x0 + i * w + w / 2}" y="${y + 26}" class="${cls}">${d}</text>`;
+                });
+                return svg;
+            }
+            window.renderColumn = function () {
+                const [a, b] = PAIRS[pairIndex];
+                const n = String(a * b).length + 1, w = 38, x0 = 300 - n * w;
+                const p1 = String(a * (b % 10)), p2 = String(a * Math.floor(b / 10));
+                let svg = '';
+                for (let i = 0; i < n; i++) {
+                    svg += `<rect x="${x0 + i * w + 2}" y="10" width="${w - 4}" height="36" rx="5" class="col-cell"/>`
+                         + `<rect x="${x0 + i * w + 2}" y="52" width="${w - 4}" height="36" rx="5" class="col-cell"/>`;
+                }
+                svg += rowCells(String(a), 10, n, w, x0, 'col-digit', 0) + rowCells(String(b), 52, n, w, x0, 'col-digit', 0)
+                     + `<text x="${x0 - 14}" y="80" class="col-sign">×</text>`
+                     + `<line x1="${x0}" y1="98" x2="${x0 + n * w}" y2="98" class="col-line"/>`;
+                if (shownSteps >= 1) svg += rowCells(p1, 104, n, w, x0, 'col-part', 0);
+                if (shownSteps >= 2) svg += rowCells(p2, 144, n, w, x0, 'col-part', 1)
+                     + `<text x="${x0 + (n - 1) * w + 6}" y="170" class="col-shift">зсув</text>`
+                     + `<text x="${x0 - 14}" y="166" class="col-sign">+</text>`;
+                if (shownSteps >= 3) svg += `<line x1="${x0}" y1="186" x2="${x0 + n * w}" y2="186" class="col-line"/>`
+                     + rowCells(String(a * b), 192, n, w, x0, 'col-result', 0);
+                document.getElementById('col-scene').innerHTML = svg;
+                const box = document.getElementById('col-steps');
+                box.innerHTML = '';
+                mulSteps(a, b).slice(0, shownSteps).forEach(s => { const div = document.createElement('div'); div.textContent = s.text; box.appendChild(div); });
+                if (!shownSteps) box.textContent = `Скільки буде ${a} · ${b}? Спершу прикиньте, а потім показуємо кроки.`;
+            };
+            window.colStep = function () { shownSteps = Math.min(shownSteps + 1, 4); renderColumn(); };
+            window.colReset = function () { shownSteps = 0; renderColumn(); };
+            window.colPair = function () { pairIndex = (pairIndex + 1) % PAIRS.length; shownSteps = 0; renderColumn(); };
+
+            // --- Слайд 5: 34 · 23 без зсуву і зі зсувом ---
+            function trapColumn(shifted) {
+                const n = 4, w = 34, x0 = 40;
+                let svg = '';
+                for (let i = 0; i < n; i++) {
+                    svg += `<rect x="${x0 + i * w + 2}" y="10" width="${w - 4}" height="34" rx="5" class="col-cell"/>`
+                         + `<rect x="${x0 + i * w + 2}" y="50" width="${w - 4}" height="34" rx="5" class="col-cell"/>`;
+                }
+                svg += rowCells('34', 8, n, w, x0, 'col-digit', 0) + rowCells('23', 48, n, w, x0, 'col-digit', 0)
+                     + `<text x="${x0 - 14}" y="76" class="col-sign">×</text><line x1="${x0}" y1="94" x2="${x0 + n * w}" y2="94" class="col-line"/>`
+                     + rowCells('102', 98, n, w, x0, 'col-part', 0) + rowCells('68', 136, n, w, x0, 'col-part', shifted ? 1 : 0)
+                     + `<text x="${x0 - 14}" y="160" class="col-sign">+</text><line x1="${x0}" y1="178" x2="${x0 + n * w}" y2="178" class="col-line"/>`;
+                if (shifted) svg += rowCells('782', 184, n, w, x0, 'col-result', 0);
+                else svg += rowCells('170', 184, n, w, x0, 'col-result', 0).replace(/class="col-result"/g, 'class="col-result" style="fill:var(--warning-red)"')
+                     + `<line x1="${x0}" y1="190" x2="${x0 + n * w}" y2="232" class="cross"/>`;
+                return svg;
+            }
+            window.renderTrap = function () {
+                document.getElementById('trap-wrong').innerHTML = trapColumn(false);
+                document.getElementById('trap-right').innerHTML = trapColumn(true);
+            };

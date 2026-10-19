@@ -1,0 +1,475 @@
+@@TITLE Вирази зі змінними. Тотожні вирази
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary { font-size: 1rem; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .pair-formula { font-size: 1.25rem; font-weight: 700; margin: 10px 0; }
+        .readout { font-size: 1.2rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+
+        /* Таблиці значень: «?» — поки відповідь не відкрито */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.1rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 7px 5px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table tr.result td { color: var(--brand-green); }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+        .nm { color: var(--warning-red); font-size: 0.9rem; }
+
+        /* Числова пряма з перевірками */
+        .axis { stroke: currentColor; stroke-width: 2; }
+        .tick-line { stroke: currentColor; stroke-width: 1.5; }
+        .tick { fill: var(--text-muted); font-size: 14px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 16px; font-weight: 700; font-style: italic; }
+        .mark-ok { fill: var(--brand-green); }
+        .mark-bad { fill: var(--warning-red); }
+        .mark-glyph { fill: var(--card-bg); font-size: 17px; font-weight: 800; text-anchor: middle; }
+        .pointer { fill: var(--brand-blue); }
+        .band-all { stroke: var(--brand-green); stroke-width: 10; stroke-linecap: round; opacity: 0.8; }
+        .band-bad { stroke: var(--warning-red); stroke-width: 10; stroke-linecap: round; opacity: 0.5; }
+        .eq-dot { fill: var(--brand-green); stroke: var(--card-bg); stroke-width: 2.5; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Фокус із задуманим числом 🎩</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Задумайте число. Помножте його на $2,$ додайте $10,$ результат поділіть на $2$ і відніміть задумане число.</p>
+                    <p class="big-question">У кожного вийшло $5$! Чи буде так із будь-яким числом?</p>
+                    <p>Кілька чисел перевірити легко. Але чисел нескінченно багато — усі не перевіриш. Як переконатися?</p>
+                    <p class="center"><button class="btn-primary" onclick="trick('n')">Перевірити на числах</button></p>
+                    <p class="center"><button class="btn-primary" onclick="trick('x')">А якщо задумали $x$?</button></p>
+                </div>
+                <div>
+                    <div class="math-widget">
+                        <table class="val-table" id="trick-table">
+                            <tr><th>Задумали</th><th>$7$</th><th>$-3$</th><th>$x$</th></tr>
+                            <tr><th>$\cdot\, 2$</th><td><span class="hidden-answer n">$14$</span><span class="q">?</span></td><td><span class="hidden-answer n">$-6$</span><span class="q">?</span></td><td><span class="hidden-answer x">$2x$</span><span class="q">?</span></td></tr>
+                            <tr><th>$+\, 10$</th><td><span class="hidden-answer n">$24$</span><span class="q">?</span></td><td><span class="hidden-answer n">$4$</span><span class="q">?</span></td><td><span class="hidden-answer x">$2x + 10$</span><span class="q">?</span></td></tr>
+                            <tr><th>$:\, 2$</th><td><span class="hidden-answer n">$12$</span><span class="q">?</span></td><td><span class="hidden-answer n">$2$</span><span class="q">?</span></td><td><span class="hidden-answer x">$x + 5$</span><span class="q">?</span></td></tr>
+                            <tr class="result"><th>$-\,$задумане</th><td><span class="hidden-answer n">$5$</span><span class="q">?</span></td><td><span class="hidden-answer n">$5$</span><span class="q">?</span></td><td><span class="hidden-answer x">$5$</span><span class="q">?</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Це вже доведення, а не перевірка</div>
+                        <p>$(2x + 10) : 2 - x = x + 5 - x = 5$ при <b>будь-якому</b> $x$.</p>
+                        <p>Рівність, правильна при будь-яких значеннях змінної, — <b>тотожність</b>. Сьогодні вчимося їх доводити.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Вирази зі змінними та їх значення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Вирази</div>
+                        <p><b>Числовий вираз</b> складається з чисел, знаків дій і дужок: $2 \cdot 7 - 5$.</p>
+                        <p><b>Вираз зі змінною</b> містить букву — <b>змінну</b>: $2x - 5$. Підставили замість змінної число й обчислили — отримали <b>значення виразу</b>.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Вираз не має змісту</div>
+                        <p>На нуль ділити не можна, тому при $x = 3$ вираз $\dfrac{12}{x - 3}$ не має змісту.</p>
+                        <p>Вирази без ділення на вираз зі змінною — <b>цілі</b>: вони мають зміст при будь-яких значеннях змінних.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні обчислюють значення, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>$x$</th><th>$4$</th><th>$0$</th><th>$-1$</th><th>$3$</th></tr>
+                        <tr><th>$2x - 5$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-5$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-7$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$1$</span><span class="q">?</span></td></tr>
+                        <tr><th>$\dfrac{12}{x - 3}$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$12$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-4$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-3$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer nm">не має змісту</span><span class="q">?</span></td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Тотожно рівні вирази. Тотожність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="math-widget">
+                        <table class="val-table">
+                            <tr><th>$x$</th><th>$-2$</th><th>$0$</th><th>$1$</th><th>$5$</th></tr>
+                            <tr><th>$3(x + 2)$</th><td>$0$</td><td>$6$</td><td>$9$</td><td>$21$</td></tr>
+                            <tr><th>$3x + 6$</th><td>$0$</td><td>$6$</td><td>$9$</td><td>$21$</td></tr>
+                        </table>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Чому значення збігаються завжди?</div>
+                        <p>Розподільна властивість $a(b + c) = ab + ac$ правильна для <b>будь-яких</b> чисел, тому $3(x + 2) = 3x + 6$ при кожному $x$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Вирази, значення яких рівні при <b>будь-яких</b> значеннях змінних, називають <b>тотожно рівними</b>.</p>
+                        <p>Рівність, правильна при будь-яких значеннях змінних, — <b>тотожність</b>: $3(x + 2) = 3x + 6$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Тотожні перетворення</div>
+                        <p>Заміна виразу тотожно рівним: розкриття дужок, зведення подібних доданків, переставна і сполучна властивості.</p>
+                        <p>$5a + 3 - 2a = 3a + 3$</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Рівні завжди чи лише іноді? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо пару і значення $x$. Учні обчислюють $A$ і $B$, потім перевіряємо. Скільки збігів досить, щоб назвати вирази тотожно рівними?</p>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="pair-btn-0" onclick="setPair(0)">$2(x - 3) + x$ і $3x - 6$</button>
+                        <button class="btn-secondary" id="pair-btn-1" onclick="setPair(1)">$x^2$ і $2x$</button>
+                        <button class="btn-secondary" id="pair-btn-2" onclick="setPair(2)">$x^3$ і $x$</button>
+                    </div>
+                    <p class="pair-formula" id="pair-formula"></p>
+                    <div class="slider-control"><label for="x-val">x</label><input type="range" id="x-val" min="-4" max="4" step="1" value="1" oninput="xInput()"><span id="x-val-out">1</span></div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="computePair()">Обчислити $A$ і $B$</button>
+                        <button class="btn-primary" onclick="revealVerdict()">Висновок</button>
+                    </div>
+                    <p class="readout" id="pair-readout"></p>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 200" id="check-scene" role="img" aria-label="Перевірені значення x на числовій прямій: де вирази рівні, а де ні"></svg>
+                    </div>
+                    <div class="box theorem hidden-answer" id="verdict-box"><p id="verdict-text"></p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як довести тотожність і як її спростувати</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Довести — один зі способів</div>
+                        <p>1) Перетворити одну частину рівності й отримати другу.</p>
+                        <p>2) Перетворити обидві частини й отримати однаковий вираз.</p>
+                        <p>3) Показати, що різниця лівої і правої частин дорівнює $0$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Спростувати — досить одного контрприкладу</div>
+                        <p><b>Контрприклад</b> — такі значення змінних, при яких ліва і права частини різні.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Доведемо:</b> $5(a - 2) - 3(a - 4) = 2(a + 1)$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Довести чи спростувати?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Доведіть тотожність $2(3x - 1) - x = 5(x + 1) - 7$.</p>
+                    <div class="step">Спосіб 3 — складаємо різницю частин: $2(3x - 1) - x$ $- [5(x + 1) - 7]$</div>
+                    <div class="step">$= 6x - 2 - x - 5x - 5 + 7$ — мінус перед дужками змінює знаки.</div>
+                    <div class="step">$= (6x - x - 5x) + (-2 - 5 + 7)$ $= 0$ при будь-якому $x$. Тотожність доведено.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Чи є тотожністю рівність $(a - b) - (b - a) = 0$?</p>
+                    <div class="step">$a = 2$, $b = 2$: $\;0 - 0 = 0$ — збіглося. Але один збіг — ще не доведення.</div>
+                    <div class="step">$a = 3$, $b = 1$: $\;(3 - 1) - (1 - 3) = 2 + 2 = 4$, а $4 \ne 0$.</div>
+                    <div class="step">Контрприклад знайдено — це <b>не тотожність</b>. Справді, $a - b - b + a = 2a - 2b$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки — ловимо контрприкладом ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Кілька разів збіглося — отже, тотожність»</div>
+                        <p>$x^2 + 2 = 3x$ правильна при $x = 1$ і $x = 2$, але при $x = 0$: $\;2 \ne 0$. Збіги не доводять — доводять перетворення.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Мінус перед дужками</div>
+                        <p>$7 - (2x - 3) \ne 7 - 2x - 3$. Мінус змінює знак <b>кожного</b> доданка: $7 - 2x + 3 = 10 - 2x$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Неподібні доданки не зводять</div>
+                        <p>$3x + 2 \ne 5x$: при $x = 1$ збігається, а при $x = 0$ — ні: $2 \ne 0$. Зводимо лише подібні: $3x + 2x = 5x$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$(a + b)^2 \ne a^2 + b^2$</div>
+                        <p>Контрприклад: $a = 1$, $b = 2$: $\;(1 + 2)^2 = 9$, а $1^2 + 2^2 = 5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Укажіть вираз, тотожно рівний виразу $4(x - 2) - x$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $3x - 8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $3x - 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $5x - 8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $3x + 8$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$4(x - 2) - x = 4x - 8 - x$ $= 3x - 8$.</p>
+                            <p>Б — на $4$ помножили лише $x$; В — $4x - x \ne 5x$; Г — помилка в знаку.</p>
+                            <p>Швидка перевірка при $x = 1$: $\;4 \cdot (-1) - 1 = -5$, і лише $3x - 8$ дає $-5$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Яка з рівностей є тотожністю?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $5 - (x - 2) = 3 - x$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $2x + 3x = 5x^2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $-(a - b) = b - a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $a - b = b - a$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>В: $-(a - b) = -a + b = b - a$ — ліву частину перетворили на праву.</p>
+                            <p>Решту спростовують контрприклади: А) $x = 0$: $7 \ne 3$; Б) $x = 2$: $10 \ne 20$ (а при $x = 0$ і $x = 1$ збігається!); Г) $a = 1$, $b = 0$: $1 \ne -1$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">При якому значенні $a$ рівність $3(x - a) + 2x = 5x - 6$ є тотожністю?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) такого $a$ немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Ліва частина: $3x - 3a + 2x = 5x - 3a$.</p>
+                            <p>$5x - 3a = 5x - 6$ при будь-якому $x$, лише якщо $3a = 6$, тобто $a = 2$.</p>
+                            <p>В — забули помножити $a$ на $3$; А і Г — помилка в знаку.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Підставили числа замість змінних — отримали <b>значення виразу</b>. Ділення на $0$ — вираз не має змісту.</p>
+                    <p><b>Тотожність</b> — рівність, правильна при <b>будь-яких</b> значеннях змінних: $3(x + 2) = 3x + 6$.</p>
+                    <p><b>Тотожні перетворення:</b> розкриття дужок, зведення подібних доданків, переставна і сполучна властивості.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p><b>Довести:</b> одну частину → у другу, або обидві → в один вираз, або різницю → у $0$.</p>
+                        <p><b>Спростувати:</b> знайти один контрприклад.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Кілька збігів — ще не доведення. Одна розбіжність — уже спростування.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderPairs();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const minus = (v) => String(v).replace('-', '−');
+
+            // --- Слайд 1: фокус із задуманим числом (спершу числа, потім x) ---
+            window.trick = function (what) {
+                document.querySelectorAll(`#trick-table .${what}`).forEach((e) => e.classList.add('shown'));
+                if (what === 'x') document.getElementById('answer-1').classList.add('shown');
+            };
+
+            // --- Слайд 2: клік по «?» відкриває значення ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 4: рівні завжди чи лише іноді ---
+            const PAIRS = [
+                { a: '2(x - 3) + x', b: '3x - 6', fa: (x) => 2 * (x - 3) + x, fb: (x) => 3 * x - 6, same: true,
+                  proof: '$2(x - 3) + x = 2x - 6 + x = 3x - 6$' },
+                { a: 'x^2', b: '2x', fa: (x) => x * x, fb: (x) => 2 * x, same: false, eq: [0, 2] },
+                { a: 'x^3', b: 'x', fa: (x) => x * x * x, fb: (x) => x, same: false, eq: [-1, 0, 1] },
+            ];
+            let pairIndex = 0, checks = {}, lastBad = null, valShown = false, verdictShown = false;
+            // «x = 0 і x = 2», «x = −1, 0 і 1»
+            const eqTex = (xs) => xs.length === 2 ? `$x = ${xs[0]}$ і $x = ${xs[1]}$` : `$x = ${xs.slice(0, -1).join(',\\ ')}$ і $${xs[xs.length - 1]}$`;
+            const eqText = (xs) => xs.length === 2 ? `x = ${minus(xs[0])} і x = ${minus(xs[1])}` : `x = ${xs.slice(0, -1).map(minus).join(', ')} і ${minus(xs[xs.length - 1])}`;
+            window.setPair = function (i) {
+                pairIndex = i; checks = {}; lastBad = null; valShown = false; verdictShown = false;
+                PAIRS.forEach((_, k) => document.getElementById(`pair-btn-${k}`).classList.toggle('on', k === i));
+                const el = document.getElementById('pair-formula');
+                el.innerHTML = `$A = ${PAIRS[i].a}$, $\\;\\;B = ${PAIRS[i].b}$`;
+                typeset(el);
+                renderPairs();
+            };
+            // Новий x — значення й висновок знову сховані
+            window.xInput = function () { valShown = false; verdictShown = false; renderPairs(); };
+            window.computePair = function () {
+                const x = parseInt(document.getElementById('x-val').value, 10), P = PAIRS[pairIndex];
+                checks[x] = P.fa(x) === P.fb(x);
+                if (!checks[x]) lastBad = x;
+                else if (lastBad === x) lastBad = null;
+                valShown = true; renderPairs();
+            };
+            window.revealVerdict = function () { verdictShown = true; renderPairs(); };
+            window.renderPairs = function () {
+                const P = PAIRS[pairIndex], x = parseInt(document.getElementById('x-val').value, 10);
+                document.getElementById('x-val-out').textContent = minus(x);
+                const A = P.fa(x), B = P.fb(x);
+                const out = document.getElementById('pair-readout');
+                out.innerHTML = valShown
+                    ? `$x = ${x}$: $\\;A = ${A}$, $\\;B = ${B}$ — <span class="${A === B ? 'ok' : 'bad'}">${A === B ? 'рівні ✓' : 'не рівні ✗'}</span>`
+                    : `$x = ${x}$: $\\;A = \\,?$, $\\;B = \\,?$`;
+                typeset(out);
+
+                // Числова пряма: позначки перевірок, стрілка — поточне x
+                const sx = (v) => 210 + v * 34, Y = 116;
+                const keys = Object.keys(checks).map(Number).sort((p, q) => p - q);
+                const bad = keys.filter((k) => !checks[k]).length;
+                const refuted = !P.same && lastBad !== null;
+                let svg = '';
+                if (verdictShown && P.same) svg += `<line x1="${sx(-5.5)}" y1="${Y}" x2="${sx(5.5)}" y2="${Y}" class="band-all"/>`;
+                if (verdictShown && refuted) svg += `<line x1="${sx(-5.5)}" y1="${Y}" x2="${sx(5.5)}" y2="${Y}" class="band-bad"/>`;
+                svg += `<line x1="${sx(-5.7)}" y1="${Y}" x2="${sx(5.7)}" y2="${Y}" class="axis"/>`
+                     + `<path d="M${sx(5.7) + 10} ${Y} l-11 -5 v10 z" fill="currentColor"/>`
+                     + `<text x="${sx(5.7) + 2}" y="${Y + 26}" class="axis-name">x</text>`;
+                for (let v = -5; v <= 5; v++) svg += `<line x1="${sx(v)}" y1="${Y - 5}" x2="${sx(v)}" y2="${Y + 5}" class="tick-line"/><text x="${sx(v)}" y="${Y + 25}" class="tick">${minus(v)}</text>`;
+                if (verdictShown && refuted) P.eq.forEach((v) => { svg += `<circle cx="${sx(v)}" cy="${Y}" r="8" class="eq-dot"/>`; });
+                keys.forEach((k) => {
+                    svg += `<circle cx="${sx(k)}" cy="${Y - 52}" r="14" class="${checks[k] ? 'mark-ok' : 'mark-bad'}"/>`
+                         + `<text x="${sx(k)}" y="${Y - 46}" class="mark-glyph">${checks[k] ? '✓' : '✗'}</text>`;
+                });
+                svg += `<path d="M${sx(x)} ${Y - 9} l-8 -15 h16 z" class="pointer"/>`;
+                let caption = keys.length ? `Перевірено значень: ${keys.length} (✓ ${keys.length - bad}, ✗ ${bad})` : 'Перевірок ще немає';
+                if (verdictShown && P.same) caption = 'Рівні при будь-якому x';
+                if (verdictShown && refuted) caption = `Рівні лише при ${eqText(P.eq)}`;
+                svg += `<text x="210" y="${Y + 66}" class="svg-caption">${caption}</text>`;
+                document.getElementById('check-scene').innerHTML = svg;
+
+                // Висновок: доведення, контрприклад або «шукаємо далі»
+                const box = document.getElementById('verdict-box'), text = document.getElementById('verdict-text');
+                let cls = 'theorem', html;
+                if (P.same) {
+                    html = (keys.length ? `Перевірок: ${keys.length}, усі збіглися — але це ще не доведення. ` : '')
+                         + `<b>Доводимо</b> перетвореннями: ${P.proof}. Вирази тотожно рівні: рівні при <b>будь-якому</b> $x$.`;
+                } else if (refuted) {
+                    cls = 'error';
+                    const a0 = P.fa(lastBad), b0 = P.fb(lastBad);
+                    html = `<b>Контрприклад:</b> $x = ${lastBad}$: $\\;A = ${a0}$, $B = ${b0}$, а $${a0} \\ne ${b0}$. Однієї розбіжності досить — вирази <b>не</b> тотожно рівні. Значення збігаються лише при ${eqTex(P.eq)}.`;
+                } else {
+                    cls = 'hack';
+                    html = keys.length
+                        ? `Перевірок: ${keys.length}, усі збіглися — але це ще <b>не доведення</b>. Можливо, розбіжність є при іншому $x$. Шукаємо далі!`
+                        : 'Спершу обчислимо $A$ і $B$ при кількох значеннях $x$.';
+                }
+                box.className = `box ${cls} hidden-answer${verdictShown ? ' shown' : ''}`;
+                if (text.dataset.html !== html) { text.dataset.html = html; text.innerHTML = html; }
+                if (verdictShown) typeset(text);
+            };
+
+            // --- Слайд 5: доведення тотожності, спосіб 2 ---
+            const STEPS = [
+                ['Ліва частина: $5(a - 2) - 3(a - 4)$', 'Спосіб 2: перетворюємо кожну частину окремо'],
+                ['$=$ [[$5a - 10 - 3a + 12$]]', 'Розкриваємо дужки: $-3 \\cdot (-4) = +12$'],
+                ['$=$ [[$2a + 2$]]', 'Зводимо подібні: $5a - 3a = 2a$, $\\;-10 + 12 = 2$'],
+                ['Права частина: $2(a + 1) =$ [[$2a + 2$]]', 'Розкриваємо дужки'],
+                ['Обидві частини дорівнюють $2a + 2$ — тотожність доведено', 'Рівність правильна при будь-якому $a$'],
+            ];
+@@INCLUDE steps.js
+
+            setPair(0);

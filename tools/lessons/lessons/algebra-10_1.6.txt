@@ -1,0 +1,454 @@
+@@TITLE Ірраціональні рівняння
+@@BRAND Алгебра і початки аналізу (10-11 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .readout { font-size: 1.08rem; }
+        .readout p { margin: 5px 0; }
+        .curve.mirror { stroke: var(--warning-red); stroke-width: 3; stroke-dasharray: 9 6; }
+        .curve.line { stroke: currentColor; stroke-width: 3; }
+        .pt-sq { fill: var(--brand-yellow); stroke: var(--card-bg); stroke-width: 2; }
+        .pt-ok { fill: var(--brand-green); stroke: var(--card-bg); stroke-width: 2; }
+        .pt-bad { fill: var(--warning-red); stroke: var(--card-bg); stroke-width: 2; }
+        .pt-cross { stroke: var(--card-bg); stroke-width: 2.6; stroke-linecap: round; }
+        .lg-text { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .lg-text.mirror { fill: var(--warning-red); }
+        .lg-text.root { fill: var(--brand-blue); }
+        .short-note { color: var(--text-muted); }
+        #eval-lines .eval-line { padding: 1px 0; font-size: 1.12rem; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Ірраціональні рівняння</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Рівняння, у якому змінна міститься під знаком кореня, називають <b>ірраціональним</b>:</p>
+                        <p>$\sqrt{x + 2} = x$, $\quad \sqrt[3]{2x - 1} = 3$, $\quad \sqrt{x} + \sqrt[4]{x} = 6$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">ОДЗ</div>
+                        <p>Корінь парного степеня $\sqrt[2k]{a}$ існує лише при $a \ge 0$, і $\sqrt[2k]{a} \ge 0$. Корінь непарного степеня існує при будь-якому $a$.</p>
+                        <p>ОДЗ рівняння $\sqrt{x + 2} = x$: $\;x \ge -2$.</p>
+                    </div>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Задача на сьогодні</div>
+                    <p>Розв'яжемо $\sqrt{x + 2} = x$, піднісши обидві частини до квадрата:</p>
+                    <p>$x + 2 = x^2$, $\;x^2 - x - 2 = 0$, $\;x_1 = 2$, $\;x_2 = -1$.</p>
+                    <p>Обидва числа входять в ОДЗ. Чи обидва — корені?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Перевіримо</button></p>
+                    <div class="hidden-answer" id="answer-1">
+                        <p>$x = 2$: $\;\sqrt{4} = 2$ ✓ — корінь.</p>
+                        <p>$x = -1$: $\;\sqrt{1} = 1 \ne -1$ ✗.</p>
+                        <p>Число $-1$ — <b>сторонній корінь</b>: його додало піднесення до квадрата, а ОДЗ не відсіяла. Які перетворення безпечні — сьогоднішня тема.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Рівносильні перетворення і рівняння-наслідки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Рівняння <b>рівносильні</b>, якщо мають ті самі корені (або обидва не мають коренів).</p>
+                        <p>Друге рівняння — <b>наслідок</b> першого, якщо кожен корінь першого є коренем другого.</p>
+                        <p>Корені наслідку, які не є коренями першого рівняння, — <b>сторонні корені</b>.</p>
+                    </div>
+                    <div class="box remark">
+                        <p>Перехід до наслідку не губить коренів, але може додати сторонні. Тому після нього — <b>перевірка</b> підстановкою в початкове рівняння.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Піднесення обох частин до степеня</div>
+                        <p><b>Непарного</b> — рівносильне перетворення:</p>
+                        <p>$f = g \;\Leftrightarrow\; f^{2k+1} = g^{2k+1}$.</p>
+                        <p><b>Парного</b> — дає рівняння-наслідок:</p>
+                        <p>$f = g \;\Rightarrow\; f^{2k} = g^{2k}$.</p>
+                        <p>Якщо на ОДЗ $f \ge 0$ і $g \ge 0$, то й піднесення до парного степеня — рівносильне перетворення.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Висновок для $\sqrt{f} = g$</div>
+                        <p>Ліва частина завжди $\ge 0$. Додаємо умову $g \ge 0$ — і піднесення до квадрата стає рівносильним.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Чому це так -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Звідки беруться сторонні корені</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example">
+                    <div class="box-title">$x = 2$ і $x^2 = 4$</div>
+                    <p>Рівняння $x = 2$ має один корінь. Піднесемо до квадрата: $x^2 = 4$ — корені $2$ і $-2$.</p>
+                    <p>Причина: $a^2 = b^2 \;\Leftrightarrow\; (a - b)(a + b) = 0$, тобто $a = b$ або $a = -b$.</p>
+                    <p>Отже, $f^2 = g^2$ об'єднує корені двох рівнянь: $f = g$ і $f = -g$.</p>
+                    <p>Для $\sqrt{x + 2} = x$ сторонній корінь $-1$ — корінь «чужого» рівняння $-\sqrt{x + 2} = x$: $\;-\sqrt{1} = -1$.</p>
+                </div>
+                <div>
+                    <div class="box example">
+                        <div class="box-title">Чому непарний степінь безпечний</div>
+                        <p>$y = t^3$ (як і $y = t^{2k+1}$) зростає на $\mathbb{R}$: кожного значення набуває один раз, тому $a^3 = b^3 \Leftrightarrow a = b$.</p>
+                        <p>$y = t^2$ зростає лише на $[0; +\infty)$: при $a \ge 0$, $b \ge 0$ маємо $a^2 = b^2 \Leftrightarrow a = b$. Звідси умова $g \ge 0$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Приклад: непарний корінь</div>
+                        <p>$\sqrt[3]{x^3 - 7} = x - 1$ $\;\Leftrightarrow\;$ $x^3 - 7 = (x - 1)^3$ $\;\Leftrightarrow\;$ $x^2 - x - 2 = 0$.</p>
+                        <p>$x = 2$ або $x = -1$ — обидва корені, перевірка не потрібна: $\sqrt[3]{-8} = -2$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Сторонній корінь на графіку 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="eq-0" onclick="setEq(0)">$\sqrt{x + 2} = x$</button>
+                        <button class="btn-secondary" id="eq-1" onclick="setEq(1)">$\sqrt{x} = \frac{x}{2}$</button>
+                        <button class="btn-secondary" id="eq-2" onclick="setEq(2)">$\sqrt{x - 1} = -2$</button>
+                        <button class="btn-secondary" id="eq-3" onclick="setEq(3)">$\sqrt{5 - x} = x - 3$</button>
+                    </div>
+                    <p>Корені — абсциси точок перетину графіків. Учень каже, скільки коренів бачить; потім підносимо до квадрата й перевіряємо.</p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="setStage(1)">▶ Піднести до квадрата</button>
+                        <button class="btn-primary" onclick="setStage(2)">Перевірити</button>
+                    </div>
+                    <div class="box theorem readout hidden-answer" id="sq-answer"><div id="sq-readout"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 330" id="sq-scene" role="img" aria-label="Графіки кореня, симетричної гілки і прямої: точки перетину — корені рівняння-наслідку"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Методи -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Перевірка чи рівносильна система</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Два способи для $\sqrt{f} = g$</div>
+                        <p><b>1. Наслідок + перевірка.</b> Підносимо до квадрата, розв'язуємо, кожне число підставляємо в <b>початкове</b> рівняння. Зручно, коли корені «гарні».</p>
+                        <p><b>2. Рівносильна система</b> — перевірка не потрібна:</p>
+                        <p>$\sqrt{f} = g \;\Leftrightarrow\; \begin{cases} f = g^2, \\ g \ge 0. \end{cases}$</p>
+                        <p>Умову $f \ge 0$ не пишемо: вона випливає з $f = g^2$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Ще два випадки</div>
+                        <p>$\sqrt{f} = \sqrt{g} \;\Leftrightarrow\; \begin{cases} f = g, \\ f \ge 0 \end{cases}$ — умову ставимо на простіший вираз.</p>
+                        <p>$\sqrt[3]{f} = g \;\Leftrightarrow\; f = g^3$ — без жодних умов.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Розв'яжемо</b> $\sqrt{x + 3} = x - 1$: корені ірраціональні, підставляти незручно — тому система.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклади -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Три типові рівняння</h2>
+            </div>
+            <div class="slide-body grid-3">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> $\sqrt{x^2 - 3} = \sqrt{2x}$</p>
+                    <div class="step">$\Leftrightarrow \begin{cases} x^2 - 3 = 2x, \\ 2x \ge 0 \end{cases}$ — умова на простіший вираз.</div>
+                    <div class="step">$x^2 - 2x - 3 = 0$: $\;x = 3$ або $x = -1$.</div>
+                    <div class="step">$x = -1$ не задовольняє $2x \ge 0$. Відповідь: $3$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> $x + \sqrt{x} - 6 = 0$</p>
+                    <div class="step">Заміна $t = \sqrt{x}$, $\;t \ge 0$; тоді $x = t^2.$</div>
+                    <div class="step">$t^2 + t - 6 = 0$: $\;t = 2$ або $t = -3$.</div>
+                    <div class="step">$t = -3 \lt 0$ — не підходить. $\sqrt{x} = 2$, відповідь: $4$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-c">
+                    <p><b>в)</b> $\sqrt{3x + 1} - \sqrt{x + 4} = 1$</p>
+                    <div class="step">Усамітнюємо корінь: $\sqrt{3x + 1} = 1 + \sqrt{x + 4}$ — обидві частини $\ge 0$.</div>
+                    <div class="step">Квадрат: $3x + 1 = x + 5 + 2\sqrt{x + 4}$, тобто $\sqrt{x + 4} = x - 2$.</div>
+                    <div class="step">$\Leftrightarrow \begin{cases} x^2 - 5x = 0, \\ x \ge 2 \end{cases}$ Звідси $x = 0$ — сторонній, лишається $x = 5$.</div>
+                    <div class="step">Перевірка: $\sqrt{16} - \sqrt{9} = 1$ ✓. Відповідь: $5$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-c')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">ОДЗ — не перевірка</div>
+                        <p>$\sqrt{x + 2} = x$: ОДЗ $x \ge -2$ містить і $2$, і $-1$. Сторонній корінь $-1$ відсіює лише умова $x \ge 0$ або перевірка.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Перевірка не в тому рівнянні</div>
+                        <p>Підставляємо в <b>початкове</b> рівняння. У наслідку $x + 2 = x^2$ «підходять» обидва числа — на те він і наслідок.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Квадрат двочлена</div>
+                        <p>$(x - 1)^2 = x^2 - 2x + 1$, а не $x^2 - 1$.</p>
+                        <p>$\left(1 + \sqrt{x + 4}\right)^2$ $= x + 5 + 2\sqrt{x + 4}$, а не $x + 5$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Добуток дорівнює нулю</div>
+                        <p>$(x - 2)\sqrt{x - 3} = 0$: $\;x = 2$ — не корінь, бо $\sqrt{-1}$ не існує. Спершу ОДЗ $x \ge 3$; відповідь: $3$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Сторонній корінь</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Рівносильність</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Заміна</button>
+                    <button class="btn-secondary" id="tab-4" onclick="showTask(4)">4. Підвищений</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\sqrt{x + 6} = x$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $-2;\ 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $2;\ -3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) коренів немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x + 6 = x^2$, $\;x^2 - x - 6 = 0$: $\;x = 3$ або $x = -2$.</p>
+                            <p>Умова $x \ge 0$ (права частина) залишає $x = 3$. Перевірка: $\sqrt{9} = 3$ ✓; $\;\sqrt{4} = 2 \ne -2$ — сторонній.</p>
+                            <p>В — забули умову чи перевірку; Г — помилка в знаках коренів.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Укажіть рівняння або систему, рівносильну рівнянню $\sqrt{5 - x} = x + 1$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $5 - x = (x + 1)^2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $\begin{cases} 5 - x = (x + 1)^2, \\ x \ge -1 \end{cases}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\begin{cases} 5 - x = (x + 1)^2, \\ x \le 5 \end{cases}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $\begin{cases} 5 - x = x^2 + 1, \\ x \ge -1 \end{cases}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $\begin{cases} 5 - x = (x + 1)^2, \\ x \le -1 \end{cases}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\sqrt{f} = g \Leftrightarrow f = g^2$, $g \ge 0$. Тут $g = x + 1 \ge 0$, тобто $x \ge -1$.</p>
+                            <p>$x^2 + 3x - 4 = 0$: $\;x = 1$ або $x = -4$. Система Б залишає $x = 1$ — це й корінь: $\sqrt{4} = 2$.</p>
+                            <p>А і В мають ще й сторонній корінь $-4$, бо $\sqrt{9} = 3 \ne -3$; ОДЗ $x \le 5$ його не відсіює. Г — $(x + 1)^2 \ne x^2 + 1$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\sqrt{x} - 3\sqrt[4]{x} + 2 = 0$.</p>
+                        <p>Якщо рівняння має один корінь, запишіть його у відповідь. Якщо коренів кілька — запишіть їхню суму.</p>
+                        <p class="short-note">Коротка відповідь: учні записують число, потім показуємо відповідь.</p>
+                        <p style="text-align:center"><button class="btn-primary" onclick="showShort(3, '17')">Показати відповідь</button></p>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>ОДЗ: $x \ge 0$. Заміна $t = \sqrt[4]{x}$, $\;t \ge 0$; тоді $\sqrt{x} = t^2$.</p>
+                            <p>$t^2 - 3t + 2 = 0$: $\;t = 1$ або $t = 2$ — обидва $\ge 0$.</p>
+                            <p>$x = t^4$: $\;x = 1$ або $x = 16$. Сума: $17$.</p>
+                            <p>$5$ — помилково взяли $x = t^2$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-4">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\sqrt{x + 2} + \sqrt{3 - x} = 3$.</p>
+                        <p>Якщо рівняння має один корінь, запишіть його у відповідь. Якщо коренів кілька — запишіть їхню суму.</p>
+                        <p class="short-note">Коротка відповідь: учні записують число, потім показуємо відповідь.</p>
+                        <p style="text-align:center"><button class="btn-primary" onclick="showShort(4, '1')">Показати відповідь</button></p>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>ОДЗ: $-2 \le x \le 3$. Обидві частини невід'ємні — підносимо до квадрата рівносильно:</p>
+                            <p>$5 + 2\sqrt{(x + 2)(3 - x)} = 9$, $\;\sqrt{(x + 2)(3 - x)} = 2$.</p>
+                            <p>$(x + 2)(3 - x) = 4$, $\;x^2 - x - 2 = 0$: $\;x = 2$ або $x = -1$.</p>
+                            <p>Перевірка: $2 + 1 = 3$ ✓, $\;1 + 2 = 3$ ✓. Сума: $1$. Від'ємне $x = -1$ — не сторонній корінь.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Непарний степінь — рівносильно: $\sqrt[3]{f} = g \Leftrightarrow f = g^3$.</p>
+                    <p>Парний степінь — рівняння-наслідок, можливі сторонні корені. Рівносильно:</p>
+                    <p>$\sqrt{f} = g \Leftrightarrow \begin{cases} f = g^2, \\ g \ge 0; \end{cases}$ $\quad \sqrt{f} = \sqrt{g} \Leftrightarrow \begin{cases} f = g, \\ f \ge 0. \end{cases}$</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>1) Усамітнити корінь (два корені — по одному в кожній частині).</p>
+                        <p>2) Піднести до степеня: рівносильна система або наслідок + перевірка в початковому рівнянні.</p>
+                        <p>3) Повторюваний вираз — заміна $t = \sqrt{x}$, $t \ge 0$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>ОДЗ не відсіює сторонніх коренів: у $\sqrt{x + 2} = x$ число $-1$ входить в ОДЗ, але коренем не є.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderSq();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+
+            // --- Слайд 4: сторонній корінь на графіку. r(x) — підкореневий вираз (r ≥ 0 на [a; b]), g(x) — права частина ---
+            const EQS = [
+                { r: (x) => x + 2, a: -2, b: 7, g: (x) => x, roots: [2, -1], lab: ['y = √(x+2)', 'y = −√(x+2)', 'y = x'],
+                  sq: '$x + 2 = x^2$, $\\;x^2 - x - 2 = 0$: $\\;x_1 = 2$, $\\;x_2 = -1$.',
+                  check: '$x = 2$: $\\;\\sqrt{4} = 2$ — корінь.</p><p>$x = -1$: $\\;\\sqrt{1} = 1 \\ne -1$ — сторонній.' },
+                { r: (x) => x, a: 0, b: 7, g: (x) => x / 2, roots: [0, 4], lab: ['y = √x', 'y = −√x', 'y = x/2'],
+                  sq: '$x = \\frac{x^2}{4}$, $\\;x^2 - 4x = 0$: $\\;x_1 = 0$, $\\;x_2 = 4$.',
+                  check: '$x = 0$: $\\;0 = 0$ — корінь. $\\;x = 4$: $\\;\\sqrt{4} = 2 = \\frac{4}{2}$ — корінь.</p><p>Сторонніх немає: в обох точках $\\frac{x}{2} \\ge 0$.' },
+                { r: (x) => x - 1, a: 1, b: 7, g: () => -2, roots: [5], lab: ['y = √(x−1)', 'y = −√(x−1)', 'y = −2'],
+                  sq: '$x - 1 = 4$: $\\;x = 5$.',
+                  check: '$x = 5$: $\\;\\sqrt{4} = 2 \\ne -2$ — сторонній.</p><p>Коренів немає: $\\sqrt{x - 1} \\ge 0$, а права частина від\'ємна.' },
+                { r: (x) => 5 - x, a: -3, b: 5, g: (x) => x - 3, roots: [4, 1], lab: ['y = √(5−x)', 'y = −√(5−x)', 'y = x − 3'],
+                  sq: '$5 - x = (x - 3)^2$, $\\;x^2 - 5x + 4 = 0$: $\\;x_1 = 4$, $\\;x_2 = 1$.',
+                  check: '$x = 4$: $\\;\\sqrt{1} = 1 = 4 - 3$ — корінь.</p><p>$x = 1$: $\\;\\sqrt{4} = 2 \\ne -2$ — сторонній.' },
+            ];
+            let eqIndex = 0, eqStage = 0, flip = 0, flipTimer = null;   // flip: 0 → 1 — гілка «перевертається» вниз
+            const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.setEq = function (i) {
+                eqIndex = i; eqStage = 0; flip = 0;
+                if (flipTimer) cancelAnimationFrame(flipTimer);
+                EQS.forEach((_, k) => document.getElementById(`eq-${k}`).classList.toggle('on', k === i));
+                renderSq();
+            };
+            window.setStage = function (s) {
+                const from = eqStage;
+                eqStage = Math.max(eqStage, s);
+                if (from >= 1) { renderSq(); return; }
+                // Анімація: графік y = √r(x) симетрично «перевертається» в y = −√r(x) (≈1,6 с), потім з'являються точки
+                if (flipTimer) cancelAnimationFrame(flipTimer);
+                if (reduceMotion) { flip = 1; renderSq(); return; }
+                const t0 = performance.now(), T = 1600;
+                const tick = (now) => {
+                    const t = Math.min(1, (now - t0) / T);
+                    flip = t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
+                    renderSq();
+                    if (t < 1) flipTimer = requestAnimationFrame(tick); else flipTimer = null;
+                };
+                flip = 0; renderSq(true);
+                flipTimer = requestAnimationFrame(tick);
+            };
+            window.renderSq = function (keepText) {
+                const E = EQS[eqIndex], P = plane(-3, 7, -3.5, 3.5, 420, 300, 26);
+                const up = (x) => Math.sqrt(Math.max(0, E.r(x)));
+                let svg = axesSvg(P);
+                if (eqStage >= 1) svg += curveSvg(P, (x) => (1 - 2 * flip) * up(x), E.a, E.b, () => 'mirror');
+                svg += curveSvg(P, up, E.a, E.b);
+                svg += curveSvg(P, E.g, -3, 7, () => 'line');
+                const done = eqStage >= 1 && flip >= 1;
+                if (done) E.roots.forEach((x) => {
+                    const y = E.g(x), X = P.sx(x), Y = P.sy(y);
+                    const cls = eqStage < 2 ? 'pt-sq' : (y >= 0 ? 'pt-ok' : 'pt-bad');
+                    svg += `<line x1="${X}" y1="${P.sy(0)}" x2="${X}" y2="${Y}" class="probe-line"/><circle cx="${X}" cy="${Y}" r="8" class="${cls}"/>`;
+                    if (eqStage >= 2 && y < 0) svg += `<path d="M${X - 4} ${Y - 4} L${X + 4} ${Y + 4} M${X + 4} ${Y - 4} L${X - 4} ${Y + 4}" class="pt-cross"/>`;
+                });
+                // Легенда під площиною
+                const item = (x, cls, text, tcls) => `<line x1="${x}" y1="312" x2="${x + 24}" y2="312" class="curve ${cls}"/><text x="${x + 30}" y="317" class="lg-text ${tcls}">${text}</text>`;
+                svg += item(12, '', E.lab[0], 'root') + item(290, 'line', E.lab[2], '');
+                if (eqStage >= 1) svg += item(146, 'mirror', E.lab[1], 'mirror');
+                document.getElementById('sq-scene').innerHTML = svg;
+                if (keepText === true || (eqStage >= 1 && flip > 0 && flip < 1)) return;
+                const box = document.getElementById('sq-answer'), out = document.getElementById('sq-readout');
+                box.classList.toggle('shown', eqStage >= 1);
+                if (eqStage === 0) { out.innerHTML = ''; return; }
+                out.innerHTML = `<p>${E.sq}</p>` + (eqStage < 2
+                    ? '<p>Рівняння-наслідок «бачить» обидва графіки: $y = \\sqrt{\\ldots}$ і симетричний йому відносно $Ox$ графік $y = -\\sqrt{\\ldots}$.</p>'
+                    : `<p>${E.check}</p><p><b>Висновок:</b> сторонні корені лежать на графіку $y = -\\sqrt{\\ldots}$, де права частина від'ємна, — їх відсіює умова $g(x) \\ge 0$.</p>`);
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+
+            // --- Слайд 5: розв'язування через рівносильну систему ---
+            const STEPS = [
+                ['$\\sqrt{x + 3} = x - 1$', 'Корінь невід\'ємний, тому й права частина має бути $\\ge 0$'],
+                ['$\\Leftrightarrow$ [[$\\begin{cases} x + 3 = (x - 1)^2, \\\\ x \\ge 1 \\end{cases}$]]', 'Рівносильна система; ОДЗ $x \\ge -3$ окремо не потрібна'],
+                ['$\\Leftrightarrow$ [[$\\begin{cases} x^2 - 3x - 2 = 0, \\\\ x \\ge 1 \\end{cases}$]]', '$x + 3 = x^2 - 2x + 1$'],
+                ['$x = \\frac{3 \\pm \\sqrt{17}}{2}$', '$D = 9 + 8 = 17$'],
+                ['[[$\\frac{3 - \\sqrt{17}}{2} \\lt 0$]] — не задовольняє $x \\ge 1$', '$\\sqrt{17} \\gt 4$, тому $\\frac{3 - \\sqrt{17}}{2} \\lt 0$, а $\\frac{3 + \\sqrt{17}}{2} \\gt 3{,}5$'],
+                ['Відповідь: $\\frac{3 + \\sqrt{17}}{2}$', 'Перевірка не потрібна: усі переходи рівносильні'],
+            ];
+@@INCLUDE steps.js
+
+            // --- Практика: коротка відповідь показується кнопкою ---
+            window.showShort = function (n, answer) {
+                document.getElementById(`quiz-${n}-verdict`).textContent = `Відповідь: ${answer}`;
+                document.getElementById(`quiz-${n}-explanation`).style.display = 'block';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };

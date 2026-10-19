@@ -1,0 +1,333 @@
+@@TITLE Текстові задачі на рух та спільну роботу
+@@CSS
+        /* Дорога з двома мандрівниками */
+        .road { stroke: currentColor; stroke-width: 3; }
+        .road-tick { stroke: currentColor; stroke-width: 1.5; }
+        .road-label { fill: currentColor; font-size: 11px; text-anchor: middle; }
+        .walker-a { fill: var(--brand-blue); }
+        .walker-b { fill: var(--brand-green); }
+        .walker-cap { font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .gap { stroke: var(--brand-yellow); stroke-width: 4; }
+        .gap-cap { fill: var(--brand-yellow); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .arrow-a { fill: var(--brand-blue); }
+        .arrow-b { fill: var(--brand-green); }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 54px; text-align: right; }
+        .move-answer { font-size: 1.15rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 6px 0; }
+
+        /* Таблиця правил */
+        .rule-name { fill: var(--brand-blue); font-size: 15px; font-weight: 800; }
+        .rule-text { fill: currentColor; font-size: 15px; }
+        .rule-line { stroke: var(--border-color); stroke-width: 1.5; }
+
+        /* Покроковий розв'язок */
+        .task-text { font-weight: 600; margin-bottom: 6px; }
+        .sol-line { padding: 4px 0; animation: fade 0.3s ease; }
+        .sol-line:last-child { font-weight: 800; color: var(--brand-green); }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .runner { font-size: 30px; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Коли друзі зустрінуться? 🚶‍♀️🚶</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> Між нашими будинками $1\,200$ м. Я виходжу тобі назустріч і йду $70$ м за хвилину.</div>
+                <div class="bubble right"><span class="who">Тарас:</span> А я йду $80$ м за хвилину. Виходимо одночасно!</div>
+                <p class="big-question">Через скільки хвилин вони зустрінуться? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Через $8$ хвилин! 🎉</div>
+                    <p>Щохвилини відстань між ними зменшується на $70 + 80 = 150$ м.</p>
+                    <p>$1\,200 : 150 = 8$ хв.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Рухаємо час ⏱️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Оля йде $70$ м/хв, Тарас — $80$ м/хв. Пересуваємо час по хвилині: як змінюється відстань між ними?</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="mode-0" onclick="setMode(0)">Назустріч</button>
+                        <button class="btn-secondary" id="mode-1" onclick="setMode(1)">У протилежні боки</button>
+                        <button class="btn-secondary" id="mode-2" onclick="setMode(2)">Навздогін</button>
+                    </div>
+                    <div class="slider-control"><label for="w-t">Минуло</label><input type="range" id="w-t" min="0" max="8" step="1" value="0" oninput="renderMove()"><span id="w-t-val">0 хв</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealMove()">На скільки змінюється щохвилини?</button></p>
+                    <div class="hidden-answer" id="move-answer"><div class="move-answer" id="move-rule"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 170" id="move-scene" role="img" aria-label="Дорога, два мандрівники і відстань між ними"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Рух і спільна робота</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$s = v \cdot t$, $\;v = s : t$, $\;t = s : v$.</p>
+                    <p>Робота $=$ продуктивність $\cdot$ час. <b>Продуктивність</b> — скільки зроблено за одиницю часу.</p>
+                    <p>Працюють разом — продуктивності <b>додаємо</b>.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" role="img" aria-label="Швидкість зближення і віддалення">
+                        <text x="10" y="32" class="rule-name">Назустріч</text><text x="390" y="32" class="rule-text" style="text-anchor:end">зближуються на v₁ + v₂</text>
+                        <line x1="10" y1="48" x2="390" y2="48" class="rule-line"/>
+                        <text x="10" y="80" class="rule-name">У протилежні боки</text><text x="390" y="80" class="rule-text" style="text-anchor:end">віддаляються на v₁ + v₂</text>
+                        <line x1="10" y1="96" x2="390" y2="96" class="rule-line"/>
+                        <text x="10" y="128" class="rule-name">Навздогін</text><text x="390" y="128" class="rule-text" style="text-anchor:end">зближуються на v₁ − v₂</text>
+                        <line x1="10" y1="144" x2="390" y2="144" class="rule-line"/>
+                        <text x="200" y="182" class="rule-text" style="text-anchor:middle;font-weight:700">(за кожну одиницю часу)</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Розв'язуємо задачу ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">План розв'язання</div>
+                    <p>1) Що відомо: швидкості (продуктивності), відстань (робота), час?</p>
+                    <p>2) Як рухаються: назустріч, у протилежні боки чи навздогін?</p>
+                    <p>3) На скільки змінюється відстань (скільки роблять разом) за одиницю часу?</p>
+                    <p>4) Ділимо або множимо — і перевіряємо.</p>
+                </div>
+                <div class="math-widget">
+                    <p class="task-text" id="sol-task"></p>
+                    <div id="sol-lines"></div>
+                    <div class="step-controls" style="justify-content:center">
+                        <button class="btn-primary" onclick="solStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="solReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="solNext()">Інша задача</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: навздогін ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Собака біжить $15$ м/с за котом, що тікає зі швидкістю $9$ м/с. Між ними $60$ м.</p>
+                        <p>$60 : (15 + 9)$? <b>Ні!</b> Обидва біжать в один бік — щосекунди собака наближається лише на $15 - 9 = 6$ м. $60 : 6 = 10$ с.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Намалюй схему зі стрілками. Стрілки назустріч чи врозтіч — додаємо, в один бік — віднімаємо.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" role="img" aria-label="Собака наздоганяє кота: швидкості віднімаємо">
+                        <line x1="20" y1="110" x2="380" y2="110" class="road"/>
+                        <text x="70" y="98" class="runner">🐕</text>
+                        <text x="250" y="98" class="runner">🐈</text>
+                        <path d="M95 82 h40 l-8 -6 m8 6 l-8 6" stroke="var(--brand-blue)" stroke-width="3" fill="none"/>
+                        <path d="M275 82 h30 l-8 -6 m8 6 l-8 6" stroke="var(--brand-green)" stroke-width="3" fill="none"/>
+                        <text x="115" y="62" class="svg-caption" style="fill:var(--brand-blue);font-size:14px">15 м/с</text>
+                        <text x="290" y="62" class="svg-caption" style="fill:var(--brand-green);font-size:14px">9 м/с</text>
+                        <line x1="70" y1="126" x2="250" y2="126" class="gap"/><text x="160" y="146" class="gap-cap">60 м</text>
+                        <text x="200" y="185" class="svg-caption" style="fill:var(--warning-red)">60 : (15 + 9) — ні</text>
+                        <line x1="110" y1="178" x2="290" y2="178" class="cross"/>
+                        <text x="200" y="218" class="svg-caption" style="fill:var(--brand-green)">60 : (15 − 9) = 10 с ✓</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Автобус проїхав $240$ км за $4$ год. З якою швидкістю він їхав?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $60$ км/год</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $960$ км/год</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $236$ км/год</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$v = s : t$. Спробуй ще раз!</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$v = 240 : 4 = 60$ км/год.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Майстер робить $12$ деталей за годину, учень — $8$. Скільки деталей вони зроблять разом за $5$ год?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $20$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $100$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $60$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки деталей вони роблять разом за <b>одну</b> годину?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Разом за годину: $12 + 8 = 20$ деталей. За $5$ год: $20 \cdot 5 = 100$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. З двох міст, відстань між якими $600$ км, одночасно назустріч вийшли потяги зі швидкостями $70$ і $80$ км/год. Через скільки годин вони зустрінуться?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $60$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>На скільки кілометрів вони зближуються щогодини?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Зближення: $70 + 80 = 150$ км/год. Час: $600 : 150 = 4$ год.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Велосипедист наздоганяє пішохода. Між ними $24$ км. Пішохід іде $4$ км/год, велосипедист їде $16$ км/год. Через скільки годин він наздожене?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $3$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Рухаються в один бік. Швидкості додаємо чи віднімаємо?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Зближення: $16 - 4 = 12$ км/год. Час: $24 : 12 = 2$ год.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$s = v \cdot t$, $\;v = s : t$, $\;t = s : v$.</p>
+                    <p>Назустріч і в протилежні боки — швидкості <b>додаємо</b>; навздогін — <b>віднімаємо</b>.</p>
+                    <p>Разом працюють — продуктивності додаємо.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>Схема → на скільки змінюється відстань (скільки роблять разом) за одиницю часу → ділимо або множимо.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Навздогін: $60 : (15 - 9) = 10$ с, а не $60 : (15 + 9)$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderMove();
+                if (currentSlide === 4) renderSolution();
+@@JS
+            // --- Слайд 2: двоє рухаються; час пересуває вчитель ---
+            // Кожен режим: довжина дороги, звідки й куди рухаються (знак швидкості), до якої хвилини повзунок
+            const MODES = [
+                { road: 1200, a: 0, va: 70, b: 1200, vb: -80, maxT: 8, rule: 'Назустріч: відстань щохвилини зменшується на 70 + 80 = 150 м. Зустрінуться через 1 200 : 150 = 8 хв.' },
+                { road: 2400, a: 1200, va: -70, b: 1200, vb: 80, maxT: 8, rule: 'У протилежні боки: відстань щохвилини збільшується на 70 + 80 = 150 м. Через 8 хв — 1 200 м.' },
+                { road: 3200, a: 300, va: 70, b: 0, vb: 80, maxT: 30, rule: 'Навздогін: Тарас щохвилини наближається на 80 − 70 = 10 м. 300 м — це 300 : 10 = 30 хв.' },
+            ];
+            let mode = 0;
+            window.setMode = function (m) {
+                mode = m;
+                MODES.forEach((_, k) => document.getElementById(`mode-${k}`).classList.toggle('on', k === m));
+                const t = document.getElementById('w-t');
+                t.max = MODES[m].maxT;
+                t.step = m === 2 ? 5 : 1;
+                t.value = 0;
+                renderMove();
+            };
+            window.renderMove = function () {
+                const M = MODES[mode], t = parseInt(document.getElementById('w-t').value, 10) || 0;
+                document.getElementById('w-t-val').textContent = `${t} хв`;
+                document.getElementById('move-answer').classList.remove('shown');
+                const xa = M.a + M.va * t, xb = M.b + M.vb * t, dist = Math.abs(xa - xb);
+                const X = (m) => 20 + m * 400 / M.road;
+                let svg = `<line x1="20" y1="110" x2="420" y2="110" class="road"/>`;
+                for (let m = 0; m <= M.road; m += M.road / 8) {
+                    svg += `<line x1="${X(m)}" y1="104" x2="${X(m)}" y2="116" class="road-tick"/><text x="${X(m)}" y="132" class="road-label">${fmt(m)}</text>`;
+                }
+                svg += `<text x="420" y="150" class="road-label">м</text>`;
+                if (dist > 0) svg += `<line x1="${X(Math.min(xa, xb))}" y1="80" x2="${X(Math.max(xa, xb))}" y2="80" class="gap"/><text x="${(X(xa) + X(xb)) / 2}" y="70" class="gap-cap">${fmt(dist)} м</text>`;
+                const arrow = (x, dir, cls) => `<path d="M${x} 96 l${dir * 14} -6 v12 z" class="${cls}"/>`;
+                svg += `<circle cx="${X(xa)}" cy="96" r="9" class="walker-a"/><text x="${X(xa)}" y="40" class="walker-cap walker-a">Оля</text>` + arrow(X(xa) + Math.sign(M.va) * 12, Math.sign(M.va), 'arrow-a')
+                     + `<circle cx="${X(xb)}" cy="${dist ? 96 : 92}" r="9" class="walker-b"/><text x="${X(xb)}" y="${dist ? 56 : 24}" class="walker-cap walker-b">Тарас</text>` + arrow(X(xb) + Math.sign(M.vb) * 12, Math.sign(M.vb), 'arrow-b');
+                if (!dist) svg += `<text x="${X(xa)}" y="160" class="gap-cap">Зустріч!</text>`;
+                document.getElementById('move-scene').innerHTML = svg;
+            };
+            window.revealMove = function () {
+                document.getElementById('move-rule').textContent = MODES[mode].rule;
+                document.getElementById('move-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: покрокові розв'язки задач ---
+            const TASKS = [
+                { task: 'Два велосипедисти виїхали одночасно назустріч з міст, між якими 90 км. Швидкості — 14 і 16 км/год. Через скільки годин вони зустрінуться?',
+                  lines: ['Рухаються назустріч — швидкості додаємо.', 'Зближення за 1 год: 14 + 16 = 30 км.', 'Час: 90 : 30 = 3 год.', 'Перевірка: 14 · 3 + 16 · 3 = 42 + 48 = 90 км ✓', 'Відповідь: через 3 год.'] },
+                { task: 'Перший насос качає 40 л води за хвилину, другий — 60 л. За скільки хвилин вони разом наповнять бак на 2 000 л?',
+                  lines: ['Працюють разом — продуктивності додаємо.', 'Разом за 1 хв: 40 + 60 = 100 л.', 'Час: 2 000 : 100 = 20 хв.', 'Перевірка: 40 · 20 + 60 · 20 = 800 + 1 200 = 2 000 л ✓', 'Відповідь: за 20 хв.'] },
+                { task: 'Мотоцикліст наздоганяє вантажівку. Між ними 30 км. Мотоцикліст їде 70 км/год, вантажівка — 55 км/год. Через скільки годин він її наздожене?',
+                  lines: ['Рухаються в один бік — швидкості віднімаємо.', 'Зближення за 1 год: 70 − 55 = 15 км.', 'Час: 30 : 15 = 2 год.', 'Перевірка: мотоцикліст — 140 км, вантажівка — 30 + 110 = 140 км ✓', 'Відповідь: через 2 год.'] },
+            ];
+            let taskIndex = 0, shownSol = 0;
+            window.renderSolution = function () {
+                const T = TASKS[taskIndex];
+                document.getElementById('sol-task').textContent = T.task;
+                const box = document.getElementById('sol-lines');
+                box.innerHTML = '';
+                T.lines.slice(0, shownSol).forEach(l => { const d = document.createElement('div'); d.className = 'sol-line'; d.textContent = l; box.appendChild(d); });
+            };
+            window.solStep = function () { shownSol = Math.min(shownSol + 1, TASKS[taskIndex].lines.length); renderSolution(); };
+            window.solReset = function () { shownSol = 0; renderSolution(); };
+            window.solNext = function () { taskIndex = (taskIndex + 1) % TASKS.length; shownSol = 0; renderSolution(); };

@@ -1,0 +1,384 @@
+@@TITLE Ділення з остачею
+@@CSS
+        /* Цукерки в пакетах і остача */
+        .chip { fill: var(--brand-blue); }
+        .chip.left { fill: var(--warning-red); }
+        .bag { fill: none; stroke: var(--brand-green); stroke-width: 2.5; }
+        .left-box { fill: none; stroke: var(--warning-red); stroke-width: 2; stroke-dasharray: 5 4; }
+        .left-cap { fill: var(--warning-red); font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 80px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .div-answer { font-size: 1.3rem; font-weight: 800; color: var(--brand-green); text-align: center; margin: 8px 0; }
+
+        /* Назви компонентів */
+        .term { font-size: 38px; font-weight: 800; text-anchor: middle; }
+        .term-a { fill: var(--brand-blue); }
+        .term-b { fill: var(--brand-green); }
+        .term-s { fill: var(--brand-yellow); }
+        .term-r { fill: var(--warning-red); }
+        .term-op { fill: currentColor; font-size: 34px; font-weight: 700; text-anchor: middle; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2; }
+        .term-name { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+
+        /* Ділення кутом */
+        .ld-digit { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-prod { fill: var(--brand-blue); font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-cur { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .ld-rem { fill: var(--warning-red); font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .ld-quot { fill: var(--brand-green); font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .ld-line { stroke: currentColor; stroke-width: 2; }
+        .ld-minus { fill: currentColor; font-size: 22px; font-weight: 700; text-anchor: middle; }
+        .col-steps { min-height: 6.5em; margin-top: 6px; }
+        .col-steps div { padding: 2px 0; animation: fade 0.3s ease; }
+        .col-steps div:last-child { font-weight: 700; }
+        .cross { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки потрібно човнів? 🚣</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Вчителька:</span> Нас $25$ учнів, у човен сідають по $4$. Скільки човнів брати?</div>
+                <div class="bubble right"><span class="who">Тарас:</span> $25$ на $4$ не ділиться… То скільки — $6$ чи $7$?</div>
+                <p class="big-question">Скільки човнів потрібно? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">$7$ човнів! 🎉</div>
+                    <p>$6$ човнів по $4$ — це $24$ учні, і ще $1$ учень лишається. Йому потрібен сьомий човен.</p>
+                    <p>Записуємо: $25 : 4 = 6$ (ост. $1$).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Пакуємо цукерки 🍬</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Пакуємо цукерки по кілька в пакет. Скільки повних пакетів? Скільки цукерок лишиться? Скажіть, а потім перевіримо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Цукерок</label><input type="range" id="w-n" min="1" max="30" step="1" value="23" oninput="renderBags()"><span id="w-n-val">23</span></div>
+                    <div class="slider-control"><label for="w-b">У пакеті</label><input type="range" id="w-b" min="2" max="9" step="1" value="5" oninput="renderBags()"><span id="w-b-val">5</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealBags()">Скільки пакетів і скільки лишилось?</button></p>
+                    <div class="hidden-answer" id="bag-answer">
+                        <div class="div-answer" id="bag-div"></div>
+                        <p style="text-align:center" id="bag-check"></p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="bag-scene" role="img" aria-label="Цукерки в пакетах і остача"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Неповна частка й остача</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо $a : b = q$ (ост. $r$), то</p>
+                    <p style="text-align:center">$a = b \cdot q + r$</p>
+                    <p><b>Остача завжди менша від дільника:</b> $r \lt b$.</p>
+                    <p>Остача $0$ — число ділиться <b>без остачі</b>.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" role="img" aria-label="23 поділити на 5 дорівнює 4, остача 3">
+                        <text x="45" y="80" class="term term-a">23</text>
+                        <text x="95" y="76" class="term-op">:</text>
+                        <text x="135" y="80" class="term term-b">5</text>
+                        <text x="180" y="78" class="term-op">=</text>
+                        <text x="225" y="80" class="term term-s">4</text>
+                        <text x="325" y="80" class="term term-r" style="font-size:30px">(ост. 3)</text>
+                        <path d="M20 100 q0 10 12 10 q13 0 13 10 q0 -10 13 -10 q12 0 12 -10" class="brace"/>
+                        <path d="M110 100 q0 10 12 10 q13 0 13 10 q0 -10 13 -10 q12 0 12 -10" class="brace"/>
+                        <path d="M200 100 q0 10 12 10 q13 0 13 10 q0 -10 13 -10 q12 0 12 -10" class="brace"/>
+                        <path d="M290 100 q0 10 17 10 q18 0 18 10 q0 -10 18 -10 q17 0 17 -10" class="brace"/>
+                        <text x="45" y="145" class="term-name">ділене</text>
+                        <text x="135" y="145" class="term-name">дільник</text>
+                        <text x="225" y="145" class="term-name">неповна частка</text>
+                        <text x="325" y="145" class="term-name">остача</text>
+                        <text x="210" y="188" class="term-name" style="font-size:17px">перевірка: 5 · 4 + 3 = 23, і 3 &lt; 5</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Ділимо кутом з остачею ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як ділити</div>
+                        <p>Ділимо кутом, як завжди. Цифри закінчились, а остача не $0$ — це і є <b>остача</b>. Вона має бути меншою від дільника.</p>
+                    </div>
+                    <div class="col-steps" id="ld-steps"></div>
+                </div>
+                <div class="math-widget">
+                    <div class="widget-svg-container"><svg viewBox="0 0 320 300" id="ld-scene" role="img" aria-label="Ділення кутом з остачею"></svg></div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="ldStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="ldReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="ldPair()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: завелика остача ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$29 : 6 = 3$ (ост. $11$)? <b>Ні!</b> $11$ більше за $6$ — у залишку вміщується ще один пакет.</p>
+                        <p>Правильно: $29 : 6 = 4$ (ост. $5$).</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Завжди перевіряй дві речі: $6 \cdot 4 + 5 = 29$ і $5 \lt 6$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 290" id="trap-scene" role="img" aria-label="29 цукерок: 4 пакети по 6 і 5 лишилось"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Знайди остачу: $38 : 5$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $8$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $7$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Яке найбільше число, не більше за $38$, ділиться на $5$? Остача має бути меншою за $5$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$5 \cdot 7 = 35$, $38 - 35 = 3$. Отже, $38 : 5 = 7$ (ост. $3$).</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Які остачі можливі при діленні на $4$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $0,\ 1,\ 2,\ 3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $1,\ 2,\ 3,\ 4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) будь-які</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Остача завжди менша від дільника. А чи може вона бути нулем?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Остача менша за $4$: $0, 1, 2$ або $3$. Остача $0$ — коли число ділиться на $4$ без остачі.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Задумане число поділили на $7$ і отримали $12$ (ост. $5$). Яке число задумали?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $84$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $89$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $79$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $96$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Ділене $=$ дільник $\cdot$ неповна частка $+$ остача.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$7 \cdot 12 + 5 = 84 + 5 = 89$. Перевірка: $89 : 7 = 12$ (ост. $5$).</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. У ліфт уміщується $6$ людей. Скільки разів йому треба піднятися, щоб перевезти $40$ людей?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $7$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $8$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Після повних рейсів хтось лишиться. Чи може він не їхати?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$40 : 6 = 6$ (ост. $4$): $6$ повних рейсів, і ще $4$ людини — сьомий рейс. Разом $7$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$a : b = q$ (ост. $r$) $\;\Rightarrow\; a = b \cdot q + r$</p>
+                    <p>Остача менша від дільника: $r \lt b$. Остача $0$ — ділиться без остачі.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як знайти ✍️</div>
+                        <p>Ділимо кутом; що лишилось наприкінці — остача. Ділене: $b \cdot q + r$.</p>
+                        <p>У задачах про човни й автобуси остача — це ще один човен!</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Остача не буває більшою за дільник: $29 : 6 = 4$ (ост. $5$), а не $3$ (ост. $11$).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderBags();
+                if (currentSlide === 4) renderLongDivision();
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // --- Слайд 2: пакуємо цукерки, остача — окремо ---
+            const val = (id) => parseInt(document.getElementById(id).value, 10) || 1;
+            function bagsSvg(n, b) {
+                const q = Math.floor(n / b), r = n % b;
+                const boxes = q + (r ? 1 : 0);
+                const cols = Math.min(5, Math.max(1, boxes)), rows = Math.ceil(boxes / cols);
+                const bw = 380 / cols, bh = Math.min(140, 270 / rows);
+                const inRow = Math.ceil(Math.sqrt(b * 1.6)), inCol = Math.ceil(b / inRow);
+                const rad = Math.max(3, Math.min(10, (bw - 16) / inRow / 2.4, (bh - 26) / inCol / 2.4));
+                let svg = '';
+                for (let g = 0; g < boxes; g++) {
+                    const isLeft = g === q;           // останній «пакет» — остача
+                    const count = isLeft ? r : b;
+                    const gx = 10 + (g % cols) * bw, gy = 10 + Math.floor(g / cols) * bh;
+                    svg += `<rect x="${gx + 4}" y="${gy + 4}" width="${bw - 8}" height="${bh - 8}" rx="12" class="${isLeft ? 'left-box' : 'bag'}"/>`;
+                    if (isLeft) svg += `<text x="${gx + bw / 2}" y="${gy + bh - 10}" class="left-cap">остача</text>`;
+                    for (let k = 0; k < count; k++) {
+                        const cx = gx + bw / 2 + ((k % inRow) - (inRow - 1) / 2) * rad * 2.4;
+                        const cy = gy + (bh - (isLeft ? 16 : 0)) / 2 + (Math.floor(k / inRow) - (inCol - 1) / 2) * rad * 2.4;
+                        svg += `<circle cx="${cx}" cy="${cy}" r="${rad}" class="chip${isLeft ? ' left' : ''}"/>`;
+                    }
+                }
+                return svg;
+            }
+            window.renderBags = function () {
+                const n = val('w-n'), b = val('w-b');
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('bag-answer').classList.remove('shown');
+                document.getElementById('bag-scene').innerHTML = bagsSvg(n, b);
+            };
+            window.revealBags = function () {
+                const n = val('w-n'), b = val('w-b'), q = Math.floor(n / b), r = n % b;
+                document.getElementById('bag-div').textContent = r ? `${n} : ${b} = ${q} (ост. ${r})` : `${n} : ${b} = ${q} — без остачі`;
+                document.getElementById('bag-check').textContent = `Перевірка: ${b} · ${q} + ${r} = ${n}, остача ${r} < ${b} ✓`;
+                document.getElementById('bag-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: ділення кутом з остачею ---
+            const PAIRS = [[47, 6], [538, 7], [1000, 9]];
+            let pairIndex = 0, shownSteps = 0;
+            function divSteps(n, d) {
+                const D = String(n).split('').map(Number);
+                let e = 0, cur = D[0];
+                while (cur < d && e < D.length - 1) { e++; cur = cur * 10 + D[e]; }
+                const steps = [];
+                for (;;) {
+                    const q = Math.floor(cur / d), prod = q * d, rem = cur - prod;
+                    steps.push({ end: e, cur, q, prod, rem });
+                    if (e === D.length - 1) break;
+                    e++;
+                    cur = rem * 10 + D[e];
+                }
+                return steps;
+            }
+            function stepText(s, k, steps, d) {
+                if (k === 0) return `Перше неповне ділене — ${s.cur}. ${s.cur} : ${d} = ${s.q}; ${s.q} · ${d} = ${s.prod}; лишається ${s.rem}.`;
+                if (s.q === 0) return `Зносимо цифру: ${s.cur} менше за ${d} — у частці пишемо 0.`;
+                return `Зносимо цифру: ${s.cur} : ${d} = ${s.q}; ${s.q} · ${d} = ${s.prod}; лишається ${s.rem}.`;
+            }
+            window.renderLongDivision = function () {
+                const [n, d] = PAIRS[pairIndex];
+                const steps = divSteps(n, d), shown = steps.slice(0, shownSteps);
+                const D = String(n), w = 28, x0 = 40, rowH = 30;
+                const cx = (i) => x0 + i * w + w / 2;
+                const right = (str, end, y, cls) => str.split('').map((ch, k) =>
+                    `<text x="${cx(end - (str.length - 1 - k))}" y="${y}" class="${cls}">${ch}</text>`).join('');
+                const xBar = x0 + D.length * w + 8;
+                let svg = right(D, D.length - 1, 30, 'ld-digit')
+                        + `<line x1="${xBar}" y1="8" x2="${xBar}" y2="72" class="ld-line"/>`
+                        + `<text x="${xBar + 12}" y="30" class="ld-digit" style="text-anchor:start">${d}</text>`
+                        + `<line x1="${xBar}" y1="40" x2="${xBar + 90}" y2="40" class="ld-line"/>`;
+                shown.map(s => s.q).join('').split('').forEach((ch, k) => {
+                    svg += `<text x="${xBar + 12 + k * 16}" y="66" class="ld-quot" style="text-anchor:start">${ch}</text>`;
+                });
+                let y = 30;
+                shown.forEach((s, k) => {
+                    if (k > 0) { y += rowH; svg += right(String(s.cur), s.end, y, 'ld-cur'); }
+                    if (s.q > 0) {
+                        y += rowH;
+                        const len = String(s.prod).length;
+                        svg += `<text x="${cx(s.end - len) + 6}" y="${y - 4}" class="ld-minus">−</text>` + right(String(s.prod), s.end, y, 'ld-prod')
+                             + `<line x1="${cx(s.end - len + 1) - w / 2}" y1="${y + 6}" x2="${cx(s.end) + w / 2}" y2="${y + 6}" class="ld-line"/>`;
+                    }
+                    if (k === steps.length - 1) { y += rowH; svg += right(String(s.rem), s.end, y, 'ld-rem'); }
+                });
+                document.getElementById('ld-scene').innerHTML = svg;
+                const box = document.getElementById('ld-steps');
+                box.innerHTML = '';
+                shown.forEach((s, k) => { const div = document.createElement('div'); div.textContent = stepText(s, k, steps, d); box.appendChild(div); });
+                if (shownSteps > steps.length) {
+                    const q = Math.floor(n / d), r = n % d, div = document.createElement('div');
+                    div.textContent = `Цифри закінчились: ${fmt(n)} : ${d} = ${q} (ост. ${r}). Перевірка: ${d} · ${q} + ${r} = ${fmt(n)}, і ${r} < ${d} ✓`;
+                    box.appendChild(div);
+                }
+                if (!shownSteps) box.textContent = `Скільки буде ${fmt(n)} : ${d}? Спершу знайдіть перше неповне ділене.`;
+            };
+            window.ldStep = function () {
+                const [n, d] = PAIRS[pairIndex];
+                shownSteps = Math.min(shownSteps + 1, divSteps(n, d).length + 1);
+                renderLongDivision();
+            };
+            window.ldReset = function () { shownSteps = 0; renderLongDivision(); };
+            window.ldPair = function () { pairIndex = (pairIndex + 1) % PAIRS.length; shownSteps = 0; renderLongDivision(); };
+
+            // --- Слайд 5: 29 цукерок по 6 — правильно 4 пакети і 5 лишилось ---
+            window.renderTrap = function () {
+                document.getElementById('trap-scene').innerHTML = bagsSvg(29, 6)
+                    + `<text x="200" y="284" class="svg-caption" style="fill:var(--brand-green)">29 : 6 = 4 (ост. 5), 5 &lt; 6 ✓</text>`;
+            };

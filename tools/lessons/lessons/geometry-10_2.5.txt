@@ -1,0 +1,684 @@
+@@TITLE Паралельне проектування
+@@BRAND Геометрія (10-11 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .slider-control label { font-weight: 700; min-width: 150px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .prop-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .prop-table th, .prop-table td { border-bottom: 1px solid var(--border-color); padding: 6px 8px; text-align: left; vertical-align: middle; }
+        .prop-table th { color: var(--brand-blue); }
+        .prop-table td.cond { color: var(--text-muted); font-size: 1rem; }
+        .meas { width: 100%; border-collapse: collapse; font-size: 1.05rem; margin-top: 10px; }
+        .meas th, .meas td { padding: 5px 6px; border-bottom: 1px solid var(--border-color); text-align: center; }
+        .meas th { color: var(--brand-blue); }
+        .meas th:first-child, .meas td:first-child { text-align: left; }
+        .meas td.keep { color: var(--brand-green); font-weight: 800; }
+        .meas td.change { color: var(--warning-red); font-weight: 800; }
+        /* Просторові креслення */
+        .pl { fill: var(--brand-blue); fill-opacity: 0.08; stroke: var(--brand-blue); stroke-opacity: 0.6; stroke-width: 1.5; stroke-linejoin: round; }
+        .pl-b { fill: var(--brand-green); fill-opacity: 0.12; stroke: var(--brand-green); stroke-opacity: 0.7; stroke-width: 1.4; stroke-dasharray: 6 4; }
+        .shade { fill: currentColor; fill-opacity: 0.16; stroke: none; }
+        .fig { fill: var(--brand-green); fill-opacity: 0.16; stroke: none; }
+        .ray { stroke: var(--brand-yellow); stroke-width: 1.7; stroke-dasharray: 5 4; }
+        .edge { stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; fill: none; }
+        .edge.g { stroke: var(--brand-green); }
+        .edge.b { stroke: var(--brand-blue); }
+        .edge.r { stroke: var(--warning-red); }
+        .edge.y { stroke: var(--brand-yellow); }
+        .edge.thin { stroke-width: 1.8; }
+        .edge.hid { stroke-dasharray: 6 5; stroke-width: 1.8; }
+        .tick { stroke: currentColor; stroke-width: 2; }
+        .pt { fill: currentColor; }
+        .pt.r { fill: var(--warning-red); }
+        .pt.b { fill: var(--brand-blue); }
+        .lbl { fill: currentColor; font-size: 16px; font-weight: 700; font-style: italic; text-anchor: middle; dominant-baseline: central; }
+        .lbl.pl-name { fill: var(--brand-blue); font-size: 20px; }
+        .lbl.pl-name.g { fill: var(--brand-green); }
+        .lbl.num { font-style: normal; fill: var(--brand-blue); font-weight: 800; }
+        .lbl.ok { font-style: normal; fill: var(--brand-green); }
+        .lbl.bad { font-style: normal; fill: var(--warning-red); }
+        .dir { stroke: var(--brand-yellow); stroke-width: 3; stroke-linecap: round; }
+        .dir.hid { stroke-dasharray: 5 4; stroke-width: 2.2; }
+        .dir-head, .sun { fill: var(--brand-yellow); }
+        .orig { fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linejoin: round; }
+        .img { fill: var(--brand-blue); fill-opacity: 0.1; stroke: var(--brand-blue); stroke-width: 2.6; stroke-linejoin: round; }
+        .arrow-m { stroke: var(--text-muted); stroke-width: 2.2; }
+        .arrow-m-head { fill: var(--text-muted); }
+        .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .thumb { background: var(--widget-bg); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+        .thumb > svg { width: 100%; height: auto; max-height: 200px; color: var(--text-dark); display: block; }
+        .thumb p { margin: 6px 0 0; font-size: 1rem; line-height: 1.4; }
+        .ex-svg { width: 100%; height: auto; max-height: 150px; color: var(--text-dark); display: block; margin: 4px 0; }
+        .math-widget .step { margin: 6px 0; }
+        .scene-sm svg { max-height: 265px; }
+        @media (max-width: 760px) { .thumbs { grid-template-columns: 1fr 1fr; } .slider-control label { min-width: 110px; } }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Паралельне проектування</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Дано площину $\alpha$ і пряму $l$, що <b>перетинає</b> $\alpha$. Через точку $A$ проведемо пряму, паралельну $l$ (якщо $A \in l$ — саму $l$). Точка $A_1$ її перетину з $\alpha$ — <b>паралельна проекція</b> точки $A$.</p>
+                        <p>$\alpha$ — <b>площина проекцій</b>, $l$ задає <b>напрям проектування</b>. <b>Проекція фігури</b> $F$ — фігура $F_1$ з проекцій усіх точок $F$.</p>
+                    </div>
+                    <p><b>Питання:</b> чому $l$ не може бути паралельною $\alpha$? <button class="btn-secondary" onclick="document.getElementById('answer-1').classList.add('shown')">Відповідь</button></p>
+                    <div class="box theorem hidden-answer" id="answer-1">
+                        <p>Тоді пряма через $A$, паралельна $l$, не перетне $\alpha$ або лежатиме в ній — точку $A_1$ не визначено.</p>
+                    </div>
+                </div>
+                <div>
+                <div class="math-widget widget-svg-container scene-sm" style="margin-bottom:14px">
+                    <svg viewBox="0 0 440 330" id="def-scene" role="img" aria-label="Площина α, пряма l і паралельна проекція трикутника ABC — трикутник A₁B₁C₁"></svg>
+                </div>
+                    <div class="box hack">
+                        <div class="box-title">Модель — тінь від Сонця ☀️</div>
+                        <p>Сонячні промені практично паралельні: тінь на рівній землі — паралельна проекція. Тінь від лампи — ні, її промені виходять з однієї точки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості паралельного проектування</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget scrollable-math">
+                    <table class="prop-table">
+                        <tr><th>Оригінал</th><th>Проекція</th><th>Умова</th></tr>
+                        <tr><td>пряма $a$; відрізок $AB$</td><td>пряма $a_1$; відрізок $A_1B_1$</td><td class="cond">не паралельні $l$ (інакше — точка)</td></tr>
+                        <tr><td>$a \parallel b$</td><td>$a_1 \parallel b_1$ або $a_1$ і $b_1$ збігаються</td><td class="cond">$a$ і $b$ не паралельні $l$</td></tr>
+                        <tr><td>$C \in AB$, $\;AC : CB = m : n$</td><td>$A_1C_1 : C_1B_1 = m : n$; середина → середина</td><td class="cond">$AB$ не паралельний $l$</td></tr>
+                        <tr><td>$AB \parallel CD$</td><td>$A_1B_1 : C_1D_1 = AB : CD$</td><td class="cond">$AB$ і $CD$ не паралельні $l$</td></tr>
+                        <tr><td>фігура $F$ у площині, паралельній $\alpha$</td><td>фігура $F_1$, рівна $F$</td><td class="cond">—</td></tr>
+                    </table>
+                </div>
+                <div class="grid-2" style="margin-top:14px">
+                    <div class="box error">
+                        <div class="box-title">Не зберігаються</div>
+                        <p>Довжини відрізків, величини кутів (прямий кут може стати гострим чи тупим), відношення непаралельних відрізків.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Перевірмо</div>
+                        <p>$C \in AB$, $\;AC : CB = 2 : 3$, $\;A_1B_1 = 20$ см. Знайдіть $A_1C_1$. <button class="btn-secondary" onclick="document.getElementById('answer-2').classList.add('shown')">Відповідь</button></p>
+                        <p class="hidden-answer" id="answer-2">$A_1C_1 : C_1B_1 = 2 : 3$, тому $A_1C_1 = 20 \cdot \frac{2}{5} = 8$ см.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Чому це так -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Ідея доведення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box example">
+                        <div class="box-title">1. Пряма → пряма, паралельні → паралельні</div>
+                        <p>Прямі, проведені через точки прямої $a$ паралельно $l$, лежать в одній площині $\beta$: вона містить $a$ і паралельна $l$. Тому проекція $a_1 = \beta \cap \alpha$ — пряма.</p>
+                        <p>Для $b \parallel a$ така площина $\gamma$ паралельна $\beta$ (ознака паралельності площин) або збігається з нею. Площина $\alpha$ перетинає паралельні площини по паралельних прямих: $a_1 \parallel b_1$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">2. Відношення відрізків</div>
+                        <p>У площині $\beta$ паралельні прямі $AA_1$, $CC_1$, $BB_1$ перетинають прямі $a$ і $a_1$. За теоремою про пропорційні відрізки $AC : CB = A_1C_1 : C_1B_1$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 330" id="why-scene" role="img" aria-label="Пряма a, її проекція a₁ і площина β, що містить a і паралельна l"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Тінь фігури: що зберігається? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Змінюємо напрям променів $l$. Учні прогнозують: що в тіні зміниться, а що — ні? Потім натискаємо «Висновок».</p>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="fig-0" onclick="setFig(0)">Квадрат</button>
+                        <button class="btn-secondary" id="fig-1" onclick="setFig(1)">Правильний трикутник</button>
+                    </div>
+                    <div class="slider-control"><label for="sun-h">Висота Сонця</label><input type="range" id="sun-h" min="45" max="70" step="1" value="52" oninput="shadowInput()"><span id="sun-h-val"></span></div>
+                    <div class="slider-control"><label for="sun-t">Поворот променів</label><input type="range" id="sun-t" min="-20" max="45" step="1" value="15" oninput="shadowInput()"><span id="sun-t-val"></span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealShadow()">Висновок</button></p>
+                    <div class="box theorem hidden-answer" id="shadow-answer"><p id="shadow-conclusion"></p></div>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container scene-sm">
+                        <svg viewBox="0 0 440 300" id="shadow-scene" role="img" aria-label="Фігура над площиною α, її тінь і паралельні промені"></svg>
+                    </div>
+                    <table class="meas" id="meas"></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Методи: плоскі фігури -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Зображення плоских фігур</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><b>Зображення</b> фігури — фігура, подібна до її паралельної проекції на деяку площину. Розміри на рисунку довільні, а паралельність і відношення відрізків однієї прямої чи паралельних прямих — як в оригіналі.</p>
+                </div>
+                <div class="thumbs">
+                    <div class="thumb"><svg viewBox="0 0 230 100" id="th-0" role="img" aria-label="Правильний трикутник і його зображення — довільний трикутник"></svg><p><b>Трикутник</b> (зокрема правильний, прямокутний) → довільний трикутник</p></div>
+                    <div class="thumb"><svg viewBox="0 0 230 100" id="th-1" role="img" aria-label="Квадрат і його зображення — паралелограм"></svg><p><b>Квадрат, прямокутник, ромб</b> → паралелограм</p></div>
+                    <div class="thumb"><svg viewBox="0 0 230 100" id="th-2" role="img" aria-label="Трапеція і її зображення — трапеція з тим самим відношенням основ"></svg><p><b>Трапеція</b> → трапеція з тим самим відношенням основ</p></div>
+                    <div class="thumb"><svg viewBox="0 0 230 100" id="th-3" role="img" aria-label="Коло і його зображення — еліпс"></svg><p><b>Коло</b> → еліпс; центр кола → центр еліпса</p></div>
+                </div>
+                <div class="box remark" style="margin-top:14px">
+                    <p>Медіана, середня лінія, центр паралелограма переходять у медіану, середню лінію, центр. Висота й бісектриса — загалом ні. Тому трапецію <b>не можна</b> зобразити паралелограмом, а паралелограм — трапецією.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Методи: многогранники -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Зображення многогранників</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-3">
+                    <div class="thumb">
+                        <svg viewBox="0 0 220 190" id="solid-0" role="img" aria-label="Зображення куба"></svg>
+                        <p><b>Куб.</b> Передня грань паралельна площині рисунка — квадрат. Паралельні рівні ребра — паралельні рівні відрізки.</p>
+                    </div>
+                    <div class="thumb">
+                        <svg viewBox="0 0 220 190" id="solid-1" role="img" aria-label="Зображення трикутної призми"></svg>
+                        <p><b>Призма.</b> Основи — рівні многокутники з паралельними відповідними сторонами; бічні ребра паралельні й рівні.</p>
+                    </div>
+                    <div class="thumb">
+                        <svg viewBox="0 0 220 190" id="solid-2" role="img" aria-label="Зображення правильної трикутної піраміди SABC з висотою SO"></svg>
+                        <p><b>Правильна піраміда.</b> Висота $SO$ — у центр основи: $O$ — точка перетину медіан $\triangle ABC$.</p>
+                    </div>
+                </div>
+                <div class="box hack" style="margin-top:14px">
+                    <div class="box-title">Читаємо рисунок</div>
+                    <p>Невидимі ребра — штрихові. Нижня грань куба на рисунку — паралелограм з кутом $45^\circ$. Яка вона насправді? <button class="btn-secondary" onclick="document.getElementById('answer-6').classList.add('shown')">Відповідь</button></p>
+                    <p class="hidden-answer" id="answer-6">Квадрат, усі кути — $90^\circ$. Кути й довжини рисунок спотворює; спираємося лише на властивості проектування.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Приклади -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Побудова й обчислення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p style="margin-top:0"><b>а)</b> $\triangle ABC$ — зображення правильного трикутника. Побудуйте зображення його висоти $BH$ і центра $O$.</p>
+                    <svg viewBox="0 0 280 175" id="exa-scene" class="ex-svg" role="img" aria-label="Зображення правильного трикутника ABC"></svg>
+                    <div class="step">1) Висота $BH$ правильного трикутника — це й медіана. Середина зберігається: $H$ — середина $AC$, $BH$ — зображення висоти.</div>
+                    <div class="step">2) Центр $O$ — точка перетину медіан: проводимо медіану $AK$, $\;O = AK \cap BH$.</div>
+                    <div class="step">3) Перевірка: $BO : OH = 2 : 1$ — як в оригіналі.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="exStep('a')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p style="margin-top:0"><b>б)</b> Через кінці відрізка $AB$ і його середину $M$ проведено паралельні прямі, що перетинають площину $\alpha$ в точках $A_1$, $B_1$, $M_1$. $AB$ не перетинає $\alpha$, $\;AA_1 = 7$ см, $BB_1 = 11$ см. Знайдіть $MM_1$.</p>
+                    <svg viewBox="0 0 300 165" id="exb-scene" class="ex-svg" role="img" aria-label="Відрізок AB над площиною α і паралельні прямі AA₁, MM₁, BB₁"></svg>
+                    <div class="step">1) $AA_1 \parallel BB_1$, тож $AA_1B_1B$ — трапеція.</div>
+                    <div class="step">2) $M_1$ — проекція середини $M$, тож середина $A_1B_1$.</div>
+                    <div class="step">3) $MM_1$ — середня лінія: $MM_1 = \frac{7 + 11}{2} = 9$&nbsp;см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="exStep('b')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Пастки -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Висота «на око»</div>
+                        <p>На зображенні правильного $\triangle ABC$ висоту не проводять перпендикулярно до $AC$ — кути не зберігаються. Висота є медіаною: $B$ з'єднуємо із серединою $AC$.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 300 150" id="trap-scene" role="img" aria-label="Хибна висота-перпендикуляр і правильне зображення висоти — медіана"></svg>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Відношення непаралельних відрізків</div>
+                        <p>У квадраті $AB : BC = 1$, а на зображенні $A_1B_1 : B_1C_1$ — будь-яке. Відношення зберігається лише на одній прямій або на паралельних прямих.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обернене твердження хибне</div>
+                        <p>З $a \parallel b$ випливає $a_1 \parallel b_1$, але не навпаки: проекції мимобіжних прямих теж можуть бути паралельними.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Забута умова</div>
+                        <p>Відрізок, паралельний $l$, проектується в точку, а квадрат, площина якого паралельна $l$, — у відрізок. Тому у властивостях умова: не паралельні $l$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Практика -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Фігури</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Трапеція</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Прямі</button>
+                    <button class="btn-secondary" id="tab-4" onclick="showTask(4)">4. Підвищений</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Яка з фігур <u>не може</u> бути паралельною проекцією квадрата?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) квадрат</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) ромб</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) прямокутник</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Г) трапеція</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) паралелограм</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Протилежні сторони квадрата паралельні, тому їх проекції паралельні (або весь квадрат стає відрізком, коли його площина паралельна $l$). Отже, проекція — паралелограм, зокрема квадрат (наприклад, коли площина квадрата паралельна $\alpha$), прямокутник чи ромб.</p>
+                            <p>У трапеції одна пара сторін не паралельна — проекцією квадрата вона бути не може.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Трапеція $A_1B_1C_1D_1$ — паралельна проекція трапеції $ABCD$ з основами $AD = 12$ см і $BC = 4$ см; $\;A_1D_1 = 9$ см. Знайдіть середню лінію трапеції $A_1B_1C_1D_1$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $8$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $6{,}5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $6$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $3$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $4{,}5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$AD \parallel BC$, тому $A_1D_1 : B_1C_1 = AD : BC = 3 : 1$, звідки $B_1C_1 = 3$ см.</p>
+                            <p>Середня лінія: $\frac{9 + 3}{2} = 6$ см. Перевірка: середня лінія оригіналу $8$ см паралельна $AD$, $\;9 \cdot \frac{8}{12} = 6$.</p>
+                            <p>$8$ см — довжину перенесли без змін; $6{,}5$ см — взяли $B_1C_1 = BC = 4$ см.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Паралельними проекціями прямих $a$ і $b$ на площину $\alpha$ є паралельні прямі $a_1$ і $b_1$. Як можуть бути розміщені прямі $a$ і $b$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) лише паралельні</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) лише мимобіжні</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) паралельні або мимобіжні</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) паралельні або перетинаються</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) будь-як</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Якби $a$ і $b$ перетиналися в точці $O$, то її проекція $O_1$ лежала б і на $a_1$, і на $b_1$ — а паралельні прямі спільних точок не мають.</p>
+                            <p>Паралельні прямі дають паралельні проекції. Мимобіжні — теж можуть: якщо площини, що містять $a$ і $b$ і паралельні $l$, паралельні між собою, то $\alpha$ перетинає їх по паралельних прямих.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-4">
+                    <div>
+                        <p class="quiz-q">Відрізок $AB$ <b>перетинає</b> площину $\alpha$. Через точки $A$, $B$ і середину $M$ відрізка $AB$ проведено паралельні прямі, що перетинають $\alpha$ в точках $A_1$, $B_1$, $M_1$; $\;AA_1 = 7$ см, $BB_1 = 11$ см. Знайдіть $MM_1$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $9$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $4$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $2$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $18$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) визначити неможливо</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$AB$ перетинає $\alpha$ в точці $O$ прямої $A_1B_1$. $\triangle OAA_1 \sim \triangle OBB_1$ ($AA_1 \parallel BB_1$), тому $OA : OB = 7 : 11$.</p>
+                            <p>Нехай $OA = 7k$, $OB = 11k$; тоді $AM = 9k$, $OM = 2k$, і $M$ лежить між $O$ і $B$. З $\triangle OMM_1 \sim \triangle OBB_1$: $MM_1 = 11 \cdot \frac{2k}{11k} = 2$ см.</p>
+                            <p>$9$ см — відповідь для випадку, коли $AB$ не перетинає $\alpha$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="10">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Проекція точки $A$: пряма через $A$, паралельна $l$, перетинає $\alpha$ в точці $A_1$ ($l$ перетинає $\alpha$).</p>
+                    <p><b>Зберігаються:</b> пряма → пряма, паралельність, відношення відрізків однієї прямої чи паралельних прямих (середина → середина).</p>
+                    <p><b>Не зберігаються:</b> довжини, кути.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Зображення ✍️</div>
+                        <p>Трикутник → будь-який трикутник; квадрат, ромб, прямокутник → паралелограм; трапеція → трапеція з тим самим відношенням основ; коло → еліпс. Центр правильного трикутника — точка перетину медіан.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Висоти й прямі кути не малюємо «на око» — будуємо через середини, медіани й паралельність.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderShadow();
+                if (currentSlide === 7) { renderExA(); renderExB(); }
+@@JS
+            // ===== Просторові креслення =====
+            const RAD = Math.PI / 180, r1 = (v) => Math.round(v * 10) / 10;
+            const lerp = (P, Q, t) => P.map((v, i) => v + (Q[i] - v) * t);
+            const mid = (P, Q) => lerp(P, Q, 0.5);
+            // Рисунок на екрані — теж паралельна проекція: сцену повертаємо на psi навколо вертикалі й дивимось згори під кутом eps
+            function camera(psi, eps, k, u0, v0) {
+                const cp = Math.cos(psi * RAD), sp = Math.sin(psi * RAD), ce = Math.cos(eps * RAD), se = Math.sin(eps * RAD);
+                return ([x, y, z]) => [r1(u0 + k * (x * cp - y * sp)), r1(v0 - k * ((x * sp + y * cp) * se + z * ce))];
+            }
+            const screenDir = (cam, v) => { const a = cam([0, 0, 0]), b = cam(v.map((t) => t * 50)); return [b[0] - a[0], b[1] - a[1]]; };
+            // Паралельна проекція точки P на площину α: z = 0 у напрямі d
+            const onAlpha = (P, d) => [P[0] - P[2] * d[0] / d[2], P[1] - P[2] * d[1] / d[2], 0];
+            const sLine = ([x1, y1], [x2, y2], cls) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}"/>`;
+            const sPoly = (Q, cls) => `<polygon points="${Q.map((q) => q.join(',')).join(' ')}" class="${cls}"/>`;
+            const sDot = ([x, y], cls = '') => `<circle cx="${x}" cy="${y}" r="4.5" class="pt ${cls}"/>`;
+            const sText = ([x, y], s, cls = '', dx = 0, dy = 0) => `<text x="${r1(x + dx)}" y="${r1(y + dy)}" class="lbl ${cls}">${s}</text>`;
+            // Підписи вершин — назовні від центра многокутника (на екрані)
+            function sLabels(Q, names, off = 15, cls = '') {
+                const cx = Q.reduce((s, q) => s + q[0], 0) / Q.length, cy = Q.reduce((s, q) => s + q[1], 0) / Q.length;
+                return Q.map((q, i) => {
+                    const dx = q[0] - cx, dy = q[1] - cy, n = Math.hypot(dx, dy) || 1;
+                    return sText(q, names[i], cls, off * dx / n, off * dy / n);
+                }).join('');
+            }
+            function sArrow(from, dir, len, cls) {
+                const n = Math.hypot(dir[0], dir[1]) || 1, ux = dir[0] / n, uy = dir[1] / n;
+                const to = [r1(from[0] + len * ux), r1(from[1] + len * uy)];
+                const head = [to, [r1(to[0] - 13 * ux + 6 * uy), r1(to[1] - 13 * uy - 6 * ux)], [r1(to[0] - 13 * ux - 6 * uy), r1(to[1] - 13 * uy + 6 * ux)]];
+                return sLine(from, [r1(to[0] - 10 * ux), r1(to[1] - 10 * uy)], cls) + sPoly(head, cls + '-head');
+            }
+            // Рисочки рівних відрізків
+            function sTicks(P, Q, count) {
+                const dx = Q[0] - P[0], dy = Q[1] - P[1], n = Math.hypot(dx, dy) || 1, ux = dx / n, uy = dy / n;
+                let out = '';
+                for (let i = 0; i < count; i++) {
+                    const o = (i - (count - 1) / 2) * 5, cx = (P[0] + Q[0]) / 2 + o * ux, cy = (P[1] + Q[1]) / 2 + o * uy;
+                    out += sLine([r1(cx - 6 * uy), r1(cy + 6 * ux)], [r1(cx + 6 * uy), r1(cy - 6 * ux)], 'tick');
+                }
+                return out;
+            }
+            const plane = (x0, x1, y0, y1) => [[x0, y0, 0], [x1, y0, 0], [x1, y1, 0], [x0, y1, 0]];
+
+            // --- Слайд 1: проекція трикутника ABC на площину α у напрямі l ---
+            function renderDef() {
+                const cam = camera(-20, 26, 34, 232, 226), d = [0.5, -0.45, -1];
+                const P = [[-2.4, 1.0, 2.7], [0.6, 1.8, 3.6], [1.2, -0.4, 2.1]], Q = P.map((p) => onAlpha(p, d));
+                const al = plane(-4.4, 4.4, -3.3, 3.0), L = [-3.2, 1.6, 0];
+                let svg = sPoly(al.map(cam), 'pl') + sText(cam(al[0]), 'α', 'pl-name', 18, -12);
+                svg += sLine(cam(L), cam(lerp(L, L.map((v, i) => v + d[i]), 0.6)), 'dir hid');
+                svg += sPoly(Q.map(cam), 'shade') + sPoly(Q.map(cam), 'edge thin');
+                P.forEach((p, i) => { svg += sLine(cam(p), cam(Q[i]), 'ray'); });
+                svg += sPoly(P.map(cam), 'fig') + sPoly(P.map(cam), 'edge g');
+                const U = L.map((v, i) => v - 3.4 * d[i]);
+                svg += sLine(cam(U), cam(L), 'dir') + sText(cam(U), 'l', '', -12, 4) + sDot(cam(L), 'pt');
+                P.concat(Q).forEach((p) => { svg += sDot(cam(p)); });
+                svg += sLabels(P.map(cam), ['A', 'B', 'C']) + sLabels(Q.map(cam), ['A₁', 'B₁', 'C₁'], 17);
+                document.getElementById('def-scene').innerHTML = svg;
+            }
+
+            // --- Слайд 3: пряма a, площина β (містить a і паралельна l), проекція a₁ = β ∩ α ---
+            function renderWhy() {
+                const cam = camera(-16, 22, 38, 214, 214), d = [0.35, -0.3, -1];
+                const A = [-2.6, 1.0, 3.0], B = [2.4, 0.2, 1.6], C = lerp(A, B, 0.4);
+                const [A1, B1, C1] = [A, B, C].map((p) => onAlpha(p, d));
+                const P = lerp(A, B, -0.25), Q = lerp(A, B, 1.25), P1 = onAlpha(P, d), Q1 = onAlpha(Q, d);
+                const up = (X) => X.map((v, i) => v - 0.9 * d[i]);
+                const al = plane(-4.6, 4.8, -2.6, 2.6);
+                let svg = sPoly(al.map(cam), 'pl') + sText(cam(al[0]), 'α', 'pl-name', 18, -12);
+                svg += sPoly([up(P), up(Q), Q1, P1].map(cam), 'pl-b') + sText(cam(lerp(up(P), up(Q), 0.8)), 'β', 'pl-name g', 0, -14);
+                svg += sLine(cam(P1), cam(Q1), 'edge thin') + sLine(cam(P), cam(Q), 'edge');
+                [[A, A1], [C, C1], [B, B1]].forEach(([X, Y]) => { svg += sLine(cam(X), cam(Y), 'ray'); });
+                [A, C, B, A1, C1, B1].forEach((X) => { svg += sDot(cam(X)); });
+                svg += sText(cam(A), 'A', '', 0, -16) + sText(cam(C), 'C', '', 0, -16) + sText(cam(B), 'B', '', 2, -16);
+                svg += sText(cam(A1), 'A₁', '', -6, 17) + sText(cam(C1), 'C₁', '', -4, 17) + sText(cam(B1), 'B₁', '', -4, 17);
+                svg += sText(cam(P), 'a', '', -4, -15) + sText(cam(Q1), 'a₁', '', 16, 4);
+                svg += sArrow([395, 40], screenDir(cam, d), 62, 'dir') + sText([395, 40], 'l', '', 14, 4);
+                document.getElementById('why-scene').innerHTML = svg;
+            }
+
+            // --- Слайд 4: тінь квадрата / правильного трикутника на площині α ---
+            // Фігура лежить у вертикальній площині y = 0 над α; Сонце задає напрям l
+            const FIGS = [
+                { names: ['A', 'B', 'C', 'D'], loc: [[-1.1, -1.1], [1.1, -1.1], [1.1, 1.1], [-1.1, 1.1]], rot: 12, zc: 2.0 },
+                { names: ['A', 'B', 'C'], loc: [[0, 1.4], [-1.212, -0.7], [1.212, -0.7]], rot: -10, zc: 2.0 },
+            ];
+            let figIndex = 0, shadowShown = false;
+            window.setFig = function (i) {
+                figIndex = i; shadowShown = false;
+                FIGS.forEach((_, k) => document.getElementById(`fig-${k}`).classList.toggle('on', k === i));
+                renderShadow();
+            };
+            window.shadowInput = function () { shadowShown = false; renderShadow(); };
+            window.revealShadow = function () { shadowShown = true; renderShadow(); };
+            const vec = (P, Q) => [Q[0] - P[0], Q[1] - P[1]];
+            const dist = (P, Q) => Math.hypot(Q[0] - P[0], Q[1] - P[1]);
+            const angleDeg = (u, v) => Math.round(Math.acos(Math.max(-1, Math.min(1, (u[0] * v[0] + u[1] * v[1]) / Math.hypot(...u) / Math.hypot(...v)))) / RAD);
+            const ratio = (r) => `${String(Math.round(r * 100) / 100).replace('.', ',')} : 1`;
+            window.renderShadow = function () {
+                const h = +document.getElementById('sun-h').value, t = +document.getElementById('sun-t').value;
+                document.getElementById('sun-h-val').textContent = `${h}°`;
+                document.getElementById('sun-t-val').textContent = `${t > 0 ? '+' : t < 0 ? '−' : ''}${Math.abs(t)}°`;
+                const d = [Math.cos(h * RAD) * Math.sin(t * RAD), -Math.cos(h * RAD) * Math.cos(t * RAD), -Math.sin(h * RAD)];
+                const F = FIGS[figIndex], c = Math.cos(F.rot * RAD), s = Math.sin(F.rot * RAD), sq = F.names.length === 4;
+                const P = F.loc.map(([a, b]) => [a * c - b * s, 0, F.zc + a * s + b * c]), Q = P.map((p) => onAlpha(p, d));
+                const M = sq ? mid(P[0], P[1]) : mid(P[1], P[2]), M1 = onAlpha(M, d);
+                const G = P.reduce((acc, p) => acc.map((v, i) => v + p[i] / 3), [0, 0, 0]), G1 = onAlpha(G, d);
+                const cam = camera(35, 24, 48, 164, 182);
+                const al = plane(-2.8, 3.7, -3.9, 1.1);
+                let svg = sPoly(al.map(cam), 'pl') + sText(cam(al[0]), 'α', 'pl-name', 18, -12);
+                const Ps = P.map(cam), Qs = Q.map(cam), ec = sq ? ['g', 'b', 'g', 'b'] : ['thin', 'thin', 'thin'];
+                svg += sPoly(Qs, 'shade');
+                Qs.forEach((q, i) => { svg += sLine(q, Qs[(i + 1) % Qs.length], `edge ${ec[i]}`); });
+                if (!sq) svg += sLine(Qs[0], cam(M1), 'edge r');
+                P.forEach((p, i) => { svg += sLine(Ps[i], Qs[i], 'ray'); });
+                svg += sLine(cam(M), cam(M1), 'ray');
+                svg += sPoly(Ps, 'fig');
+                Ps.forEach((p, i) => { svg += sLine(p, Ps[(i + 1) % Ps.length], `edge ${ec[i]}`); });
+                if (!sq) svg += sLine(Ps[0], cam(M), 'edge r') + sDot(cam(G), 'b') + sDot(cam(G1), 'b')
+                    + sText(cam(G), 'G', '', 13, -3) + sText(cam(G1), 'G₁', '', 15, -4);
+                svg += sDot(cam(M), 'r') + sDot(cam(M1), 'r');
+                const mOff = (A, B, X) => { const v = vec(cam(A), cam(B)), n = Math.hypot(...v) || 1; return [15 * v[1] / n, -15 * v[0] / n]; };
+                const [mx, my] = sq ? mOff(P[0], P[1]) : mOff(P[1], P[2]);
+                svg += sText(cam(M), 'M', '', -mx, -my) + sText(cam(M1), 'M₁', '', -mx * 1.1, -my * 1.1);
+                svg += sLabels(Ps, F.names) + sLabels(Qs, F.names.map((n) => n + '₁'), 17);
+                svg += `<circle cx="40" cy="30" r="12" class="sun"/>` + sArrow([40, 30], screenDir(cam, d), 66, 'dir');
+                svg += sText([40, 30], 'l', '', 22, 30);
+                document.getElementById('shadow-scene').innerHTML = svg;
+
+                // Вимірювання — у самій площині α (справжні кути й довжини тіні)
+                let rows;
+                if (sq) {
+                    const ang = angleDeg(vec(Q[0], Q[1]), vec(Q[0], Q[3]));
+                    const par = Math.abs(vec(Q[0], Q[1])[0] * vec(Q[3], Q[2])[1] - vec(Q[0], Q[1])[1] * vec(Q[3], Q[2])[0]) < 1e-9
+                        && Math.abs(vec(Q[0], Q[3])[0] * vec(Q[1], Q[2])[1] - vec(Q[0], Q[3])[1] * vec(Q[1], Q[2])[0]) < 1e-9;
+                    rows = [['Кут при вершині A', '90°', `${ang}°`, ang === 90 ? '' : 'change'],
+                        ['AB : AD', '1 : 1', ratio(dist(Q[0], Q[1]) / dist(Q[0], Q[3])), 'v'],
+                        ['AM : MB', '1 : 1', ratio(dist(Q[0], M1) / dist(M1, Q[1])), 'keep'],
+                        ['AB ∥ DC, AD ∥ BC', 'так', par ? 'так' : 'ні', 'keep']];
+                } else {
+                    const ang = angleDeg(vec(Q[0], Q[1]), vec(Q[0], Q[2]));
+                    rows = [['Кут при вершині A', '60°', `${ang}°`, ang === 60 ? '' : 'change'],
+                        ['AB : AC', '1 : 1', ratio(dist(Q[0], Q[1]) / dist(Q[0], Q[2])), 'v'],
+                        ['BM : MC', '1 : 1', ratio(dist(Q[1], M1) / dist(M1, Q[2])), 'keep'],
+                        ['AG : GM', '2 : 1', ratio(dist(Q[0], G1) / dist(G1, M1)), 'keep']];
+                }
+                rows.forEach((r) => { if (r[3] === 'v') r[3] = r[2] === r[1] ? '' : 'change'; });
+                document.getElementById('meas').innerHTML = `<tr><th></th><th>${sq ? 'Квадрат' : 'Трикутник'}</th><th>Тінь</th></tr>`
+                    + rows.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="${shadowShown ? r[3] : ''}">${r[2]}</td></tr>`).join('');
+                const box = document.getElementById('shadow-answer'), out = document.getElementById('shadow-conclusion');
+                box.classList.toggle('shown', shadowShown);
+                out.innerHTML = sq
+                    ? 'Тінь квадрата — <b>паралелограм</b>: $A_1B_1 \\parallel D_1C_1$, $A_1D_1 \\parallel B_1C_1$, а $M_1$ — середина $A_1B_1$. Кут і відношення сусідніх сторін змінилися — вони не зберігаються.'
+                    : '$M_1$ — середина $B_1C_1$, тож $A_1M_1$ — медіана тіні, і $A_1G_1 : G_1M_1 = 2 : 1$. Кути й відношення сторін змінилися: тінь правильного трикутника — довільний трикутник.';
+                if (shadowShown && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+
+            // --- Слайд 5: оригінал → зображення (афінне перетворення, як при паралельному проектуванні) ---
+            function fitPts(P, x0, x1, y0, y1) {
+                const xs = P.map((p) => p[0]), ys = P.map((p) => p[1]);
+                const mnx = Math.min(...xs), mxx = Math.max(...xs), mny = Math.min(...ys), mxy = Math.max(...ys);
+                const k = Math.min((x1 - x0) / (mxx - mnx), (y1 - y0) / (mxy - mny));
+                const ox = (x0 + x1) / 2 - k * (mnx + mxx) / 2, oy = (y0 + y1) / 2 + k * (mny + mxy) / 2;
+                return (p) => [r1(ox + k * p[0]), r1(oy - k * p[1])];
+            }
+            function renderThumbs() {
+                const ring = Array.from({ length: 60 }, (_, i) => [Math.cos(i * Math.PI / 30), Math.sin(i * Math.PI / 30)]);
+                const SH = [
+                    { pts: [[0, 0], [2, 0], [1, 1.732]], T: ([x, y]) => [x + 0.75 * y, 0.6 * y] },
+                    { pts: [[0, 0], [2, 0], [2, 2], [0, 2]], T: ([x, y]) => [x + 0.55 * y, 0.6 * y] },
+                    { pts: [[0, 0], [3, 0], [2.25, 1.3], [0.75, 1.3]], T: ([x, y]) => [0.9 * x + 0.8 * y, 0.15 * x + 0.75 * y] },
+                    { pts: ring, T: ([x, y]) => [x + 0.5 * y, 0.5 * y], circle: true },
+                ];
+                SH.forEach((sh, i) => {
+                    const img = sh.pts.map(sh.T), fo = fitPts(sh.pts, 10, 90, 10, 90), fi = fitPts(img, 140, 222, 12, 88);
+                    let svg = sPoly(sh.pts.map(fo), 'orig') + sArrow([98, 50], [1, 0], 34, 'arrow-m') + sPoly(img.map(fi), 'img');
+                    if (sh.circle) {
+                        const p = [Math.cos(0.6), Math.sin(0.6)], q = [-p[0], -p[1]];
+                        svg += sLine(fo(p), fo(q), 'edge thin') + sDot(fo([0, 0])) + sLine(fi(sh.T(p)), fi(sh.T(q)), 'edge thin b') + sDot(fi([0, 0]), 'b');
+                    }
+                    document.getElementById(`th-${i}`).innerHTML = svg;
+                });
+            }
+
+            // --- Слайд 6: куб, призма, піраміда; невидимі ребра — штрихові ---
+            function solidSvg(V, F, k, u0, v0) {
+                const q = 0.5, a = 45 * RAD;
+                const proj = ([x, y, z]) => [r1(u0 + k * (x + q * y * Math.cos(a))), r1(v0 - k * (z + q * y * Math.sin(a)))];
+                const dir = [-q * Math.cos(a), 1, -q * Math.sin(a)];   // цей напрям рисунок «стискає» в точку
+                const c = V.reduce((acc, p) => acc.map((t, i) => t + p[i] / V.length), [0, 0, 0]);
+                const front = F.map((f) => {
+                    const p = V[f[0]], u = V[f[1]].map((t, i) => t - p[i]), w = V[f[2]].map((t, i) => t - p[i]);
+                    let n = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+                    if (n.reduce((s, t, i) => s + t * (p[i] - c[i]), 0) < 0) n = n.map((t) => -t);
+                    return n.reduce((s, t, i) => s + t * dir[i], 0) < 0;
+                });
+                const edges = new Map();
+                F.forEach((f, fi) => f.forEach((v, j) => {
+                    const w = f[(j + 1) % f.length], key = v < w ? `${v}-${w}` : `${w}-${v}`;
+                    edges.set(key, edges.get(key) === true || front[fi]);
+                }));
+                let hid = '', vis = '';
+                edges.forEach((visible, key) => {
+                    const [i, j] = key.split('-').map(Number), ln = sLine(proj(V[i]), proj(V[j]), visible ? 'edge' : 'edge hid');
+                    if (visible) vis += ln; else hid += ln;
+                });
+                return { hid, vis, proj };
+            }
+            function renderSolids() {
+                const cube = solidSvg([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
+                    [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]], 112, 62, 160);
+                document.getElementById('solid-0').innerHTML = cube.hid + cube.vis;
+                // основа — правильний трикутник: A — ліворуч позаду, B — спереду, C — праворуч позаду
+                const R = 0.62, tri = [[-R * Math.cos(30 * RAD), R / 2], [0, -R], [R * Math.cos(30 * RAD), R / 2]];
+                const pr = solidSvg([...tri.map(([x, y]) => [x, y, 0]), ...tri.map(([x, y]) => [x, y, 1.15])],
+                    [[0, 1, 2], [3, 4, 5], [0, 1, 4, 3], [1, 2, 5, 4], [2, 0, 3, 5]], 105, 106, 158);
+                document.getElementById('solid-1').innerHTML = pr.hid + pr.vis;
+                const S = [0, 0, 1.25], py = solidSvg([...tri.map(([x, y]) => [x, y, 0]), S], [[0, 1, 2], [0, 1, 3], [1, 2, 3], [2, 0, 3]], 98, 106, 150);
+                const p = py.proj, A = [...tri[0], 0], B = [...tri[1], 0], C = [...tri[2], 0], O = [0, 0, 0];
+                let svg = py.hid + sLine(p(A), p(mid(B, C)), 'edge hid y') + sLine(p(C), p(mid(A, B)), 'edge hid y') + sLine(p(S), p(O), 'edge hid r') + py.vis;
+                svg += sDot(p(O), 'r') + sText(p(O), 'O', '', 3, 16) + sText(p(S), 'S', '', 0, -14)
+                    + sText(p(A), 'A', '', -13, 2) + sText(p(B), 'B', '', -14, 7) + sText(p(C), 'C', '', 13, -2);
+                document.getElementById('solid-2').innerHTML = svg;
+            }
+
+            // --- Слайд 7: приклади з кроками; рисунок оновлюється разом із кроками ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+            const stepsShown = (id) => document.querySelectorAll(`#ex-${id} .step.shown`).length;
+            window.exStep = function (id) { nextStep(`ex-${id}`); if (id === 'a') renderExA(); else renderExB(); };
+            window.renderExA = function () {
+                const n = stepsShown('a'), A = [40, 150], B = [120, 22], C = [250, 128];
+                const H = mid(A, C), K = mid(B, C), O = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+                let svg = sPoly([A, B, C], 'fig') + sPoly([A, B, C], 'edge');
+                if (n >= 1) svg += sTicks(A, H, 1) + sTicks(H, C, 1) + sLine(B, H, 'edge g') + sDot(H, 'r') + sText(H, 'H', '', 4, 16);
+                if (n >= 2) svg += sTicks(B, K, 2) + sTicks(K, C, 2) + sLine(A, K, 'edge b') + sDot(K) + sText(K, 'K', '', 14, -6) + sDot(O, 'r') + sText(O, 'O', '', -13, -6);
+                if (n >= 3) svg += sText(mid(B, O), '2', 'num', 12, 0) + sText(mid(O, H), '1', 'num', 11, 0);
+                svg += sDot(A) + sDot(B) + sDot(C) + sText(A, 'A', '', -13, 4) + sText(B, 'B', '', 0, -14) + sText(C, 'C', '', 13, 4);
+                document.getElementById('exa-scene').innerHTML = svg;
+            };
+            window.renderExB = function () {
+                const n = stepsShown('b'), cam = camera(-14, 24, 40, 146, 108), d = [0.3, -0.28, -1];
+                const A = [-2.3, 0.5, 1.4], B = [2.0, 0.1, 2.2], M = mid(A, B);
+                const [A1, B1, M1] = [A, B, M].map((p) => onAlpha(p, d));
+                const al = plane(-3.5, 3.4, -1.7, 1.5);
+                let svg = sPoly(al.map(cam), 'pl') + sText(cam(al[0]), 'α', 'pl-name', 16, -11);
+                if (n >= 1) svg += sPoly([A, B, B1, A1].map(cam), 'fig');
+                svg += sLine(cam(A1), cam(B1), 'edge thin') + sLine(cam(A), cam(B), 'edge');
+                svg += sLine(cam(A), cam(A1), 'edge b') + sLine(cam(B), cam(B1), 'edge b') + sLine(cam(M), cam(M1), n >= 3 ? 'edge g' : 'edge r');
+                svg += sTicks(cam(A), cam(M), 1) + sTicks(cam(M), cam(B), 1);
+                if (n >= 2) svg += sTicks(cam(A1), cam(M1), 1) + sTicks(cam(M1), cam(B1), 1);
+                [A, B, M, A1, B1, M1].forEach((X) => { svg += sDot(cam(X)); });
+                svg += sText(cam(A), 'A', '', -6, -15) + sText(cam(B), 'B', '', 6, -15) + sText(cam(M), 'M', '', 0, -16)
+                    + sText(cam(A1), 'A₁', '', -8, 15) + sText(cam(B1), 'B₁', '', 8, 15) + sText(cam(M1), 'M₁', '', 2, 16);
+                svg += sText(cam(mid(A, A1)), '7', 'num', -14, 0) + sText(cam(mid(B, B1)), '11', 'num', 17, 0) + sText(cam(mid(M, M1)), n >= 3 ? '9' : '?', 'num', 13, 0);
+                document.getElementById('exb-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 8: хибний перпендикуляр і правильне зображення висоти ---
+            function renderTrap() {
+                const A = [30, 128], B = [122, 22], C = [272, 112], H = mid(A, C);
+                const t = ((B[0] - A[0]) * (C[0] - A[0]) + (B[1] - A[1]) * (C[1] - A[1])) / ((C[0] - A[0]) ** 2 + (C[1] - A[1]) ** 2);
+                const P = lerp(A, C, t), u = [(C[0] - A[0]), (C[1] - A[1])], un = Math.hypot(...u), e = [u[0] / un * 9, u[1] / un * 9];
+                const w = [(B[0] - P[0]), (B[1] - P[1])], wn = Math.hypot(...w), f = [w[0] / wn * 9, w[1] / wn * 9];
+                let svg = sPoly([A, B, C], 'fig') + sPoly([A, B, C], 'edge');
+                svg += sLine(B, P, 'edge hid r') + `<polyline points="${r1(P[0] - e[0])},${r1(P[1] - e[1])} ${r1(P[0] - e[0] + f[0])},${r1(P[1] - e[1] + f[1])} ${r1(P[0] + f[0])},${r1(P[1] + f[1])}" class="edge thin r"/>`;
+                svg += sLine(B, H, 'edge g') + sTicks(A, H, 1) + sTicks(H, C, 1) + sDot(H, 'r');
+                svg += sText(P, '✗', 'bad', -12, 14) + sText(H, 'H ✓', 'ok', 10, 16);
+                svg += sText(A, 'A', '', -12, 4) + sText(B, 'B', '', 0, -13) + sText(C, 'C', '', 13, 4);
+                document.getElementById('trap-scene').innerHTML = svg;
+            }
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+            };
+
+            renderDef(); renderWhy(); renderThumbs(); renderSolids(); renderTrap();
