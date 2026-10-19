@@ -1,0 +1,325 @@
+@@TITLE Відрізок. Довжина відрізка
+@@CSS
+@@INCLUDE steps.css
+        /* Лінійка й відрізки */
+        .ruler { fill: var(--brand-yellow); fill-opacity: 0.35; stroke: currentColor; stroke-width: 1.5; }
+        .tick { stroke: currentColor; stroke-width: 1; }
+        .tick.cm { stroke-width: 2; }
+        .tick-num { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; }
+        .seg { stroke: var(--brand-blue); stroke-width: 5; stroke-linecap: round; }
+        .seg.alt { stroke: var(--brand-green); }
+        .pt { fill: var(--warning-red); }
+        .pt-name { fill: currentColor; font-size: 18px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .len { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .ruler-move { transition: transform 1.2s ease; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 60px; text-align: right; }
+        .readout { font-size: 1.3rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .units p { margin: 4px 0; }
+        .mini-fig { display: block; width: 100%; max-width: 400px; margin: 8px auto; color: var(--text-dark); }
+        @media (prefers-reduced-motion: reduce) { .ruler-move { transition: none; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Яка дорога коротша? 🏫</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> Від дому до школи навпростець — $500$ м. А я ходжу через магазин: $300$ м до магазину і ще $400$ м до школи.</div>
+                <div class="bubble right"><span class="who">Тарас:</span> Зате через магазин цікавіше! А наскільки довше?</div>
+                <p class="big-question">Яка дорога коротша і на скільки метрів? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Навпростець — на $200$ м коротше! 🎉</div>
+                    <p>Через магазин: $300 + 400 = 700$ м. Навпростець: $500$ м. $700 - 500 = 200$ м.</p>
+                    <p>Найкоротший шлях між двома точками — <b>відрізок</b>, що їх сполучає.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Вимірюємо відрізок лінійкою 📏</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Прикладаємо лінійку нулем до точки $A$ і дивимось, навпроти якої поділки точка $B$. Учні називають довжину, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-b">Точка $B$</label><input type="range" id="w-b" min="10" max="115" step="1" value="73" oninput="renderRuler()"><span id="w-b-val"></span></div>
+                    <p style="text-align:center">
+                        <button class="btn-secondary" onclick="applyRuler()">▶ Прикласти лінійку</button>
+                        <button class="btn-primary" onclick="revealRuler()">Яка довжина?</button>
+                    </p>
+                    <div class="hidden-answer" id="ruler-answer"><div class="readout" id="ruler-len"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" id="ruler-scene" role="img" aria-label="Відрізок AB над лінійкою з сантиметрами й міліметрами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Відрізок і його довжина</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Відрізок</b> $AB$ — частина прямої між точками $A$ і $B$. Точки $A$ і $B$ — <b>кінці</b> відрізка.</p>
+                    <p><b>Довжина</b> відрізка — відстань між його кінцями.</p>
+                    <p>Рівні відрізки мають рівні довжини.</p>
+                    <p>Якщо точка $C$ лежить на відрізку $AB$, то $AB = AC + CB$.</p>
+                </div>
+                <div class="box definition units">
+                    <div class="box-title">Одиниці довжини</div>
+                    <p>$1$ см $= 10$ мм</p>
+                    <p>$1$ дм $= 10$ см</p>
+                    <p>$1$ м $= 10$ дм $= 100$ см</p>
+                    <p>$1$ км $= 1\,000$ м</p>
+                    <p>$4$ см $7$ мм $= 47$ мм</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Шукаємо довжину відрізка ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Точка $C$ лежить на відрізку $AB$. $AC = 3$ см $4$ мм, $CB = 2$ см $8$ мм. Знайди довжину відрізка $AB$.</p>
+                    </div>
+                    <svg viewBox="0 0 400 90" class="mini-fig" role="img" aria-label="Точка C лежить на відрізку AB">
+                        <line x1="30" y1="45" x2="370" y2="45" class="seg"/>
+                        <circle cx="30" cy="45" r="6" class="pt"/><circle cx="216" cy="45" r="6" class="pt"/><circle cx="370" cy="45" r="6" class="pt"/>
+                        <text x="30" y="25" class="pt-name">A</text><text x="216" y="25" class="pt-name">C</text><text x="370" y="25" class="pt-name">B</text>
+                        <text x="123" y="75" class="len">3 см 4 мм</text><text x="293" y="75" class="len">2 см 8 мм</text>
+                    </svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: лінійка не від нуля ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Кінці відрізка — навпроти поділок $2$ см і $7$ см. Довжина $7$ см? <b>Ні!</b> $7 - 2 = 5$ см.</p>
+                        <p>І одиниці: $1$ м — це $100$ см, а не $10$ см.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Прикладай лінійку нулем до кінця відрізка. Якщо не від нуля — віднімай: більша поділка мінус менша.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" id="trap-scene" role="img" aria-label="Відрізок від 2 до 7 см на лінійці: довжина 5 см, а не 7"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Скільки міліметрів у $4$ см $7$ мм?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $47$ мм</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $470$ мм</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $11$ мм</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$1$ см $= 10$ мм. Скільки міліметрів у $4$ см? Додай ще $7$ мм.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$4$ см $= 40$ мм, $40 + 7 = 47$ мм.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Точка $K$ лежить на відрізку $MN$, $MK = 5$ см, $KN = 3$ см. Знайди $MN$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $2$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $8$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $15$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Точка $K$ ділить $MN$ на дві частини. Намалюй і подумай, з чого складається $MN$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$MN = MK + KN = 5 + 3 = 8$ см.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. $AB = 12$ см, точка $C$ лежить на $AB$, $AC = 7$ см $5$ мм. Знайди $CB$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $5$ см $5$ мм</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $4$ см $5$ мм</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $19$ см $5$ мм</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$CB = AB - AC$. Переведи все в міліметри: $12$ см $= 120$ мм.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$120 - 75 = 45$ мм $= 4$ см $5$ мм.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Скільки відрізків на малюнку?</p>
+                    <svg viewBox="0 0 360 60" class="mini-fig" role="img" aria-label="Чотири точки A, B, C, D на одній прямій">
+                        <line x1="20" y1="35" x2="340" y2="35" class="seg"/>
+                        <circle cx="20" cy="35" r="5" class="pt"/><circle cx="120" cy="35" r="5" class="pt"/><circle cx="210" cy="35" r="5" class="pt"/><circle cx="340" cy="35" r="5" class="pt"/>
+                        <text x="20" y="18" class="pt-name">A</text><text x="120" y="18" class="pt-name">B</text><text x="210" y="18" class="pt-name">C</text><text x="340" y="18" class="pt-name">D</text>
+                    </svg>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $6$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Не лише короткі! Почни з точки $A$: $AB$, $AC$, $AD$… Далі з $B$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$AB, AC, AD, BC, BD, CD$ — $6$ відрізків.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Відрізок $AB$ — частина прямої між кінцями $A$ і $B$; довжина — відстань між ними.</p>
+                    <p>$C$ на $AB$: $\;AB = AC + CB$.</p>
+                    <p>$1$ см $= 10$ мм, $1$ м $= 100$ см, $1$ км $= 1\,000$ м.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як вимірювати ✍️</div>
+                        <p>Лінійку — нулем до кінця відрізка. $3$ см $4$ мм $+ 2$ см $8$ мм $= 34 + 28 = 62$ мм $= 6$ см $2$ мм.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Кінці навпроти $2$ і $7$ см — довжина $5$ см, а не $7$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderRuler();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // --- Лінійка: 0–12 см, 30 px на сантиметр (3 px на міліметр), нуль при x = 30 ---
+            const R0 = 30, PX = 3;
+            function rulerSvg(y, maxCm) {
+                let svg = `<rect x="${R0 - 12}" y="${y}" width="${maxCm * 10 * PX + 24}" height="46" rx="4" class="ruler"/>`;
+                for (let mm = 0; mm <= maxCm * 10; mm++) {
+                    const x = R0 + mm * PX, h = mm % 10 === 0 ? 16 : mm % 5 === 0 ? 11 : 7;
+                    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" class="tick${mm % 10 === 0 ? ' cm' : ''}"/>`;
+                    if (mm % 10 === 0) svg += `<text x="${x}" y="${y + 32}" class="tick-num">${mm / 10}</text>`;
+                }
+                return svg;
+            }
+            function point(x, y, name) {
+                return `<circle cx="${x}" cy="${y}" r="6" class="pt"/><text x="${x}" y="${y - 14}" class="pt-name">${name}</text>`;
+            }
+            function cmMm(mm) {
+                const cm = Math.floor(mm / 10), r = mm % 10;
+                return (cm ? `${cm} см` : '') + (cm && r ? ' ' : '') + (r ? `${r} мм` : '');
+            }
+
+            // --- Слайд 2: точка B рухається, лінійку можна «прикласти» анімацією ---
+            window.renderRuler = function () {
+                const b = parseInt(document.getElementById('w-b').value, 10) || 10;
+                document.getElementById('w-b-val').textContent = cmMm(b);
+                document.getElementById('ruler-answer').classList.remove('shown');
+                document.getElementById('ruler-scene').innerHTML =
+                    `<line x1="${R0}" y1="70" x2="${R0 + b * PX}" y2="70" class="seg"/>` + point(R0, 70, 'A') + point(R0 + b * PX, 70, 'B')
+                    + `<line x1="${R0}" y1="70" x2="${R0}" y2="110" class="tick" stroke-dasharray="3 3"/>`
+                    + `<line x1="${R0 + b * PX}" y1="70" x2="${R0 + b * PX}" y2="110" class="tick" stroke-dasharray="3 3"/>`
+                    + `<g id="ruler-g" class="ruler-move">${rulerSvg(110, 12)}</g>`;
+            };
+            window.applyRuler = function () {
+                renderRuler();
+                const g = document.getElementById('ruler-g');
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) return;
+                g.style.transition = 'none';
+                g.style.transform = 'translate(160px, 60px)';
+                requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transition = ''; g.style.transform = 'translate(0px, 0px)'; }));
+            };
+            window.revealRuler = function () {
+                const b = parseInt(document.getElementById('w-b').value, 10) || 10;
+                document.getElementById('ruler-len').textContent = `AB = ${cmMm(b)} = ${b} мм`;
+                document.getElementById('ruler-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: AB = AC + CB ---
+            const STEPS = [
+                ['[[$AB = AC + CB$]]', 'Точка $C$ ділить $AB$ на дві частини'],
+                ['$AC = $ [[$34$ мм]], $\\;CB = $ [[$28$ мм]]', 'Переводимо в міліметри: $3$ см $= 30$ мм'],
+                ['$AB = 34 + 28 = $ [[$62$ мм]]', 'Додаємо'],
+                ['$62$ мм $= $ [[$6$ см $2$ мм]]', '$60$ мм $= 6$ см'],
+                ['Відповідь: $AB = 6$ см $2$ мм.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
+
+            // --- Слайд 5: відрізок від 2 до 7 см ---
+            window.renderTrap = function () {
+                const a = R0 + 20 * PX, b = R0 + 70 * PX;
+                document.getElementById('trap-scene').innerHTML =
+                    `<line x1="${a}" y1="70" x2="${b}" y2="70" class="seg"/>` + point(a, 70, 'M') + point(b, 70, 'N')
+                    + `<line x1="${a}" y1="70" x2="${a}" y2="110" class="tick" stroke-dasharray="3 3"/>`
+                    + `<line x1="${b}" y1="70" x2="${b}" y2="110" class="tick" stroke-dasharray="3 3"/>`
+                    + rulerSvg(110, 12)
+                    + `<text x="100" y="190" class="svg-caption" style="fill:var(--warning-red)">7 см</text>`
+                    + `<line x1="72" y1="172" x2="128" y2="196" class="cross"/>`
+                    + `<text x="300" y="190" class="svg-caption" style="fill:var(--brand-green)">7 − 2 = 5 см ✓</text>`;
+            };
