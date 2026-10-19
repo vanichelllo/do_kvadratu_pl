@@ -1,0 +1,343 @@
+@@TITLE Порівняння звичайних дробів з однаковими знаменниками
+@@CSS
+@@INCLUDE steps.css
+        /* Піца й смужки */
+        .slice { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .slice.on { fill: var(--brand-yellow); }
+        .crust { fill: none; stroke: #c98a2b; stroke-width: 6; }
+        .frac-num, .frac-den { fill: currentColor; font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .frac-num { fill: var(--brand-blue); }
+        .frac-den { fill: var(--brand-green); }
+        .frac-bar { stroke: currentColor; stroke-width: 4; stroke-linecap: round; }
+        .frac-cap { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: start; }
+        .cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .cell.on { fill: var(--brand-yellow); }
+        .bad { fill: var(--card-bg); stroke: var(--warning-red); stroke-width: 2.5; }
+        .bad.on { fill: var(--warning-red); fill-opacity: 0.35; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 110px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+        .strip-a { fill: var(--brand-blue); fill-opacity: 0.55; }
+        .strip-b { fill: var(--brand-green); fill-opacity: 0.55; }
+        .strip-cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .sign-big { fill: var(--warning-red); font-size: 46px; font-weight: 900; text-anchor: middle; }
+        .ray { stroke: currentColor; stroke-width: 2.5; }
+        .tick { stroke: currentColor; stroke-width: 2; }
+        .ray-lbl { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .ray-pt { fill: var(--warning-red); }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Хто з'їв більше? 🍕</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Ми купили дві однакові піци й кожну розрізали на $8$ шматків. Я з'їла $\dfrac{3}{8}$ своєї піци.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я — $\dfrac{5}{8}$ своєї. Хто з'їв більше?</div>
+                    <p class="big-question">Як порівняти $\dfrac{3}{8}$ і $\dfrac{5}{8}$? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Тарас: $\dfrac{5}{8} \gt \dfrac{3}{8}$ 🎉</div>
+                        <p>Шматки однакові — по $\dfrac{1}{8}$ піци. Тарас з'їв $5$ таких шматків, а Оля — $3$. Що більше однакових частин, то більший дріб.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 380 220" id="pizza-1" role="img" aria-label="Дві однакові піци по 8 шматків: зафарбовано 3 і 5"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Дві однакові смужки 📏</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Дві однакові смужки поділено на однакову кількість частин. Яка зафарбована частина більша? Учні ставлять знак — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Знаменник</label><input type="range" id="w-n" min="2" max="12" step="1" value="7" oninput="renderStrips()"><span id="w-n-val">7</span></div>
+                    <div class="slider-control"><label for="w-a">Синя</label><input type="range" id="w-a" min="0" max="12" step="1" value="4" oninput="renderStrips()"><span id="w-a-val">4</span></div>
+                    <div class="slider-control"><label for="w-b">Зелена</label><input type="range" id="w-b" min="0" max="12" step="1" value="6" oninput="renderStrips()"><span id="w-b-val">6</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealStrips()">Який знак?</button></p>
+                    <div class="hidden-answer" id="strips-answer"><div class="readout" id="strips-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 220" id="strips-scene" role="img" aria-label="Дві однакові смужки з однаковою кількістю частин"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Порівняння дробів з однаковими знаменниками</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>З двох дробів з <b>однаковими знаменниками</b> більший той, у якого <b>більший чисельник</b>:</p>
+                    <p style="text-align:center">$\dfrac{5}{8} \gt \dfrac{3}{8}$, бо $5 \gt 3$.</p>
+                    <p>Якщо чисельники рівні — дроби рівні: $\dfrac{4}{9} = \dfrac{4}{9}$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">На координатному промені</div>
+                    <p>Більший дріб лежить <b>правіше</b>.</p>
+                    <svg viewBox="0 0 360 90" class="mini-fig" id="ray-scene" role="img" aria-label="Координатний промінь з дробами 1/5, 3/5, 4/5"></svg>
+                    <p>Правильний дріб $\lt 1$, неправильний $\ge 1$: $\;\dfrac{4}{5} \lt 1 \lt \dfrac{6}{5}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Розташовуємо дроби по порядку ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Розташуй у порядку зростання: $\dfrac{5}{9}$, $\dfrac{2}{9}$, $\dfrac{7}{9}$, $\dfrac{4}{9}$, $\dfrac{10}{9}$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: правило — лише для однакових знаменників ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$\dfrac{3}{4}$ і $\dfrac{3}{8}$: знаменники різні, тож правило «більший чисельник» тут не працює. Подивись на смужки: $\dfrac{3}{4}$ більше!</p>
+                        <p>І порівнюємо частини <b>однакового цілого</b>: $\dfrac{1}{2}$ маленької піци може бути менше, ніж $\dfrac{1}{4}$ величезної.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Спершу перевір знаменники: однакові — порівнюй чисельники.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 200" id="trap-scene" role="img" aria-label="Смужки 3/4 і 3/8"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Що більше: $\dfrac{4}{7}$ чи $\dfrac{6}{7}$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $\dfrac{4}{7}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $\dfrac{6}{7}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) Вони рівні</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знаменники однакові — порівняй чисельники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$6 \gt 4$, тож $\dfrac{6}{7} \gt \dfrac{4}{7}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Який знак між $\dfrac{9}{10}$ і $1$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $\lt$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $\gt$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $=$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$1 = \dfrac{10}{10}$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$\dfrac{9}{10} \lt \dfrac{10}{10} = 1$ — правильний дріб менший за $1$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Який дріб найбільший: $\dfrac{3}{10}$, $\dfrac{9}{10}$, $\dfrac{7}{10}$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\dfrac{3}{10}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{7}{10}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $\dfrac{9}{10}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>У кого найбільший чисельник?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$9 \gt 7 \gt 3$: найбільший $\dfrac{9}{10}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Скільки натуральних $x$, при яких $\dfrac{2}{9} \lt \dfrac{x}{9} \lt \dfrac{6}{9}$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $5$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Порівнюй чисельники: $2 \lt x \lt 6$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$x = 3, 4, 5$ — три числа. ($2$ і $6$ не підходять: знаки строгі.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Однакові знаменники — більший той дріб, у якого більший чисельник.</p>
+                    <p>На промені більший дріб лежить правіше.</p>
+                    <p>Правильний $\lt 1 \le$ неправильний.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$\dfrac{2}{9} \lt \dfrac{4}{9} \lt \dfrac{5}{9} \lt \dfrac{7}{9} \lt \dfrac{10}{9}$ — упорядковуємо чисельники.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Правило — лише для однакових знаменників і однакового цілого.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderPizza1();
+                if (currentSlide === 2) renderStrips();
+                if (currentSlide === 3) renderRay();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrapFig();
+@@JS
+            // Піца з n рівних шматків, перші m зафарбовано
+            function pizzaSvg(cx, cy, r, n, m) {
+                let svg = '';
+                for (let k = 0; k < n; k++) {
+                    const a0 = -Math.PI / 2 + 2 * Math.PI * k / n, a1 = -Math.PI / 2 + 2 * Math.PI * (k + 1) / n;
+                    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                    const big = a1 - a0 > Math.PI ? 1 : 0;
+                    svg += `<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${big} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" class="slice${k < m ? ' on' : ''}"/>`;
+                }
+                return svg + `<circle cx="${cx}" cy="${cy}" r="${r}" class="crust"/>`;
+            }
+            // Дріб, намальований у SVG: чисельник, риска, знаменник
+            function fracSvg(x, y, m, n, captions) {
+                let svg = `<text x="${x}" y="${y - 12}" class="frac-num">${m}</text><line x1="${x - 34}" y1="${y}" x2="${x + 34}" y2="${y}" class="frac-bar"/><text x="${x}" y="${y + 46}" class="frac-den">${n}</text>`;
+                if (captions) svg += `<text x="${x + 44}" y="${y - 24}" class="frac-cap" style="fill:var(--brand-blue)">чисельник</text><text x="${x + 44}" y="${y + 34}" class="frac-cap" style="fill:var(--brand-green)">знаменник</text>`;
+                return svg;
+            }
+
+            // Смужка з n частин, перші m зафарбовано
+            function stripSvg(x, y, w, h, n, m, cls) {
+                let svg = '';
+                for (let k = 0; k < n; k++) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="strip-cell"/>`;
+                for (let k = 0; k < Math.min(m, n); k++) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${h}" class="${cls}" style="stroke:var(--text-dark);stroke-width:2"/>`;
+                return svg;
+            }
+
+            // --- Слайд 1 ---
+            window.renderPizza1 = function () {
+                document.getElementById('pizza-1').innerHTML = pizzaSvg(95, 100, 80, 8, 3) + pizzaSvg(285, 100, 80, 8, 5)
+                    + `<text x="95" y="205" class="svg-caption">Оля: 3/8</text><text x="285" y="205" class="svg-caption">Тарас: 5/8</text>`;
+            };
+
+            // --- Слайд 2: дві смужки ---
+            function stripVals() {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 2;
+                ['w-a', 'w-b'].forEach(id => { const s = document.getElementById(id); s.max = n; if (parseInt(s.value, 10) > n) s.value = n; });
+                return [parseInt(document.getElementById('w-a').value, 10) || 0, parseInt(document.getElementById('w-b').value, 10) || 0, n];
+            }
+            function stripsScene(a, b, n, sign) {
+                return stripSvg(20, 30, 300, 50, n, a, 'strip-a') + stripSvg(20, 130, 300, 50, n, b, 'strip-b')
+                    + `<text x="370" y="66" class="frac-cap" style="fill:var(--brand-blue);font-size:22px;text-anchor:middle">${a}/${n}</text>`
+                    + `<text x="370" y="166" class="frac-cap" style="fill:var(--brand-green);font-size:22px;text-anchor:middle">${b}/${n}</text>`
+                    + `<text x="370" y="122" class="sign-big">${sign}</text>`;
+            }
+            window.renderStrips = function () {
+                const [a, b, n] = stripVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('strips-answer').classList.remove('shown');
+                document.getElementById('strips-scene').innerHTML = stripsScene(a, b, n, '?');
+            };
+            window.revealStrips = function () {
+                const [a, b, n] = stripVals(), sign = a > b ? '>' : a < b ? '<' : '=';
+                document.getElementById('strips-scene').innerHTML = stripsScene(a, b, n, sign);
+                document.getElementById('strips-text').textContent = a === b ? `${a}/${n} = ${b}/${n}: чисельники рівні`
+                    : `${a}/${n} ${sign} ${b}/${n}, бо ${a} ${sign} ${b}`;
+                document.getElementById('strips-answer').classList.add('shown');
+            };
+
+            // --- Слайд 3: промінь ---
+            window.renderRay = function () {
+                const x0 = 20, u = 300;
+                let svg = `<line x1="${x0}" y1="40" x2="350" y2="40" class="ray"/><path d="M350 40 l-9 -4 v8 z" fill="currentColor"/>`;
+                for (let k = 0; k <= 5; k++) svg += `<line x1="${x0 + k * u / 5}" y1="${k % 5 ? 33 : 28}" x2="${x0 + k * u / 5}" y2="${k % 5 ? 47 : 52}" class="tick"/>`;
+                svg += `<text x="${x0}" y="72" class="ray-lbl">0</text><text x="${x0 + u}" y="72" class="ray-lbl">1</text>`;
+                [1, 3, 4].forEach(k => { svg += `<circle cx="${x0 + k * u / 5}" cy="40" r="6" class="ray-pt"/><text x="${x0 + k * u / 5}" y="20" class="ray-lbl">${k}/5</text>`; });
+                document.getElementById('ray-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 5: 3/4 і 3/8 ---
+            window.renderTrapFig = function () {
+                document.getElementById('trap-scene').innerHTML = stripSvg(20, 30, 300, 50, 4, 3, 'strip-a') + stripSvg(20, 120, 300, 50, 8, 3, 'strip-b')
+                    + `<text x="370" y="66" class="frac-cap" style="fill:var(--brand-blue);font-size:22px;text-anchor:middle">3/4</text>`
+                    + `<text x="370" y="156" class="frac-cap" style="fill:var(--brand-green);font-size:22px;text-anchor:middle">3/8</text>`
+                    + `<text x="210" y="196" class="svg-caption" style="fill:var(--warning-red)">чисельники однакові, а частини — різні!</text>`;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['Знаменники однакові — $9$, тож порівнюємо [[чисельники]]: $5, 2, 7, 4, 10$.', 'Більший чисельник — більший дріб'],
+                ['Чисельники за зростанням: [[$2 \\lt 4 \\lt 5 \\lt 7 \\lt 10$]].', 'Упорядковуємо натуральні числа'],
+                ['[[$\\dfrac{2}{9} \\lt \\dfrac{4}{9} \\lt \\dfrac{5}{9} \\lt \\dfrac{7}{9} \\lt \\dfrac{10}{9}$]]', 'Записуємо дроби в тому самому порядку'],
+                ['Перевірка: $\\dfrac{10}{9}$ — неправильний, він більший за $1$, а решта — менші. ✓', 'Готово!'],
+            ];
+@@INCLUDE steps.js
