@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Кут. Види кутів. Вимірювання кутів | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        /* Транспортир і кути */
+        .prot { fill: var(--brand-yellow); fill-opacity: 0.18; stroke: currentColor; stroke-width: 1.5; }
+        .prot-tick { stroke: currentColor; stroke-width: 1; }
+        .prot-tick.big { stroke-width: 2; }
+        .prot-num { fill: currentColor; font-size: 11px; font-weight: 700; text-anchor: middle; }
+        .prot-num.inner { fill: var(--text-muted); font-size: 10px; }
+        .side { stroke: var(--brand-blue); stroke-width: 4; stroke-linecap: round; }
+        .angle-arc { fill: var(--brand-green); fill-opacity: 0.25; stroke: var(--brand-green); stroke-width: 2.5; }
+        .angle-arc.right { fill: var(--brand-yellow); fill-opacity: 0.45; stroke: currentColor; }
+        .angle-arc.obtuse { fill: var(--warning-red); fill-opacity: 0.2; stroke: var(--warning-red); }
+        .pt { fill: var(--warning-red); }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .clock-face { fill: var(--card-bg); stroke: currentColor; stroke-width: 3; }
+        .hand { stroke: currentColor; stroke-width: 5; stroke-linecap: round; }
+        .hand.min { stroke: var(--brand-blue); stroke-width: 4; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.25rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .types-table { width: 100%; border-collapse: collapse; font-size: 1.02rem; }
+        .types-table td { padding: 6px 8px; border-bottom: 1.5px solid var(--border-color); }
+        .types-table td:last-child { font-weight: 800; white-space: nowrap; }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Який кут між стрілками? 🕒</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> О $3{:}00$ стрілки годинника утворюють кут, схожий на кут зошита. А о $6{:}00$?</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> О шостій стрілки — в різні боки. Хіба це кут?</div>
+                    <p class="big-question">Які кути між стрілками о $3{:}00$ і о $6{:}00$? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$90°$ і $180°$! 🎉</div>
+                        <p>О $3{:}00$ — <b>прямий</b> кут, $90°$. О $6{:}00$ стрілки йдуть у протилежні боки — <b>розгорнутий</b> кут, $180°$. Так, це теж кут!</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 360 200" id="clock-scene" role="img" aria-label="Два годинники: 3:00 і 6:00"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Відкриваємо кут 📐</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Сторона $OA$ лежить на нулі транспортира, сторона $OB$ повертається. Учні оцінюють кут на око й називають його вид, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-deg">Кут</label><input type="range" id="w-deg" min="10" max="180" step="5" value="65" oninput="renderAngle()"><span id="w-deg-val">65°</span></div>
+                    <p style="text-align:center">
+                        <button class="btn-secondary" onclick="swingAngle()">▶ Відкрити кут</button>
+                        <button class="btn-primary" onclick="revealAngle()">Який це кут?</button>
+                    </p>
+                    <div class="hidden-answer" id="angle-answer"><div class="readout" id="angle-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 230" id="angle-scene" role="img" aria-label="Кут AOB на транспортирі"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Кут і його види</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Кут</b> — фігура з двох променів зі спільним початком. Промені — <b>сторони</b> кута, спільний початок — <b>вершина</b>.</p>
+                    <p>Позначення: $\angle AOB$ — вершину пишемо <b>посередині</b>; або $\angle O$.</p>
+                    <p>Кути вимірюють у <b>градусах</b> транспортиром.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Види кутів</div>
+                    <table class="types-table">
+                        <tr><td>Гострий</td><td>менший за $90°$</td></tr>
+                        <tr><td>Прямий</td><td>$90°$</td></tr>
+                        <tr><td>Тупий</td><td>між $90°$ і $180°$</td></tr>
+                        <tr><td>Розгорнутий</td><td>$180°$</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Вимірюємо кут транспортиром ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <svg viewBox="0 0 420 230" class="mini-fig" style="max-width:470px" id="measure-fig" role="img" aria-label="Транспортир прикладено до кута AOB, сторона OB проходить через позначку 65"></svg>
+                    <p>Перед кожним кліком учні кажуть, що робимо далі.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: дві шкали транспортира ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Сторона $OB$ проходить через числа $65$ і $115$. Кут гострий, тож $115°$ — <b>помилка</b>: $\angle AOB = 65°$.</p>
+                        <p>Розмір кута не залежить від довжини сторін — лише від того, наскільки вони «розкриті».</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Читай ту шкалу, яка на стороні $OA$ починається з $0$. І перевір на око: гострий кут — менше $90°$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 230" id="trap-scene" role="img" aria-label="Транспортир з двома шкалами: правильне значення 65, а не 115"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Як називається кут $90°$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) Прямий</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) Гострий</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) Тупий</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Такий кут — у кутку зошита.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$90°$ — прямий кут.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Яка точка — вершина кута $\angle MKN$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $M$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $K$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $N$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Де в назві кута пишуть вершину?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Вершина — посередині: $K$. Сторони — промені $KM$ і $KN$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Який вид має кут $135°$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) Гострий</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) Тупий</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) Розгорнутий</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Порівняй $135°$ з $90°$ і $180°$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$90° \lt 135° \lt 180°$ — тупий кут.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Промінь $OC$ ділить прямий кут $AOB$ на два кути, $\angle AOC = 35°$. Знайди $\angle COB$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $55°$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $145°$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $35°$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Прямий кут — $90°$. Він складається з двох частин.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\angle COB = 90° - 35° = 55°$. ($145° = 180° - 35°$ — це для розгорнутого кута.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Кут — два промені зі спільним початком (вершиною). $\angle AOB$: вершина $O$ посередині.</p>
+                    <p>Гострий $\lt 90°$, прямий $= 90°$, тупий — між $90°$ і $180°$, розгорнутий $= 180°$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як вимірювати ✍️</div>
+                        <p>Центр транспортира — у вершину, нуль — на сторону $OA$, читаємо число на стороні $OB$ за шкалою, що починається з $0$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Дві шкали: гострий кут не може бути $115°$. Довжина сторін на кут не впливає.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderClocks();
+                if (currentSlide === 2) renderAngle();
+                if (currentSlide === 4) { renderMeasure(); renderEval(); }
+                if (currentSlide === 5) renderTrap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Транспортир з центром (cx, cy) і радіусом r; кут відкладаємо від правої сторони ---
+            const rad = (d) => d * Math.PI / 180;
+            const pol = (cx, cy, r, d) => ({ x: cx + r * Math.cos(rad(d)), y: cy - r * Math.sin(rad(d)) });
+            function protractor(cx, cy, r, inner) {
+                let svg = `<path d="M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z" class="prot"/>`;
+                for (let d = 0; d <= 180; d += 5) {
+                    const big = d % 10 === 0, a = pol(cx, cy, r, d), b = pol(cx, cy, r - (big ? 12 : 7), d);
+                    svg += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="prot-tick${big ? ' big' : ''}"/>`;
+                    if (d % 10 === 0) {
+                        const t = pol(cx, cy, r - 22, d);
+                        svg += `<text x="${t.x}" y="${t.y + 4}" class="prot-num">${d}</text>`;
+                        if (inner) { const u = pol(cx, cy, r - 38, d); svg += `<text x="${u.x}" y="${u.y + 4}" class="prot-num inner">${180 - d}</text>`; }
+                    }
+                }
+                return svg;
+            }
+            function angleSvg(cx, cy, len, deg) {
+                const b = pol(cx, cy, len, deg), cls = deg < 90 ? '' : deg === 90 ? ' right' : ' obtuse';
+                let arc;
+                if (deg === 90) {
+                    arc = `<path d="M${cx + 22} ${cy} L${cx + 22} ${cy - 22} L${cx} ${cy - 22}" class="angle-arc right"/>`;
+                } else {
+                    const r = 34, p = pol(cx, cy, r, deg);
+                    arc = `<path d="M${cx} ${cy} L${cx + r} ${cy} A${r} ${r} 0 ${deg > 180 ? 1 : 0} 0 ${p.x} ${p.y} Z" class="angle-arc${cls}"/>`;
+                }
+                return arc + `<line x1="${cx}" y1="${cy}" x2="${cx + len}" y2="${cy}" class="side"/>`
+                     + `<line x1="${cx}" y1="${cy}" x2="${b.x}" y2="${b.y}" class="side"/>`
+                     + `<circle cx="${cx}" cy="${cy}" r="5" class="pt"/>`
+                     + `<text x="${cx}" y="${cy + 22}" class="pt-name">O</text>`
+                     + `<text x="${cx + len + 4}" y="${cy + 22}" class="pt-name">A</text>`
+                     + `<text x="${pol(cx, cy, len + 16, deg).x}" y="${pol(cx, cy, len + 16, deg).y + 6}" class="pt-name">B</text>`;
+            }
+            function kind(d) { return d < 90 ? 'гострий' : d === 90 ? 'прямий' : d < 180 ? 'тупий' : 'розгорнутий'; }
+
+            // --- Слайд 1: годинники 3:00 і 6:00 ---
+            function clock(cx, cy, h, label) {
+                let svg = `<circle cx="${cx}" cy="${cy}" r="70" class="clock-face"/>`;
+                for (let k = 0; k < 12; k++) {
+                    const a = pol(cx, cy, 70, 90 - k * 30), b = pol(cx, cy, 60, 90 - k * 30);
+                    svg += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="prot-tick big"/>`;
+                }
+                const m = pol(cx, cy, 55, 90), hh = pol(cx, cy, 40, 90 - h * 30);
+                svg += `<line x1="${cx}" y1="${cy}" x2="${m.x}" y2="${m.y}" class="hand min"/>`
+                     + `<line x1="${cx}" y1="${cy}" x2="${hh.x}" y2="${hh.y}" class="hand"/>`
+                     + `<text x="${cx}" y="${cy + 95}" class="svg-caption">${label}</text>`;
+                return svg;
+            }
+            window.renderClocks = function () {
+                document.getElementById('clock-scene').innerHTML = clock(90, 85, 3, '3:00') + clock(270, 85, 6, '6:00');
+            };
+
+            // --- Слайд 2: кут на транспортирі ---
+            const CX = 210, CY = 195, R = 150;
+            let angAnim = null;
+            function angDeg() { return parseInt(document.getElementById('w-deg').value, 10) || 10; }
+            function drawAngle(d) {
+                document.getElementById('angle-scene').innerHTML = protractor(CX, CY, R, false) + angleSvg(CX, CY, 170, d);
+            }
+            window.renderAngle = function () {
+                cancelAnimationFrame(angAnim);
+                document.getElementById('w-deg-val').textContent = angDeg() + '°';
+                document.getElementById('angle-answer').classList.remove('shown');
+                drawAngle(angDeg());
+            };
+            window.swingAngle = function () {
+                renderAngle();
+                const target = angDeg(), reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) return;
+                const t0 = performance.now(), dur = 1300;
+                const step = (now) => {
+                    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3), d = Math.max(1, target * e);
+                    drawAngle(k < 1 ? d : target);
+                    if (k < 1) angAnim = requestAnimationFrame(step);
+                };
+                angAnim = requestAnimationFrame(step);
+            };
+            window.revealAngle = function () {
+                const d = angDeg();
+                document.getElementById('angle-text').textContent = `∠AOB = ${d}° — ${kind(d)} кут`;
+                document.getElementById('angle-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: вимірювання кута 65° ---
+            window.renderMeasure = function () {
+                document.getElementById('measure-fig').innerHTML = protractor(CX, CY, R, true) + angleSvg(CX, CY, 170, 65);
+            };
+            const STEPS = [
+                ['Центр транспортира — у [[вершину $O$]].', 'Точку в центрі транспортира суміщаємо з вершиною'],
+                ['Нуль шкали — на [[сторону $OA$]].', 'Сторона $OA$ іде вздовж нульової лінії'],
+                ['Сторона $OB$ проходить через [[$65$ і $115$]].', 'На транспортирі дві шкали'],
+                ['Читаємо шкалу, що на $OA$ починається з $0$: [[$65°$]].', 'Зовнішня шкала: на $OA$ — нуль'],
+                ['$\\angle AOB = 65°$ — гострий кут.', 'Перевірка на око: менший за прямий ✓'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+            // --- Слайд 5: дві шкали ---
+            window.renderTrap = function () {
+                const lab = pol(CX, CY, R + 16, 65);
+                document.getElementById('trap-scene').innerHTML = protractor(CX, CY, R, true) + angleSvg(CX, CY, 170, 65)
+                    + `<text x="70" y="40" class="svg-caption" style="fill:var(--warning-red)">115°</text>`
+                    + `<line x1="45" y1="28" x2="95" y2="48" class="cross"/>`
+                    + `<text x="360" y="40" class="svg-caption" style="fill:var(--brand-green)">65° ✓</text>`;
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
