@@ -1,0 +1,528 @@
+@@TITLE Властивості паралельних площин
+@@BRAND Геометрія (10-11 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .prop-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .prop-table th, .prop-table td { border-bottom: 1px solid var(--border-color); padding: 7px 6px; text-align: left; vertical-align: top; }
+        .prop-table th { color: var(--brand-blue); }
+        .prop-table td.why { color: var(--text-muted); font-size: 0.98rem; }
+        .slider-control label { font-weight: 800; min-width: 92px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .edge { stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; }
+        .edge.hid { stroke-width: 1.5; stroke-dasharray: 7 6; opacity: 0.75; }
+        .pl { fill: var(--brand-blue); fill-opacity: 0.1; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+        .pl-g { fill: var(--brand-green); fill-opacity: 0.2; stroke: var(--brand-green); stroke-width: 1.5; stroke-linejoin: round; }
+        .cut { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .seg-par { stroke: var(--brand-blue); stroke-width: 4; stroke-linecap: round; }
+        .sec-fill { fill: var(--brand-blue); fill-opacity: 0.13; stroke: none; }
+        .side { stroke-width: 4; stroke-linecap: round; fill: none; }
+        .side.hid { stroke-dasharray: 9 7; }
+        .side.px { stroke: var(--brand-blue); }
+        .side.py { stroke: var(--brand-green); }
+        .side.pz { stroke: var(--brand-yellow); }
+        .side.now { stroke-width: 6; }
+        .pt { fill: currentColor; }
+        .lbl { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .lbl.it { font-style: italic; font-size: 18px; }
+        .lbl.red { fill: var(--warning-red); }
+        .greek { fill: var(--text-muted); font-size: 22px; font-style: italic; font-weight: 700; text-anchor: middle; }
+        .greek.g { fill: var(--brand-green); }
+        .legend { font-size: 0.98rem; margin: 6px 0; }
+        .chip { display: inline-block; width: 26px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+        .chip.px { background: var(--brand-blue); }
+        .chip.py { background: var(--brand-green); }
+        .chip.pz { background: var(--brand-yellow); }
+        .svg-note { font-size: 0.98rem; color: var(--text-muted); margin: 6px 0 0; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Паралельні площини: що вже знаємо</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Нагадаємо (тема 2.3)</div>
+                        <p>Площини $\alpha$ і $\beta$ <b>паралельні</b>, якщо вони не мають спільних точок. Запис: $\alpha \parallel \beta.$</p>
+                        <p><b>Ознака:</b> якщо дві прямі, що перетинаються, однієї площини відповідно паралельні двом прямим другої площини, то ці площини паралельні.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Задача на сьогодні</div>
+                        <p>Переріз куба — шестикутник. Чому його протилежні сторони паралельні, хоча лежать у різних гранях?</p>
+                        <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Ідея</button></p>
+                        <div class="hidden-answer" id="answer-1">
+                            <p>Протилежні грані куба лежать у <b>паралельних площинах</b>. Площина перерізу перетинає обидві — і, як доведемо, по паралельних прямих.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 320" id="intro-scene" role="img" aria-label="Куб і його переріз-шестикутник"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія: головна теорема -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема про перетин паралельних площин третьою</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Якщо дві паралельні площини перетнуто третьою площиною, то прямі їх перетину паралельні.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Доведення</div>
+                        <p>Нехай $\alpha \parallel \beta$, $\;\gamma \cap \alpha = a$, $\;\gamma \cap \beta = b$.</p>
+                        <p>1) Прямі $a$ і $b$ лежать в одній площині $\gamma$.</p>
+                        <p>2) $a \subset \alpha$, $b \subset \beta$, а $\alpha$ і $\beta$ спільних точок не мають — отже, $a$ і $b$ не перетинаються.</p>
+                        <p>3) Прямі однієї площини, що не перетинаються, паралельні: $a \parallel b$. $\blacksquare$</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="slider-control"><label for="cut-th">Нахил $\gamma$</label><input type="range" id="cut-th" min="45" max="135" step="5" value="60" oninput="renderCut()"><span id="cut-th-val"></span></div>
+                    <div class="slider-control"><label for="cut-ph">Поворот $\gamma$</label><input type="range" id="cut-ph" min="-30" max="30" step="5" value="15" oninput="renderCut()"><span id="cut-ph-val"></span></div>
+                    <div class="widget-svg-container">
+                        <svg viewBox="0 0 420 300" id="cut-scene" role="img" aria-label="Паралельні площини альфа і бета, січна площина гамма і прямі перетину a і b"></svg>
+                    </div>
+                    <p class="svg-note">Хоч як нахиляємо $\gamma$, прямі $a$ і $b$ лишаються паралельними.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія: інші властивості -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Інші властивості паралельних площин</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget scrollable-math">
+                    <table class="prop-table">
+                        <tr><th>Властивість</th><th>На чому ґрунтується</th></tr>
+                        <tr><td>1. Відрізки паралельних прямих, що містяться між двома паралельними площинами, рівні.</td><td class="why">теорема + паралелограм</td></tr>
+                        <tr><td>2. Через точку поза площиною проходить <b>одна і тільки одна</b> площина, паралельна даній.</td><td class="why">існування — за ознакою; єдиність — від супротивного</td></tr>
+                        <tr><td>3. Дві різні площини, паралельні третій, паралельні між собою.</td><td class="why">властивість 2</td></tr>
+                        <tr><td>4. Пряма, що перетинає одну з двох паралельних площин, перетинає і другу.</td><td class="why">від супротивного + теорема</td></tr>
+                        <tr><td>5. Площина, що перетинає одну з двох паралельних площин, перетинає і другу.</td><td class="why">від супротивного + властивість 2</td></tr>
+                    </table>
+                </div>
+                <div class="box remark">
+                    <p><b>Умова скрізь:</b> площини саме паралельні. У властивості 1 — відрізки саме <b>паралельних</b> прямих.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Чому це так -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Доведення двох властивостей</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="seg-scene" role="img" aria-label="Паралельні відрізки AB і CD між паралельними площинами"></svg>
+                </div>
+                <div>
+                    <div class="box example">
+                        <div class="box-title">Властивість 1: $AB = CD$</div>
+                        <p>$AB \parallel CD$, $\;A, C \in \alpha$, $\;B, D \in \beta$. Паралельні прямі $AB$ і $CD$ задають площину, яка перетинає $\alpha$ і $\beta$ по прямих $AC$ і $BD$.</p>
+                        <p>За теоремою $AC \parallel BD$. Отже, $ABDC$ — паралелограм і $AB = CD$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Властивість 3</div>
+                        <p>$\alpha \parallel \gamma$, $\;\beta \parallel \gamma$. Якби $\alpha$ і $\beta$ мали спільну точку $M$, то через $M$ проходили б дві різні площини, паралельні $\gamma$, — суперечність із властивістю 2. Отже, $\alpha \parallel \beta$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Дослідження -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Переріз куба: які сторони паралельні? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо положення січної площини. Учень називає вид перерізу й пари паралельних сторін, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="sec-t">Зсув</label><input type="range" id="sec-t" min="4" max="96" step="2" value="50" oninput="sectionInput()"><span id="sec-t-val"></span></div>
+                    <div class="slider-control"><label for="sec-c">Нахил</label><input type="range" id="sec-c" min="0.4" max="2.4" step="0.2" value="1.2" oninput="sectionInput()"><span id="sec-c-val"></span></div>
+                    <p class="legend"><span class="chip px"></span>ліва й права грані &nbsp; <span class="chip py"></span>передня й задня &nbsp; <span class="chip pz"></span>нижня й верхня</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealSection()">Висновок</button></p>
+                    <div class="box theorem hidden-answer" id="sec-answer"><p id="sec-conclusion"></p></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 320" id="sec-scene" role="img" aria-label="Куб і його переріз площиною"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Методи -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Побудова перерізу: паралельні грані</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0"><b>Задача.</b> Побудуйте переріз куба $ABCDA_1B_1C_1D_1$ площиною, що проходить через точки $B$, $D_1$ і точку $K$ на ребрі $AA_1$.</p>
+                    <div id="m-steps">
+                        <div class="step">1) $K$ і $B$ лежать у грані $AA_1B_1B$ — проводимо $KB$.</div>
+                        <div class="step">2) $K$ і $D_1$ лежать у грані $AA_1D_1D$ — проводимо $KD_1$.</div>
+                        <div class="step">3) Грань $DD_1C_1C \parallel AA_1B_1B$: через $D_1$ проводимо $D_1L \parallel KB$, $\;L \in CC_1.$</div>
+                        <div class="step">4) Проводимо $LB$. Переріз $KBLD_1$ — паралелограм: ще й $KD_1 \parallel BL$ (грані $AA_1D_1D \parallel BB_1C_1C$).</div>
+                    </div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="methodNext()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="methodReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 320" id="m-scene" role="img" aria-label="Побудова перерізу куба через точки K, B і D1"></svg>
+                    </div>
+                    <div class="box theorem" style="margin-top:12px">
+                        <div class="box-title">Правила</div>
+                        <p>Сполучаємо лише точки <b>однієї грані</b>. На паралельних гранях сторони перерізу паралельні.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Приклади -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Обчислення з паралельними площинами</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Точка $O$ лежить між паралельними площинами $\alpha$ і $\beta.$ Дві прямі через $O$ перетинають $\alpha$ у точках $A$ і $B$, а $\beta$ — у точках $A_1$ і $B_1.$ $OA = 3$, $OA_1 = 6$, $AB = 4$. Знайдіть $A_1B_1$.</p>
+                    <div class="step">Прямі $AA_1$ і $BB_1$ перетинаються в $O$ і задають площину. Вона перетинає $\alpha$ і $\beta$ по $AB$ і $A_1B_1$, тож $AB \parallel A_1B_1$.</div>
+                    <div class="step">$\triangle OAB \sim \triangle OA_1B_1$: кути при $O$ вертикальні, $\angle OAB = \angle OA_1B_1$ (різносторонні).</div>
+                    <div class="step">$A_1B_1 = AB \cdot \dfrac{OA_1}{OA} = 4 \cdot \dfrac{6}{3} = 8$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Трикутник $ABC$ лежить у площині $\alpha$, $\alpha \parallel \beta$. Паралельні прямі, проведені через $A$, $B$, $C$, перетинають $\beta$ у точках $A_1$, $B_1$, $C_1$. $AB = 5$, $BC = 6$, $AC = 7$. Знайдіть периметр $\triangle A_1B_1C_1$.</p>
+                    <div class="step">Площина прямих $AA_1 \parallel BB_1$ перетинає $\alpha$ і $\beta$ по $AB$ і $A_1B_1$: $AB \parallel A_1B_1$.</div>
+                    <div class="step">$AA_1B_1B$ — паралелограм, тому $A_1B_1 = AB = 5$. Так само $B_1C_1 = 6$, $A_1C_1 = 7$.</div>
+                    <div class="step">$\triangle A_1B_1C_1 = \triangle ABC$, периметр $5 + 6 + 7 = 18$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Пастки -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Площини не паралельні</div>
+                        <p>Якщо $\alpha$ і $\beta$ перетинаються, третя площина може перетнути їх по прямих, що перетинаються (сусідні грані куба). Теорема — лише для $\alpha \parallel \beta$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Рівні — лише паралельні відрізки</div>
+                        <p>Похилі відрізки між $\alpha \parallel \beta$, які не паралельні, можуть мати різну довжину.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Точки різних граней</div>
+                        <p>Відрізок між точками сусідніх граней іде всередині куба — це не сторона перерізу. Сполучаємо лише точки однієї грані.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Паралельні — не означає рівні</div>
+                        <p>Сторони перерізу на паралельних гранях паралельні, але можуть мати різну довжину: переріз може бути трапецією.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Практика -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Теорема</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Подібність</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Переріз</button>
+                    <button class="btn-secondary" id="tab-4" onclick="showTask(4)">4. Підвищений</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Площини $\alpha$ і $\beta$ паралельні. Площина $\gamma$ перетинає $\alpha$ по прямій $a$. Укажіть правильне твердження.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $\gamma$ може не перетинати $\beta$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $\gamma$ перетинає $\beta$ по прямій, паралельній $a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\gamma$ перетинає $\beta$ по прямій, що перетинає $a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\gamma$ перетинає $\beta$ по прямій, мимобіжній з $a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $\gamma \parallel \beta$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Площина, що перетинає одну з паралельних площин, перетинає і другу — А і Д хибні.</p>
+                            <p>Обидві лінії перетину лежать у $\gamma$ (тож не мимобіжні — Г хибне) і не мають спільних точок, бо $\alpha \cap \beta = \varnothing$ (В хибне). Отже, вони паралельні.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Точка $O$ не лежить між паралельними площинами $\alpha$ і $\beta.$ Дві прямі через $O$ перетинають $\alpha$ у точках $A_1$, $B_1$, а $\beta$ — у точках $A_2$, $B_2$; точка $A_1$ лежить між $O$ і $A_2$. $OA_1 = 4$, $A_1A_2 = 6$, $A_1B_1 = 5$. Знайдіть $A_2B_2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $7{,}5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $12{,}5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $11$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Площина прямих $OA_2$ і $OB_2$ перетинає $\alpha$ і $\beta$ по $A_1B_1$ і $A_2B_2$, тож $A_1B_1 \parallel A_2B_2$ і $\triangle OA_1B_1 \sim \triangle OA_2B_2$.</p>
+                            <p>$OA_2 = 4 + 6 = 10$, $\;A_2B_2 = 5 \cdot \dfrac{10}{4} = 12{,}5$.</p>
+                            <p>$7{,}5$ — узяли $A_1A_2$ замість $OA_2$; $2$ — перевернули відношення.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Переріз куба площиною — п'ятикутник. Скільки пар паралельних сторін має цей п'ятикутник?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) жодної</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) одну</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) дві</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) три</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) залежить від площини</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Кожна сторона лежить на своїй грані: п'ятикутник перетинає $5$ граней із $6$. Неперетнута лише одна грань, тож дві інші пари протилежних граней перетнуто обидві.</p>
+                            <p>За теоремою на кожній такій парі сторони паралельні — $2$ пари. Сторона на грані, протилежній до неперетнутої, пари не має.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-4">
+                    <div>
+                        <p class="quiz-q">Ребро куба $ABCDA_1B_1C_1D_1$ дорівнює $4$. Знайдіть площу перерізу куба площиною, що проходить через $B_1,$ $D_1$ і середину $M$ ребра $AB$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $6\sqrt{10}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $18$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $24$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $9\sqrt{2}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$ABCD \parallel A_1B_1C_1D_1$: через $M$ проводимо $MN \parallel B_1D_1$, $N$ — середина $AD$. Переріз $MB_1D_1N$ — рівнобічна трапеція.</p>
+                            <p>$B_1D_1 = 4\sqrt{2}$, $\;MN = 2\sqrt{2}$ (середня лінія $\triangle ABD$), $\;MB_1 = \sqrt{16 + 4} = 2\sqrt{5}$.</p>
+                            <p>Висота $h = \sqrt{20 - (\sqrt{2})^2} = 3\sqrt{2}$, $\;S = \dfrac{4\sqrt{2} + 2\sqrt{2}}{2} \cdot 3\sqrt{2} = 18$.</p>
+                            <p>$6\sqrt{10}$ — бічну сторону взяли за висоту.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="10">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\alpha \parallel \beta$, $\;\gamma \cap \alpha = a$, $\;\gamma \cap \beta = b$ $\;\Rightarrow\;$ $a \parallel b$.</p>
+                    <p>Відрізки паралельних прямих між $\alpha \parallel \beta$ рівні. Через точку поза площиною — одна паралельна площина. Дві площини, паралельні третій, паралельні.</p>
+                    <p>Пряма чи площина, що перетинає одну з паралельних площин, перетинає й другу.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Метод ✍️</div>
+                        <p>Переріз: сполучаємо точки однієї грані; на паралельній грані проводимо паралельний відрізок.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Лінії перетину паралельні лише для паралельних площин; рівні лише відрізки паралельних прямих.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 2) renderCut();
+                if (currentSlide === 4) renderSeg();
+                if (currentSlide === 5) renderSection();
+                if (currentSlide === 6) renderMethod();
+@@JS
+            // --- Просторові креслення: косокутна проєкція (x — вправо, y — углиб, z — вгору) ---
+            const proj = (S, ox, oy, k = 0.45) => { const c = k * Math.SQRT1_2; return ([x, y, z]) => [ox + S * (x + c * y), oy - S * (z + c * y)]; };
+            const f1 = (v) => v.toFixed(1);
+            const seg = (pr, a, b, cls) => { const [x1, y1] = pr(a), [x2, y2] = pr(b); return `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" class="${cls}"/>`; };
+            const polyS = (pr, pts, cls) => `<polygon points="${pts.map((p) => pr(p).map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const txt = (pr, p, s, dx, dy, cls = 'lbl') => { const [x, y] = pr(p); return `<text x="${f1(x + dx)}" y="${f1(y + dy + 6)}" class="${cls}">${s}</text>`; };
+            const dot = (pr, p) => { const [x, y] = pr(p); return `<circle cx="${f1(x)}" cy="${f1(y)}" r="4.5" class="pt"/>`; };
+            const lin = (p, u, t) => p.map((v, i) => v + t * u[i]);
+            const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+            const dotp = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+            // --- Куб ABCDA₁B₁C₁D₁ з ребром 1; невидимі ребра (при вершині D) — пунктиром ---
+            const CV = { A: [0, 0, 0], B: [1, 0, 0], C: [1, 1, 0], D: [0, 1, 0], A1: [0, 0, 1], B1: [1, 0, 1], C1: [1, 1, 1], D1: [0, 1, 1] };
+            const CE = [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['A1', 'B1'], ['B1', 'C1'], ['C1', 'D1'], ['D1', 'A1'], ['A', 'A1'], ['B', 'B1'], ['C', 'C1'], ['D', 'D1']];
+            const HID_E = ['CD', 'DA', 'DD1'];
+            const HID_F = [[0, 0], [1, 1], [2, 0]];     // ліва, задня, нижня грані не видно
+            const CL = { A: [-14, 14], B: [14, 14], C: [16, 4], D: [-16, -2], A1: [-18, 0], B1: [16, 14], C1: [16, -8], D1: [-12, -12] };
+            const cubePr = proj(190, 95, 290);
+            const sub = (n) => n.replace('1', '₁');
+            function cubeEdges(pr) {
+                return CE.map(([a, b]) => seg(pr, CV[a], CV[b], 'edge' + (HID_E.includes(a + b) ? ' hid' : ''))).join('');
+            }
+            function cubeLabels(pr) {
+                return Object.keys(CV).map((n) => txt(pr, CV[n], sub(n), CL[n][0], CL[n][1])).join('');
+            }
+            // Переріз куба площиною n·p = s: вершини многокутника в порядку обходу
+            function cubeSection(n, s) {
+                const f = (p) => dotp(n, p) - s, pts = [];
+                const add = (p) => { if (!pts.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) < 1e-7)) pts.push(p); };
+                CE.forEach(([a, b]) => {
+                    const P = CV[a], Q = CV[b], fp = f(P), fq = f(Q);
+                    if (Math.abs(fp) < 1e-9) add(P);
+                    if (Math.abs(fq) < 1e-9) add(Q);
+                    if (fp * fq < 0) add(lin(P, Q.map((v, i) => v - P[i]), fp / (fp - fq)));
+                });
+                if (pts.length < 3) return [];
+                const c = [0, 1, 2].map((i) => pts.reduce((m, p) => m + p[i], 0) / pts.length);
+                const u = cross(n, Math.abs(n[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0]), v = cross(n, u);
+                const ang = (p) => { const d = p.map((x, i) => x - c[i]); return Math.atan2(dotp(d, v), dotp(d, u)); };
+                return pts.sort((p, q) => ang(p) - ang(q));
+            }
+            // Сторони перерізу: грань, на якій лежить сторона (вісь 0/1/2 і значення 0/1), і чи вона невидима
+            function sectionSides(pts) {
+                return pts.map((p, i) => {
+                    const q = pts[(i + 1) % pts.length], faces = [];
+                    for (let ax = 0; ax < 3; ax++) for (const val of [0, 1]) if (Math.abs(p[ax] - val) < 1e-7 && Math.abs(q[ax] - val) < 1e-7) faces.push([ax, val]);
+                    const hid = faces.length > 0 && faces.every(([ax, val]) => HID_F.some(([a2, v2]) => a2 === ax && v2 === val));
+                    return { p, q, faces, axis: faces.length ? faces[0][0] : -1, hid };
+                });
+            }
+            function sectionSvg(pr, pts) {
+                if (pts.length < 3) return '';
+                return polyS(pr, pts, 'sec-fill') + sectionSides(pts).map((sd) => seg(pr, sd.p, sd.q, `side p${'xyz'[sd.axis] || ''}${sd.hid ? ' hid' : ''}`)).join('');
+            }
+
+            // --- Слайд 1: шестикутний переріз ---
+            window.renderIntro = function () {
+                const pts = cubeSection([1, -0.6, 1.2], 0.8);
+                document.getElementById('intro-scene').innerHTML = cubeEdges(cubePr) + sectionSvg(cubePr, pts) + cubeLabels(cubePr);
+            };
+
+            // --- Площини α (z = 0) і β (z = H) у вигляді паралелограмів ---
+            const PX = 1.6, PY = 1.1, PH = 1.3, plPr = proj(95, 210, 228);
+            const rect = (z) => [[-PX, -PY, z], [PX, -PY, z], [PX, PY, z], [-PX, PY, z]];
+            const planeNames = (pr) => txt(pr, [-PX, -PY, 0], 'α', 26, -14, 'greek') + txt(pr, [-PX, -PY, PH], 'β', 26, -14, 'greek');
+            // Відрізок прямої b + s·u, що лежить у прямокутнику |x| ≤ PX, |y| ≤ PY
+            function clipLine(b, u) {
+                let lo = -1e9, hi = 1e9;
+                [[0, PX], [1, PY]].forEach(([i, M]) => {
+                    if (Math.abs(u[i]) < 1e-9) return;
+                    const s1 = (-M - b[i]) / u[i], s2 = (M - b[i]) / u[i];
+                    lo = Math.max(lo, Math.min(s1, s2)); hi = Math.min(hi, Math.max(s1, s2));
+                });
+                return [lo, hi];
+            }
+
+            // --- Слайд 2: січна площина γ з нахилом θ і поворотом φ ---
+            window.renderCut = function () {
+                const th = parseInt(document.getElementById('cut-th').value, 10), ph = parseInt(document.getElementById('cut-ph').value, 10);
+                document.getElementById('cut-th-val').textContent = `${th}°`;
+                document.getElementById('cut-ph-val').textContent = `${ph < 0 ? '−' : ''}${Math.abs(ph)}°`;
+                const r = Math.PI / 180, pr = plPr, L = 1.25;
+                const u = [Math.cos(ph * r), Math.sin(ph * r), 0];
+                const w = [-Math.sin(ph * r) * Math.cos(th * r), Math.cos(ph * r) * Math.cos(th * r), Math.sin(th * r)];
+                const at = (s, t) => lin(lin([0, 0, PH / 2], u, s), w, t);
+                const t0 = -PH / 2 / w[2], t1 = PH / 2 / w[2];
+                const line = (t) => { const [lo, hi] = clipLine(at(0, t), u); return [at(Math.max(lo, -L), t), at(Math.min(hi, L), t)]; };
+                const [a0, a1] = line(t0), [b0, b1] = line(t1);
+                let svg = polyS(pr, rect(0), 'pl')
+                    + polyS(pr, [at(-L, 1.3 * t0), at(L, 1.3 * t0), at(L, 1.3 * t1), at(-L, 1.3 * t1)], 'pl-g')
+                    + polyS(pr, rect(PH), 'pl')
+                    + seg(pr, a0, a1, 'cut') + seg(pr, b0, b1, 'cut')
+                    + planeNames(pr)
+                    + txt(pr, at(-L, 1.3 * t1), 'γ', -16, -2, 'greek g')
+                    + txt(pr, a1, 'a', 14, 6, 'lbl it red') + txt(pr, b1, 'b', 14, -8, 'lbl it red');
+                document.getElementById('cut-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 4: паралельні відрізки AB і CD між α і β ---
+            window.renderSeg = function () {
+                const pr = plPr, d = [0.45, 0.25, PH];
+                const A = [-1.0, -0.5, 0], C = [0.45, 0.25, 0], B = lin(A, d, 1), D = lin(C, d, 1);
+                document.getElementById('seg-scene').innerHTML = polyS(pr, rect(0), 'pl') + polyS(pr, [A, C, D, B], 'pl-g') + polyS(pr, rect(PH), 'pl')
+                    + seg(pr, A, C, 'cut') + seg(pr, B, D, 'cut') + seg(pr, A, B, 'seg-par') + seg(pr, C, D, 'seg-par')
+                    + [A, B, C, D].map((p) => dot(pr, p)).join('')
+                    + txt(pr, A, 'A', -14, 12) + txt(pr, C, 'C', 14, 12) + txt(pr, B, 'B', -14, -10) + txt(pr, D, 'D', 14, -10)
+                    + planeNames(pr);
+            };
+
+            // --- Слайд 5: переріз куба площиною x − 0,6y + c·z = s (площина «дивиться» на глядача, не стає ребром у проєкції) ---
+            const FACE_PAIRS = ['$AA_1D_1D$ і $BB_1C_1C$', '$AA_1B_1B$ і $DD_1C_1C$', '$ABCD$ і $A_1B_1C_1D_1$'];
+            const POLY_NAMES = { 3: 'трикутник', 4: 'чотирикутник', 5: 'п\'ятикутник', 6: 'шестикутник' };
+            const PAIR_WORDS = ['', 'одну пару', 'дві пари', 'три пари'];
+            let secShown = false;
+            window.sectionInput = function () { secShown = false; renderSection(); };
+            window.revealSection = function () { secShown = true; renderSection(); };
+            window.renderSection = function () {
+                const t = parseInt(document.getElementById('sec-t').value, 10), c = parseFloat(document.getElementById('sec-c').value);
+                document.getElementById('sec-t-val').textContent = `${t} %`;
+                document.getElementById('sec-c-val').textContent = c.toFixed(1).replace('.', ',');
+                const n = [1, -0.6, c], pts = cubeSection(n, -0.6 + t / 100 * (1.6 + c));
+                document.getElementById('sec-scene').innerHTML = cubeEdges(cubePr) + sectionSvg(cubePr, pts) + cubeLabels(cubePr);
+                const box = document.getElementById('sec-answer'), out = document.getElementById('sec-conclusion');
+                box.classList.toggle('shown', secShown);
+                if (!secShown) return;
+                const sides = sectionSides(pts);
+                const pairs = [0, 1, 2].filter((ax) => [0, 1].every((val) => sides.some((sd) => sd.faces.some(([a, v]) => a === ax && v === val))));
+                let html = `Переріз — <b>${POLY_NAMES[pts.length] || 'многокутник'}</b>. `;
+                if (!pairs.length) html += 'Жодної пари протилежних граней площина не перетинає двічі — паралельних сторін немає.';
+                else {
+                    html += `Площина перетинає ${PAIR_WORDS[pairs.length]} паралельних граней: ${pairs.map((ax) => FACE_PAIRS[ax]).join('; ')}. Сторони на них паралельні (однаковий колір).`;
+                    if (pts.length === 4) html += pairs.length === 1 ? ' Це трапеція.' : ' Це паралелограм.';
+                }
+                out.innerHTML = html;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+
+            // --- Слайд 6: покрокова побудова перерізу KBLD₁ ---
+            const MK = [0, 0, 1 / 3], ML = [1, 1, 2 / 3];
+            const M_SIDES = [[MK, CV.B, 'py'], [MK, CV.D1, 'px hid'], [CV.D1, ML, 'py hid'], [ML, CV.B, 'px']];
+            let mStep = 0;
+            window.renderMethod = function () {
+                const pr = cubePr;
+                let svg = (mStep === 4 ? polyS(pr, [MK, CV.B, ML, CV.D1], 'sec-fill') : '') + cubeEdges(pr);
+                M_SIDES.slice(0, mStep).forEach(([p, q, cls], k) => { svg += seg(pr, p, q, `side ${cls}${k === mStep - 1 ? ' now' : ''}`); });
+                svg += cubeLabels(pr) + dot(pr, MK) + txt(pr, MK, 'K', -18, 2, 'lbl red') + dot(pr, CV.B) + dot(pr, CV.D1);
+                if (mStep >= 3) svg += dot(pr, ML) + txt(pr, ML, 'L', 18, 4, 'lbl red');
+                document.getElementById('m-scene').innerHTML = svg;
+                document.querySelectorAll('#m-steps .step').forEach((el, k) => el.classList.toggle('shown', k < mStep));
+            };
+            window.methodNext = function () { mStep = Math.min(mStep + 1, 4); renderMethod(); };
+            window.methodReset = function () { mStep = 0; renderMethod(); };
+@@INCLUDE steps.js

@@ -85,6 +85,32 @@ def covered_by_teacher(pupil, material):
     return bool(request and grade and grade.id in (licensed_grade_ids(request.teacher) or set()))
 
 
+def own_class_grade_ids(user):
+    """Учень власника сайту (заявку «N клас» підтверджено, викладач не вказаний або це сам власник) бачить усі уроки
+    й практику свого класу в кожному шкільному курсі (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається.
+    Повертає множину id класів; результат кешується на об'єкті користувача на час запиту."""
+    if not user.is_authenticated:
+        return set()
+    if not hasattr(user, '_own_class_grade_ids'):
+        grades = set()
+        request = TutorStudentRequest.objects.filter(user=user, status='approved', course__startswith='grade_') \
+            .select_related('teacher').first()
+        if request and (request.teacher is None or is_owner(request.teacher)):
+            number = int(request.course.split('_')[1])
+            grades = set(CurriculumGrade.objects.filter(number=number).exclude(subject__name=NMT_SUBJECT_NAME)
+                         .values_list('id', flat=True))
+        user._own_class_grade_ids = grades
+    return user._own_class_grade_ids
+
+
+def in_own_class(user, material):
+    """Чи належить тема до класу, у якому навчається учень (див. own_class_grade_ids)."""
+    if material.is_bundle:
+        return False
+    grade = material.curriculum_grade
+    return grade is not None and grade.id in own_class_grade_ids(user)
+
+
 def invite_for(user):
     invite = TeacherInvite.objects.filter(teacher=user).first()
     if invite is None:

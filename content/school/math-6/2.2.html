@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Зведення дробів до спільного знаменника. Порівняння дробів | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Дроби на піці й смужках */
+        .cell.empty { fill: var(--card-bg); }
+        .cell.blue { fill: var(--brand-blue); fill-opacity: 0.5; }
+        .cell.green { fill: var(--brand-green); fill-opacity: 0.5; }
+        .cell.red { fill: var(--warning-red); fill-opacity: 0.5; }
+        .cut-main { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+        .cut-new { stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 4 3; }
+        .frame { fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .crust { fill: none; stroke: var(--brand-yellow); stroke-width: 7; }
+        .fr-t { fill: currentColor; font-weight: 800; text-anchor: middle; }
+        .fr-bar { stroke: currentColor; stroke-width: 2.5; }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: var(--text-muted); font-size: 14px; font-weight: 600; text-anchor: end; }
+        .who-name { font-size: 20px; font-weight: 800; text-anchor: end; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .mark { font-size: 28px; font-weight: 800; text-anchor: middle; }
+        .mult { fill: var(--brand-green); font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .arc-arrow { fill: none; stroke: var(--brand-green); stroke-width: 2.5; }
+        .guide { stroke: var(--brand-yellow); stroke-width: 2.5; stroke-dasharray: 6 4; }
+        .sep { stroke: var(--border-color); stroke-width: 2; stroke-dasharray: 4 4; }
+
+        /* Перемикачі й кнопки «+ / −» */
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary { font-size: 1.05rem; }
+        .modes .btn-secondary.pair { font-size: 1.3rem; padding: 4px 12px; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .stepper { display: flex; align-items: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+        .stepper .st-label { flex: 1; min-width: 190px; font-weight: 600; }
+        .stepper .btn-secondary { font-size: 1.2rem; min-width: 44px; padding: 3px 10px; }
+        .stepper .st-ctl { display: inline-flex; align-items: center; gap: 10px; }
+        .stepper .st-val { font-size: 1.35rem; font-weight: 800; min-width: 26px; text-align: center; color: var(--brand-blue); }
+
+        /* Покрокове розв'язання */
+        .ev-task { font-weight: 700; margin: 0 0 6px; }
+        .ev-line { font-size: 1.2rem; font-weight: 700; padding: 3px 0; animation: fade 0.3s ease; }
+        .ev-line mark { display: inline-block; vertical-align: middle; line-height: 1; background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 3px 6px; }
+        .ev-line.done { color: var(--brand-green); }
+        .ev-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .nw { white-space: nowrap; }
+
+        /* Пастки: перемикаються кнопками */
+        .trap-card { display: none; }
+        .trap-card.on { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Хто з'їв більше піци? 🍕</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я з'їла $\dfrac{3}{4}$ піци!</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я — $\dfrac{5}{6}$ такої самої піци. Хто з нас з'їв більше?</div>
+                    <p class="big-question">Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealPizza()">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Тарас! 🎉</div>
+                        <p>Розріжемо обидві піци на $12$ однакових шматочків: $\dfrac{3}{4} = \dfrac{9}{12}$, а $\dfrac{5}{6} = \dfrac{10}{12}$. І $\dfrac{10}{12} \gt \dfrac{9}{12}$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 290" id="pizza-scene" role="img" aria-label="Дві однакові піци: одна поділена на 4 частини, друга — на 6"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Ріжемо на однакові частини ✂️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Смужки однакові, а частини в них різні. Учні кажуть, на скільки поділити кожну частину, — клацаємо «+». Коли частини стануть однаковими?</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary pair on" id="pair-0" onclick="setPair(0)">$\frac{3}{4}$ і $\frac{5}{6}$</button>
+                        <button class="btn-secondary pair" id="pair-1" onclick="setPair(1)">$\frac{2}{3}$ і $\frac{3}{5}$</button>
+                        <button class="btn-secondary pair" id="pair-2" onclick="setPair(2)">$\frac{5}{8}$ і $\frac{3}{4}$</button>
+                    </div>
+                    <div class="stepper"><span class="st-label">Верхня: кожну частину ділимо на</span><span class="st-ctl"><button class="btn-secondary" onclick="cutMore(0, -1)">−</button><span class="st-val" id="k-0">1</span><button class="btn-secondary" onclick="cutMore(0, 1)">+</button></span></div>
+                    <div class="stepper"><span class="st-label">Нижня: кожну частину ділимо на</span><span class="st-ctl"><button class="btn-secondary" onclick="cutMore(1, -1)">−</button><span class="st-val" id="k-1">1</span><button class="btn-secondary" onclick="cutMore(1, 1)">+</button></span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealCut()">Що вийшло?</button></p>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 30 440 222" id="cut-scene" role="img" aria-label="Дві однакові смужки, поділені на частини"></svg>
+                    </div>
+                    <div class="box theorem hidden-answer" id="cut-answer" style="margin-top:12px"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Спільний знаменник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Запам'ятай! ⭐</div>
+                        <p><b>Найменший спільний знаменник</b> — це НСК знаменників.</p>
+                        <p><b>Додатковий множник</b> $=$ спільний знаменник $:$ знаменник дробу.</p>
+                        <p>Множимо на нього <b>і чисельник, і знаменник</b> — дріб від цього не змінюється (основна властивість дробу).</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Як порівняти дроби</div>
+                        <p>Зводимо до спільного знаменника й порівнюємо чисельники: $\dfrac{9}{12} \lt \dfrac{10}{12}$, отже $\dfrac{3}{4} \lt \dfrac{5}{6}$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 300" id="rule-scene" role="img" aria-label="3/4 = 9/12 і 5/6 = 10/12: чисельник і знаменник множимо на додатковий множник"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Зводимо й порівнюємо ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як порівняти дроби</div>
+                        <p>1) Знаходимо НСК знаменників — це спільний знаменник.</p>
+                        <p>2) Ділимо його на кожен знаменник — це додаткові множники.</p>
+                        <p>3) Множимо чисельник і знаменник кожного дробу на його множник.</p>
+                        <p>4) Порівнюємо чисельники.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Можна й так</div>
+                        <p>Добуток знаменників теж підійде, але з НСК числа менші й рахувати легше.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p class="ev-task" id="ev-task"></p>
+                    <div id="ev-lines"></div>
+                    <p class="ev-note" id="ev-note"></p>
+                    <div class="step-controls" style="justify-content:center">
+                        <button class="btn-primary" onclick="evalStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="evalNext()">Інший приклад</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно, пастки! ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="trap-0" onclick="setTrap(0)">Пастка 1</button>
+                        <button class="btn-secondary" id="trap-1" onclick="setTrap(1)">Пастка 2</button>
+                    </div>
+                    <div class="trap-card on" id="trap-card-0">
+                        <div class="box error">
+                            <div class="box-title">Обережно, пастка!</div>
+                            <p>$\dfrac{3}{4} = \dfrac{3}{12}$? <b>Ні!</b> Знаменник помножили на $3$, а чисельник — забули. Частини стали дрібніші, а взяли їх знову $3$.</p>
+                            <p>Правильно: $\dfrac{3}{4} = \dfrac{3 \cdot 3}{4 \cdot 3} = \dfrac{9}{12}$.</p>
+                        </div>
+                        <div class="box hack">
+                            <div class="box-title">Лайфхак</div>
+                            <p>Що робиш зі знаменником — те саме роби й із чисельником.</p>
+                        </div>
+                    </div>
+                    <div class="trap-card" id="trap-card-1">
+                        <div class="box error">
+                            <div class="box-title">Обережно, пастка!</div>
+                            <p>«$\dfrac{1}{8} \gt \dfrac{1}{4}$, бо $8 \gt 4$»? <b>Ні!</b> Що більший знаменник, то дрібніші частини: $\dfrac{1}{8} \lt \dfrac{1}{4}$.</p>
+                        </div>
+                        <div class="box hack">
+                            <div class="box-title">Лайфхак</div>
+                            <p>Чисельники однакові — більший той дріб, у якого знаменник менший: $\dfrac{3}{5} \gt \dfrac{3}{7}$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 285" id="trap-scene" role="img" aria-label="Смужки дробів: як правильно і як ні"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Зведи дріб $\dfrac{2}{3}$ до знаменника $12$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $\dfrac{2}{12}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $\dfrac{8}{12}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{11}{12}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>На скільки треба помножити $3$, щоб вийшло $12$? На це число помнож і чисельник, і знаменник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>Додатковий множник: $12 : 3 = 4$.</p>
+                        <p>$\dfrac{2}{3} = \dfrac{2 \cdot 4}{3 \cdot 4} = \dfrac{8}{12}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Знайди найменший спільний знаменник дробів $\dfrac{1}{6}$ і $\dfrac{3}{8}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $48$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $14$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $24$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Шукай <b>найменше</b> число, яке ділиться і на $6$, і на $8$, — це <span class="nw">НСК$(6; 8)$</span>.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Кратні $8$: $8$, $16$, $24$ — і $24$ ділиться на $6$. <span class="nw">НСК$(6; 8) = 24$.</span></p>
+                        <p>$48$ — теж спільний знаменник, але не найменший.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) — складніші, для другого уроку -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Що більше: $\dfrac{5}{8}$ чи $\dfrac{7}{12}$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $\dfrac{5}{8}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{7}{12}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) Вони рівні</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Зведи дроби до спільного знаменника <span class="nw">НСК$(8; 12) = 24$</span> і порівняй чисельники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{5}{8} = \dfrac{15}{24}$, $\;\dfrac{7}{12} = \dfrac{14}{24}$.</p>
+                        <p>$15 \gt 14$, отже $\dfrac{5}{8} \gt \dfrac{7}{12}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Друзі мали однакові шоколадки. Оля з'їла $\dfrac{3}{4}$ своєї, Тарас — $\dfrac{5}{8}$, Ярина — $\dfrac{2}{3}$. Хто з'їв найбільше?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) Тарас</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) Ярина</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) Оля</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Зведи всі три дроби до спільного знаменника $24$ і порівняй чисельники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\dfrac{3}{4} = \dfrac{18}{24}$, $\;\dfrac{5}{8} = \dfrac{15}{24}$, $\;\dfrac{2}{3} = \dfrac{16}{24}$.</p>
+                        <p>Найбільший чисельник — $18$: найбільше з'їла Оля.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Найменший спільний знаменник — НСК знаменників.</p>
+                    <p>Додатковий множник $=$ спільний знаменник $:$ знаменник.</p>
+                    <p>Множимо <b>і чисельник, і знаменник</b>: $\dfrac{3}{4} = \dfrac{3 \cdot 3}{4 \cdot 3} = \dfrac{9}{12}$.</p>
+                    <p>Щоб порівняти дроби — зводимо до спільного знаменника й порівнюємо чисельники.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як це робити ✍️</div>
+                        <p>$\dfrac{5}{6}$ і $\dfrac{7}{9}$: <span class="nw">НСК$(6; 9) = 18$,</span> $\dfrac{15}{18} \gt \dfrac{14}{18}$, отже $\dfrac{5}{6} \gt \dfrac{7}{9}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$\dfrac{3}{4} \ne \dfrac{3}{12}$ — множимо обидва числа. Більший знаменник — дрібніші частини: $\dfrac{1}{8} \lt \dfrac{1}{4}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderPizza();
+                if (currentSlide === 2) renderCut();
+                if (currentSlide === 3) renderRule();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Спільне: MathJax, дріб у SVG і смужка з частинами ---
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            const lcm = (a, b) => a / gcd(a, b) * b;
+            const fr = (a, b) => `\\dfrac{${a}}{${b}}`;
+            // Дріб у SVG: чисельник над рискою (MathJax у <text> не працює); y — рівень риски
+            function fracSvg(x, y, a, b, color, size = 22) {
+                const fill = color ? `;fill:${color}` : '', stroke = color ? ` style="stroke:${color}"` : '';
+                const half = String(Math.max(a, b)).length * size * 0.3 + 5;
+                return `<text x="${x}" y="${y - size * 0.3}" class="fr-t" style="font-size:${size}px${fill}">${a}</text>`
+                     + `<line x1="${x - half}" y1="${y}" x2="${x + half}" y2="${y}" class="fr-bar"${stroke}/>`
+                     + `<text x="${x}" y="${y + size * 1.05}" class="fr-t" style="font-size:${size}px${fill}">${b}</text>`;
+            }
+            // Смужка з b частин, кожну з яких поділено ще на k; зафарбовано m дрібних частин
+            function stripSvg(m, b, k, x0, y, w, h, color) {
+                const n = b * k, cw = w / n;
+                let s = `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="cell empty"/>`
+                      + `<rect x="${x0}" y="${y}" width="${m * cw}" height="${h}" class="cell ${color}"/>`;
+                for (let i = 1; i < n; i++) {
+                    const x = x0 + i * cw;
+                    s += i % k ? `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" class="cut-new"/>`
+                               : `<line x1="${x}" y1="${y - 6}" x2="${x}" y2="${y + h + 6}" class="cut-main"/>`;
+                }
+                return s + `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="frame"/>`;
+            }
+
+            // --- Слайд 1: дві піци; по кліку обидві «доділяються» на 12 шматочків ---
+            function pizzaSvg(cx, cy, r, a, b, color) {
+                const P = (t) => [cx + r * Math.sin(2 * Math.PI * t), cy - r * Math.cos(2 * Math.PI * t)].map(v => +v.toFixed(1));
+                const [sx, sy] = P(0), [ex, ey] = P(a / b);
+                let base = `<circle cx="${cx}" cy="${cy}" r="${r}" class="cell empty"/>`
+                         + `<path d="M${cx} ${cy} L${sx} ${sy} A${r} ${r} 0 ${a / b > 0.5 ? 1 : 0} 1 ${ex} ${ey} Z" class="cell ${color}"/>`;
+                let cuts = '';
+                for (let i = 0; i < 12; i++) {
+                    const [x, y] = P(i / 12), line = `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="CLS"/>`;
+                    if ((i * b) % 12 === 0) base += line.replace('CLS', 'cut-main');
+                    else cuts += line.replace('CLS', 'cut-new');
+                }
+                return { base, cuts, crust: `<circle cx="${cx}" cy="${cy}" r="${r}" class="crust"/>` };
+            }
+            window.renderPizza = function () {
+                const scene = document.getElementById('pizza-scene');
+                if (scene.childElementCount) return;   // малюємо один раз, щоб не загубити показану відповідь
+                const A = pizzaSvg(100, 145, 75, 3, 4, 'blue'), B = pizzaSvg(300, 145, 75, 5, 6, 'green');
+                const blue = 'var(--brand-blue)', green = 'var(--brand-green)';
+                scene.innerHTML = A.base + B.base
+                    + `<g class="hidden-answer">${A.cuts}${B.cuts}`
+                    + `<text x="80" y="264" class="fr-t" style="font-size:24px">=</text>` + fracSvg(112, 256, 9, 12, blue, 20)
+                    + `<text x="280" y="264" class="fr-t" style="font-size:24px">=</text>` + fracSvg(312, 256, 10, 12, green, 20) + '</g>'
+                    + A.crust + B.crust
+                    + `<text x="88" y="40" class="who-name" style="fill:${blue}">Оля</text>` + fracSvg(115, 33, 3, 4, blue, 20)
+                    + `<text x="288" y="40" class="who-name" style="fill:${green}">Тарас</text>` + fracSvg(315, 33, 5, 6, green, 20);
+            };
+            window.revealPizza = function () {
+                document.querySelectorAll('[data-slide="1"] .hidden-answer').forEach(e => e.classList.add('shown'));
+            };
+
+            // --- Слайд 2: дві смужки; кожну частину «доділяємо» ще на k частин ---
+            const PAIRS = [[3, 4, 5, 6], [2, 3, 3, 5], [5, 8, 3, 4]];
+            let pair = 0, ks = [1, 1];
+            const partsWord = (n) => (n % 100 >= 11 && n % 100 <= 14) ? 'частин'
+                : n % 10 === 1 ? 'частина' : (n % 10 >= 2 && n % 10 <= 4) ? 'частини' : 'частин';
+            window.setPair = function (p) {
+                pair = p; ks = [1, 1];
+                PAIRS.forEach((_, i) => document.getElementById(`pair-${i}`).classList.toggle('on', i === p));
+                renderCut();
+            };
+            window.cutMore = function (i, d) {
+                ks[i] = Math.min(6, Math.max(1, ks[i] + d));
+                renderCut();
+            };
+            window.renderCut = function () {
+                const [a, b, c, d] = PAIRS[pair], n1 = b * ks[0], n2 = d * ks[1];
+                document.getElementById('k-0').textContent = ks[0];
+                document.getElementById('k-1').textContent = ks[1];
+                let s = fracSvg(40, 75, a, b, 'var(--brand-blue)') + stripSvg(a * ks[0], b, ks[0], 80, 50, 340, 50, 'blue')
+                      + `<text x="420" y="126" class="svg-note">${n1} ${partsWord(n1)}</text>`
+                      + fracSvg(40, 175, c, d, 'var(--brand-green)') + stripSvg(c * ks[1], d, ks[1], 80, 150, 340, 50, 'green')
+                      + `<text x="420" y="226" class="svg-note">${n2} ${partsWord(n2)}</text>`;
+                s += n1 === n2 ? '<text x="250" y="246" class="svg-caption ok-text">Частини однакові ✓</text>'
+                               : '<text x="250" y="246" class="svg-caption" style="fill:var(--text-muted)">Частини різні</text>';
+                document.getElementById('cut-scene').innerHTML = s;
+                // Відповідь готуємо одразу, а показуємо лише після кліку «Що вийшло?»
+                const box = document.getElementById('cut-answer');
+                box.classList.remove('shown');
+                const eq = (x, y, k) => k === 1 ? `$${fr(x, y)}$ — не змінюємо`
+                    : `$${fr(x, y)} = ${fr(x + ' \\cdot ' + k, y + ' \\cdot ' + k)} = ${fr(x * k, y * k)}$`;
+                if (n1 === n2) {
+                    const L = lcm(b, d), p = a * ks[0], q = c * ks[1];
+                    const sign = p < q ? '\\lt' : p > q ? '\\gt' : '=';
+                    box.innerHTML = '<div class="box-title">Тепер порівнюємо! 🎉</div>'
+                        + `<p>${eq(a, b, ks[0])}, &nbsp; ${eq(c, d, ks[1])}</p>`
+                        + `<p>$${fr(p, n1)} ${sign} ${fr(q, n2)}$, отже $${fr(a, b)} ${sign} ${fr(c, d)}$.</p>`
+                        + (n1 !== L ? `<p>Працює, але найменший спільний знаменник — $${L}$.</p>` : '');
+                } else {
+                    box.innerHTML = '<div class="box-title">Поки що ні 🤔</div>'
+                        + `<p>Частини ще різні: $${n1}$ і $${n2}$. Шукаємо число, яке ділиться і на $${b}$, і на $${d}$!</p>`;
+                }
+                typeset([box]);
+            };
+            window.revealCut = function () { document.getElementById('cut-answer').classList.add('shown'); };
+
+            // --- Слайд 3: схема «множимо і чисельник, і знаменник» ---
+            window.renderRule = function () {
+                let s = '<defs><marker id="arr-g" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">'
+                      + '<path d="M0 0 L10 5 L0 10 z" style="fill:var(--brand-green)"/></marker></defs>'
+                      + '<text x="220" y="36" class="svg-caption" style="font-size:21px">НСК(4; 6) = 12</text>';
+                [[3, 4, 3, 110], [5, 6, 2, 330]].forEach(([a, b, k, cx]) => {
+                    const x1 = cx - 52, x2 = cx + 52, y = 160;
+                    s += fracSvg(x1, y, a, b, null, 28) + `<text x="${cx}" y="${y + 9}" class="fr-t" style="font-size:28px">=</text>`
+                       + fracSvg(x2, y, a * k, b * k, 'var(--brand-green)', 28)
+                       + `<path d="M${x1 + 4} ${y - 40} Q${cx} ${y - 92} ${x2 - 4} ${y - 40}" class="arc-arrow" marker-end="url(#arr-g)"/>`
+                       + `<text x="${cx}" y="${y - 72}" class="mult">·${k}</text>`
+                       + `<path d="M${x1 + 4} ${y + 42} Q${cx} ${y + 94} ${x2 - 4} ${y + 42}" class="arc-arrow" marker-end="url(#arr-g)"/>`
+                       + `<text x="${cx}" y="${y + 90}" class="mult">·${k}</text>`
+                       + `<text x="${cx}" y="${y + 128}" class="svg-caption" style="fill:var(--text-muted)">12 : ${b} = ${k}</text>`;
+                });
+                document.getElementById('rule-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: покрокове порівняння; [[…]] — що підсвітити в останньому показаному рядку ---
+            const EXAMPLES = [
+                { task: 'Порівняй $\\dfrac{5}{6}$ і $\\dfrac{7}{9}$.', lines: [
+                    ['<span class="nw">НСК$(6; 9) =$ [[$18$]]</span>', 'Найменше число, що ділиться і на $6$, і на $9$'],
+                    ['$18 : 6 =$ [[$3$]], $\\;18 : 9 =$ [[$2$]]', 'Додаткові множники'],
+                    ['$\\dfrac{5}{6} = \\dfrac{5 \\cdot 3}{6 \\cdot 3} =$ [[$\\dfrac{15}{18}$]]', 'Чисельник і знаменник множимо на $3$'],
+                    ['$\\dfrac{7}{9} = \\dfrac{7 \\cdot 2}{9 \\cdot 2} =$ [[$\\dfrac{14}{18}$]]', 'Чисельник і знаменник множимо на $2$'],
+                    ['$\\dfrac{15}{18} \\gt \\dfrac{14}{18}$, отже [[$\\dfrac{5}{6} \\gt \\dfrac{7}{9}$]]', 'Знаменники однакові — порівнюємо чисельники: $15 \\gt 14$'],
+                ] },
+                { task: 'Порівняй $\\dfrac{4}{9}$ і $\\dfrac{5}{12}$.', lines: [
+                    ['<span class="nw">НСК$(9; 12) =$ [[$36$]]</span>', 'Кратні $12$: $12$, $24$, $36$ — і $36$ ділиться на $9$'],
+                    ['$36 : 9 =$ [[$4$]], $\\;36 : 12 =$ [[$3$]]', 'Додаткові множники'],
+                    ['$\\dfrac{4}{9} = \\dfrac{4 \\cdot 4}{9 \\cdot 4} =$ [[$\\dfrac{16}{36}$]]', 'Чисельник і знаменник множимо на $4$'],
+                    ['$\\dfrac{5}{12} = \\dfrac{5 \\cdot 3}{12 \\cdot 3} =$ [[$\\dfrac{15}{36}$]]', 'Чисельник і знаменник множимо на $3$'],
+                    ['$\\dfrac{16}{36} \\gt \\dfrac{15}{36}$, отже [[$\\dfrac{4}{9} \\gt \\dfrac{5}{12}$]]', 'Порівнюємо чисельники: $16 \\gt 15$'],
+                ] },
+                { task: 'Порівняй $\\dfrac{7}{10}$ і $\\dfrac{3}{5}$.', lines: [
+                    ['<span class="nw">НСК$(10; 5) =$ [[$10$]]</span>', 'Лайфхак: $10$ ділиться на $5$ — отже, $10$ і є спільним знаменником'],
+                    ['$\\dfrac{3}{5} = \\dfrac{3 \\cdot 2}{5 \\cdot 2} =$ [[$\\dfrac{6}{10}$]]', 'Додатковий множник $10 : 5 = 2$, а дріб $\\frac{7}{10}$ не змінюємо'],
+                    ['$\\dfrac{7}{10} \\gt \\dfrac{6}{10}$, отже [[$\\dfrac{7}{10} \\gt \\dfrac{3}{5}$]]', 'Порівнюємо чисельники: $7 \\gt 6$'],
+                ] },
+            ];
+            let exIndex = 0, shownLines = 0;
+            window.renderEval = function () {
+                const ex = EXAMPLES[exIndex], box = document.getElementById('ev-lines'), note = document.getElementById('ev-note');
+                document.getElementById('ev-task').innerHTML = ex.task;
+                box.innerHTML = ex.lines.slice(0, shownLines).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shownLines - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="ev-line${k === ex.lines.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                note.innerHTML = shownLines ? ex.lines[shownLines - 1][1] : 'Учні називають перший крок — потім перевіряємо.';
+                typeset([document.getElementById('ev-task'), box, note]);
+            };
+            window.evalStep = function () { shownLines = Math.min(shownLines + 1, EXAMPLES[exIndex].lines.length); renderEval(); };
+            window.evalReset = function () { shownLines = 0; renderEval(); };
+            window.evalNext = function () { exIndex = (exIndex + 1) % EXAMPLES.length; shownLines = 0; renderEval(); };
+
+            // --- Слайд 5: дві пастки, перемикаються кнопками ---
+            let trap = 0;
+            const COLORS = { blue: 'var(--brand-blue)', green: 'var(--brand-green)', red: 'var(--warning-red)' };
+            window.setTrap = function (t) {
+                trap = t;
+                [0, 1].forEach(k => {
+                    document.getElementById(`trap-${k}`).classList.toggle('on', k === t);
+                    document.getElementById(`trap-card-${k}`).classList.toggle('on', k === t);
+                });
+                renderTrap();
+            };
+            window.renderTrap = function () {
+                const X = 95, W = 290;
+                const row = (m, b, k, p, q, color, y, h) => fracSvg(45, y + h / 2, p, q, COLORS[color], 20) + stripSvg(m, b, k, X, y, W, h, color);
+                let s;
+                if (trap === 0) {
+                    // 3/4, правильно 9/12 і хибно 3/12: кожну чверть поділено на 3
+                    s = row(3, 4, 1, 3, 4, 'blue', 30, 40) + row(9, 4, 3, 9, 12, 'green', 125, 40) + row(3, 4, 3, 3, 12, 'red', 220, 40)
+                      + `<line x1="${X + W * 0.75}" y1="18" x2="${X + W * 0.75}" y2="272" class="guide"/>`
+                      + '<text x="415" y="155" class="mark ok-text">✓</text><text x="415" y="250" class="mark bad-text">✗</text>';
+                } else {
+                    // 1/4 і 1/8; 3/5 і 3/7 — однакові чисельники
+                    s = row(1, 4, 1, 1, 4, 'blue', 22, 36) + row(1, 8, 1, 1, 8, 'green', 82, 36)
+                      + `<line x1="${X + W / 4}" y1="12" x2="${X + W / 4}" y2="128" class="guide"/>`
+                      + '<line x1="20" y1="149" x2="420" y2="149" class="sep"/>'
+                      + row(3, 5, 1, 3, 5, 'blue', 172, 36) + row(3, 7, 1, 3, 7, 'green', 232, 36)
+                      + `<line x1="${X + W * 0.6}" y1="162" x2="${X + W * 0.6}" y2="278" class="guide"/>`;
+                }
+                document.getElementById('trap-scene').innerHTML = s;
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

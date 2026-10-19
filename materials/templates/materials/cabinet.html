@@ -662,7 +662,7 @@
         <details class="cab-section" data-section="library" data-default-open open>
             <summary><h2 class="cab-section-title"><span>📚 Бібліотека конспектів</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
             <div class="cab-section-body">
-            {% if purchased_materials %}
+            {% if purchased_materials or library_groups %}
                 {% for group in library_groups %}
                     <h3 class="library-group-title">{{ group.label }}</h3>
                     <div class="library-grid">

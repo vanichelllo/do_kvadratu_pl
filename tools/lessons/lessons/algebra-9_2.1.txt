@@ -1,0 +1,510 @@
+@@TITLE Властивості функцій (зростання, спадання, нулі, проміжки знакосталості)
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+        /* Координатна площина і графіки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.pos, .curve.up { stroke: var(--brand-green); }
+        .curve.neg { stroke: var(--warning-red); }
+        .curve.down { stroke: var(--brand-yellow); }
+        .end-dot { fill: var(--brand-blue); }
+        .zero-dot { fill: var(--brand-yellow); stroke: var(--card-bg); stroke-width: 2; }
+        .zero-label { fill: currentColor; font-size: 14px; font-weight: 800; text-anchor: middle; }
+        .mono-label { font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .probe { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 2; }
+        .probe-line { stroke: var(--brand-blue); stroke-width: 1.5; stroke-dasharray: 5 4; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; }
+        .readout { font-weight: 700; min-height: 1.5em; }
+        .prop-line { min-height: 3.2em; font-weight: 600; }
+
+        /* Таблиця відомих функцій */
+        .fn-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .fn-table th, .fn-table td { border-bottom: 1px solid var(--border-color); padding: 7px 6px; text-align: left; vertical-align: top; }
+        .fn-table th { color: var(--brand-blue); }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.25rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Що «розповідає» графік? 🌡️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Метеостанція записувала температуру повітря протягом доби. Подивімося на графік і відповімо:</p>
+                    <p>1) Коли температура <b>підвищувалась</b>, а коли — <b>знижувалась</b>?</p>
+                    <p>2) Коли було <b>нижче нуля</b>, а коли — вище?</p>
+                    <p>3) О котрій було рівно $0^\circ$?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Показати відповіді</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Це і є властивості функції</div>
+                        <p>1) Зростала з $4$ до $14$ год, спадала з $0$ до $4$ і з $14$ до $24$ год — <b>проміжки зростання і спадання</b>.</p>
+                        <p>2) Нижче нуля — з $0$ до $8$ і з $22$ до $24$ год — <b>проміжки знакосталості</b>.</p>
+                        <p>3) О $8$ і $22$ год — <b>нулі функції</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="temp-scene" role="img" aria-label="Графік температури повітря протягом доби"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Нулі, знакосталість, монотонність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Нулі функції</div>
+                        <p>Значення $x$, при яких $f(x) = 0$. На графіку — абсциси точок перетину з віссю $Ox$.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Проміжки знакосталості</div>
+                        <p>Проміжки, на яких $f(x) \gt 0$ (графік <b>вище</b> осі $Ox$) або $f(x) \lt 0$ (графік <b>нижче</b> осі $Ox$).</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Зростання і спадання</div>
+                        <p>Функція <b>зростає</b> на проміжку, якщо для будь-яких $x_1 \lt x_2$ з цього проміжку $f(x_1) \lt f(x_2)$: більшому аргументу — більше значення.</p>
+                        <p>Функція <b>спадає</b>, якщо з $x_1 \lt x_2$ випливає $f(x_1) \gt f(x_2)$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Читаємо графік зліва направо</div>
+                        <p>Йде вгору — зростає, йде вниз — спадає. Усі проміжки записуємо для $x$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Чому лінійна функція зростає або спадає</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Функція $y = kx + b$</div>
+                        <p>$k \gt 0$ — зростає на $\mathbb{R}$; $\;k \lt 0$ — спадає на $\mathbb{R}$; $\;k = 0$ — стала.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Чому так?</div>
+                        <p>Нехай $x_1 \lt x_2$ і $k \gt 0$. Помножимо нерівність на додатне $k$: $kx_1 \lt kx_2$. Додамо $b$: $kx_1 + b \lt kx_2 + b$, тобто $f(x_1) \lt f(x_2)$ — зростає.</p>
+                        <p>Якщо $k \lt 0$, знак нерівності змінюється — спадає.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <table class="fn-table">
+                        <tr><th>Функція</th><th>Зростає / спадає</th></tr>
+                        <tr><td>$y = x^2$</td><td>спадає на $(-\infty;\,0]$, зростає на $[0;\,+\infty)$</td></tr>
+                        <tr><td>$y = \sqrt{x}$</td><td>зростає на $[0;\,+\infty)$</td></tr>
+                        <tr><td>$y = \dfrac{k}{x},\ k \gt 0$</td><td>спадає на $(-\infty;\,0)$ і на $(0;\,+\infty)$</td></tr>
+                        <tr><td>$y = \dfrac{k}{x},\ k \lt 0$</td><td>зростає на $(-\infty;\,0)$ і на $(0;\,+\infty)$</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Досліджуємо графік 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="g-btn-0" onclick="setGraph(0)">Графік 1</button>
+                        <button class="btn-secondary" id="g-btn-1" onclick="setGraph(1)">$y = \frac{1}{2}x - 1$</button>
+                        <button class="btn-secondary" id="g-btn-2" onclick="setGraph(2)">$y = \frac{1}{2}x^2 - 2$</button>
+                    </div>
+                    <p>Спершу учень називає властивість за графіком, потім перевіряємо:</p>
+                    <div class="modes">
+                        <button class="btn-primary" id="m-btn-zeros" onclick="setMode('zeros')">Нулі</button>
+                        <button class="btn-primary" id="m-btn-sign" onclick="setMode('sign')">Знак</button>
+                        <button class="btn-primary" id="m-btn-mono" onclick="setMode('mono')">Зростання / спадання</button>
+                    </div>
+                    <div class="box theorem prop-line" id="prop-line">Оберіть властивість.</div>
+                    <div class="slider-control"><label for="probe-x">x</label><input type="range" id="probe-x" min="-5" max="5" step="0.1" value="-4" oninput="renderGraph()"></div>
+                    <p class="readout" id="probe-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="graph-scene" role="img" aria-label="Графік функції з позначеними властивостями"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як дослідити функцію за формулою</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Область визначення $D(f)$.</p>
+                    <p>2) Нулі: розв'язуємо рівняння $f(x) = 0$.</p>
+                    <p>3) Знак: розв'язуємо нерівності $f(x) \gt 0$ і $f(x) \lt 0$.</p>
+                    <p>4) Монотонність — за видом функції (таблиця з теорії) або за графіком.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Дослідимо</b> $f(x) = 6 - 2x$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Два приклади різної складності</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> $y = x^2 - 9$</p>
+                    <div class="step">$D = \mathbb{R}$. Нулі: $x^2 = 9$, $x = -3$ або $x = 3$.</div>
+                    <div class="step">$y \gt 0$ на $(-\infty;\,-3) \cup (3;\,+\infty)$, $\;y \lt 0$ на $(-3;\,3)$ — перевіряємо по точці: $y(0) = -9 \lt 0$, $y(4) = 7 \gt 0$.</div>
+                    <div class="step">Додавання числа не змінює характеру зміни: як і $y = x^2$, спадає на $(-\infty;\,0]$ і зростає на $[0;\,+\infty)$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> $y = \sqrt{x} - 2$</p>
+                    <div class="step">$D = [0;\,+\infty)$ — корінь лише з невід'ємних чисел.</div>
+                    <div class="step">Нуль: $\sqrt{x} = 2$, $x = 4$.</div>
+                    <div class="step">$y \lt 0$ на $[0;\,4)$, $\;y \gt 0$ на $(4;\,+\infty)$. Точка $x = 0$ входить: $y(0) = -2 \lt 0$.</div>
+                    <div class="step">Як і $y = \sqrt{x}$, зростає на $[0;\,+\infty)$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Нуль — це число, а не точка</div>
+                        <p>Нуль функції $y = 2x - 6$ — це $x = 3$, а не точка $(3;\,0)$ і не $y = 0$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Проміжки — для $x$, не для $y$</div>
+                        <p>«Зростає на $[-2;\,3]$» означає $x$ від $-2$ до $3$. Значення $y$ на осі $Oy$ тут не записуємо.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Нуль не входить у знакосталість</div>
+                        <p>Якщо нуль $x = 2$, то $y \gt 0$ на $(2;\,+\infty)$ — дужка кругла: у точці $2$ значення не додатне.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$y = \frac{1}{x}$ не спадає на всій $D$</div>
+                        <p>$-1 \lt 1$, а $f(-1) = -1 \lt f(1) = 1$. Правильно: спадає на $(-\infty;\,0)$ і на $(0;\,+\infty)$ окремо.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Формат НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть нуль функції $y = 2x - 8$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $-4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $-8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $8$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2x - 8 = 0$, $\;2x = 8$, $\;x = 4$.</p>
+                            <p>$-8$ — це значення $y$ при $x = 0$, а не нуль функції.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">За графіком укажіть проміжок спадання функції.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $[-4;\,-1]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $[-1;\,3]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $[-3;\,3]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $[3;\,5]$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Зліва направо графік іде вниз від $x = -1$ до $x = 3$: спадає на $[-1;\,3]$. На $[-4;\,-1]$ і $[3;\,5]$ — зростає.</p>
+                            <p>$[-3;\,3]$ — це значення $y$, а проміжки записують для $x$.</p>
+                        </div>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 300" id="task2-scene" role="img" aria-label="Графік функції на проміжку від −4 до 5"></svg>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Укажіть усі значення $x$, при яких функція $y = \sqrt{x} - 2$ набуває від'ємних значень.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $(-\infty;\,4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $[0;\,4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $(4;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $[0;\,2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $(0;\,4]$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$D(y) = [0;\,+\infty)$. Нерівність $\sqrt{x} - 2 \lt 0$: $\sqrt{x} \lt 2$, $\;0 \le x \lt 4$.</p>
+                            <p>Відповідь: $[0;\,4)$. А — забули про $D(y)$, Д — у нулі $x = 4$ значення не від'ємне, а при $x = 0$ — від'ємне.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Нулі:</b> $f(x) = 0$ — перетин з $Ox$.</p>
+                    <p><b>Знакосталість:</b> $f(x) \gt 0$ — вище $Ox$, $f(x) \lt 0$ — нижче.</p>
+                    <p><b>Зростає:</b> $x_1 \lt x_2 \Rightarrow f(x_1) \lt f(x_2)$; <b>спадає:</b> $f(x_1) \gt f(x_2)$.</p>
+                    <p>$y = kx + b$: $k \gt 0$ — зростає, $k \lt 0$ — спадає.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>$D(f)$ → нулі ($f(x) = 0$) → знак ($f(x) \gt 0$, $f(x) \lt 0$) → монотонність.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Усі проміжки — для $x$, з урахуванням $D(f)$; нулі в знакосталість не входять.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderTemp();
+                if (currentSlide === 4) renderGraph();
+                if (currentSlide === 5) renderEval();
+                if (currentSlide === 8) renderTask2();
+@@JS
+            // --- Координатна площина: спільні перетворення координат ---
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y') {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 4}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) if (x !== 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${String(x).replace('-', '−')}</text>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) if (y !== 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${String(y).replace('-', '−')}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Гладка крива через точки екстремумів: між сусідніми точками s(t) = 3t² − 2t³
+            const smooth = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) { const t = (x - ax) / (bx - ax); return ay + (by - ay) * (3 * t * t - 2 * t * t * t); }
+                }
+                return NaN;
+            };
+            // Ламана через точки
+            const broken = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) return ay + (by - ay) * (x - ax) / (bx - ax);
+                }
+                return NaN;
+            };
+            // Крива, розфарбована за класом кожної точки (cls(x, y) → 'pos' / 'neg' / 'up' / …)
+            function curveSvg(P, f, a, b, cls = () => '') {
+                let svg = '', d = '', cur = null;
+                const N = 240;
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.05 || y > P.y1 + 0.05) { if (d) svg += `<path d="${d}" class="curve ${cur}"/>`; d = ''; continue; }
+                    const c = cls(x, y);
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    if (d && c !== cur) { svg += `<path d="${d} L${pt}" class="curve ${cur}"/>`; d = ''; }
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                    cur = c;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cur}"/>`;
+                return svg;
+            }
+            const num = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',').replace('-', '−');
+
+            // --- Слайд 1: температура протягом доби ---
+            window.renderTemp = function () {
+                const P = plane(0, 24, -6, 7);
+                const f = broken([[0, -3], [4, -5], [8, 0], [14, 6], [20, 2], [24, -2]]);
+                let svg = axesSvg(P, 4, 2, 't, год', 'T, °C');
+                svg += curveSvg(P, f, 0, 24);
+                [[8, 0], [22, 0]].forEach(([x]) => svg += `<circle cx="${P.sx(x)}" cy="${P.sy(0)}" r="6" class="zero-dot"/>`);
+                document.getElementById('temp-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 4: дослідження графіків ---
+            const GRAPHS = [
+                { f: smooth([[-5, -2], [-1, 2], [3, -2], [5, 2]]), a: -5, b: 5, ends: true, zeros: [-3, 1, 4],
+                  mono: [[-5, -1, 'up'], [-1, 3, 'down'], [3, 5, 'up']],
+                  props: { zeros: 'Нулі: $x = -3;\\ 1;\\ 4$.',
+                           sign: '$f(x) \\gt 0$ на $(-3;\\,1) \\cup (4;\\,5]$; $\\ f(x) \\lt 0$ на $[-5;\\,-3) \\cup (1;\\,4)$.',
+                           mono: 'Зростає на $[-5;\\,-1]$ і на $[3;\\,5]$, спадає на $[-1;\\,3]$.' } },
+                { f: (x) => x / 2 - 1, a: -6, b: 6, ends: false, zeros: [2], mono: [[-6, 6, 'up']],
+                  props: { zeros: 'Нуль: $\\frac{1}{2}x - 1 = 0$, $x = 2$.',
+                           sign: '$y \\gt 0$ на $(2;\\,+\\infty)$, $\\ y \\lt 0$ на $(-\\infty;\\,2)$.',
+                           mono: 'Зростає на $\\mathbb{R}$, бо $k = \\frac{1}{2} \\gt 0$.' } },
+                { f: (x) => x * x / 2 - 2, a: -6, b: 6, ends: false, zeros: [-2, 2], mono: [[-6, 0, 'down'], [0, 6, 'up']],
+                  props: { zeros: 'Нулі: $x^2 = 4$, $x = -2;\\ 2$.',
+                           sign: '$y \\gt 0$ на $(-\\infty;\\,-2) \\cup (2;\\,+\\infty)$, $\\ y \\lt 0$ на $(-2;\\,2)$.',
+                           mono: 'Спадає на $(-\\infty;\\,0]$, зростає на $[0;\\,+\\infty)$.' } },
+            ];
+            let graphIndex = 0, mode = null;
+            window.setGraph = function (i) {
+                graphIndex = i; mode = null;
+                GRAPHS.forEach((_, k) => document.getElementById(`g-btn-${k}`).classList.toggle('on', k === i));
+                const g = GRAPHS[i], slider = document.getElementById('probe-x');
+                slider.min = Math.max(g.a, -5.5); slider.max = Math.min(g.b, 5.5); slider.value = slider.min;
+                renderGraph();
+            };
+            window.setMode = function (m) { mode = m; renderGraph(); };
+            window.renderGraph = function () {
+                const g = GRAPHS[graphIndex], P = plane(-6, 6, -3.5, 3.5);
+                let cls = () => '';
+                if (mode === 'sign') cls = (x, y) => (y >= 0 ? 'pos' : 'neg');
+                if (mode === 'mono') cls = (x) => (g.mono.find(([a, b]) => x >= a && x < b) || g.mono[g.mono.length - 1])[2];
+                let svg = axesSvg(P) + curveSvg(P, g.f, g.a, g.b, cls);
+                if (g.ends) [g.a, g.b].forEach((x) => svg += `<circle cx="${P.sx(x)}" cy="${P.sy(g.f(x))}" r="5" class="end-dot"/>`);
+                if (mode === 'zeros') g.zeros.forEach((x) => svg += `<circle cx="${P.sx(x)}" cy="${P.sy(0)}" r="7" class="zero-dot"/><text x="${P.sx(x)}" y="${P.sy(0) - 12}" class="zero-label">${String(x).replace('-', '−')}</text>`);
+                if (mode === 'mono') g.mono.forEach(([a, b, dir]) => {
+                    let xm = (Math.max(a, -5.5) + Math.min(b, 5.5)) / 2;
+                    if (Math.abs(xm) < 1) xm = 3;   // не накладаємо підпис на вісь Oy
+                    svg += `<text x="${P.sx(xm)}" y="${P.sy(-3.3)}" class="mono-label" style="fill:var(${dir === 'up' ? '--brand-green' : '--brand-yellow'})">${dir === 'up' ? 'зростає ↗' : 'спадає ↘'}</text>`;
+                });
+                // Точка на графіку, яку рухає повзунок
+                const x = parseFloat(document.getElementById('probe-x').value), y = g.f(x);
+                let text = '';
+                if (isFinite(y) && y >= P.y0 && y <= P.y1) {
+                    svg += `<line x1="${P.sx(x)}" y1="${P.sy(0)}" x2="${P.sx(x)}" y2="${P.sy(y)}" class="probe-line"/><circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="7" class="probe"/>`;
+                    const sign = Math.abs(y) < 0.05 ? 'нуль функції' : y > 0 ? 'значення додатне' : "значення від'ємне";
+                    text = `x = ${num(x)}: f(x) ≈ ${num(y)} — ${sign}`;
+                }
+                document.getElementById('graph-scene').innerHTML = svg;
+                document.getElementById('probe-readout').textContent = text;
+                ['zeros', 'sign', 'mono'].forEach((m) => document.getElementById(`m-btn-${m}`).style.opacity = mode && mode !== m ? '0.6' : '1');
+                const line = document.getElementById('prop-line');
+                const html = mode ? g.props[mode] : 'Оберіть властивість — спершу учень називає її за графіком.';
+                if (line.dataset.html !== html) {
+                    line.dataset.html = html; line.innerHTML = html;
+                    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([line]);
+                }
+            };
+
+            // --- Слайд 5: покрокове дослідження f(x) = 6 − 2x ---
+            const STEPS = [
+                ['$D(f) = \\mathbb{R}$', 'Лінійна функція визначена для всіх $x$'],
+                ['Нулі: $6 - 2x = 0$, [[$x = 3$]]', 'Розв\'язуємо рівняння $f(x) = 0$'],
+                ['$6 - 2x \\gt 0 \\Rightarrow$ [[$x \\lt 3$]]', 'Ділимо на $-2$ — знак нерівності змінюється'],
+                ['$f(x) \\gt 0$ на $(-\\infty;\\,3)$, $\\ f(x) \\lt 0$ на $(3;\\,+\\infty)$', 'Нуль $x = 3$ у проміжки не входить'],
+                ['Спадає на $\\mathbb{R}$', '$k = -2 \\lt 0$'],
+            ];
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Слайд 6: кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Слайд 8: перемикач завдань і графік до завдання 2 ---
+            window.showTask = function (n) {
+                [1, 2, 3].forEach((k) => {
+                    document.getElementById(`task-${k}`).classList.toggle('on', k === n);
+                    document.getElementById(`tab-${k}`).classList.toggle('on', k === n);
+                });
+                if (n === 2) renderTask2();
+            };
+            window.renderTask2 = function () {
+                const P = plane(-5, 6, -4, 4);
+                const f = smooth([[-4, -3], [-1, 3], [3, -2], [5, 2]]);
+                let svg = axesSvg(P) + curveSvg(P, f, -4, 5);
+                [-4, 5].forEach((x) => svg += `<circle cx="${P.sx(x)}" cy="${P.sy(f(x))}" r="5" class="end-dot"/>`);
+                document.getElementById('task2-scene').innerHTML = svg;
+            };
+
+            setGraph(0);

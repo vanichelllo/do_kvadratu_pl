@@ -1,0 +1,355 @@
+@@TITLE Властивості кореня n-го степеня
+@@BRAND Алгебра і початки аналізу (10-11 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .prop-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .prop-table th, .prop-table td { border-bottom: 1px solid var(--border-color); padding: 6px 6px; text-align: left; vertical-align: middle; }
+        .prop-table th { color: var(--brand-blue); }
+        .prop-table td.cond { color: var(--text-muted); font-size: 0.98rem; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; }
+        .slider-control span { font-weight: 700; min-width: 36px; text-align: right; }
+        .readout { font-size: 1.15rem; min-height: 2.6em; }
+        .fact-label { font-size: 15px; font-weight: 800; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Нагадаємо: корінь $n$-го степеня</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення ($n \in \mathbb{N},\ n \ge 2$)</div>
+                        <p>Корінь $n$-го степеня з числа $a$ — число, $n$-й степінь якого дорівнює $a$.</p>
+                        <p><b>Парне $n$:</b> $\sqrt[n]{a}$ — арифметичний корінь, визначений лише при $a \ge 0$, і $\sqrt[n]{a} \ge 0$.</p>
+                        <p><b>Непарне $n$:</b> $\sqrt[n]{a}$ визначений для будь-якого $a$: $\sqrt[3]{-8} = -2$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Задача на сьогодні</div>
+                        <p>Обчисліть без калькулятора: $\sqrt[3]{16} \cdot \sqrt[3]{4}$ і $\;\sqrt[4]{48} - \sqrt[4]{3}$.</p>
+                        <p>Окремо жоден корінь не обчислюється. Потрібні <b>властивості</b> коренів.</p>
+                        <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Підглянути відповідь</button></p>
+                        <div class="hidden-answer" id="answer-1">
+                            <p>$\sqrt[3]{16 \cdot 4} = \sqrt[3]{64} = 4$; $\quad 2\sqrt[4]{3} - \sqrt[4]{3} = \sqrt[4]{3}$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості та умови їх застосування</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget scrollable-math">
+                    <table class="prop-table">
+                        <tr><th>Властивість</th><th>Умови (для парного $n$)</th></tr>
+                        <tr><td>$\sqrt[n]{ab} = \sqrt[n]{a} \cdot \sqrt[n]{b}$</td><td class="cond">$a \ge 0,\ b \ge 0$</td></tr>
+                        <tr><td>$\sqrt[n]{\dfrac{a}{b}} = \dfrac{\sqrt[n]{a}}{\sqrt[n]{b}}$</td><td class="cond">$a \ge 0,\ b \gt 0$</td></tr>
+                        <tr><td>$\left(\sqrt[n]{a}\right)^k = \sqrt[n]{a^k}$</td><td class="cond">$a \ge 0$</td></tr>
+                        <tr><td>$\sqrt[k]{\sqrt[n]{a}} = \sqrt[nk]{a}$</td><td class="cond">$a \ge 0$</td></tr>
+                        <tr><td>$\sqrt[nk]{a^k} = \sqrt[n]{a}$ — основна властивість</td><td class="cond">$a \ge 0$</td></tr>
+                        <tr><td>$\sqrt[n]{a^n} = |a|$ при парному $n$; $\;\sqrt[n]{a^n} = a$ при непарному</td><td class="cond">будь-яке $a$</td></tr>
+                    </table>
+                </div>
+                <p>Для <b>непарних</b> $n$ перші чотири рівності правильні при будь-яких $a$ і $b$ (знаменник $b \ne 0$).</p>
+            </div>
+        </section>
+
+        <!-- 3. Чому це так -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Ідея доведення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example">
+                    <div class="box-title">$\sqrt[n]{ab} = \sqrt[n]{a} \cdot \sqrt[n]{b}$, $\ a, b \ge 0$</div>
+                    <p>Покажемо, що права частина задовольняє означення кореня з $ab$.</p>
+                    <p>1) $\left(\sqrt[n]{a} \cdot \sqrt[n]{b}\right)^n = \left(\sqrt[n]{a}\right)^n \cdot \left(\sqrt[n]{b}\right)^n = ab$.</p>
+                    <p>2) $\sqrt[n]{a} \cdot \sqrt[n]{b} \ge 0$ — добуток невід'ємних.</p>
+                    <p>Отже, це арифметичний корінь $n$-го степеня з $ab$. Решта властивостей доводяться так само.</p>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Звідки модуль у $\sqrt[n]{a^n}$?</div>
+                    <p>При парному $n$ корінь невід'ємний, а $a$ може бути від'ємним. Число $|a| \ge 0$ і $|a|^n = a^n$ — отже, $\sqrt[n]{a^n} = |a|$.</p>
+                    <p>$\sqrt[4]{(-3)^4} = \sqrt[4]{81} = 3 = |-3|$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Коли $\sqrt[n]{x^n} = x$, а коли $|x|$? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо $n$ і $x$. Спершу учень прогнозує значення, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="r-n">n</label><input type="range" id="r-n" min="2" max="7" step="1" value="2" oninput="rootInput()"><span id="r-n-val">2</span></div>
+                    <div class="slider-control"><label for="r-x">x</label><input type="range" id="r-x" min="-4" max="4" step="0.5" value="-3" oninput="rootInput()"><span id="r-x-val">−3</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealRoot()">Обчислити</button></p>
+                    <div class="box theorem readout hidden-answer" id="root-answer"><div id="root-readout"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="root-scene" role="img" aria-label="Графік y = корінь n-го степеня з x у степені n"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Методи -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Винесення і внесення множника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Як і коли</div>
+                    <p><b>Винесення:</b> підкореневий вираз розкладаємо на множники, з яких один — $n$-й степінь: $\sqrt[n]{a^n b} = |a|\sqrt[n]{b}$ (парне $n$, $b \ge 0$).</p>
+                    <p><b>Внесення:</b> $a\sqrt[n]{b} = \sqrt[n]{a^n b}$ лише при $a \ge 0$. Якщо $a \lt 0$ і $n$ парне — мінус лишається перед коренем: $a\sqrt[n]{b} = -\sqrt[n]{|a|^n b}$.</p>
+                    <p>Для непарного $n$ множник вносять зі знаком: $-2\sqrt[3]{5} = \sqrt[3]{-40}$.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Спростимо</b> $\sqrt[3]{54} - \sqrt[3]{16} + \sqrt[3]{-250}$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклади -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Три типові задачі</h2>
+            </div>
+            <div class="slide-body grid-3">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Обчисліть $\sqrt[4]{8} \cdot \sqrt[4]{2} + \dfrac{\sqrt[5]{96}}{\sqrt[5]{3}}$.</p>
+                    <div class="step">$\sqrt[4]{8 \cdot 2} = \sqrt[4]{16} = 2$.</div>
+                    <div class="step">$\sqrt[5]{96 : 3} = \sqrt[5]{32} = 2$.</div>
+                    <div class="step">Відповідь: $4$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Спростіть $\sqrt[6]{(x - 3)^6} + x$, якщо $x \lt 3$.</p>
+                    <div class="step">$n = 6$ — парне: $\sqrt[6]{(x - 3)^6} = |x - 3|$.</div>
+                    <div class="step">$x \lt 3$, тому $x - 3 \lt 0$ і $|x - 3| = 3 - x$.</div>
+                    <div class="step">$3 - x + x = 3$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-c">
+                    <p><b>в)</b> Порівняйте $\sqrt[3]{3}$ і $\sqrt[6]{10}$.</p>
+                    <div class="step">Зводимо до спільного показника $6$ (основна властивість): $\sqrt[3]{3} = \sqrt[6]{3^2} = \sqrt[6]{9}$.</div>
+                    <div class="step">$9 \lt 10$, корінь — зростаюча функція: $\sqrt[6]{9} \lt \sqrt[6]{10}$.</div>
+                    <div class="step">Отже, $\sqrt[3]{3} \lt \sqrt[6]{10}$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-c')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Загублений модуль</div>
+                        <p>$\sqrt{(-5)^2} = 5$, а не $-5$. $\;\sqrt[4]{a^4} = |a|$, а не $a$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Умови для добутку</div>
+                        <p>$\sqrt{(-4)(-9)} = \sqrt{36} = 6$, але $\sqrt{-4} \cdot \sqrt{-9}$ не існує. Для від'ємних множників: $\sqrt{ab} = \sqrt{|a|}\cdot\sqrt{|b|}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Корінь із суми</div>
+                        <p>$\sqrt{9 + 16} = 5$, а $\sqrt{9} + \sqrt{16} = 7$. Властивості є лише для добутку й частки!</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Внесення від'ємного множника</div>
+                        <p>$-2\sqrt{3} = -\sqrt{12}$, а не $\sqrt{12}$: ліва частина від'ємна, $\sqrt{12} \gt 0$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Обчислення</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Модуль</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Порівняння</button>
+                    <button class="btn-secondary" id="tab-4" onclick="showTask(4)">4. Підвищений</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Обчисліть $\sqrt[4]{32} \cdot \sqrt[4]{\dfrac{1}{2}}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $\sqrt{2}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\sqrt[4]{32 \cdot \frac{1}{2}} = \sqrt[4]{16} = 2$, бо $2^4 = 16$.</p>
+                            <p>$16$ — забули добути корінь; $4$ — добули квадратний замість четвертого.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть $\sqrt[4]{\left(2 - \sqrt{5}\right)^4}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $2 - \sqrt{5}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $\sqrt{5} - 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\left(2 - \sqrt{5}\right)^2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $2 + \sqrt{5}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $-2 - \sqrt{5}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\sqrt[4]{a^4} = |a|$. Оскільки $\sqrt{5} \gt 2$, то $2 - \sqrt{5} \lt 0$.</p>
+                            <p>$\left|2 - \sqrt{5}\right| = \sqrt{5} - 2$. Відповідь А — від'ємне число, корінь таким бути не може.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Укажіть найбільше з чисел.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\sqrt{2}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $\sqrt[3]{3}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\sqrt[6]{6}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $\sqrt[4]{4}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\sqrt[6]{8}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Зводимо до кореня шостого степеня: $\sqrt{2} = \sqrt[6]{8}$, $\;\sqrt[3]{3} = \sqrt[6]{9}$, $\;\sqrt[4]{4} = \sqrt{2} = \sqrt[6]{8}$.</p>
+                            <p>Найбільший підкореневий вираз — $9$: найбільше $\sqrt[3]{3}$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-4">
+                    <div>
+                        <p class="quiz-q">Спростіть $\sqrt{a^2} + \sqrt[3]{a^3}$, якщо $a \lt 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $2a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $-2a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $-a$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\sqrt{a^2} = |a| = -a$ (бо $a \lt 0$); $\;\sqrt[3]{a^3} = a$ — непарний степінь, модуля немає.</p>
+                            <p>$-a + a = 0$. «$2a$» — забули модуль, «$-2a$» — поставили модуль і в кубічний корінь.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\sqrt[n]{ab} = \sqrt[n]{a}\sqrt[n]{b}$, $\;\sqrt[n]{\frac{a}{b}} = \frac{\sqrt[n]{a}}{\sqrt[n]{b}}$, $\;\sqrt[nk]{a^k} = \sqrt[n]{a}$, $\;\sqrt[k]{\sqrt[n]{a}} = \sqrt[nk]{a}$.</p>
+                    <p>Парне $n$: $a, b \ge 0$; $\;\sqrt[n]{a^n} = |a|$. Непарне $n$: $\sqrt[n]{a^n} = a$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Методи ✍️</div>
+                        <p>Виносимо $n$-ті степені з-під кореня, зводимо подібні; для порівняння — спільний показник кореня.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Парний корінь з $a^n$ — це $|a|$. Від'ємний множник під парний корінь не вносимо.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderRoot();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+
+            // --- Слайд 4: y = ⁿ√(xⁿ) — при парному n це |x|, при непарному — x ---
+            let rootShown = false;
+            window.rootInput = function () { rootShown = false; renderRoot(); };
+            window.revealRoot = function () { rootShown = true; renderRoot(); };
+            window.renderRoot = function () {
+                const n = parseInt(document.getElementById('r-n').value, 10), x = parseFloat(document.getElementById('r-x').value);
+                document.getElementById('r-n-val').textContent = n;
+                document.getElementById('r-x-val').textContent = num(x);
+                const even = n % 2 === 0, y = even ? Math.abs(x) : x;
+                const P = plane(-5, 5, -4.5, 4.5);
+                let svg = axesSvg(P);
+                svg += curveSvg(P, (t) => t, -5, 5, () => 'ghost');
+                if (rootShown) {
+                    svg += curveSvg(P, (t) => (even ? Math.abs(t) : t), -4.5, 4.5);
+                    svg += `<line x1="${P.sx(x)}" y1="${P.sy(0)}" x2="${P.sx(x)}" y2="${P.sy(y)}" class="probe-line"/><circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="7" class="probe"/>`
+                         + `<text x="${P.sx(-4.7)}" y="${P.sy(0.6)}" class="fact-label" style="fill:var(--brand-blue)">${even ? 'y = |x|' : 'y = x'}</text>`;
+                } else {
+                    svg += `<circle cx="${P.sx(x)}" cy="${P.sy(0)}" r="7" class="probe"/>`;
+                }
+                svg += `<text x="${P.sx(4.8)}" y="${P.sy(-4.1)}" class="fact-label" style="fill:var(--text-muted);text-anchor:end">пунктир: y = x</text>`;
+                document.getElementById('root-scene').innerHTML = svg;
+                const box = document.getElementById('root-answer'), out = document.getElementById('root-readout');
+                box.classList.toggle('shown', rootShown);
+                if (!rootShown) return;
+                const xs = Number.isInteger(x) ? `${x}` : `${x}`.replace('.', '{,}');
+                const pow = Math.pow(x, n), powS = Number.isInteger(pow) ? `${pow}` : `${pow}`.replace('.', '{,}');
+                const ys = Number.isInteger(y) ? `${y}` : `${y}`.replace('.', '{,}');
+                const rt = (v) => (n === 2 ? `\\sqrt{${v}}` : `\\sqrt[${n}]{${v}}`);
+                out.innerHTML = `$${rt(`(${xs})^{${n}}`)} = ${rt(powS)} = ${ys}$`
+                    + `<br>${even ? (x < 0 ? 'Парне $n$, $x \\lt 0$: результат — $|x|$, а не $x$.' : 'Парне $n$, $x \\ge 0$: $|x| = x$.') : 'Непарне $n$: результат — саме $x$, знак зберігається.'}`;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+
+            // --- Слайд 5: покрокове спрощення ---
+            const STEPS = [
+                ['$\\sqrt[3]{27 \\cdot 2} - \\sqrt[3]{8 \\cdot 2} + \\sqrt[3]{-125 \\cdot 2}$', 'Шукаємо множники — повні куби: $27$, $8$, $-125$'],
+                ['$=$ [[$3\\sqrt[3]{2} - 2\\sqrt[3]{2} - 5\\sqrt[3]{2}$]]', 'Виносимо: $\\sqrt[3]{-125} = -5$ — непарний корінь з від\'ємного числа'],
+                ['$=$ [[$(3 - 2 - 5)\\sqrt[3]{2}$]]', 'Зводимо подібні'],
+                ['$= -4\\sqrt[3]{2}$', 'Відповідь'],
+            ];
+@@INCLUDE steps.js

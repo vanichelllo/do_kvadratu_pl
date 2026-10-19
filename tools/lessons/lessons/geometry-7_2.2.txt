@@ -1,0 +1,579 @@
+@@TITLE Перпендикулярні прямі
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .slider-control label { font-weight: 800; min-width: 84px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.6em; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; font-style: italic; text-anchor: middle; }
+        .fig { display: block; width: 100%; max-height: 150px; margin: 6px auto; color: var(--text-dark); }
+        .fig.tall { max-height: 170px; }
+        .mini-svg { display: block; width: 100%; max-width: 260px; margin: 4px auto 0; color: var(--text-dark); }
+        .angle-sq { fill: var(--brand-yellow); fill-opacity: 0.55; stroke: currentColor; stroke-width: 1.6; }
+        .angle-sq.g { fill: var(--brand-green); }
+        .angle-label.lbl-r { fill: var(--warning-red); }
+        .arc-stroke { fill: none; stroke: var(--warning-red); stroke-width: 2.5; }
+        .geo-line.dash { stroke-dasharray: 8 6; }
+        .geo-line.thin { stroke-width: 1.6; }
+        .bracket { stroke: currentColor; stroke-width: 1.5; fill: none; }
+        .len-label { fill: currentColor; font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .len-label.start { text-anchor: start; }
+
+        /* Слайд 1: дорога і стежки */
+        .road { fill: var(--text-muted); opacity: 0.3; }
+        .road-mid { stroke: var(--card-bg); stroke-width: 3; stroke-dasharray: 16 12; }
+        .path { stroke: var(--brand-blue); stroke-width: 3; stroke-dasharray: 8 6; stroke-linecap: round; }
+        .path.best { stroke: var(--brand-green); stroke-width: 5; stroke-dasharray: none; }
+        .path.dim { opacity: 0.35; }
+        .path-num { fill: var(--brand-blue); font-size: 19px; font-weight: 800; text-anchor: middle; }
+        .house { fill: var(--brand-yellow); fill-opacity: 0.5; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+
+        /* Слайд 4: відрізок AM */
+        .seg-am { stroke: var(--brand-yellow); stroke-width: 4.5; stroke-linecap: round; }
+        .seg-am.ok { stroke: var(--brand-green); }
+        .seg-ah { stroke: var(--brand-green); stroke-width: 3; stroke-dasharray: 7 6; }
+        .seg-ah.solid { stroke-width: 5; stroke-dasharray: none; stroke-linecap: round; }
+
+        /* Слайд 5: косинець */
+        .set-square { fill: var(--brand-yellow); fill-opacity: 0.3; stroke: var(--brand-yellow); stroke-width: 2.2; stroke-linejoin: round; }
+        .set-square.ghost { fill-opacity: 0.06; stroke-dasharray: 6 5; stroke-opacity: 0.6; }
+        .set-square.faded { fill-opacity: 0.12; stroke-opacity: 0.45; }
+        .tick-mark { stroke: var(--brand-yellow); stroke-width: 1.5; }
+        .tick-mark.ghost, .tick-mark.faded { stroke-opacity: 0.4; }
+        .move-arrow { stroke: var(--brand-blue); stroke-width: 2.5; }
+        .move-head { fill: var(--brand-blue); }
+        #con .step { margin: 6px 0; }
+        .widget-svg-container #cross-scene { max-height: 270px; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Яка стежка найкоротша? 🚶</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Від будинку $A$ до прямої дороги прокладають стежку. Вести її можна до будь-якої точки дороги — на малюнку три варіанти.</p>
+                    <p class="big-question">Яка стежка найкоротша і чим вона особлива?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealRoad()">Ідея</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Стежка 3 — під прямим кутом до дороги</div>
+                        <p>Вона найкоротша. Прямі, що перетинаються під прямим кутом, — <b>перпендикулярні</b>, а такий відрізок від точки до прямої — <b>перпендикуляр</b>. Його довжина — <b>відстань</b> від точки до прямої.</p>
+                        <p>Сьогодні: перпендикулярні прямі, їхні властивості й побудова.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="road-scene" role="img" aria-label="Будинок A, пряма дорога і три стежки до неї"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Кут між прямими. Перпендикулярні прямі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Кут між прямими</div>
+                        <p>Дві прямі, що перетинаються, утворюють чотири кути. <b>Кут між прямими</b> — той із них, що не більший за $90^\circ$.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Перпендикулярні прямі</div>
+                        <p>Прямі <b>перпендикулярні</b>, якщо при перетині утворюють прямий кут: $a \perp b$ («$a$ перпендикулярна до $b$»).</p>
+                        <p><b>Відрізки</b> і <b>промені</b> перпендикулярні, якщо лежать на перпендикулярних прямих.</p>
+                    </div>
+                    <p>Повертаємо пряму $b$. Учень називає решту кутів і кут між прямими — потім перевіряємо.</p>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 300" id="cross-scene" role="img" aria-label="Прямі a і b перетинаються й утворюють чотири кути"></svg>
+                    </div>
+                    <div class="slider-control"><label for="cross-alpha">Жовтий кут</label><input type="range" id="cross-alpha" min="30" max="150" step="5" value="60" oninput="crossInput()"><span id="cross-val"></span></div>
+                    <p style="text-align:center;margin:4px 0"><button class="btn-secondary" onclick="playCross()">▶ Повернути до 90°</button> <button class="btn-primary" onclick="revealCross()">Показати кути</button></p>
+                    <div class="box theorem hidden-answer" id="cross-answer" style="margin-top:6px"><p id="cross-readout"></p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості перпендикулярних прямих</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Якщо один із кутів прямий, то прямі всі чотири</div>
+                    <svg class="fig" viewBox="0 0 300 180" id="right-scene" role="img" aria-label="Прямі a і b, кути 1, 2, 3, 4; кут 1 прямий"></svg>
+                    <p>$\angle 1 = 90^\circ$. Учень пояснює, чому інші кути теж прямі.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealWhy()">Обґрунтування</button></p>
+                    <div class="hidden-answer" id="why-answer">
+                        <p>$\angle 2 = 180^\circ - \angle 1 = 90^\circ$ — суміжні.</p>
+                        <p>$\angle 3 = \angle 1$, $\;\angle 4 = \angle 2$ — вертикальні.</p>
+                        <p>Тож щоб довести $a \perp b$, досить знайти <b>один</b> прямий кут.</p>
+                    </div>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Теорема</div>
+                    <p>Через кожну точку прямої можна провести перпендикулярну до неї пряму, і тільки одну.</p>
+                    <svg class="fig" viewBox="0 0 300 180" id="unique-scene" role="img" aria-label="Пряма a, точка O на ній, промені OA, OB і OC"></svg>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealUnique()">Ідея доведення</button></p>
+                    <div class="hidden-answer" id="unique-answer">
+                        <p><b>Існує:</b> від променя $OA$ відкладаємо $\angle AOB = 90^\circ$, тоді $OB \perp a$.</p>
+                        <p><b>Єдина:</b> якби ще й $OC \perp a$ ($C$ з того ж боку від $a$, що й $B$), то від променя $OA$ було б відкладено два різні кути по $90^\circ$. А такий кут лише один — суперечність.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Найкоротший відрізок від точки до прямої 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Точка $A$ лежить поза прямою $a$, точка $M$ рухається по прямій. Де має бути $M$, щоб відрізок $AM$ був найкоротшим? Учень пропонує — рухаємо й перевіряємо.</p>
+                    <div class="slider-control"><label for="dist-m">Точка $M$</label><input type="range" id="dist-m" min="-6" max="6" step="0.5" value="4" oninput="distInput()"></div>
+                    <p class="readout" id="dist-readout"></p>
+                    <p style="text-align:center"><button class="btn-secondary" onclick="playDist()">▶ Пробіг точки M</button> <button class="btn-primary" onclick="revealDist()">Висновок</button></p>
+                    <div class="box theorem hidden-answer" id="dist-answer">
+                        <div class="box-title">Найкоротший — перпендикуляр</div>
+                        <p>Відрізок $AH$, де $H$ на прямій $a$ і $AH \perp a$, — <b>перпендикуляр</b> з точки $A$ до прямої $a$, точка $H$ — <b>основа перпендикуляра</b>.</p>
+                        <p><b>Відстань від точки до прямої</b> — довжина перпендикуляра, тут $3$ см. Будь-який інший відрізок $AM$ довший (доведемо згодом).</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="dist-scene" role="img" aria-label="Точка A, пряма a і відрізок AM"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як провести перпендикуляр косинцем 📐</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div id="con">
+                    <p style="margin-top:0">Дано пряму $a$ і точку $A$ поза нею. Проведемо через $A$ пряму $b \perp a$.</p>
+                    <div class="step">1) Прикладаємо косинець однією стороною прямого кута до прямої $a$.</div>
+                    <div class="step">2) Пересуваємо його вздовж $a$, доки друга сторона прямого кута не пройде через точку $A$.</div>
+                    <div class="step">3) Проводимо вздовж цієї сторони пряму $b$: $\;b \perp a$.</div>
+                    <div class="step">4) $H$ — основа перпендикуляра $AH$. Довжина $AH$, виміряна лінійкою, — відстань від $A$ до $a$.</div>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="conStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="conReset()">Спочатку</button>
+                    </div>
+                    <div class="box remark" style="margin-top:12px">
+                        <div class="box-title">Точка на самій прямій</div>
+                        <p>Якщо $A$ лежить на $a$, ставимо в неї вершину прямого кута косинця — далі так само.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="con-scene" role="img" aria-label="Побудова перпендикуляра до прямої a косинцем"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Два приклади</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p style="margin-top:0"><b>а)</b> Точки $A$ і $B$ лежать на прямій, перпендикулярній до прямої $a$, на відстанях $3$ см і $5$ см від $a$. Знайдіть $AB$.</p>
+                    <svg class="fig tall" viewBox="0 0 420 180" id="exa-scene" role="img" aria-label="Два випадки: точки A і B по один бік і по різні боки від прямої a"></svg>
+                    <div class="step">Ця пряма перетинає $a$ в точці $H$. $AH$ і $BH$ — перпендикуляри до $a$, тож $AH = 3$ см, $BH = 5$ см.</div>
+                    <div class="step">$A$ і $B$ по один бік від $a$: $\;AB = 5 - 3 = 2$ (см).</div>
+                    <div class="step">По різні боки: $\;AB = 5 + 3 = 8$ (см). Відповідь: $2$ см або $8$ см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="exStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p style="margin-top:0"><b>б)</b> $OM$ і $ON$ — бісектриси суміжних кутів $AOC$ і $COB$. Доведіть, що $OM \perp ON$.</p>
+                    <svg class="fig tall" viewBox="0 0 420 180" id="exb-scene" role="img" aria-label="Суміжні кути AOC і COB та їхні бісектриси OM і ON"></svg>
+                    <div class="step">$\angle AOC + \angle COB = 180^\circ$ — суміжні кути.</div>
+                    <div class="step">$\angle MOC = \tfrac12 \angle AOC$, $\;\angle CON = \tfrac12 \angle COB$ — бісектриси.</div>
+                    <div class="step">$\angle MON = \angle MOC + \angle CON =$ $= \tfrac12 (\angle AOC + \angle COB) = 90^\circ$, отже $OM \perp ON$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="exStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Кут між прямими — $130^\circ$»</div>
+                        <p>Прямі утворили кути $130^\circ$ і $50^\circ$. Кут між прямими — $50^\circ$: він не буває більшим за $90^\circ$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">«Сума двох кутів $180^\circ$ — отже, $a \perp b$»</div>
+                        <p>Суміжні кути дають $180^\circ$ завжди: $30^\circ + 150^\circ$ теж. Прямий кут гарантують, наприклад, два <b>вертикальні</b> кути із сумою $180^\circ$ або рівні суміжні.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Відстань — це довжина $AM$»</div>
+                        <p>Відстань від точки $A$ до прямої — довжина лише перпендикуляра $AH$, а не будь-якого відрізка $AM$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">«Перпендикулярні відрізки перетинаються»</div>
+                        <p>Не обов'язково: $AB \perp CD$, якщо вони лежать на перпендикулярних прямих, — навіть без спільних точок.</p>
+                        <svg class="mini-svg" viewBox="0 0 260 90" role="img" aria-label="Відрізки AB і CD без спільних точок лежать на перпендикулярних прямих">
+                            <line x1="120" y1="64" x2="196" y2="64" class="geo-line thin dash"/>
+                            <line x1="200" y1="44" x2="200" y2="60" class="geo-line thin dash"/>
+                            <path d="M200 64 L186 64 L186 50 L200 50 Z" class="angle-sq g"/>
+                            <line x1="24" y1="64" x2="120" y2="64" class="geo-line"/>
+                            <line x1="200" y1="8" x2="200" y2="44" class="geo-line"/>
+                            <circle cx="24" cy="64" r="4" class="geo-dot"/><circle cx="120" cy="64" r="4" class="geo-dot"/>
+                            <circle cx="200" cy="8" r="4" class="geo-dot"/><circle cx="200" cy="44" r="4" class="geo-dot"/>
+                            <text x="24" y="86" class="pt-name">A</text><text x="120" y="86" class="pt-name">B</text>
+                            <text x="216" y="16" class="pt-name">C</text><text x="216" y="50" class="pt-name">D</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Один із кутів, що утворилися при перетині двох прямих, дорівнює $140^\circ$. Знайдіть кут між прямими.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $140^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $50^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">В) $40^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $70^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Суміжний кут: $180^\circ - 140^\circ = 40^\circ$. Утворилися кути $140^\circ$, $40^\circ$, $140^\circ$, $40^\circ$.</p>
+                            <p>Кут між прямими не більший за $90^\circ$ — це $40^\circ$.</p>
+                            <p>Хибні: $140^\circ$ — тупий кут; $50^\circ = 140^\circ - 90^\circ$ і $70^\circ = 140^\circ : 2$ — дії без підстав.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$AB \perp CD$, $O$ — точка їх перетину. Промінь $OK$ лежить усередині кута $COB$, $\angle AOK = 125^\circ$. Знайдіть $\angle KOD$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $35^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $55^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $125^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Г) $145^\circ$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\angle KOB = 180^\circ - 125^\circ = 55^\circ$ — суміжний з $\angle AOK$. $\angle BOD = 90^\circ$: при $AB \perp CD$ усі чотири кути прямі.</p>
+                            <p>$\angle KOD = \angle KOB + \angle BOD = 55^\circ + 90^\circ = 145^\circ$. ($35^\circ = \angle COK$, $\;55^\circ = \angle KOB$.)</p>
+                        </div>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 300" id="task2-scene" role="img" aria-label="Перпендикулярні прямі AB і CD та промінь OK"></svg>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Один із кутів, що утворилися при перетині двох прямих, утричі менший від суми трьох інших. Знайдіть кут між прямими.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $45^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $60^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $120^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Чотири кути — дві пари суміжних, разом $2 \cdot 180^\circ = 360^\circ$. Нехай кут $x$, тоді решта три в сумі $360^\circ - x$.</p>
+                            <p>$360^\circ - x = 3x$, $\;4x = 360^\circ$, $\;x = 90^\circ$. Один кут прямий — прямі перпендикулярні, кут між ними $90^\circ$.</p>
+                            <p>Хибні: $45^\circ$ і $60^\circ$ — якщо взяти $180^\circ$ замість $360^\circ$; $120^\circ$ — з $3x = 360^\circ$ (забули сам кут $x$).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$a \perp b$ — прямі перетинаються під прямим кутом. Якщо один кут прямий, то всі чотири прямі.</p>
+                    <p>Через кожну точку прямої проходить лише одна перпендикулярна до неї пряма.</p>
+                    <p>Кут між прямими — той з утворених кутів, що не більший за $90^\circ$.</p>
+                    <p>Відстань від точки $A$ до прямої — довжина перпендикуляра $AH$ ($H$ — його основа).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Довести $a \perp b$: знайти один кут $90^\circ$ (суміжні — у сумі $180^\circ$, вертикальні — рівні).</p>
+                        <p>Побудова: косинець однією стороною прямого кута — на пряму, другою — через точку.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Сума двох кутів $180^\circ$ — ще не перпендикулярність: суміжні кути дають $180^\circ$ завжди.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderRoad();
+                if (currentSlide === 2) renderCross();
+                if (currentSlide === 3) renderTheory();
+                if (currentSlide === 4) renderDist();
+                if (currentSlide === 5) renderCon();
+                if (currentSlide === 6) renderExamples();
+                if (currentSlide === 8) renderTask2();
+@@JS
+            // --- Креслення: допоміжні функції (y у SVG спрямована вниз, кути — проти годинникової стрілки) ---
+            const rad = (d) => d * Math.PI / 180;
+            const r1 = (v) => Math.round(v * 10) / 10;
+            const pt = (C, r, deg) => [C[0] + r * Math.cos(rad(deg)), C[1] - r * Math.sin(rad(deg))];
+            const xy = (p) => `${r1(p[0])} ${r1(p[1])}`;
+            const seg = (A, B, cls) => `<line x1="${r1(A[0])}" y1="${r1(A[1])}" x2="${r1(B[0])}" y2="${r1(B[1])}" class="${cls}"/>`;
+            const label = (p, s, cls = 'pt-name', dx = 0, dy = 0) => `<text x="${r1(p[0] + dx)}" y="${r1(p[1] + dy + 6)}" class="${cls}">${s}</text>`;
+            const dot = (p) => `<circle cx="${r1(p[0])}" cy="${r1(p[1])}" r="4.5" class="geo-dot"/>`;
+            const sector = (C, r, s0, s1, cls) => `<path d="M${xy(C)} L${xy(pt(C, r, s0))} A${r} ${r} 0 ${s1 - s0 > 180 ? 1 : 0} 0 ${xy(pt(C, r, s1))} Z" class="angle-arc ${cls}"/>`;
+            const square = (C, d, s0, cls) => `<path d="M${xy(C)} L${xy(pt(C, d, s0))} L${xy(pt(C, d * Math.SQRT2, s0 + 45))} L${xy(pt(C, d, s0 + 90))} Z" class="angle-sq ${cls}"/>`;
+            const arcStroke = (C, r, s0, s1, cls) => `<path d="M${xy(pt(C, r, s0))} A${r} ${r} 0 0 0 ${xy(pt(C, r, s1))}" class="${cls}"/>`;
+            const bracket = (x, y1, y2, text) => `<path d="M${x - 5} ${y1} H${x} V${y2} H${x - 5}" class="bracket"/>` + label([x + 8, (y1 + y2) / 2], text, 'len-label start', 0, -1);
+            // --- Анімації: запускає вчитель; при «зменшити рух» — одразу кінцевий стан ---
+            let animId = 0;
+            const ease = (k) => k < 0.5 ? 2 * k * k : 1 - Math.pow(2 - 2 * k, 2) / 2;
+            function animate(ms, step) {
+                const id = ++animId;
+                if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { step(1); return; }
+                const t0 = performance.now();
+                const frame = (t) => { if (id !== animId) return; const k = Math.min(1, (t - t0) / ms); step(k); if (k < 1) requestAnimationFrame(frame); };
+                requestAnimationFrame(frame);
+            }
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+
+            // --- Покрокові розв'язання і перемикач завдань практики ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (n === 2) renderTask2();
+            };
+
+            // --- Слайд 1: будинок, дорога і три стежки ---
+            let roadShown = false;
+            window.revealRoad = function () { roadShown = true; document.getElementById('answer-1').classList.add('shown'); renderRoad(); };
+            window.renderRoad = function () {
+                const A = [330, 112];
+                let svg = '<rect x="8" y="206" width="404" height="34" rx="4" class="road"/>' + seg([18, 223], [402, 223], 'road-mid')
+                        + '<text x="110" y="266" class="svg-caption">дорога</text>';
+                [[80, 206], [200, 206], [330, 206]].forEach((E, k) => {
+                    svg += seg(A, E, !roadShown ? 'path' : k === 2 ? 'path best' : 'path dim')
+                         + label([(A[0] + E[0]) / 2, (A[1] + E[1]) / 2], String(k + 1), 'path-num', k === 2 ? 15 : -13, -8);
+                });
+                if (roadShown) svg += square([330, 206], 15, 90, 'g');
+                svg += '<path d="M308 112 V78 H352 V112 Z" class="house"/><path d="M300 80 L330 52 L360 80 Z" class="house"/>'
+                     + dot(A) + label(A, 'A', 'pt-name', -34, -4);
+                document.getElementById('road-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 2: дві прямі й чотири кути ---
+            let crossShown = false;
+            window.crossInput = function () { animId++; crossShown = false; renderCross(); };
+            // Пряма b плавно повертається, доки кут не стане прямим
+            window.playCross = function () {
+                const input = document.getElementById('cross-alpha');
+                let from = parseInt(input.value, 10);
+                if (from === 90) from = 30;
+                crossShown = false;
+                animate(1800, (k) => { const v = from + (90 - from) * ease(k); input.value = Math.round(v); renderCross(k < 1 ? v : 90); });
+            };
+            window.revealCross = function () { crossShown = true; renderCross(); };
+            window.renderCross = function (over) {
+                const al = typeof over === 'number' ? over : parseInt(document.getElementById('cross-alpha').value, 10), right = al === 90, O = [210, 150];
+                document.getElementById('cross-val').textContent = `${Math.round(al)}°`;
+                const L = Math.min(right ? 999 : 192 / Math.abs(Math.cos(rad(al))), 136 / Math.sin(rad(al)));
+                const val = [al, 180 - al, al, 180 - al], start = [0, al, 180, 180 + al];
+                let svg = '';
+                for (let k = 0; k < 4; k++) {
+                    const s0 = start[k], s1 = s0 + val[k], known = k === 0 || crossShown;
+                    // Жовтий — даний кут і вертикальний до нього, синій — суміжні з ним; прямі кути — зелені
+                    const cls = !known ? 'none' : right && crossShown ? 'g' : k % 2 === 0 ? '' : 'b';
+                    svg += right && known ? square(O, 20, s0, cls) : sector(O, 36, s0, s1, cls);
+                    svg += label(pt(O, 64, (s0 + s1) / 2), known ? `${Math.round(val[k])}°` : '?', 'angle-label', 0, -1);
+                }
+                svg += seg([14, 150], [406, 150], 'geo-line') + seg(pt(O, L, al), pt(O, -L, al), 'geo-line sec') + dot(O)
+                     + label([398, 150], 'a', 'line-name', 0, -20)
+                     + label(pt(O, L - 18, al), 'b', 'line-name', 17 * Math.sin(rad(al)), 17 * Math.cos(rad(al)));
+                document.getElementById('cross-scene').innerHTML = svg;
+                const out = document.getElementById('cross-readout');
+                out.innerHTML = right
+                    ? 'Суміжні кути: $180^\\circ - 90^\\circ = 90^\\circ$, вертикальний — $90^\\circ$. Усі чотири кути прямі: $a \\perp b.$'
+                    : `Суміжні кути: $180^\\circ - ${al}^\\circ = ${180 - al}^\\circ$, вертикальний — $${al}^\\circ$. Кут між прямими — $${Math.min(al, 180 - al)}^\\circ.$`;
+                document.getElementById('cross-answer').classList.toggle('shown', crossShown);
+                if (crossShown) typeset(out);
+            };
+
+            // --- Слайд 3: чотири прямі кути; єдиність перпендикулярної прямої ---
+            let whyShown = false, uniqueShown = false;
+            window.revealWhy = function () { whyShown = true; document.getElementById('why-answer').classList.add('shown'); renderTheory(); };
+            window.revealUnique = function () { uniqueShown = true; document.getElementById('unique-answer').classList.add('shown'); renderTheory(); };
+            window.renderTheory = function () {
+                const O = [150, 92];
+                let svg = '';
+                for (let k = 0; k < 4; k++) {
+                    if (k === 0 || whyShown) svg += square(O, 18, 90 * k, 'g');
+                    svg += label(pt(O, 38, 90 * k + 45), String(k + 1), 'angle-label', 0, -1);
+                }
+                svg += seg([12, 92], [288, 92], 'geo-line') + seg([150, 8], [150, 176], 'geo-line sec') + dot(O)
+                     + label([280, 92], 'a', 'line-name', 0, -18) + label([150, 12], 'b', 'line-name', 14, 0);
+                document.getElementById('right-scene').innerHTML = svg;
+
+                const Q = [110, 150], C = pt(Q, 128, 62);
+                let u = square(Q, 16, 0, 'g');
+                if (uniqueShown) u += arcStroke(Q, 44, 0, 62, 'arc-stroke') + label(pt(Q, 72, 31), '90°?', 'angle-label lbl-r', 4, -1)
+                    + seg(pt(Q, -30, 62), pt(Q, 152, 62), 'geo-line sec dash') + dot(C) + label(C, 'C', 'pt-name', 15, 2);
+                u += seg([12, 150], [288, 150], 'geo-line') + seg([110, 12], [110, 176], 'geo-line sec')
+                   + dot(Q) + dot([250, 150]) + dot([110, 30])
+                   + label(Q, 'O', 'pt-name', -15, 16) + label([250, 150], 'A', 'pt-name', 0, 18) + label([110, 30], 'B', 'pt-name', -15, 0)
+                   + label([282, 150], 'a', 'line-name', 0, -18);
+                document.getElementById('unique-scene').innerHTML = u;
+            };
+
+            // --- Слайд 4: точка M рухається по прямій a ---
+            let distShown = false;
+            window.distInput = function () { animId++; distShown = false; renderDist(); };
+            // Точка M пробігає пряму і зупиняється там, де AM найкоротший
+            window.playDist = function () {
+                const input = document.getElementById('dist-m'), x0 = parseFloat(input.value);
+                distShown = false;
+                animate(2800, (k) => {
+                    const x = k < 0.4 ? x0 + (-6 - x0) * ease(k / 0.4) : -6 + 6 * ease((k - 0.4) / 0.6);
+                    input.value = Math.round(x * 2) / 2;
+                    renderDist(k < 1 ? x : 0);
+                });
+            };
+            window.revealDist = function () { distShown = true; renderDist(); };
+            window.renderDist = function (over) {
+                const x = typeof over === 'number' ? over : parseFloat(document.getElementById('dist-m').value), U = 30, Y = 230, h = 3, perp = x === 0;
+                const A = [210, Y - h * U], H = [210, Y], M = [210 + x * U, Y];
+                const len = Math.hypot(x, h), ang = perp ? 90 : Math.atan(h / Math.abs(x)) * 180 / Math.PI;
+                const whole = (v) => Math.abs(v - Math.round(v)) < 1e-9;
+                const lenTxt = whole(len) ? String(Math.round(len)) : String(r1(len)).replace('.', ',');
+                let svg = '';
+                if (perp) svg += square(M, 18, 0, distShown ? 'g' : '');
+                else {
+                    const [s0, s1] = x > 0 ? [180 - ang, 180] : [0, ang];
+                    svg += sector(M, 32, s0, s1, '') + label(pt(M, 56, (s0 + s1) / 2), `${Math.round(ang)}°`, 'angle-label', 0, -1);
+                }
+                if (distShown && !perp) svg += square(H, 15, x > 0 ? 90 : 0, 'g');
+                svg += seg([14, Y], [406, Y], 'geo-line');
+                if (distShown && !perp) svg += seg(A, H, 'seg-ah') + label([210, (A[1] + Y) / 2], '3 см', 'len-label', x > 0 ? -30 : 30, 0);
+                svg += seg(A, M, perp ? 'seg-am ok' : 'seg-am');
+                // Довжина AM — збоку від відрізка, далі від основи перпендикуляра
+                const sg = x < 0 ? -1 : 1, nl = Math.hypot(h, x);
+                svg += label([(A[0] + M[0]) / 2 + sg * h / nl * 30, (A[1] + M[1]) / 2 - sg * x / nl * 30], `${whole(len) ? '' : '≈ '}${lenTxt} см`, 'len-label');
+                svg += dot(A) + dot(M) + label(A, 'A', 'pt-name', -16, -14) + label([398, Y], 'a', 'line-name', 0, -20);
+                if (distShown && !perp) svg += dot(H) + label(H, 'H', 'pt-name', Math.abs(x) <= 1 ? (x > 0 ? -14 : 14) : 0, 22);
+                svg += label(M, perp && distShown ? 'M = H' : 'M', 'pt-name', 0, 22);
+                document.getElementById('dist-scene').innerHTML = svg;
+                document.getElementById('dist-readout').innerHTML = `<i>AM</i> ${whole(len) ? '=' : '≈'} ${lenTxt} см; кут між <i>AM</i> і <i>a</i> ${whole(ang) ? '=' : '≈'} ${Math.round(ang)}°`;
+                document.getElementById('dist-answer').classList.toggle('shown', distShown);
+            };
+
+            // --- Слайд 5: побудова косинцем, крок за кроком ---
+            const conCount = () => document.querySelectorAll('#con .step.shown').length;
+            window.conStep = function () { nextStep('con'); renderCon(); };
+            window.conReset = function () { document.querySelectorAll('#con .step').forEach((s) => s.classList.remove('shown')); renderCon(); };
+            // Косинець: вершина прямого кута на прямій a в точці (vx; 220), одна сторона — вздовж a, друга — вгору
+            function setSquare(vx, cls) {
+                const y0 = 220, p = 150, q = 190, V = [vx, y0], W = [vx + p, y0], T = [vx, y0 - q];
+                const r = (p + q - Math.hypot(p, q)) / 2, I = [vx + r, y0 - r], k = 0.42;
+                const sc = (X) => [I[0] + k * (X[0] - I[0]), I[1] + k * (X[1] - I[1])];
+                let s = `<path d="M${xy(V)} L${xy(W)} L${xy(T)} Z M${xy(sc(V))} L${xy(sc(T))} L${xy(sc(W))} Z" class="set-square ${cls}" fill-rule="evenodd"/>`;
+                for (let t = 10; t <= q - 20; t += 10) s += seg([vx, y0 - t], [vx + (t % 50 === 0 ? 11 : 6), y0 - t], `tick-mark ${cls}`);
+                return s;
+            }
+            window.renderCon = function () {
+                const n = conCount(), A = [250, 90], H = [250, 220];
+                let svg = '';
+                if (n === 1) svg += setSquare(70, '');
+                if (n === 2) svg += setSquare(70, 'ghost') + setSquare(250, '') + seg([96, 250], [226, 250], 'move-arrow') + '<path d="M238 250 l-13 -6 v12 z" class="move-head"/>';
+                if (n === 3) svg += setSquare(250, 'faded');
+                if (n >= 4) svg += square(H, 17, 0, 'g');
+                svg += seg([14, 220], [406, 220], 'geo-line');
+                if (n >= 3) svg += seg([250, 12], [250, 292], 'geo-line sec') + label([250, 14], 'b', 'line-name', 15, 2);
+                if (n >= 4) svg += seg(A, H, 'seg-ah solid') + dot(H) + label(H, 'H', 'pt-name', -16, 20);
+                svg += dot(A) + label(A, 'A', 'pt-name', -18, -8) + label([24, 220], 'a', 'line-name', 0, -20);
+                document.getElementById('con-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 6: креслення до прикладів з'являються разом із кроками ---
+            window.exStep = function (id) { nextStep(id); renderExamples(); };
+            window.renderExamples = function () {
+                const na = document.querySelectorAll('#ex-a .step.shown').length, nb = document.querySelectorAll('#ex-b .step.shown').length, u = 14;
+                let a = '';
+                // Ліворуч — A і B по один бік від a, праворуч — по різні боки
+                [[110, 118, -1, 2, 2, 'AB = 2 см'], [320, 80, 1, 3, 3, 'AB = 8 см']].forEach(([x, y, side, when, , cap]) => {
+                    const A = [x, y - 3 * u], B = [x, y + side * 5 * u], H = [x, y];
+                    a += seg([x - 92, y], [x + 92, y], 'geo-line') + seg([x, Math.min(B[1], A[1]) - 18], [x, Math.max(B[1], y) + 14], 'geo-line thin')
+                       + label([x + 86, y], 'a', 'line-name', 0, -18) + dot(A) + label(A, 'A', 'pt-name', -15, -2);
+                    if (na >= 1) a += square(H, 13, 180, 'g') + dot(H) + label(H, 'H', 'pt-name', -15, 15) + bracket(x + 16, A[1], y, '3 см');
+                    if (na >= when) a += dot(B) + label(B, 'B', 'pt-name', -15, -2) + bracket(side < 0 ? x + 62 : x + 16, Math.min(B[1], y), Math.max(B[1], y), '5 см')
+                                       + label([x, 166], cap, 'svg-caption', 0, 0);
+                });
+                document.getElementById('exa-scene').innerHTML = a;
+
+                const O = [210, 150], C = pt(O, 125, 64), Mb = pt(O, 128, 122), N = pt(O, 128, 32);
+                let b = sector(O, 34, 122, 180, '') + sector(O, 34, 64, 122, '') + sector(O, 34, 32, 64, 'b') + sector(O, 34, 0, 32, 'b');
+                if (nb >= 3) b += square(O, 17, 32, 'g');
+                b += seg([30, 150], [390, 150], 'geo-line') + seg(O, C, 'geo-line') + seg(O, Mb, 'geo-line sec') + seg(O, N, 'geo-line sec') + dot(O)
+                   + label([30, 150], 'A', 'pt-name', 0, 16) + label([390, 150], 'B', 'pt-name', 0, 16) + label(O, 'O', 'pt-name', 0, 18)
+                   + label(C, 'C', 'pt-name', 14, 0) + label(Mb, 'M', 'pt-name', -15, 0) + label(N, 'N', 'pt-name', 15, 2);
+                document.getElementById('exb-scene').innerHTML = b;
+            };
+
+            // --- Слайд 8: малюнок до завдання 2 ---
+            window.renderTask2 = function () {
+                const O = [210, 150], K = pt(O, 140, 55);
+                document.getElementById('task2-scene').innerHTML = sector(O, 42, 55, 180, '') + square(O, 17, 180, 'g')
+                    + label(pt(O, 68, 117.5), '125°', 'angle-label', 0, -1)
+                    + seg([40, 150], [380, 150], 'geo-line') + seg([210, 22], [210, 278], 'geo-line') + seg(O, K, 'geo-line sec') + dot(O)
+                    + label([40, 150], 'A', 'pt-name', 0, -20) + label([380, 150], 'B', 'pt-name', 0, -20) + label([210, 22], 'C', 'pt-name', 15, 2)
+                    + label([210, 278], 'D', 'pt-name', 15, -6) + label(K, 'K', 'pt-name', 15, 2) + label(O, 'O', 'pt-name', -15, 18);
+            };
