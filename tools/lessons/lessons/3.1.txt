@@ -1,0 +1,332 @@
+@@TITLE Уявлення про звичайні дроби
+@@CSS
+@@INCLUDE steps.css
+        /* Піца й смужки */
+        .slice { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .slice.on { fill: var(--brand-yellow); }
+        .crust { fill: none; stroke: #c98a2b; stroke-width: 6; }
+        .frac-num, .frac-den { fill: currentColor; font-size: 44px; font-weight: 800; text-anchor: middle; }
+        .frac-num { fill: var(--brand-blue); }
+        .frac-den { fill: var(--brand-green); }
+        .frac-bar { stroke: currentColor; stroke-width: 4; stroke-linecap: round; }
+        .frac-cap { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: start; }
+        .cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .cell.on { fill: var(--brand-yellow); }
+        .bad { fill: var(--card-bg); stroke: var(--warning-red); stroke-width: 2.5; }
+        .bad.on { fill: var(--warning-red); fill-opacity: 0.35; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 110px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Яку частину піци з'їла Оля? 🍕</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Піцу розрізали на $8$ рівних шматків, і я з'їла $3$ з них.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> То ти з'їла $3$ піци? Чи $8$?</div>
+                    <p class="big-question">Як записати числом, яку частину піци з'їла Оля? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$\dfrac{3}{8}$ піци — «три восьмих»! 🎉</div>
+                        <p>Піцу поділили на $8$ рівних частин — це <b>знаменник</b>, унизу. Оля взяла $3$ такі частини — це <b>чисельник</b>, угорі. Такий запис називають <b>звичайним дробом</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 360 240" id="pizza-1" role="img" aria-label="Піца з 8 шматків, 3 з них з'їдено"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Ріжемо піцу на рівні частини 🔪</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Обираємо, на скільки рівних частин ріжемо піцу і скільки частин беремо. Учні називають дріб і читають його — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Частин усього</label><input type="range" id="w-n" min="2" max="12" step="1" value="6" oninput="renderPizza()"><span id="w-n-val">6</span></div>
+                    <div class="slider-control"><label for="w-m">Беремо</label><input type="range" id="w-m" min="0" max="6" step="1" value="2" oninput="renderPizza()"><span id="w-m-val">2</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealPizza()">Який це дріб?</button></p>
+                    <div class="hidden-answer" id="pizza-answer"><div class="readout" id="pizza-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 240" id="pizza-scene" role="img" aria-label="Піца, поділена на рівні частини, частину з них зафарбовано"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Звичайний дріб</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Запис $\dfrac{m}{n}$ — <b>звичайний дріб</b>. Ціле поділили на $n$ <b>рівних</b> частин і взяли $m$ таких частин.</p>
+                    <p><b>Знаменник</b> $n$ (унизу) показує, на скільки рівних частин поділили ціле. <b>Чисельник</b> $m$ (угорі) — скільки частин узяли.</p>
+                    <p>Читаємо: $\dfrac{3}{8}$ — «три восьмих», $\dfrac{1}{2}$ — «одна друга», $\dfrac{2}{5}$ — «дві п'ятих».</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Дріб — це ділення</div>
+                    <p>Риска дробу означає ділення: $\dfrac{3}{4} = 3 : 4$.</p>
+                    <p>$3$ піци порівну на $4$ друзів — кожному $\dfrac{3}{4}$ піци.</p>
+                    <p>Усе ціле — це $\dfrac{n}{n} = 1$: $\;\dfrac{8}{8}$ піци — уся піца.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Шоколадка на часточки ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Шоколадка складається з $12$ однакових часточок. Оля з'їла $5$ часточок. Яку частину шоколадки вона з'їла і яка частина лишилася?</p>
+                    </div>
+                    <svg viewBox="0 0 380 160" class="mini-fig" id="choco-scene" role="img" aria-label="Шоколадка з 12 часточок, 5 з'їдено"></svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: частини мають бути рівні ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Квадрат поділили на $4$ частини і зафарбували одну. Це $\dfrac{1}{4}$? <b>Лише якщо частини рівні!</b> Справа частини різні — зафарбована більша за чверть.</p>
+                        <p>І не переплутай: «$3$ частини з $8$» — це $\dfrac{3}{8}$, а не $\dfrac{8}{3}$. Скільки всього частин — унизу.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Знаменник — «на скільки ділили» (низ, основа). Чисельник — «скільки лічимо» (верх).</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 220" id="trap-scene" role="img" aria-label="Квадрат на 4 рівні частини і квадрат на 4 нерівні частини"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Круг поділили на $4$ рівні частини і зафарбували $3$. Яку частину круга зафарбовано?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\dfrac{3}{4}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{4}{3}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{1}{4}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки частин усього — знаменник; скільки зафарбували — чисельник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{3}{4}$ — «три четвертих». ($\dfrac{1}{4}$ — незафарбована частина.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Який знаменник у дробу $\dfrac{5}{9}$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $9$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $14$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знаменник записують під рискою.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Знаменник $9$, чисельник $5$: ціле поділили на $9$ частин і взяли $5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Як записати дріб «дві сьомих»?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\dfrac{7}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $\dfrac{2}{7}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{2}{9}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>«Сьомих» — на скільки частин ділили.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Чисельник $2$, знаменник $7$: $\dfrac{2}{7}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. $3$ однакові піци порівну розділили між $4$ друзями. Скільки піци отримав кожен?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $\dfrac{4}{3}$ піци</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $\dfrac{1}{4}$ піци</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $\dfrac{3}{4}$ піци</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Риска дробу — це ділення: $3 : 4$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Кожну піцу ріжемо на $4$ частини; кожен бере по шматку з кожної піци — $3$ четвертих: $3 : 4 = \dfrac{3}{4}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{m}{n}$: знаменник $n$ — на скільки рівних частин поділили ціле, чисельник $m$ — скільки частин узяли.</p>
+                    <p>Риска дробу — ділення: $\dfrac{3}{4} = 3 : 4$. $\;\dfrac{n}{n} = 1$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>З'їли $5$ з $12$ часточок — $\dfrac{5}{12}$; лишилося $12 - 5 = 7$ — $\dfrac{7}{12}$ шоколадки.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Частини мають бути рівні. «$3$ з $8$» — це $\dfrac{3}{8}$, а не $\dfrac{8}{3}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderPizza1();
+                if (currentSlide === 2) renderPizza();
+                if (currentSlide === 4) { renderChoco(); renderEval(); }
+                if (currentSlide === 5) renderTrapFig();
+@@JS
+            // Піца з n рівних шматків, перші m зафарбовано
+            function pizzaSvg(cx, cy, r, n, m) {
+                let svg = '';
+                for (let k = 0; k < n; k++) {
+                    const a0 = -Math.PI / 2 + 2 * Math.PI * k / n, a1 = -Math.PI / 2 + 2 * Math.PI * (k + 1) / n;
+                    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                    const big = a1 - a0 > Math.PI ? 1 : 0;
+                    svg += `<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${big} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" class="slice${k < m ? ' on' : ''}"/>`;
+                }
+                return svg + `<circle cx="${cx}" cy="${cy}" r="${r}" class="crust"/>`;
+            }
+            // Дріб, намальований у SVG: чисельник, риска, знаменник
+            function fracSvg(x, y, m, n, captions) {
+                let svg = `<text x="${x}" y="${y - 12}" class="frac-num">${m}</text><line x1="${x - 34}" y1="${y}" x2="${x + 34}" y2="${y}" class="frac-bar"/><text x="${x}" y="${y + 46}" class="frac-den">${n}</text>`;
+                if (captions) svg += `<text x="${x + 44}" y="${y - 24}" class="frac-cap" style="fill:var(--brand-blue)">чисельник</text><text x="${x + 44}" y="${y + 34}" class="frac-cap" style="fill:var(--brand-green)">знаменник</text>`;
+                return svg;
+            }
+
+            // --- Слайд 1 ---
+            window.renderPizza1 = function () {
+                document.getElementById('pizza-1').innerHTML = pizzaSvg(120, 120, 95, 8, 3) + fracSvg(270, 120, 3, 8, false)
+                    + `<text x="270" y="200" class="svg-caption">три восьмих</text>`;
+            };
+
+            // --- Слайд 2: читаємо дроби ---
+            const NUM = ['нуль', 'одна', 'дві', 'три', 'чотири', 'п\'ять', 'шість', 'сім', 'вісім', 'дев\'ять', 'десять', 'одинадцять', 'дванадцять'];
+            const DEN1 = ['', '', 'друга', 'третя', 'четверта', 'п\'ята', 'шоста', 'сьома', 'восьма', 'дев\'ята', 'десята', 'одинадцята', 'дванадцята'];
+            const DEN2 = ['', '', 'других', 'третіх', 'четвертих', 'п\'ятих', 'шостих', 'сьомих', 'восьмих', 'дев\'ятих', 'десятих', 'одинадцятих', 'дванадцятих'];
+            function readFrac(m, n) { return NUM[m] + ' ' + (m === 1 ? DEN1[n] : DEN2[n]); }
+            function pizzaVals() {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 2, s = document.getElementById('w-m');
+                s.max = n;
+                if (parseInt(s.value, 10) > n) s.value = n;
+                return [parseInt(s.value, 10) || 0, n];
+            }
+            window.renderPizza = function () {
+                const [m, n] = pizzaVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('pizza-answer').classList.remove('shown');
+                document.getElementById('pizza-scene').innerHTML = pizzaSvg(115, 120, 100, n, m) + fracSvg(262, 115, '?', '?', true);
+            };
+            window.revealPizza = function () {
+                const [m, n] = pizzaVals();
+                document.getElementById('pizza-scene').innerHTML = pizzaSvg(115, 120, 100, n, m) + fracSvg(262, 115, m, n, true);
+                let t = `${m}/${n} — «${readFrac(m, n)}» піци`;
+                if (m === n) t += ': уся піца, ціле';
+                if (m === 0) t += ': жодного шматка';
+                document.getElementById('pizza-text').textContent = t;
+                document.getElementById('pizza-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: шоколадка 3 × 4 ---
+            window.renderChoco = function () {
+                let svg = '';
+                for (let k = 0; k < 12; k++) {
+                    const r = Math.floor(k / 6), c = k % 6;
+                    svg += `<rect x="${20 + c * 56}" y="${20 + r * 56}" width="52" height="52" rx="6" class="cell${k < 5 ? ' on' : ''}"/>`;
+                }
+                svg += `<text x="190" y="150" class="svg-caption">жовті — з'їдені часточки</text>`;
+                document.getElementById('choco-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 5: рівні й нерівні частини ---
+            window.renderTrapFig = function () {
+                const s = 150;
+                let svg = '';
+                [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([i, j], k) => {
+                    svg += `<rect x="${30 + i * s / 2}" y="${20 + j * s / 2}" width="${s / 2}" height="${s / 2}" class="cell${k === 0 ? ' on' : ''}"/>`;
+                });
+                svg += `<rect x="230" y="20" width="110" height="100" class="bad on"/><rect x="340" y="20" width="40" height="100" class="bad"/>`
+                    + `<rect x="230" y="120" width="110" height="50" class="bad"/><rect x="340" y="120" width="40" height="50" class="bad"/>`
+                    + `<text x="105" y="200" class="svg-caption" style="fill:var(--brand-green)">рівні частини: 1/4 ✓</text>`
+                    + `<text x="305" y="200" class="svg-caption" style="fill:var(--warning-red)">нерівні — не 1/4 ✗</text>`;
+                document.getElementById('trap-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['Шоколадку поділили на $12$ рівних часточок — знаменник [[$12$]].', 'На скільки частин поділили ціле'],
+                ['Оля з\'їла $5$ — чисельник $5$: з\'їла [[$\\dfrac{5}{12}$]] шоколадки.', 'Скільки частин узяли'],
+                ['Лишилося $12 - 5 = 7$ часточок: [[$\\dfrac{7}{12}$]] шоколадки.', 'Віднімаємо з\'їдене'],
+                ['Відповідь: з\'їла $\\dfrac{5}{12}$, лишилося $\\dfrac{7}{12}$ шоколадки.', 'Перевірка: $5 + 7 = 12$ часточок ✓'],
+            ];
+@@INCLUDE steps.js
