@@ -163,6 +163,10 @@ class StudyMaterial(models.Model):
     )
 
     is_free = models.BooleanField(default=False, verbose_name="Безкоштовний матеріал")
+    # Ціну шкільного уроку ставлять правила цін (SchoolPriceRule); ціна, змінена в адмінці вручну, має пріоритет
+    price_is_manual = models.BooleanField(default=False, verbose_name="Ціна вручну",
+                                          help_text="Правила цін шкільних уроків не змінюють ціну цього матеріалу. "
+                                                    "Ставиться само, коли ціну змінено в адмінці.")
     is_bundle = models.BooleanField(default=False, verbose_name="Це Пакет (Bundle)")
     included_materials = models.ManyToManyField('self', blank=True, symmetrical=False,
                                                 verbose_name="Матеріали, що входять у пакет")
@@ -705,6 +709,25 @@ class TeacherPlan(models.Model):
 
     def __str__(self):
         return f"{self.get_kind_display()}: {self.name}"
+
+
+class SchoolPriceRule(models.Model):
+    """Ціни шкільних уроків (materials/pricing.py): правило класу, а без нього — загальне (клас не вказано).
+    Діагностика за клас завжди безкоштовна; уроки з ручною ціною (StudyMaterial.price_is_manual) правило не чіпає."""
+    grade = models.OneToOneField(CurriculumGrade, on_delete=models.CASCADE, null=True, blank=True,
+                                 related_name='price_rule', verbose_name="Клас (порожньо — для всіх інших класів)")
+    topic_price = models.PositiveIntegerField(default=29, verbose_name="Ціна теми, грн",
+                                              help_text="Урок і узагальнення розділу: презентація + практика.")
+    first_topic_free = models.BooleanField(default=True, verbose_name="Перша тема кожного розділу безкоштовна")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['grade'], condition=models.Q(grade__isnull=True),
+                                               name='one_default_school_price_rule')]
+        verbose_name = "Правило цін шкільних уроків"
+        verbose_name_plural = "Правила цін шкільних уроків"
+
+    def __str__(self):
+        return f"{self.grade or 'Усі інші класи'}: тема {self.topic_price} грн"
 
 
 class TeacherLicense(models.Model):

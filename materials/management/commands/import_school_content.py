@@ -7,7 +7,8 @@
 
 Кожен файл спершу перевіряється (materials/content_check.py); файл із помилками пропускається.
 Презентація стає html_content уроку теми (урок створюється, якщо його ще немає). Завдання з банків додаються
-без дублікатів. Без --publish уроки лишаються неопублікованими (видно вам і репетиторам за підпискою).
+без дублікатів. Без --publish уроки лишаються неопублікованими (видно вам і репетиторам за підпискою). Ціни шкільних уроків
+ставлять правила цін (адмінка → «Правила цін шкільних уроків»); --price задає ручну ціну нових уроків.
 
     python manage.py import_school_content content/school/math-5 --check     # лише перевірити
     python manage.py import_school_content content/school/math-5 --price 49  # завантажити
@@ -29,6 +30,7 @@ from django.db import transaction
 from materials.bank_import import BankFormatError, build_report, import_tasks, parse_bank_source
 from materials.content_check import check_bank, check_presentation
 from materials.models import CurriculumTopic, StudyMaterial
+from materials.pricing import apply_price_rules
 
 
 class Command(BaseCommand):
@@ -41,7 +43,7 @@ class Command(BaseCommand):
                             help='Не зупинятися з помилкою (для деплою): лише вивести, які файли пропущено')
         parser.add_argument('--check', action='store_true', help='Лише перевірити, нічого не записувати')
         parser.add_argument('--publish', action='store_true', help='Опублікувати уроки на вітрині')
-        parser.add_argument('--price', type=int, default=None, help='Ціна нових уроків, грн (за замовчуванням 0)')
+        parser.add_argument('--price', type=int, default=None, help='Ручна ціна нових уроків, грн (за замовчуванням — за правилами цін)')
 
     def handle(self, folders, all_folders=False, keep_going=False, check=False, publish=False, price=None, **options):
         roots = [Path(folder) for folder in folders]
@@ -59,6 +61,10 @@ class Command(BaseCommand):
                     raise
                 self.stdout.write(self.style.ERROR(f'   помилка: {exc}'))
                 failed += 1
+        if not check:
+            repriced = apply_price_rules()
+            if repriced:
+                self.stdout.write(f'Ціни за правилами оновлено: {repriced}')
         if failed and not keep_going:
             raise CommandError(f'Файлів з помилками: {failed} — їх пропущено.')
         if failed:
@@ -91,7 +97,7 @@ class Command(BaseCommand):
                 material = StudyMaterial.objects.filter(curriculum_topic=topic, is_bundle=False).first()
                 if material is None:
                     material = StudyMaterial(curriculum_topic=topic, title=topic.name, price=price or 0,
-                                             is_free=not price)
+                                             is_free=not price, price_is_manual=price is not None)
                 changed = material.html_source_hash != digest
                 if not changed and (not publish or material.is_published):
                     continue   # файл не змінився — урок (разом із правками в адмінці) не чіпаємо

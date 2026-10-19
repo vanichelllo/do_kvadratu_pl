@@ -2,7 +2,7 @@ import uuid
 import datetime
 from django.contrib import admin
 from django.contrib import messages
-from django.db.models import BooleanField, Case, Count, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Q, Value, When
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
@@ -19,12 +19,13 @@ from users.models import PurchaseHistory
 from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
                           validate_school_spec)
 from .content_check import check_bank, check_presentation
+from .pricing import apply_price_rules, school_materials
 from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME
 )
 
 User = get_user_model()
@@ -458,6 +459,27 @@ class HasPresentationFilter(admin.SimpleListFilter):
         return queryset
 
 
+class ReadinessFilter(admin.SimpleListFilter):
+    """Цикл публікації шкільних уроків: імпорт → чернетка → «Готові до публікації» (є презентація і завдання) →
+    власник переглядає й публікує (дія «Опублікувати»)."""
+    title = 'Готовність уроку'
+    parameter_name = 'ready'
+
+    def lookups(self, request, model_admin):
+        return (('ready', 'Готові до публікації'), ('no_bank', 'Без завдань'), ('no_html', 'Без презентації'))
+
+    def queryset(self, request, queryset):
+        school = queryset.filter(is_bundle=False, curriculum_topic__isnull=False).exclude(
+            curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
+        if self.value() == 'ready':
+            return school.filter(is_published=False, has_html=True, has_tasks=True)
+        if self.value() == 'no_bank':
+            return school.filter(has_html=True, has_tasks=False).exclude(curriculum_topic__kind='diagnostic')
+        if self.value() == 'no_html':
+            return school.filter(has_html=False, curriculum_topic__kind='lesson')
+        return queryset
+
+
 class HasPdfFilter(admin.SimpleListFilter):
     title = 'PDF-файл'
     parameter_name = 'has_pdf'
@@ -508,12 +530,14 @@ class StudyMaterialAdminForm(forms.ModelForm):
 
 class StudyMaterialAdmin(admin.ModelAdmin):
     form = StudyMaterialAdminForm
-    list_display = ('title', 'grade_label', 'price', 'is_published', 'is_free', 'is_bundle', 'has_html', 'has_pdf')
+    list_display = ('title', 'grade_label', 'price', 'is_published', 'is_free', 'price_is_manual', 'is_bundle',
+                    'has_html', 'has_tasks', 'has_pdf')
     list_display_links = ('title',)
     # Ціну й публікацію можна змінити прямо в списку і зберегти кнопкою внизу
     list_editable = ('price', 'is_published')
     list_select_related = ('curriculum_topic__chapter__grade__subject',)
-    list_filter = ('is_published', 'is_free', 'is_bundle', HasPresentationFilter, HasPdfFilter,
+    list_filter = (ReadinessFilter, 'is_published', 'is_free', 'price_is_manual', 'is_bundle', HasPresentationFilter,
+                   HasPdfFilter,
                    'curriculum_topic__chapter__grade')
     search_fields = ('title',)
     autocomplete_fields = ['curriculum_topic']
@@ -522,15 +546,24 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     readonly_fields = ('reader_link',)
     fieldsets = (
         ('Основне', {'fields': ('title', 'curriculum_topic', 'tags', 'description')}),
-        ('Вітрина', {'fields': ('price', 'is_free', 'is_published', 'image')}),
+        ('Вітрина', {'fields': ('price', 'is_free', 'price_is_manual', 'is_published', 'image'),
+                     'description': 'Ціни шкільних уроків ставлять «Правила цін шкільних уроків». Змінена тут '
+                                    'ціна стає ручною; щоб повернути ціну за правилом, зніміть «Ціна вручну».'}),
         ('Контент', {'fields': ('file', 'html_file', 'reader_link')}),
         ('HTML-код вручну', {'classes': ('collapse',), 'fields': ('html_content',),
                              'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
         ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
     )
 
+    actions = ['publish', 'unpublish', 'price_by_rules']
+
     def save_model(self, request, obj, form, change):
+        # Ціну, змінену вручну (у формі чи прямо в списку), правила цін більше не чіпають
+        if {'price', 'is_free'} & set(form.changed_data) and 'price_is_manual' not in form.changed_data:
+            obj.price_is_manual = True
         super().save_model(request, obj, form, change)
+        if 'price_is_manual' in form.changed_data and not obj.price_is_manual:
+            apply_price_rules(school_materials().filter(pk=obj.pk))
         # Вставлену презентацію шкільної теми одразу перевіряємо за вимогами docs/html_prompt.md
         if obj.html_content and not obj.is_nmt and (
                 'html_content' in form.changed_data or form.cleaned_data.get('html_file')):
@@ -559,8 +592,10 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         # Презентація (до кількох МБ) у списку не завантажується — лише позначка, чи вона є
         filled = Q(html_content__isnull=False) & ~Q(html_content='')
+        tasks = Question.materials.through.objects.filter(studymaterial_id=OuterRef('pk'))
         return super().get_queryset(request).annotate(
-            has_html=Case(When(filled, then=Value(True)), default=Value(False), output_field=BooleanField()))
+            has_html=Case(When(filled, then=Value(True)), default=Value(False), output_field=BooleanField()),
+            has_tasks=Exists(tasks))
 
     @admin.display(description='Курс / клас', ordering='curriculum_topic__chapter__grade__order')
     def grade_label(self, obj):
@@ -574,6 +609,27 @@ class StudyMaterialAdmin(admin.ModelAdmin):
     @admin.display(description='PDF', boolean=True)
     def has_pdf(self, obj):
         return bool(obj.file)
+
+    @admin.display(description='Завдання', boolean=True, ordering='has_tasks')
+    def has_tasks(self, obj):
+        return obj.has_tasks
+
+    @admin.action(description='✅ Опублікувати вибрані')
+    def publish(self, request, queryset):
+        count = queryset.update(is_published=True)
+        self.message_user(request, f'Опубліковано: {count}.', messages.SUCCESS)
+
+    @admin.action(description='🙈 Зняти з публікації')
+    def unpublish(self, request, queryset):
+        count = queryset.update(is_published=False)
+        self.message_user(request, f'Знято з публікації: {count}.', messages.SUCCESS)
+
+    @admin.action(description='💲 Ціна за правилами (скасувати ручну ціну)')
+    def price_by_rules(self, request, queryset):
+        queryset.update(price_is_manual=False)
+        changed = apply_price_rules(school_materials().filter(pk__in=queryset.values('pk')))
+        self.message_user(request, f'Ціну за правилами поставлено; змінено: {changed}. Матеріали НМТ і пакети '
+                                   f'правила не оцінюють.', messages.SUCCESS)
 
 admin.site.register(StudyMaterial, StudyMaterialAdmin)
 
@@ -775,6 +831,30 @@ class TeacherPlanAdmin(admin.ModelAdmin):
     """Тарифи для сторінки «Для репетиторів». Тариф продається, коли він увімкнений і має ціну."""
     list_display = ('name', 'kind', 'max_students', 'price_month', 'price_year', 'is_active', 'order')
     list_editable = ('price_month', 'price_year', 'is_active', 'order')
+
+
+@admin.register(SchoolPriceRule)
+class SchoolPriceRuleAdmin(admin.ModelAdmin):
+    """Ціни шкільних уроків: загальне правило (клас не вказано) і, за потреби, окремі для класів. Після збереження
+    ціни всіх уроків без ручної ціни перераховуються одразу."""
+    list_display = ('__str__', 'grade', 'topic_price', 'first_topic_free')
+    list_select_related = ('grade__subject',)
+
+    def reprice(self, request):
+        changed = apply_price_rules(school_materials())
+        self.message_user(request, f'Ціни шкільних уроків перераховано; змінено: {changed}.', messages.SUCCESS)
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        self.reprice(request)
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        self.reprice(request)
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        self.reprice(request)
 
 
 @admin.register(TeacherLicense)

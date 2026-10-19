@@ -3452,3 +3452,70 @@ class CurriculumTreeUpdateTests(BaseTestCase):
         spec.loader.exec_module(module)
         self.assertEqual((path.parent / 'lesson_prompt.md').read_text(), module.OUT,
                          'запустіть python docs/build_lesson_prompt.py')
+
+
+class SchoolPriceRuleTests(BaseTestCase):
+    """Ціни шкільних уроків за правилами: перша тема розділу безкоштовна, решта — за ціною теми, ручна ціна лишається."""
+
+    def setUp(self):
+        from .models import SchoolPriceRule
+        self.default_rule = SchoolPriceRule.objects.get(grade=None)   # створює міграція: 29 грн, перша тема безкоштовна
+        self.first = make_school_topic('1.1. Перша', 5, 1)
+        self.second = make_school_topic('1.2. Друга', 5, 2)
+        summary = CurriculumTopic.objects.create(chapter=self.first.chapter, name='Узагальнення', order=99,
+                                                 kind='summary')
+        diagnostic = CurriculumTopic.objects.create(chapter=self.first.chapter, name='Діагностика', order=100,
+                                                    kind='diagnostic')
+        self.lessons = {name: StudyMaterial.objects.create(title=name, curriculum_topic=topic, is_free=True)
+                        for name, topic in (('first', self.first), ('second', self.second), ('summary', summary),
+                                            ('diagnostic', diagnostic))}
+        self.nmt = StudyMaterial.objects.create(title='1. НМТ', price=19)
+
+    def prices(self):
+        return {name: StudyMaterial.objects.values_list('price', 'is_free').get(pk=m.pk)
+                for name, m in self.lessons.items()}
+
+    def test_default_rule(self):
+        from .pricing import apply_price_rules
+        self.assertEqual(apply_price_rules(), 2)
+        self.assertEqual(self.prices(), {'first': (0, True), 'second': (29, False), 'summary': (29, False),
+                                         'diagnostic': (0, True)})
+        self.nmt.refresh_from_db()
+        self.assertEqual((self.nmt.price, self.nmt.is_free), (19, False))
+        self.assertEqual(apply_price_rules(), 0)
+
+    def test_grade_rule_and_manual_price(self):
+        from .models import SchoolPriceRule
+        from .pricing import apply_price_rules
+        SchoolPriceRule.objects.create(grade=self.first.chapter.grade, topic_price=39, first_topic_free=False)
+        StudyMaterial.objects.filter(pk=self.lessons['second'].pk).update(price=5, is_free=False, price_is_manual=True)
+        apply_price_rules()
+        self.assertEqual(self.prices(), {'first': (39, False), 'second': (5, False), 'summary': (39, False),
+                                         'diagnostic': (0, True)})
+
+    def test_admin_rule_reprices_and_admin_edit_makes_price_manual(self):
+        boss = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(boss)
+        admin_url = '/do-kvadratu-secret-control/materials/'
+        response = self.client.post(f'{admin_url}schoolpricerule/{self.default_rule.pk}/change/',
+                                    {'grade': '', 'topic_price': '35', 'first_topic_free': 'on'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.prices()['second'], (35, False))
+
+        second = self.lessons['second']
+        changelist = f'{admin_url}studymaterial/'
+        StudyMaterial.objects.filter(pk=second.pk).update(html_content='<html>')
+        self.assertContains(self.client.get(changelist, {'ready': 'no_bank'}), 'second')
+        # Зміна ціни прямо в списку робить її ручною: правила її більше не чіпають
+        response = self.client.post(changelist, {
+            'form-TOTAL_FORMS': '1', 'form-INITIAL_FORMS': '1', 'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000', 'form-0-id': str(second.pk), 'form-0-price': '50', 'form-0-is_published': 'on',
+            '_save': 'Зберегти'})
+        self.assertEqual(response.status_code, 302)
+        second.refresh_from_db()
+        self.assertEqual((second.price, second.price_is_manual, second.is_published), (50, True, True))
+        self.client.post(changelist, {'action': 'price_by_rules', '_selected_action': [second.pk]})
+        self.assertEqual(self.prices()['second'], (35, False))
+        self.client.post(changelist, {'action': 'unpublish', '_selected_action': [second.pk]})
+        second.refresh_from_db()
+        self.assertFalse(second.is_published)
