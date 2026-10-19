@@ -3,7 +3,8 @@
 * Власник сайту (is_staff / is_superuser) — усі матеріали; його учні — ті, в кого викладач не вказаний
   (заявки «Навчаєтесь у мене особисто?» і всі давніші) або вказаний він сам.
 * Репетитор — користувач з активною підпискою (TeacherLicense) хоча б на один клас: показ уроків, практика,
-  ДЗ і звіти лише в ліцензованих класах і лише для своїх учнів. Учні репетитора практикуються в цих класах
+  ДЗ і звіти лише в ліцензованих класах і лише для своїх учнів. Учень репетитора, поки в того є підписка,
+  бачить усі уроки й практику свого класу (як учень власника) і практикується в усіх класах підписки
   без окремої оплати.
 
 Чужих учнів, їхніх спроб, ДЗ і звітів викладач не бачить ніде.
@@ -86,8 +87,9 @@ def covered_by_teacher(pupil, material):
 
 
 def own_class_grade_ids(user):
-    """Учень власника сайту (заявку «N клас» підтверджено, викладач не вказаний або це сам власник) бачить усі уроки
-    й практику свого класу в кожному шкільному курсі (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається.
+    """Учень (заявку «N клас» підтверджено) бачить усі уроки й практику свого класу в кожному шкільному курсі
+    (5–6 — математика, 7–11 — алгебра й геометрія), поки навчається: учень власника сайту — завжди, учень
+    репетитора — у тих курсах свого класу, які покриває чинна підписка репетитора.
     Повертає множину id класів; результат кешується на об'єкті користувача на час запиту."""
     if not user.is_authenticated:
         return set()
@@ -95,10 +97,13 @@ def own_class_grade_ids(user):
         grades = set()
         request = TutorStudentRequest.objects.filter(user=user, status='approved', course__startswith='grade_') \
             .select_related('teacher').first()
-        if request and (request.teacher is None or is_owner(request.teacher)):
+        if request:
             number = int(request.course.split('_')[1])
             grades = set(CurriculumGrade.objects.filter(number=number).exclude(subject__name=NMT_SUBJECT_NAME)
                          .values_list('id', flat=True))
+            licensed = licensed_grade_ids(request.teacher) if request.teacher is not None else None
+            if licensed is not None:
+                grades &= licensed
         user._own_class_grade_ids = grades
     return user._own_class_grade_ids
 

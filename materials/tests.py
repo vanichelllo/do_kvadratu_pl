@@ -937,7 +937,8 @@ class CourseChoicesTests(BaseTestCase):
 
 
 class OwnClassAccessTests(BaseTestCase):
-    """Учень власника сайту, підтверджений у класі, бачить усі теми свого класу (і лише їх) без купівлі."""
+    """Учень власника сайту (чи репетитора з підпискою), підтверджений у класі, бачить усі теми свого класу
+    (і лише їх) без купівлі."""
 
     def setUp(self):
         from django.core.management import call_command
@@ -969,6 +970,25 @@ class OwnClassAccessTests(BaseTestCase):
         self.request.status = 'approved'
         self.request.teacher = self.make_user('tutor@example.com')
         self.request.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+
+    def test_tutors_pupil_opens_own_grade_while_subscription_is_active(self):
+        tutor = self.make_user('tutor@example.com')
+        self.request.teacher = tutor
+        self.request.save()
+        license_ = TeacherLicense.objects.create(teacher=tutor, scope='school',
+                                                 valid_until=timezone.localdate() + datetime.timedelta(days=30))
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.geometry9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.algebra8.id}/').status_code, 404)
+        self.assertIn(self.geometry9.title, self.client.get('/cabinet/').content.decode())
+        # Підписка лише на НМТ чи прострочена — повного доступу до класу немає
+        license_.scope = 'nmt'
+        license_.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+        license_.scope = 'school'
+        license_.valid_until = timezone.localdate() - datetime.timedelta(days=1)
+        license_.save()
         self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
 
 
@@ -1449,7 +1469,7 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 18.10.2026')
+        self.assertContains(offer, 'Редакція від 19.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -3030,7 +3050,8 @@ class TutorAccountTests(BaseTestCase):
         self.assertEqual(self.client.get(f'/practice/{self.lesson5.id}/').status_code, 200)
         response = self.client.get(f'/practice/{self.lesson8.id}/')
         self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
-        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 404)   # презентація — ні
+        # Учень у 5 класі, підписка викладача покриває 5 клас — презентація теж відкрита
+        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 200)
 
     def test_expired_license_turns_tutor_features_off(self):
         TeacherLicense.objects.filter(teacher=self.tutor).update(valid_until=timezone.localdate() - datetime.timedelta(days=1))
@@ -3452,3 +3473,70 @@ class CurriculumTreeUpdateTests(BaseTestCase):
         spec.loader.exec_module(module)
         self.assertEqual((path.parent / 'lesson_prompt.md').read_text(), module.OUT,
                          'запустіть python docs/build_lesson_prompt.py')
+
+
+class SchoolPriceRuleTests(BaseTestCase):
+    """Ціни шкільних уроків за правилами: перша тема розділу безкоштовна, решта — за ціною теми, ручна ціна лишається."""
+
+    def setUp(self):
+        from .models import SchoolPriceRule
+        self.default_rule = SchoolPriceRule.objects.get(grade=None)   # створює міграція: 29 грн, перша тема безкоштовна
+        self.first = make_school_topic('1.1. Перша', 5, 1)
+        self.second = make_school_topic('1.2. Друга', 5, 2)
+        summary = CurriculumTopic.objects.create(chapter=self.first.chapter, name='Узагальнення', order=99,
+                                                 kind='summary')
+        diagnostic = CurriculumTopic.objects.create(chapter=self.first.chapter, name='Діагностика', order=100,
+                                                    kind='diagnostic')
+        self.lessons = {name: StudyMaterial.objects.create(title=name, curriculum_topic=topic, is_free=True)
+                        for name, topic in (('first', self.first), ('second', self.second), ('summary', summary),
+                                            ('diagnostic', diagnostic))}
+        self.nmt = StudyMaterial.objects.create(title='1. НМТ', price=19)
+
+    def prices(self):
+        return {name: StudyMaterial.objects.values_list('price', 'is_free').get(pk=m.pk)
+                for name, m in self.lessons.items()}
+
+    def test_default_rule(self):
+        from .pricing import apply_price_rules
+        self.assertEqual(apply_price_rules(), 2)
+        self.assertEqual(self.prices(), {'first': (0, True), 'second': (29, False), 'summary': (29, False),
+                                         'diagnostic': (0, True)})
+        self.nmt.refresh_from_db()
+        self.assertEqual((self.nmt.price, self.nmt.is_free), (19, False))
+        self.assertEqual(apply_price_rules(), 0)
+
+    def test_grade_rule_and_manual_price(self):
+        from .models import SchoolPriceRule
+        from .pricing import apply_price_rules
+        SchoolPriceRule.objects.create(grade=self.first.chapter.grade, topic_price=39, first_topic_free=False)
+        StudyMaterial.objects.filter(pk=self.lessons['second'].pk).update(price=5, is_free=False, price_is_manual=True)
+        apply_price_rules()
+        self.assertEqual(self.prices(), {'first': (39, False), 'second': (5, False), 'summary': (39, False),
+                                         'diagnostic': (0, True)})
+
+    def test_admin_rule_reprices_and_admin_edit_makes_price_manual(self):
+        boss = self.make_user('boss@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(boss)
+        admin_url = '/do-kvadratu-secret-control/materials/'
+        response = self.client.post(f'{admin_url}schoolpricerule/{self.default_rule.pk}/change/',
+                                    {'grade': '', 'topic_price': '35', 'first_topic_free': 'on'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.prices()['second'], (35, False))
+
+        second = self.lessons['second']
+        changelist = f'{admin_url}studymaterial/'
+        StudyMaterial.objects.filter(pk=second.pk).update(html_content='<html>')
+        self.assertContains(self.client.get(changelist, {'ready': 'no_bank'}), 'second')
+        # Зміна ціни прямо в списку робить її ручною: правила її більше не чіпають
+        response = self.client.post(changelist, {
+            'form-TOTAL_FORMS': '1', 'form-INITIAL_FORMS': '1', 'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000', 'form-0-id': str(second.pk), 'form-0-price': '50', 'form-0-is_published': 'on',
+            '_save': 'Зберегти'})
+        self.assertEqual(response.status_code, 302)
+        second.refresh_from_db()
+        self.assertEqual((second.price, second.price_is_manual, second.is_published), (50, True, True))
+        self.client.post(changelist, {'action': 'price_by_rules', '_selected_action': [second.pk]})
+        self.assertEqual(self.prices()['second'], (35, False))
+        self.client.post(changelist, {'action': 'unpublish', '_selected_action': [second.pk]})
+        second.refresh_from_db()
+        self.assertFalse(second.is_published)
