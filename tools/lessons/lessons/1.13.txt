@@ -1,0 +1,324 @@
+@@TITLE Розв'язування задач за допомогою рівнянь
+@@CSS
+@@INCLUDE steps.css
+        /* Слайд 2: стрічки-відрізки */
+        .bar-x { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 1.5; }
+        .bar-plus { fill: var(--brand-yellow); stroke: var(--card-bg); stroke-width: 1.5; }
+        .bar-ok .bar-x { fill: var(--brand-green); }
+        .bar-label { fill: currentColor; font-size: 16px; font-weight: 800; }
+        .bar-in { fill: #fff; font-size: 14px; font-weight: 800; text-anchor: middle; }
+        .bar-in.dark { fill: #1b1b1b; }
+        .target { stroke: var(--warning-red); stroke-width: 3; stroke-dasharray: 7 5; }
+        .target-label { fill: var(--warning-red); font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; margin: 6px 0; }
+        .readout.ok { color: var(--brand-green); }
+        .readout.bad { color: var(--warning-red); }
+        .rule-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .rule-table td { padding: 7px 8px; border-bottom: 1.5px solid var(--border-color); }
+        .rule-table td:last-child { font-weight: 800; text-align: center; white-space: nowrap; }
+        .task-box { font-size: 1.05rem; line-height: 1.5; }
+        .svg-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        @media (prefers-reduced-motion: reduce) { .bar-x, .bar-plus { transition: none; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Яке число задумала Оля? 🤔</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> Я задумала число. Помножила його на $3$ і додала $7$ — вийшло $40$. Вгадаєш?</div>
+                <div class="bubble right"><span class="who">Тарас:</span> Спробую $10$: $3 \cdot 10 + 7 = 37$ — замало… А можна знайти без вгадування?</div>
+                <p class="big-question">Яке число задумала Оля? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Оля задумала $11$! 🎉</div>
+                    <p>Позначимо задумане число буквою $x$. Тоді $3x + 7 = 40$ — це <b>рівняння</b>.</p>
+                    <p>$3x = 40 - 7 = 33$, $\;x = 33 : 3 = 11$. Перевірка: $3 \cdot 11 + 7 = 40$ ✓</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Скільки наліпок у Тараса? 🏷️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>У Тараса $x$ наліпок, а в Олі — на $8$ більше. Разом у них $50$ наліпок. Скільки наліпок у Тараса?</p>
+                    </div>
+                    <p>Учні пропонують $x$ — рухаємо повзунок і перевіряємо, чи вийшло разом $50$.</p>
+                    <div class="slider-control"><label for="w-x">Тарас, $x$</label><input type="range" id="w-x" min="5" max="30" step="1" value="12" oninput="renderBars()"><span id="w-x-val">12</span></div>
+                    <p style="text-align:center">
+                        <button class="btn-primary" onclick="checkBars()">Перевірити</button>
+                        <button class="btn-secondary" onclick="runBars()">▶ Підбирати по черзі</button>
+                    </p>
+                    <div class="readout" id="bars-readout"></div>
+                    <div class="box theorem hidden-answer" id="bars-equation">
+                        <div class="box-title">Без підбору — рівнянням</div>
+                        <p>$x + (x + 8) = 50$, $\;2x + 8 = 50$, $\;2x = 42$, $\;x = 21$.</p>
+                    </div>
+                    <p style="text-align:center"><button class="btn-secondary" onclick="document.getElementById('bars-equation').classList.add('shown')">Показати рівняння</button></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="bars-scene" role="img" aria-label="Стрічки: наліпки Тараса, Олі й разом порівняно з 50"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як розв'язати задачу рівнянням</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>1) Познач невідоме буквою $x$ — зазвичай <b>меншу</b> величину.</p>
+                    <p>2) Вирази через $x$ інші величини.</p>
+                    <p>3) Склади <b>рівняння</b> за умовою.</p>
+                    <p>4) Розв'яжи його.</p>
+                    <p>5) Перевір за умовою й дай відповідь <b>на питання задачі</b>.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Як записати через $x$</div>
+                    <table class="rule-table">
+                        <tr><td>на $8$ більше, ніж $x$</td><td>$x + 8$</td></tr>
+                        <tr><td>на $8$ менше, ніж $x$</td><td>$x - 8$</td></tr>
+                        <tr><td>у $3$ рази більше, ніж $x$</td><td>$3x$</td></tr>
+                        <tr><td>у $3$ рази менше, ніж $x$</td><td>$x : 3$</td></tr>
+                        <tr><td>разом $x$ і $3x$</td><td>$x + 3x = 4x$</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Розв'язуємо задачу ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition task-box">
+                        <div class="box-title">Задача</div>
+                        <p>У двох кошиках $48$ яблук. У першому кошику в $3$ рази більше яблук, ніж у другому. Скільки яблук у кожному кошику?</p>
+                    </div>
+                    <p>Перед кожним кліком учні кажуть наступний крок, потім перевіряємо.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: на яке питання відповідаємо? ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>У Олі в $2$ рази більше цукерок, ніж у Тараса. Разом — $27$. Скільки цукерок в Олі?</p>
+                        <p>$x + 2x = 27$, $\;3x = 27$, $\;x = 9$. Відповідь: $9$? <b>Ні!</b> $x$ — це цукерки <b>Тараса</b>. В Олі $2 \cdot 9 = 18$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Розв'язав рівняння — перечитай питання: що позначено буквою $x$, а про що питають?</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 240" role="img" aria-label="Тарас має 9 цукерок, Оля — 18; відповідь 18, а не 9">
+                        <text x="20" y="62" class="bar-label">Тарас</text>
+                        <rect x="90" y="40" width="90" height="34" class="bar-x"/>
+                        <text x="135" y="63" class="bar-in">x = 9</text>
+                        <text x="20" y="122" class="bar-label">Оля</text>
+                        <rect x="90" y="100" width="90" height="34" class="bar-x"/>
+                        <rect x="180" y="100" width="90" height="34" class="bar-x"/>
+                        <text x="282" y="123" class="bar-label">2x = 18</text>
+                        <text x="110" y="185" class="svg-caption" style="fill:var(--warning-red)">Відповідь: 9</text>
+                        <line x1="50" y1="168" x2="170" y2="195" class="cross"/>
+                        <text x="300" y="185" class="svg-caption" style="fill:var(--brand-green)">Відповідь: 18 ✓</text>
+                        <text x="200" y="225" class="svg-caption" style="font-size:14px">Питали про Олю — це 2x</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Задумали число, додали до нього $15$ і отримали $42$. Яке рівняння відповідає задачі?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $x + 15 = 42$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $x - 15 = 42$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $15x = 42$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Задумане число — $x$. «Додали $15$» — що робимо з $x$?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$x + 15 = 42$, $\;x = 42 - 15 = 27$. Перевірка: $27 + 15 = 42$ ✓</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. У Тараса $x$ марок, а в Олі — на $5$ більше. Скільки марок в Олі?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $5x$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $x + 5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $x - 5$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>«На $5$ більше» — це не «у $5$ разів більше». Що треба зробити з $x$?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>«На $5$ більше» — додаємо $5$: $x + 5$. А $5x$ — це «у $5$ разів більше».</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Ручка в $4$ рази дорожча за олівець. Разом вони коштують $35$ грн. Скільки коштує олівець?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $28$ грн</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $7$ грн</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $31$ грн</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Олівець — $x$ грн, ручка — $4x$ грн. Склади рівняння: разом $35$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$x + 4x = 35$, $\;5x = 35$, $\;x = 7$ грн. ($28$ грн — це ручка.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. У двох класах $58$ учнів. У 5-А на $4$ учні більше, ніж у 5-Б. Скільки учнів у 5-А?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $27$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $29$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $31$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>У 5-Б $x$ учнів, у 5-А — $x + 4$. Знайди $x$, а потім дай відповідь про 5-А.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$x + x + 4 = 58$, $\;2x = 54$, $\;x = 27$ — це 5-Б. У 5-А: $27 + 4 = 31$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Невідоме → $x$ → інші величини через $x$ → рівняння → розв'язок → перевірка → відповідь на питання.</p>
+                    <p>«На $5$ більше» — $x + 5$, «у $5$ разів більше» — $5x$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$48$ яблук, у першому кошику в $3$ рази більше: $x + 3x = 48$, $\;x = 12$, у першому — $36$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Знайшов $x$ — перевір, чи про нього питають. Часто відповідь — $2x$ чи $x + 4$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderBars();
+                if (currentSlide === 4) renderEval();
+@@JS
+            // --- Слайд 2: стрічки Тараса, Олі й «разом» проти мети 50 ---
+            const UNIT = 5, X0 = 80, TOTAL = 50, MORE = 8;
+            function barsSvg(x, ok) {
+                const bx = (y, from, units, cls, label, dark) => `<rect x="${X0 + from * UNIT}" y="${y}" width="${units * UNIT}" height="34" class="${cls}"/>`
+                    + (units * UNIT >= 22 ? `<text x="${X0 + (from + units / 2) * UNIT}" y="${y + 23}" class="bar-in${dark ? ' dark' : ''}">${label}</text>` : '');
+                let svg = `<g class="${ok ? 'bar-ok' : ''}">`;
+                svg += `<text x="8" y="57" class="bar-label">Тарас</text>` + bx(34, 0, x, 'bar-x', 'x');
+                svg += `<text x="8" y="117" class="bar-label">Оля</text>` + bx(94, 0, x, 'bar-x', 'x') + bx(94, x, MORE, 'bar-plus', '8', true);
+                svg += `<text x="8" y="177" class="bar-label">Разом</text>` + bx(154, 0, x, 'bar-x', 'x') + bx(154, x, x, 'bar-x', 'x')
+                     + bx(154, 2 * x, MORE, 'bar-plus', '8', true);
+                svg += '</g>';
+                const tx = X0 + TOTAL * UNIT;
+                svg += `<line x1="${tx}" y1="140" x2="${tx}" y2="205" class="target"/><text x="${tx}" y="228" class="target-label">50</text>`;
+                return svg;
+            }
+            function barsX() { return parseInt(document.getElementById('w-x').value, 10) || 5; }
+            window.renderBars = function (ok) {
+                const x = barsX();
+                document.getElementById('w-x-val').textContent = x;
+                document.getElementById('bars-scene').innerHTML = barsSvg(x, ok === true);
+                if (ok !== true) document.getElementById('bars-readout').textContent = '';
+            };
+            window.checkBars = function () {
+                const x = barsX(), sum = 2 * x + MORE, out = document.getElementById('bars-readout');
+                renderBars(sum === TOTAL);
+                out.className = 'readout ' + (sum === TOTAL ? 'ok' : 'bad');
+                out.textContent = `${x} + ${x + MORE} = ${sum}` + (sum === TOTAL ? ' ✓ Знайшли!' : sum < TOTAL ? ' — замало' : ' — забагато');
+            };
+            // Анімація: x зростає від 5, доки разом не стане 50 (вчитель запускає кнопкою)
+            let barsTimer = null;
+            window.runBars = function () {
+                clearInterval(barsTimer);
+                const slider = document.getElementById('w-x');
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) { slider.value = (TOTAL - MORE) / 2; checkBars(); return; }
+                slider.value = 5; renderBars();
+                barsTimer = setInterval(() => {
+                    const x = barsX();
+                    if (2 * x + MORE >= TOTAL) { clearInterval(barsTimer); checkBars(); return; }
+                    slider.value = x + 1; renderBars();
+                    document.getElementById('bars-readout').textContent = `${x + 1} + ${x + 1 + MORE} = ${2 * (x + 1) + MORE}`;
+                    document.getElementById('bars-readout').className = 'readout';
+                }, 160);
+            };
+
+            // --- Слайд 4: розв'язання задачі про кошики ---
+            const STEPS = [
+                ['Нехай у другому кошику [[$x$]] яблук.', 'Позначаємо буквою меншу величину'],
+                ['Тоді в першому — [[$3x$]] яблук.', '«У 3 рази більше» — множимо на 3'],
+                ['[[$x + 3x = 48$]]', 'Разом 48 — складаємо рівняння'],
+                ['$4x = 48$, [[$x = 12$]]', 'Спрощуємо: $x + 3x = 4x$, і розв\'язуємо'],
+                ['У першому: [[$3 \\cdot 12 = 36$]]', 'Відповідаємо на всі питання задачі'],
+                ['Перевірка: $36 + 12 = 48$ ✓, $36 = 3 \\cdot 12$ ✓. Відповідь: $36$ і $12$ яблук.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
