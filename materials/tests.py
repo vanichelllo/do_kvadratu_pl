@@ -1469,7 +1469,7 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 20.10.2026')
+        self.assertContains(offer, 'Редакція від 19.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -1485,7 +1485,7 @@ class LegalPagesTests(BaseTestCase):
     def test_terms_version_matches_published_edition(self):
         # Дата редакції на сторінках і TERMS_VERSION мають змінюватися разом
         from django.conf import settings as dj_settings
-        y, m, d = dj_settings.TERMS_VERSION.split('-')
+        y, m, d = dj_settings.TERMS_VERSION[:10].split('-')   # «2026-10-19b» — друга редакція того ж дня
         self.assertContains(self.client.get('/offer/'), f'Редакція від {d}.{m}.{y}')
 
 
