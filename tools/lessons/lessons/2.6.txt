@@ -1,0 +1,315 @@
+@@TITLE Прямокутник. Квадрат
+@@CSS
+@@INCLUDE steps.css
+        /* Прямокутники й квадрати */
+        .rect { fill: var(--brand-blue); fill-opacity: 0.12; stroke: var(--brand-blue); stroke-width: 3.5; transition: all 0.6s ease; }
+        .rect.square { fill: var(--brand-green); fill-opacity: 0.18; stroke: var(--brand-green); }
+        .diag { stroke: var(--brand-yellow); stroke-width: 3; stroke-dasharray: 7 5; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vx { fill: var(--warning-red); }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .len { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 700; min-width: 48px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 380px; margin: 6px auto; color: var(--text-dark); }
+        @media (prefers-reduced-motion: reduce) { .rect { transition: none; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Квадрат — це прямокутник? 🟩</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Мій аркуш — прямокутник, а клітинка в зошиті — квадрат. Це різні фігури!</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А по-моєму, квадрат — теж прямокутник, тільки «особливий».</div>
+                    <p class="big-question">Хто правий? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Правий Тарас! 🎉</div>
+                        <p>Прямокутник — чотирикутник, у якого всі кути прямі. У квадрата всі кути теж прямі, тож він — прямокутник, у якого ще й усі сторони рівні.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 360 220" role="img" aria-label="Прямокутний аркуш і квадратна клітинка">
+                        <rect x="30" y="40" width="190" height="130" class="rect"/>
+                        <rect x="250" y="70" width="80" height="80" class="rect square"/>
+                        <path d="M30 58 L48 58 L48 40" class="right-mark"/><path d="M250 88 L268 88 L268 70" class="right-mark"/>
+                        <text x="125" y="200" class="svg-caption">прямокутник</text><text x="290" y="200" class="svg-caption">квадрат</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Тягнемо прямокутник 📐</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Змінюємо довжину й ширину. Що лишається незмінним? Коли прямокутник стає квадратом? Учні кажуть, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Довжина</label><input type="range" id="w-a" min="1" max="8" step="1" value="6" oninput="renderRect()"><span id="w-a-val">6 см</span></div>
+                    <div class="slider-control"><label for="w-b">Ширина</label><input type="range" id="w-b" min="1" max="5" step="1" value="3" oninput="renderRect()"><span id="w-b-val">3 см</span></div>
+                    <p style="text-align:center">
+                        <button class="btn-secondary" onclick="makeSquare()">▶ Зробити квадратом</button>
+                        <button class="btn-primary" onclick="revealRect()">Що це за фігура?</button>
+                    </p>
+                    <div class="hidden-answer" id="rect-answer"><div class="readout" id="rect-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 240" id="rect-scene" role="img" aria-label="Прямокутник ABCD на клітинках, діагоналі"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Прямокутник і квадрат</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Прямокутник</b> — чотирикутник, у якого всі кути прямі.</p>
+                    <p>Протилежні сторони прямокутника рівні. Сусідні сторони називають <b>довжиною</b> й <b>шириною</b>.</p>
+                    <p><b>Квадрат</b> — прямокутник, у якого всі сторони рівні.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Діагоналі</div>
+                    <p><b>Діагональ</b> — відрізок, що сполучає дві протилежні вершини: $AC$ і $BD$.</p>
+                    <p>Діагоналі прямокутника рівні й у точці перетину діляться навпіл.</p>
+                    <p>Кожна діагональ ділить прямокутник на два рівні прямокутні трикутники.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Шукаємо сторони прямокутника ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>У прямокутнику $ABCD$ сторона $AB = 7$ см, а $BC$ на $3$ см коротша. Знайди всі сторони.</p>
+                    </div>
+                    <svg viewBox="0 0 380 225" class="mini-fig" role="img" aria-label="Прямокутник ABCD, AB = 7 см, BC невідома">
+                        <rect x="40" y="30" width="280" height="160" class="rect"/>
+                        <text x="28" y="206" class="pt-name">A</text><text x="332" y="206" class="pt-name">B</text>
+                        <text x="332" y="26" class="pt-name">C</text><text x="28" y="26" class="pt-name">D</text>
+                        <text x="180" y="214" class="len">7 см</text><text x="340" y="115" class="len">?</text>
+                    </svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: рівні сторони — ще не квадрат ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>У чотирикутника всі сторони рівні. Це квадрат? <b>Не обов'язково!</b> Якщо кути не прямі, це «скошений» чотирикутник — ромб, а не квадрат.</p>
+                        <p>Квадрат — коли <b>і</b> всі сторони рівні, <b>і</b> всі кути прямі.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перевір кути косинцем: усі прямі — прямокутник; ще й сторони рівні — квадрат.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 220" role="img" aria-label="Ромб з рівними сторонами, але не прямими кутами, поруч із квадратом">
+                        <polygon points="40,170 150,170 213,80 103,80" class="rect"/>
+                        <rect x="250" y="70" width="100" height="100" class="rect square"/>
+                        <path d="M250 152 L268 152 L268 170" class="right-mark"/>
+                        <text x="120" y="205" class="svg-caption" style="fill:var(--warning-red)">не квадрат</text>
+                        <text x="300" y="205" class="svg-caption" style="fill:var(--brand-green)">квадрат ✓</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Скільки прямих кутів у прямокутника?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $1$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Згадай означення: які кути в прямокутника?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>Усі $4$ кути прямокутника — прямі.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Сторона квадрата — $6$ см. Яка довжина сусідньої сторони?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $6$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $3$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $12$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Які сторони у квадрата?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>У квадрата всі сторони рівні — $6$ см.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Діагональ $AC$ прямокутника $ABCD$ дорівнює $10$ см. Яка довжина діагоналі $BD$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $5$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $20$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $10$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Що відомо про діагоналі прямокутника?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Діагоналі прямокутника рівні: $BD = 10$ см. ($5$ см — половина діагоналі.)</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Довжина прямокутника — $9$ см, ширина у $3$ рази менша. Яка ширина?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $27$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $3$ см</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $6$ см</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>«У $3$ рази менша» — ділимо на $3$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$9 : 3 = 3$ см. ($6$ см — «на $3$ менша».)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Прямокутник — усі кути прямі; протилежні сторони рівні.</p>
+                    <p>Квадрат — прямокутник з рівними сторонами.</p>
+                    <p>Діагоналі прямокутника рівні й діляться точкою перетину навпіл.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$AB = 7$ см, $BC = 7 - 3 = 4$ см, тоді $CD = AB = 7$ см, $AD = BC = 4$ см.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Рівні сторони ще не роблять квадратом — потрібні й прямі кути.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderRect();
+                if (currentSlide === 4) renderEval();
+@@JS
+            // --- Слайд 2: прямокутник на клітинках (1 см = 1 клітинка = 40 px), діагоналі ---
+            const CELL = 40, OX = 50, OY = 20;
+            function rectVals() {
+                return [parseInt(document.getElementById('w-a').value, 10) || 1, parseInt(document.getElementById('w-b').value, 10) || 1];
+            }
+            function rectSvg(a, b) {
+                let svg = '';
+                for (let x = 0; x <= 8; x++) svg += `<line x1="${OX + x * CELL}" y1="${OY}" x2="${OX + x * CELL}" y2="${OY + 5 * CELL}" class="grid-line"/>`;
+                for (let y = 0; y <= 5; y++) svg += `<line x1="${OX}" y1="${OY + y * CELL}" x2="${OX + 8 * CELL}" y2="${OY + y * CELL}" class="grid-line"/>`;
+                const x0 = OX, y1 = OY + 5 * CELL, x1 = OX + a * CELL, y0 = y1 - b * CELL;
+                svg += `<rect x="${x0}" y="${y0}" width="${a * CELL}" height="${b * CELL}" class="rect${a === b ? ' square' : ''}"/>`
+                     + `<line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y0}" class="diag"/><line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" class="diag"/>`
+                     + `<text x="${x0 - 12}" y="${y1 + 8}" class="pt-name">A</text><text x="${x0 - 12}" y="${y0 + 4}" class="pt-name">B</text>`
+                     + `<text x="${x1 + 12}" y="${y0 + 4}" class="pt-name">C</text><text x="${x1 + 12}" y="${y1 + 8}" class="pt-name">D</text>`;
+                return svg;
+            }
+            window.renderRect = function () {
+                const [a, b] = rectVals();
+                document.getElementById('w-a-val').textContent = a + ' см';
+                document.getElementById('w-b-val').textContent = b + ' см';
+                document.getElementById('rect-answer').classList.remove('shown');
+                document.getElementById('rect-scene').innerHTML = rectSvg(a, b);
+            };
+            // Анімація: довжина крок за кроком наближається до ширини — прямокутник стає квадратом
+            let sqTimer = null;
+            window.makeSquare = function () {
+                clearInterval(sqTimer);
+                const slider = document.getElementById('w-a'), target = rectVals()[1];
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) { slider.value = target; renderRect(); revealRect(); return; }
+                sqTimer = setInterval(() => {
+                    const a = parseInt(slider.value, 10);
+                    if (a === target) { clearInterval(sqTimer); revealRect(); return; }
+                    slider.value = a + (a < target ? 1 : -1);
+                    renderRect();
+                }, 350);
+            };
+            window.revealRect = function () {
+                const [a, b] = rectVals();
+                document.getElementById('rect-text').textContent = a === b
+                    ? `Квадрат ${a} × ${a} см: усі кути прямі й усі сторони рівні`
+                    : `Прямокутник ${a} × ${b} см: усі кути прямі, AB = CD = ${b} см, BC = AD = ${a} см`;
+                document.getElementById('rect-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: сторони прямокутника ---
+            const STEPS = [
+                ['$AB = 7$ см, $BC = 7 - 3 = $ [[$4$ см]].', '«На $3$ см коротша» — віднімаємо'],
+                ['Протилежні сторони рівні: $CD = AB = $ [[$7$ см]].', 'Властивість прямокутника'],
+                ['І $AD = BC = $ [[$4$ см]].', 'Ще одна пара протилежних сторін'],
+                ['Відповідь: $AB = CD = 7$ см, $BC = AD = 4$ см.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
