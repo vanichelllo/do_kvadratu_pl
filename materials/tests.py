@@ -937,7 +937,8 @@ class CourseChoicesTests(BaseTestCase):
 
 
 class OwnClassAccessTests(BaseTestCase):
-    """Учень власника сайту, підтверджений у класі, бачить усі теми свого класу (і лише їх) без купівлі."""
+    """Учень власника сайту (чи репетитора з підпискою), підтверджений у класі, бачить усі теми свого класу
+    (і лише їх) без купівлі."""
 
     def setUp(self):
         from django.core.management import call_command
@@ -969,6 +970,25 @@ class OwnClassAccessTests(BaseTestCase):
         self.request.status = 'approved'
         self.request.teacher = self.make_user('tutor@example.com')
         self.request.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+
+    def test_tutors_pupil_opens_own_grade_while_subscription_is_active(self):
+        tutor = self.make_user('tutor@example.com')
+        self.request.teacher = tutor
+        self.request.save()
+        license_ = TeacherLicense.objects.create(teacher=tutor, scope='school',
+                                                 valid_until=timezone.localdate() + datetime.timedelta(days=30))
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.geometry9.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/download/{self.algebra8.id}/').status_code, 404)
+        self.assertIn(self.geometry9.title, self.client.get('/cabinet/').content.decode())
+        # Підписка лише на НМТ чи прострочена — повного доступу до класу немає
+        license_.scope = 'nmt'
+        license_.save()
+        self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
+        license_.scope = 'school'
+        license_.valid_until = timezone.localdate() - datetime.timedelta(days=1)
+        license_.save()
         self.assertEqual(self.client.get(f'/download/{self.algebra9.id}/').status_code, 404)
 
 
@@ -1449,7 +1469,7 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 18.10.2026')
+        self.assertContains(offer, 'Редакція від 19.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -3030,7 +3050,8 @@ class TutorAccountTests(BaseTestCase):
         self.assertEqual(self.client.get(f'/practice/{self.lesson5.id}/').status_code, 200)
         response = self.client.get(f'/practice/{self.lesson8.id}/')
         self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
-        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 404)   # презентація — ні
+        # Учень у 5 класі, підписка викладача покриває 5 клас — презентація теж відкрита
+        self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 200)
 
     def test_expired_license_turns_tutor_features_off(self):
         TeacherLicense.objects.filter(teacher=self.tutor).update(valid_until=timezone.localdate() - datetime.timedelta(days=1))

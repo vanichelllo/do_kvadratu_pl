@@ -134,7 +134,7 @@ def user_owns_material(user, material):
         return False
     if user.purchased_materials.filter(id=material.id).exists():
         return True
-    # Учень власника сайту бачить усі теми свого класу без купівлі
+    # Учень власника сайту чи репетитора з підпискою бачить усі теми свого класу без купівлі
     if teachers.in_own_class(user, material):
         return True
     if material.is_bundle:
@@ -1429,7 +1429,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
         purchased_list.sort(key=get_number)
         context['purchased_materials'] = purchased_list
 
-        # Учень власника сайту бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
+        # Учень власника сайту чи репетитора з підпискою бачить у бібліотеці всі теми свого класу (уроки з презентацією чи практикою)
         library_list = purchased_list
         class_grades = teachers.own_class_grade_ids(self.request.user)
         if class_grades:
