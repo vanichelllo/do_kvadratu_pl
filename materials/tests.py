@@ -1469,7 +1469,7 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 20.10.2026')
+        self.assertContains(offer, 'Редакція від 19.10.2026')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -1485,7 +1485,7 @@ class LegalPagesTests(BaseTestCase):
     def test_terms_version_matches_published_edition(self):
         # Дата редакції на сторінках і TERMS_VERSION мають змінюватися разом
         from django.conf import settings as dj_settings
-        y, m, d = dj_settings.TERMS_VERSION.split('-')
+        y, m, d = dj_settings.TERMS_VERSION[:10].split('-')   # «2026-10-19b» — друга редакція того ж дня
         self.assertContains(self.client.get('/offer/'), f'Редакція від {d}.{m}.{y}')
 
 
@@ -3176,7 +3176,7 @@ class SchoolContentTests(BaseTestCase):
                 call_command('import_school_content', str(folder), stdout=open('/dev/null', 'w'))
         lesson = StudyMaterial.objects.get(curriculum_topic__name__startswith='1.1. ',
                                            curriculum_topic__chapter__grade__name='5 клас')
-        self.assertFalse(lesson.is_published)
+        self.assertTrue(lesson.is_published)   # новий урок з репозиторію одразу на вітрині
         self.assertGreaterEqual(Question.objects.filter(materials=lesson).count(), 45)
 
     def test_deploy_import_is_repeatable_and_does_not_stop_on_errors(self):
@@ -3207,10 +3207,18 @@ class SchoolContentTests(BaseTestCase):
         self.assertEqual(lesson.html_content, 'правка в адмінці')
 
         # Файл у репозиторії змінився (інший відбиток) — деплой записує нову версію
-        StudyMaterial.objects.filter(pk=lesson.pk).update(html_source_hash='старий файл')
+        # Знятий з публікації в адмінці урок деплой знову не публікує, навіть коли файл змінився
+        StudyMaterial.objects.filter(pk=lesson.pk).update(html_source_hash='старий файл', is_published=False)
         call_command('import_school_content', all_folders=True, keep_going=True, **quiet)
         lesson.refresh_from_db()
         self.assertTrue(lesson.html_content.startswith('<!DOCTYPE html>'))
+        self.assertFalse(lesson.is_published)
+
+        # --draft: нові уроки — чернетками
+        StudyMaterial.objects.filter(curriculum_topic__chapter__grade__name='7 клас').delete()
+        call_command('import_school_content', 'content/school/geometry-7', draft=True, **quiet)
+        self.assertFalse(StudyMaterial.objects.filter(curriculum_topic__chapter__grade__name='7 клас',
+                                                      is_published=True).exists())
 
     def test_checker_rejects_broken_files(self):
         from .content_check import check_bank, check_presentation
