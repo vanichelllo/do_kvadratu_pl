@@ -1,0 +1,356 @@
+@@TITLE Координатний промінь. Шкала
+@@CSS
+@@INCLUDE steps.css
+        /* Координатний промінь */
+        .ray { stroke: currentColor; stroke-width: 2.5; }
+        .ray-head { fill: currentColor; }
+        .tick { stroke: currentColor; stroke-width: 1.5; }
+        .tick.big { stroke-width: 2.5; }
+        .tick-num { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .unit-seg { stroke: var(--brand-green); stroke-width: 6; stroke-linecap: round; }
+        .pt { fill: var(--warning-red); }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .jump { fill: none; stroke: var(--brand-blue); stroke-width: 2; stroke-dasharray: 4 4; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .cross { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .slider-control label { font-weight: 800; min-width: 110px; }
+        .slider-control span { font-weight: 700; min-width: 28px; text-align: right; }
+        .readout { font-size: 1.3rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 420px; margin: 8px auto; color: var(--text-dark); }
+        /* Термометр */
+        .thermo-glass { fill: var(--card-bg); stroke: currentColor; stroke-width: 2; }
+        .thermo-red { fill: var(--warning-red); }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки градусів надворі? 🌡️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> На термометрі підписано лише $20$ і $30$, а між ними — $5$ проміжків. Стовпчик зупинився на другій рисочці після $20$.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> То $22$ градуси! Кожна рисочка — це $1$ градус… чи ні?</div>
+                    <p class="big-question">Яка температура? Подумай і скажи — а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$24$ °C! 🎉</div>
+                        <p>Від $20$ до $30$ — $10$ градусів на $5$ проміжків: одна поділка — $10 : 5 = 2$ градуси.</p>
+                        <p>Дві поділки після $20$: $20 + 2 \cdot 2 = 24$. Це <b>ціна поділки</b> шкали.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 200 260" id="thermo-scene" role="img" aria-label="Термометр: між 20 і 30 п'ять проміжків, стовпчик на другій поділці після 20"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Стрибаємо по координатному променю 🦗</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Коник стартує з точки $O$ і стрибає на один <b>одиничний відрізок</b> за раз. Учні кажуть, де він зупиниться, потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Стрибків</label><input type="range" id="w-n" min="1" max="12" step="1" value="7" oninput="renderJumps()"><span id="w-n-val">7</span></div>
+                    <p style="text-align:center">
+                        <button class="btn-secondary" onclick="runJumps()">▶ Стрибати</button>
+                        <button class="btn-primary" onclick="revealJumps()">Яка координата?</button>
+                    </p>
+                    <div class="hidden-answer" id="jumps-answer"><div class="readout" id="jumps-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 170" id="jumps-scene" role="img" aria-label="Координатний промінь з одиничним відрізком і стрибками коника"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Координатний промінь і шкала</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Координатний промінь</b>: початок $O$ — число $0$, обраний <b>одиничний відрізок</b> і напрям (стрілка).</p>
+                    <p><b>Координата</b> точки — число, що їй відповідає: $A(5)$ — «точка $A$ з координатою $5$».</p>
+                    <p>Чим правіше точка, тим більша її координата.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Шкала</div>
+                    <p><b>Шкала</b> — промінь з поділками й числами: лінійка, термометр, ваги, спідометр.</p>
+                    <p><b>Ціна поділки</b> $=$ (різниця двох сусідніх підписаних чисел) $:$ (кількість проміжків між ними).</p>
+                    <p>Між $0$ і $10$ — $5$ проміжків: ціна поділки $10 : 5 = 2$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Шукаємо координату за шкалою ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Знайди координати точок $M$ і $K$.</p>
+                    </div>
+                    <svg viewBox="0 0 420 90" class="mini-fig" id="scale-fig" role="img" aria-label="Шкала 0, 10, 20, 30, між сусідніми числами по 5 проміжків; точки M і K"></svg>
+                    <p>Перед кожним кліком учні кажуть наступний крок.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: поділка — не завжди одиниця ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Підписано $0$ і $50$, між ними $5$ проміжків. Точка на третій рисочці — це $3$? <b>Ні!</b> Ціна поділки $50 : 5 = 10$, тож координата $30$.</p>
+                        <p>І рахуємо <b>проміжки</b>, а не рисочки: між $0$ і $50$ — $6$ рисочок, але $5$ проміжків.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Спершу знайди ціну поділки, а вже потім рахуй координату.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 170" id="trap-scene" role="img" aria-label="Шкала від 0 до 50 з п'ятьма проміжками; точка на третій поділці має координату 30"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Яка координата точки $P$?</p>
+                    <svg viewBox="0 0 420 70" class="mini-fig" id="quiz1-fig" role="img" aria-label="Координатний промінь з поділками через 1 і точкою P"></svg>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $7$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $5$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Рахуй одиничні відрізки від $0$, а не рисочки.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>Від $O$ до $P$ — $6$ одиничних відрізків: $P(6)$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. На шкалі підписано $0$ і $20$, між ними $4$ проміжки. Яка ціна поділки?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $20$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Різницю чисел поділи на кількість проміжків.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$(20 - 0) : 4 = 5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Скільки одиничних відрізків між точками $A(4)$ і $B(11)$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $7$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $11$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Від $4$ до $11$ — на скільки треба «дострибати»?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$11 - 4 = 7$ одиничних відрізків.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. На термометрі між $0$ і $10$ — $5$ проміжків. Стовпчик на $3$ поділки вище за $10$. Яка температура?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $13$ °C</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $16$ °C</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $40$ °C</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Спершу ціна поділки: $10 : 5$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Ціна поділки $2$ °C: $10 + 3 \cdot 2 = 16$ °C.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Координатний промінь: $O(0)$, одиничний відрізок, напрям. $A(5)$ — точка з координатою $5$.</p>
+                    <p>Правіше — більша координата. Між $A(4)$ і $B(11)$ — $11 - 4 = 7$ одиничних відрізків.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як читати шкалу ✍️</div>
+                        <p>Ціна поділки $=$ різниця чисел $:$ кількість проміжків. Між $0$ і $10$ — $5$ проміжків: $2$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Поділка — не завжди $1$. Рахуй проміжки, а не рисочки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderThermo();
+                if (currentSlide === 2) renderJumps();
+                if (currentSlide === 4) { renderScale(); renderEval(); }
+                if (currentSlide === 5) renderTrap();
+                if (currentSlide === 6) renderQuiz1();
+@@JS
+            // --- Спільне: координатний промінь від x0 з кроком px на поділку ---
+            function raySvg(x0, y, px, ticks, label, endX) {
+                let svg = `<line x1="${x0}" y1="${y}" x2="${endX - 6}" y2="${y}" class="ray"/>`
+                        + `<path d="M${endX} ${y} L${endX - 12} ${y - 6} L${endX - 12} ${y + 6} Z" class="ray-head"/>`;
+                for (let k = 0; k <= ticks; k++) {
+                    const x = x0 + k * px, lab = label(k);
+                    svg += `<line x1="${x}" y1="${y - (lab !== '' ? 9 : 6)}" x2="${x}" y2="${y + (lab !== '' ? 9 : 6)}" class="tick${lab !== '' ? ' big' : ''}"/>`;
+                    if (lab !== '') svg += `<text x="${x}" y="${y + 27}" class="tick-num">${lab}</text>`;
+                }
+                return svg;
+            }
+            function dot(x, y, name) {
+                return `<circle cx="${x}" cy="${y}" r="6" class="pt"/><text x="${x}" y="${y - 14}" class="pt-name">${name}</text>`;
+            }
+
+            // --- Слайд 1: термометр від 0 до 40, між десятками 5 проміжків ---
+            window.renderThermo = function () {
+                const top = 20, bottom = 210, x = 80, step = (bottom - top) / 20; // 20 проміжків по 2 °C
+                let svg = `<rect x="${x - 10}" y="${top - 10}" width="20" height="${bottom - top + 20}" rx="10" class="thermo-glass"/>`
+                        + `<circle cx="${x}" cy="${bottom + 22}" r="18" class="thermo-red"/>`;
+                const level = bottom - 12 * step; // 24 °C — дванадцята поділка від нуля
+                svg += `<rect x="${x - 5}" y="${level}" width="10" height="${bottom - level + 12}" class="thermo-red"/>`;
+                for (let k = 0; k <= 20; k++) {
+                    const y = bottom - k * step, big = k % 5 === 0;
+                    svg += `<line x1="${x + 12}" y1="${y}" x2="${x + (big ? 32 : 24)}" y2="${y}" class="tick${big ? ' big' : ''}"/>`;
+                    if (big) svg += `<text x="${x + 52}" y="${y + 5}" class="tick-num">${k * 2}</text>`;
+                }
+                svg += `<text x="${x + 80}" y="${level + 5}" class="pt-name" style="font-style:normal">?</text>`;
+                document.getElementById('thermo-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 2: стрибки коника на n одиничних відрізків ---
+            const J0 = 30, JPX = 28, JY = 110;
+            function jumpsScene(done) {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 1;
+                let svg = raySvg(J0, JY, JPX, 13, (k) => k, 410)
+                        + `<line x1="${J0}" y1="${JY}" x2="${J0 + JPX}" y2="${JY}" class="unit-seg"/>`
+                        + `<text x="${J0 + JPX / 2}" y="${JY + 50}" class="svg-caption" style="font-size:12px;fill:var(--brand-green)">одиничний</text>`
+                        + `<text x="${J0}" y="${JY - 22}" class="pt-name">O</text>`;
+                for (let k = 0; k < done; k++) {
+                    const a = J0 + k * JPX, b = a + JPX;
+                    svg += `<path d="M${a} ${JY} Q${(a + b) / 2} ${JY - 45} ${b} ${JY}" class="jump"/>`;
+                }
+                if (done) svg += dot(J0 + done * JPX, JY, 'A');
+                return svg;
+            }
+            let jumpTimer = null;
+            window.renderJumps = function () {
+                clearInterval(jumpTimer);
+                const n = parseInt(document.getElementById('w-n').value, 10) || 1;
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('jumps-answer').classList.remove('shown');
+                document.getElementById('jumps-scene').innerHTML = jumpsScene(0);
+            };
+            window.runJumps = function () {
+                renderJumps();
+                const n = parseInt(document.getElementById('w-n').value, 10) || 1;
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (reduce) { document.getElementById('jumps-scene').innerHTML = jumpsScene(n); return; }
+                let done = 0;
+                jumpTimer = setInterval(() => {
+                    done += 1;
+                    document.getElementById('jumps-scene').innerHTML = jumpsScene(done);
+                    if (done >= n) clearInterval(jumpTimer);
+                }, 260);
+            };
+            window.revealJumps = function () {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 1;
+                document.getElementById('jumps-scene').innerHTML = jumpsScene(n);
+                document.getElementById('jumps-text').textContent = `${n} стрибків по 1 — точка A(${n})`;
+                document.getElementById('jumps-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: шкала 0, 10, 20, 30; ціна поділки 2 ---
+            window.renderScale = function () {
+                document.getElementById('scale-fig').innerHTML =
+                    raySvg(40, 55, 20, 16, (k) => (k % 5 === 0 ? k * 2 : ''), 410)
+                    + dot(40 + 8 * 20, 55, 'M') + dot(40 + 12 * 20, 55, 'K');
+            };
+            const STEPS = [
+                ['Між $0$ і $10$ — [[$5$ проміжків]].', 'Рахуємо проміжки, а не рисочки'],
+                ['Ціна поділки: [[$10 : 5 = 2$]].', 'Одна поділка — $2$'],
+                ['$M$ — на $3$ поділки правіше за $10$: [[$10 + 3 \\cdot 2 = 16$]].', '$M(16)$'],
+                ['$K$ — на $2$ поділки правіше за $20$: [[$20 + 2 \\cdot 2 = 24$]].', '$K(24)$'],
+                ['Відповідь: $M(16)$, $K(24)$.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
+
+            // --- Слайд 5: шкала 0–50 з п'ятьма проміжками ---
+            window.renderTrap = function () {
+                document.getElementById('trap-scene').innerHTML =
+                    raySvg(40, 70, 60, 5, (k) => (k === 0 || k === 5 ? k * 10 : ''), 410)
+                    + dot(40 + 3 * 60, 70, 'T')
+                    + `<text x="110" y="145" class="svg-caption" style="fill:var(--warning-red)">T(3)</text>`
+                    + `<line x1="80" y1="128" x2="140" y2="152" class="cross"/>`
+                    + `<text x="300" y="145" class="svg-caption" style="fill:var(--brand-green)">50 : 5 = 10 → T(30) ✓</text>`;
+            };
+
+            // --- Слайд 6: точка P(6) на промені з кроком 1 ---
+            window.renderQuiz1 = function () {
+                document.getElementById('quiz1-fig').innerHTML =
+                    raySvg(30, 38, 32, 11, (k) => (k === 0 || k === 1 ? k : ''), 410) + dot(30 + 6 * 32, 38, 'P');
+            };
