@@ -1,0 +1,348 @@
+@@TITLE Промінь. Пряма
+@@CSS
+@@INCLUDE steps.css
+        /* Відрізок, промінь, пряма */
+        .fig-line { stroke: var(--brand-blue); stroke-width: 4; stroke-linecap: round; fill: none; }
+        .fig-line.ghost { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 6; }
+        .fig-line.alt { stroke: var(--brand-green); }
+        .fig-line.bad { stroke: var(--warning-red); }
+        .arrow-head { fill: var(--brand-blue); }
+        .arrow-head.alt { fill: var(--brand-green); }
+        .arrow-head.bad { fill: var(--warning-red); }
+        .pt { fill: var(--warning-red); }
+        .pt.start { fill: var(--brand-yellow); stroke: currentColor; stroke-width: 2; }
+        .pt-name { fill: currentColor; font-size: 18px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; margin: 6px 0; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 400px; margin: 8px auto; color: var(--text-dark); }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки прямих через дві точки? ✏️</h1>
+            </div>
+            <div class="slide-body">
+                <div class="bubble left"><span class="who">Оля:</span> Я поставила дві точки й провела через них пряму. А ти зможеш провести через ці самі точки іншу пряму?</div>
+                <div class="bubble right"><span class="who">Тарас:</span> Легко! Трохи нахилю лінійку… Ой, тоді вона вже не проходить через обидві точки.</div>
+                <p class="big-question">Скільки прямих можна провести через дві точки? Подумай і скажи — а потім перевіримо.</p>
+                <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                <div class="box hack hidden-answer" id="answer-1">
+                    <div class="box-title">Лише одну! 🎉</div>
+                    <p>Через дві точки можна провести <b>одну і тільки одну</b> пряму.</p>
+                    <p>Тому пряму можна назвати двома її точками: пряма $AB$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Відрізок, промінь чи пряма? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Ті самі точки $A$ і $B$ — а фігури різні. Учні кажуть, що зміниться, потім перевіряємо: скільки кінців? Чи можна виміряти?</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="mode-seg" onclick="setFigure('seg')">Відрізок $AB$</button>
+                        <button class="btn-secondary" id="mode-ray" onclick="setFigure('ray')">Промінь $AB$</button>
+                        <button class="btn-secondary" id="mode-rayba" onclick="setFigure('rayba')">Промінь $BA$</button>
+                        <button class="btn-secondary" id="mode-line" onclick="setFigure('line')">Пряма $AB$</button>
+                    </div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealFigure()">Що це за фігура?</button></p>
+                    <div class="hidden-answer" id="figure-answer"><div class="readout" id="figure-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 220" id="figure-scene" role="img" aria-label="Відрізок, промінь або пряма через точки A і B"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Пряма і промінь</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Пряма</b> не має кінців — вона безмежна в обидва боки. Позначають: пряма $AB$ або пряма $a$.</p>
+                    <p>Через дві точки проходить <b>одна і тільки одна</b> пряма.</p>
+                    <p>Довжини прямої й променя не буває — виміряти можна лише відрізок.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Промінь</div>
+                    <p><b>Промінь</b> має початок і безмежний в один бік.</p>
+                    <p>Промінь $OA$: перша буква — <b>початок</b> $O$, друга — будь-яка інша точка променя.</p>
+                    <p>Точка $O$ на прямій ділить її на <b>два промені</b> з початком $O$ — їх називають <b>доповняльними</b>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Рахуємо промені ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Точки $A$, $B$, $C$ лежать на прямій у такому порядку. Скільки різних променів з початком у цих точках лежить на прямій?</p>
+                    </div>
+                    <svg viewBox="0 0 400 80" class="mini-fig" role="img" aria-label="Точки A, B, C на прямій">
+                        <line x1="10" y1="45" x2="390" y2="45" class="fig-line"/>
+                        <circle cx="90" cy="45" r="6" class="pt"/><circle cx="200" cy="45" r="6" class="pt"/><circle cx="310" cy="45" r="6" class="pt"/>
+                        <text x="90" y="25" class="pt-name">A</text><text x="200" y="25" class="pt-name">B</text><text x="310" y="25" class="pt-name">C</text>
+                    </svg>
+                    <p>Перед кожним кліком учні називають наступний промінь.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: промені $AB$ і $BA$ — різні ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Відрізки $AB$ і $BA$ — однакові. А промені $AB$ і $BA$ — <b>різні</b>: у них різні початки й вони йдуть у різні боки.</p>
+                        <p>«Довжина променя $5$ см»? <b>Ні!</b> Промінь безмежний — виміряти можна лише відрізок.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перша буква в назві променя — його початок. Промінь «стартує» з першої букви й іде через другу.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 220" id="trap-scene" role="img" aria-label="Промінь AB іде праворуч від A, промінь BA — ліворуч від B"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Яка фігура має початок, але не має кінця?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) Відрізок</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) Промінь</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) Пряма</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>У відрізка два кінці, у прямої — жодного. А в кого один?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>Промінь має початок і безмежний в один бік.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Який запис означає промінь з початком у точці $K$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) промінь $KM$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) промінь $MK$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) пряма $KM$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Яка буква в назві променя показує його початок?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>Початок пишемо першим: промінь $KM$ починається в $K$. У прямої початку немає.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Точка $O$ лежить на прямій. На скільки променів з початком $O$ вона ділить пряму?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $1$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $4$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Від точки $O$ пряма йде в скільки боків?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>Ліворуч і праворуч — $2$ доповняльні промені з початком $O$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Точки $A$, $B$, $C$ не лежать на одній прямій. Скільки прямих можна провести так, щоб кожна проходила через дві з них?</p>
+                    <svg viewBox="0 0 300 110" class="mini-fig" style="max-width:260px" role="img" aria-label="Три точки A, B, C, що не лежать на одній прямій">
+                        <circle cx="40" cy="90" r="6" class="pt"/><circle cx="150" cy="25" r="6" class="pt"/><circle cx="260" cy="90" r="6" class="pt"/>
+                        <text x="40" y="76" class="pt-name">A</text><text x="150" y="14" class="pt-name" dy="0">B</text><text x="260" y="76" class="pt-name">C</text>
+                    </svg>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $1$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $6$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Через кожні дві точки — одна пряма. Скільки є пар точок?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Пари: $AB$, $BC$, $AC$ — $3$ прямі. ($AB$ і $BA$ — та сама пряма.)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Відрізок — $2$ кінці, промінь — $1$ початок, пряма — без кінців.</p>
+                    <p>Через дві точки — одна і тільки одна пряма.</p>
+                    <p>Точка на прямій ділить її на $2$ доповняльні промені.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як рахувати промені ✍️</div>
+                        <p>Кожна точка на прямій — початок $2$ променів: $3$ точки — $6$ променів. Промені $AB$ і $AC$ можуть збігатися!</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Промені $AB$ і $BA$ — різні. Довжини в променя і прямої немає.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderFigure();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+            // --- Спільне: точки й стрілки ---
+            const A = { x: 140, y: 140 }, B = { x: 270, y: 90 };
+            const W = 420, H = 220, PAD = 14;
+            function edgeT(P, Q, sign) {
+                // Найбільше t (за знаком sign), при якому P + t(Q − P) ще в межах рисунка
+                const dx = Q.x - P.x, dy = Q.y - P.y;
+                let t = Infinity;
+                if (dx) t = Math.min(t, ((sign * dx > 0 ? W - PAD : PAD) - P.x) / (sign * dx));
+                if (dy) t = Math.min(t, ((sign * dy > 0 ? H - PAD : PAD) - P.y) / (sign * dy));
+                return sign * t;
+            }
+            function at(P, Q, t) { return { x: P.x + t * (Q.x - P.x), y: P.y + t * (Q.y - P.y) }; }
+            function arrow(from, to, cls) {
+                const ang = Math.atan2(to.y - from.y, to.x - from.x), s = 13;
+                const p1 = { x: to.x - s * Math.cos(ang - 0.4), y: to.y - s * Math.sin(ang - 0.4) };
+                const p2 = { x: to.x - s * Math.cos(ang + 0.4), y: to.y - s * Math.sin(ang + 0.4) };
+                return `<path d="M${to.x} ${to.y} L${p1.x} ${p1.y} L${p2.x} ${p2.y} Z" class="arrow-head ${cls || ''}"/>`;
+            }
+            function pt(P, name, start) {
+                return `<circle cx="${P.x}" cy="${P.y}" r="6" class="pt${start ? ' start' : ''}"/><text x="${P.x}" y="${P.y - 14}" class="pt-name">${name}</text>`;
+            }
+
+            // --- Слайд 2: та сама пара точок — відрізок, промінь AB, промінь BA, пряма ---
+            const FIG = {
+                seg: { from: 0, to: 1, text: 'Відрізок AB: два кінці — A і B. Його довжину можна виміряти.' },
+                ray: { from: 0, to: null, text: 'Промінь AB: початок A, іде через B без кінця.' },
+                rayba: { from: 1, to: null, back: true, text: 'Промінь BA: початок B, іде через A в інший бік — це інший промінь!' },
+                line: { from: null, to: null, text: 'Пряма AB: кінців немає, безмежна в обидва боки.' },
+            };
+            let figMode = 'seg', figAnim = null;
+            window.setFigure = function (m) {
+                figMode = m;
+                ['seg', 'ray', 'rayba', 'line'].forEach((k) => document.getElementById('mode-' + k).classList.toggle('on', k === m));
+                document.getElementById('figure-answer').classList.remove('shown');
+                animateFigure();
+            };
+            function figureSvg(t0, t1) {
+                const p0 = at(A, B, t0), p1 = at(A, B, t1), f = FIG[figMode];
+                let svg = `<line x1="${at(A, B, edgeT(A, B, -1)).x}" y1="${at(A, B, edgeT(A, B, -1)).y}" x2="${at(A, B, edgeT(A, B, 1)).x}" y2="${at(A, B, edgeT(A, B, 1)).y}" class="fig-line ghost"/>`;
+                svg += `<line x1="${p0.x}" y1="${p0.y}" x2="${p1.x}" y2="${p1.y}" class="fig-line"/>`;
+                const tMax = edgeT(A, B, 1), tMin = edgeT(A, B, -1);
+                if ((figMode === 'ray' || figMode === 'line') && t1 >= tMax - 0.001) svg += arrow(at(A, B, 0), p1);
+                if ((figMode === 'rayba' || figMode === 'line') && t0 <= tMin + 0.001) svg += arrow(at(A, B, 1), p0);
+                svg += pt(A, 'A', figMode === 'ray') + pt(B, 'B', figMode === 'rayba');
+                if (figMode === 'ray' || figMode === 'rayba') svg += `<text x="210" y="210" class="svg-caption">жовта точка — початок</text>`;
+                return svg;
+            }
+            // Фігура «виростає» з відрізка AB до країв рисунка (кнопки запускає вчитель)
+            function animateFigure() {
+                cancelAnimationFrame(figAnim);
+                const f = FIG[figMode], tMax = edgeT(A, B, 1), tMin = edgeT(A, B, -1);
+                const end0 = f.from === null || f.back ? tMin : f.from, end1 = f.to === null && !f.back ? tMax : 1;
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const scene = document.getElementById('figure-scene');
+                if (reduce) { scene.innerHTML = figureSvg(end0, end1); return; }
+                const t0 = performance.now(), dur = 900;
+                const step = (now) => {
+                    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+                    scene.innerHTML = figureSvg(0 + (end0 - 0) * e, 1 + (end1 - 1) * e);
+                    if (k < 1) figAnim = requestAnimationFrame(step);
+                };
+                figAnim = requestAnimationFrame(step);
+            }
+            window.renderFigure = function () {
+                const f = FIG[figMode], tMax = edgeT(A, B, 1), tMin = edgeT(A, B, -1);
+                const end0 = f.from === null || f.back ? tMin : f.from, end1 = f.to === null && !f.back ? tMax : 1;
+                document.getElementById('figure-scene').innerHTML = figureSvg(end0, end1);
+            };
+            window.revealFigure = function () {
+                document.getElementById('figure-text').textContent = FIG[figMode].text;
+                document.getElementById('figure-answer').classList.add('shown');
+            };
+
+            // --- Слайд 4: промені з початками A, B, C ---
+            const STEPS = [
+                ['Кожна точка ділить пряму на [[$2$ промені]].', 'Ліворуч і праворуч від точки'],
+                ['Точка $A$: промінь [[$AB$]] (він же $AC$) і промінь ліворуч.', '$AB$ і $AC$ — той самий промінь: початок $A$, той самий бік'],
+                ['Точка $B$: промені [[$BA$ і $BC$]].', 'Вони доповняльні'],
+                ['Точка $C$: промінь [[$CA$]] (він же $CB$) і промінь праворуч.', 'Знову один промінь має дві назви'],
+                ['Разом: [[$3 \\cdot 2 = 6$]] променів.', 'Рахуємо початки, а не назви'],
+                ['Відповідь: $6$ різних променів.', 'Готово!'],
+            ];
+@@INCLUDE steps.js
+
+            // --- Слайд 5: промінь AB і промінь BA ---
+            window.renderTrap = function () {
+                const P = { x: 140, y: 70 }, Q = { x: 260, y: 70 }, P2 = { x: 140, y: 160 }, Q2 = { x: 260, y: 160 };
+                document.getElementById('trap-scene').innerHTML =
+                    `<line x1="140" y1="70" x2="385" y2="70" class="fig-line"/>` + arrow(P, { x: 385, y: 70 })
+                    + pt(P, 'A', true) + pt(Q, 'B') + `<text x="300" y="105" class="svg-caption">промінь AB</text>`
+                    + `<line x1="260" y1="160" x2="15" y2="160" class="fig-line alt"/>` + arrow(Q2, { x: 15, y: 160 }, 'alt')
+                    + pt(P2, 'A') + pt(Q2, 'B', true) + `<text x="100" y="195" class="svg-caption">промінь BA</text>`;
+            };
+
+            setFigure('seg');
