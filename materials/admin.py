@@ -25,7 +25,8 @@ from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
-    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME
+    CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
+    ClassPlan, ClassSubscription
 )
 
 User = get_user_model()
@@ -831,6 +832,24 @@ class TeacherPlanAdmin(admin.ModelAdmin):
     """Тарифи для сторінки «Для репетиторів». Тариф продається, коли він увімкнений і має ціну."""
     list_display = ('name', 'kind', 'max_students', 'price_month', 'price_year', 'is_active', 'order')
     list_editable = ('price_month', 'price_year', 'is_active', 'order')
+
+
+@admin.register(ClassPlan)
+class ClassPlanAdmin(admin.ModelAdmin):
+    """Ціни підписки учня на клас (сторінка «Підписка на клас»). Клас продається, коли він увімкнений і має ціну:
+    вмикайте, коли в класі вже достатньо опублікованих уроків. Позначка видна на вітрині (напр. «Ранній доступ»)."""
+    list_display = ('number', 'price_month', 'price_year', 'is_active', 'note')
+    list_editable = ('price_month', 'price_year', 'is_active', 'note')
+
+
+@admin.register(ClassSubscription)
+class ClassSubscriptionAdmin(admin.ModelAdmin):
+    """Підписки учнів на клас. Оплачені через сайт створюються самі; тут — видати вручну, продовжити, подарувати."""
+    list_display = ('user', 'number', 'plan', 'valid_until', 'note', 'created_at')
+    list_select_related = ('user', 'plan')
+    list_filter = ('number', 'valid_until')
+    search_fields = ('user__email', 'user__first_name', 'user__last_name', 'note')
+    raw_id_fields = ('user',)
 
 
 @admin.register(SchoolPriceRule)

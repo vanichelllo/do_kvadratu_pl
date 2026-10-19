@@ -225,6 +225,12 @@
             </a>
         {% endif %}
 
+        {% if class_plan %}
+            <a href="{% url 'class_subscribe' %}?class={{ class_plan.number }}#class-{{ class_plan.number }}" style="display: block; margin-top: 15px; text-align: center; padding: 12px; border: 2px dashed var(--brand-blue); border-radius: 8px; color: var(--brand-blue); font-weight: 700; text-decoration: none;">
+                🎒 Або весь {{ class_plan.number }} клас за підпискою{% if class_plan.price_month %} — від {{ class_plan.price_month }} ₴/міс{% endif %} →
+            </a>
+        {% endif %}
+
         <!-- ========================================== -->
         <!-- БЛОК ВІДГУКІВ ПРО МАТЕРІАЛ -->
         <!-- ========================================== -->
