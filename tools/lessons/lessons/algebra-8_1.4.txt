@@ -1,0 +1,359 @@
+@@TITLE Множення і ділення раціональних дробів
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+
+        /* Таблиця перевірок */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.nm { color: var(--warning-red); font-size: 0.9rem; }
+
+        /* Схема додаткових множників */
+        .dm-box { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; }
+        .dm-text { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .dm-mult { fill: var(--brand-green); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .dm-arrow { stroke: var(--brand-green); stroke-width: 2; fill: none; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Площа «дробового» прямокутника 📐</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Сторони прямокутника — $\dfrac{x^2 - 1}{x}$ см і $\dfrac{x}{x + 1}$ см ($x \gt 1$).</p>
+                    <p class="big-question">Чому дорівнює його площа? Чи можна записати її без дробів?</p>
+                    <p>Треба перемножити два раціональні дроби. Здається, вийде громіздко… а насправді — дуже коротко.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися відповідь</button></p>
+                </div>
+                <div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Спершу розкласти — потім скоротити</div>
+                        <p class="big-formula">$\dfrac{x^2 - 1}{x} \cdot \dfrac{x}{x + 1} = \dfrac{(x - 1)(x + 1) \cdot x}{x \cdot (x + 1)} = x - 1$</p>
+                        <p>Площа — $x - 1$ см². При $x = 5$: сторони $\dfrac{24}{5}$ і $\dfrac{5}{6}$, площа $4$ см² ✓.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Множення раціональних дробів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Правило</div>
+                        <p>Добуток дробів — дріб, чисельник якого дорівнює добутку чисельників, а знаменник — добутку знаменників:</p>
+                        <p class="big-formula">$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{ac}{bd}$</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Спершу скорочуємо</div>
+                        <p>Не перемножуйте одразу: розкладіть чисельники й знаменники на множники і скоротіть — так менше обчислень.</p>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-0">
+                    <p><b>Приклад.</b> $\dfrac{3x}{y^2} \cdot \dfrac{y}{6x^2}$</p>
+                    <div class="step">$= \dfrac{3x \cdot y}{y^2 \cdot 6x^2}$ — записуємо під однією рискою.</div>
+                    <div class="step">Скорочуємо на $3$, на $x$ і на $y$: $\dfrac{3 \cdot x \cdot y}{6 \cdot x^2 \cdot y^2}$.</div>
+                    <div class="step">$= \dfrac{1}{2xy}$ при $x \ne 0$, $y \ne 0$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-0')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Ділення і піднесення до степеня</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Ділення</div>
+                        <p>Щоб поділити дріб на дріб, ділене множать на дріб, <b>обернений до дільника</b>:</p>
+                        <p class="big-formula">$\dfrac{a}{b} : \dfrac{c}{d} = \dfrac{a}{b} \cdot \dfrac{d}{c} = \dfrac{ad}{bc}$</p>
+                        <p>Умова: $b \ne 0$, $d \ne 0$ і ще $c \ne 0$ — на нуль ділити не можна.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Степінь дробу</div>
+                        <p class="big-formula">$\left(\dfrac{a}{b}\right)^n = \dfrac{a^n}{b^n}$</p>
+                        <p>$\left(\dfrac{2x}{y^2}\right)^3 = \dfrac{8x^3}{y^6}$. Знак: $\left(-\dfrac{a}{b}\right)^2 = \dfrac{a^2}{b^2}$, $\;\left(-\dfrac{a}{b}\right)^3 = -\dfrac{a^3}{b^3}$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Цілий вираз — теж дріб</div>
+                        <p>$\dfrac{x}{y} : x = \dfrac{x}{y} \cdot \dfrac{1}{x} = \dfrac{1}{y}$ ($x \ne 0$).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Скоротили — а значення ті самі? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>$A = \dfrac{x^2 - 4}{x + 3} \cdot \dfrac{x + 3}{x - 2}$, після скорочення $B = x + 2$. Обираємо $x$, учні обчислюють, потім перевіряємо. Де $A$ не має змісту, а $B$ — має?</p>
+                    <div class="slider-control"><label for="x-val">x</label><input type="range" id="x-val" min="-4" max="4" step="1" value="1" oninput="xInput()"><span id="x-val-out">1</span></div>
+                    <p class="center"><button class="btn-primary" onclick="computeAB()">Обчислити $A$ і $B$</button></p>
+                    <p class="readout" id="ab-readout"></p>
+                </div>
+                <div>
+                    <div class="math-widget">
+                        <table class="val-table" id="ab-table"></table>
+                    </div>
+                    <div class="box theorem hidden-answer" id="ab-verdict">
+                        <div class="box-title">Висновок</div>
+                        <p>$A = B$ скрізь, де $A$ має зміст. Але при $x = -3$ і $x = 2$ вираз $A$ не має змісту, а $B$ має. Тому записуємо: $A = x + 2$ при $x \ne -3$, $x \ne 2$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Множення і ділення крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Ділення замінити множенням на обернений дріб.</p>
+                    <p>2) Розкласти всі чисельники й знаменники на множники.</p>
+                    <p>3) Скоротити однакові множники чисельника й знаменника.</p>
+                    <p>4) Перемножити те, що лишилося; записати ОДЗ.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Спростимо:</b> $\dfrac{a^2 - 9}{a^2 + 2a} : \dfrac{a - 3}{a}$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Степінь і «протилежні» множники</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Спростіть $\left(-\dfrac{2x^2}{3y}\right)^3 \cdot \dfrac{9y^4}{4x^5}$.</p>
+                    <div class="step">$\left(-\dfrac{2x^2}{3y}\right)^3 = -\dfrac{8x^6}{27y^3}$ — непарний степінь, мінус лишається.</div>
+                    <div class="step">$-\dfrac{8x^6 \cdot 9y^4}{27y^3 \cdot 4x^5}$ — скорочуємо: $\dfrac{8 \cdot 9}{27 \cdot 4} = \dfrac{2}{3}$, $\dfrac{x^6}{x^5} = x$, $\dfrac{y^4}{y^3} = y$.</div>
+                    <div class="step">$= -\dfrac{2xy}{3}$ при $x \ne 0$, $y \ne 0$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Спростіть $\dfrac{x - y}{x^2} \cdot \dfrac{x}{y - x}$.</p>
+                    <div class="step">$y - x = -(x - y)$.</div>
+                    <div class="step">$\dfrac{(x - y) \cdot x}{x^2 \cdot (-(x - y))}$ — скорочуємо на $x(x - y)$.</div>
+                    <div class="step">$= -\dfrac{1}{x}$ при $x \ne 0$, $x \ne y$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Перевертають не той дріб</div>
+                        <p>$\dfrac{a}{b} : \dfrac{c}{d} \ne \dfrac{b}{a} \cdot \dfrac{c}{d}$. Обертаємо <b>дільник</b> — другий дріб.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Скорочують доданки</div>
+                        <p>$\dfrac{x + 2}{x + 5} \cdot \dfrac{x}{2} \ne \dfrac{x(x + 1)}{x + 5}$: «скоротити» $2$ у сумі $x + 2$ не можна. Скорочуємо лише множники.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Знак у степені</div>
+                        <p>$\left(-\dfrac{a}{b}\right)^2 = \dfrac{a^2}{b^2}$, але $-\left(\dfrac{a}{b}\right)^2 = -\dfrac{a^2}{b^2}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Забувають ОДЗ дільника</div>
+                        <p>У $\dfrac{1}{x} : \dfrac{x - 1}{x}$ треба й $x \ne 0$, і $x \ne 1$ — дільник не може дорівнювати нулю.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Спростіть $\dfrac{4a}{b} \cdot \dfrac{b^2}{8a^3}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $\dfrac{2b}{a^2}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $\dfrac{b}{2a^2}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{4ab^2}{8a^3 b}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\dfrac{b}{2a^3}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{4a \cdot b^2}{b \cdot 8a^3} = \dfrac{b}{2a^2}$: скоротили на $4$, $a$ і $b$.</p>
+                            <p>А — переплутали $4$ і $8$; В — не скоротили; Г — не скоротили $a$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть $\dfrac{x^2 - 25}{3x} : \dfrac{x + 5}{6x^2}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $2x(x - 5)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $\dfrac{x - 5}{2x}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $2x(x + 5)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $\dfrac{(x - 5)(x + 5)^2}{18x^3}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{(x - 5)(x + 5)}{3x} \cdot \dfrac{6x^2}{x + 5} = 2x(x - 5)$ при $x \ne 0$, $x \ne -5$.</p>
+                            <p>Б — перевернули ділене; В — помилка в розкладі $x^2 - 25$; Г — помножили замість ділення.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Спростіть $\left(\dfrac{a - b}{a}\right)^2 : \dfrac{b^2 - a^2}{a^3}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\dfrac{a(a - b)}{a + b}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $\dfrac{a(b - a)}{a + b}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{a - b}{a(a + b)}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\dfrac{(a - b)^2}{b^2 - a^2}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{(a - b)^2}{a^2} \cdot \dfrac{a^3}{(b - a)(b + a)}$. Оскільки $(a - b)^2 = (b - a)^2$, скорочуємо на $b - a$ і на $a^2$:</p>
+                            <p>$\dfrac{(b - a) \cdot a}{a + b} = \dfrac{a(b - a)}{a + b}$ при $a \ne 0$, $a \ne \pm b$.</p>
+                            <p>А — загубили знак: $b^2 - a^2 = -(a^2 - b^2)$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{ac}{bd}$, $\;\dfrac{a}{b} : \dfrac{c}{d} = \dfrac{ad}{bc}$, $\;\left(\dfrac{a}{b}\right)^n = \dfrac{a^n}{b^n}$.</p>
+                    <p>Ділимо — множимо на дріб, обернений до <b>дільника</b>.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Ділення → множення; розклади на множники; скороти; перемнож залишок; запиши ОДЗ.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Скорочують лише множники. Після скорочення ОДЗ не зникає: $\dfrac{x^2 - 4}{x + 3} \cdot \dfrac{x + 3}{x - 2} = x + 2$ лише при $x \ne -3$, $x \ne 2$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderAB();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+            // Нескоротний дріб p/q у TeX (знак — перед дробом)
+            function fracTex(p, q) {
+                if (q < 0) { p = -p; q = -q; }
+                const g = gcd(Math.abs(p), q) || 1;
+                p /= g; q /= g;
+                if (q === 1) return String(p);
+                return (p < 0 ? '-' : '') + `\\dfrac{${Math.abs(p)}}{${q}}`;
+            }
+
+            // --- Слайд 4: A = (x²−4)/(x+3) · (x+3)/(x−2) і B = x + 2 ---
+            let checks = {}, shownNow = false;
+            window.xInput = function () { shownNow = false; renderAB(); };
+            window.computeAB = function () {
+                const x = parseInt(document.getElementById('x-val').value, 10);
+                checks[x] = true; shownNow = true; renderAB();
+                if (Object.keys(checks).length >= 3) document.getElementById('ab-verdict').classList.add('shown');
+            };
+            function valueAt(x) {
+                const B = String(x + 2);
+                if (x === -3 || x === 2) return { A: null, B };
+                return { A: fracTex((x * x - 4) * (x + 3), (x + 3) * (x - 2)), B };
+            }
+            window.renderAB = function () {
+                const x = parseInt(document.getElementById('x-val').value, 10);
+                document.getElementById('x-val-out').textContent = String(x).replace('-', '−');
+                const out = document.getElementById('ab-readout'), v = valueAt(x);
+                out.innerHTML = !shownNow ? `$x = ${x}$: $\;A = \\,?$, $\;B = \\,?$`
+                    : v.A !== null ? `$x = ${x}$: $\;A = ${v.A}$, $\;B = ${v.B}$ — <span class="ok">рівні ✓</span>`
+                        : `$x = ${x}$: <span class="bad">$A$ не має змісту</span> (знаменник $0$), а $B = ${v.B}$`;
+                typeset(out);
+                const keys = Object.keys(checks).map(Number).sort((p, q) => p - q);
+                const table = document.getElementById('ab-table');
+                table.innerHTML = '<tr><th>$x$</th><th>$A$</th><th>$B$</th></tr>' + (keys.length ? keys.map(k => {
+                    const w = valueAt(k);
+                    return w.A !== null ? `<tr><th>$${k}$</th><td>$${w.A}$</td><td>$${w.B}$</td></tr>`
+                             : `<tr><th>$${k}$</th><td class="nm">не має змісту</td><td>$${w.B}$</td></tr>`;
+                }).join('') : '<tr><td colspan="3">перевірок ще немає</td></tr>');
+                typeset(table);
+            };
+
+            // --- Слайд 5: (a²−9)/(a²+2a) : (a−3)/a ---
+            const STEPS = [
+                ['$= \\dfrac{a^2 - 9}{a^2 + 2a} \\cdot $ [[$\\dfrac{a}{a - 3}$]]', 'Крок 1: ділення — множення на обернений дріб'],
+                ['$= \\dfrac{(a - 3)(a + 3)}{a(a + 2)} \\cdot \\dfrac{a}{a - 3}$', 'Крок 2: розкладаємо на множники: різниця квадратів і винесення $a$'],
+                ['$= $ [[$\\dfrac{a + 3}{a + 2}$]]', 'Крок 3: скорочуємо на $a$ і на $a - 3$'],
+                ['ОДЗ: $a \\ne 0$, $a \\ne -2$, $a \\ne 3$', 'Крок 4: знаменники й чисельник дільника не дорівнюють нулю'],
+            ];
+@@INCLUDE steps.js
