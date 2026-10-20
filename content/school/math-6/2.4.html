@@ -478,7 +478,7 @@
             };
             window.revealArea = function () {
                 const [a, b, c, d] = areaVals(), out = document.getElementById('area-text'), g = gcd(a * c, b * d);
-                out.innerHTML = `$${fr(c, d)} \\cdot ${fr(a, b)} = ${fr(a * c, b * d)}$` + (g > 1 ? `$\; = ${fr(a * c / g, b * d / g)}$` : '')
+                out.innerHTML = `$${fr(c, d)} \\cdot ${fr(a, b)} = ${fr(a * c, b * d)}$` + (g > 1 ? `$\\; = ${fr(a * c / g, b * d / g)}$` : '')
                     + ` — ${a * c} клітинок із ${b * d}.`;
                 document.getElementById('area-answer').classList.add('shown');
                 typeset([out]);
