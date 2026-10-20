@@ -1,0 +1,317 @@
+@@TITLE Ділення дробів
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        /* Смужки-цілі */
+        .cell.empty { fill: var(--card-bg); }
+        .cell.blue { fill: var(--brand-blue); fill-opacity: 0.5; }
+        .cell.green { fill: var(--brand-green); fill-opacity: 0.5; }
+        .cell.alt { fill: var(--brand-yellow); fill-opacity: 0.55; }
+        .cut-main { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+        .cut-new { stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 4 3; }
+        .frame { fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .piece-num { fill: currentColor; font-size: 13px; font-weight: 800; text-anchor: middle; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .slider-control label { font-weight: 800; min-width: 170px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки склянок соку? 🧃</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Мама:</span> У нас $3$ літри соку. Розлий його у склянки по $\dfrac{1}{4}$ л.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> Це $3 : \dfrac{1}{4}$. Вийде менше за $3$?</div>
+                    <p class="big-question">Скільки склянок вийде?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealJuice()">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$12$ склянок! 🎉</div>
+                        <p>У літрі — $4$ чверті, тож $3 : \dfrac{1}{4} = 3 \cdot 4 = 12$. Ділення на дріб, менший за $1$, дає <b>більше</b> число!</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="juice-scene" role="img" aria-label="Три літри, кожен поділено на чверті: 12 склянок"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Скільки разів уміщується? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Ділити — означає з'ясувати, скільки разів дільник уміщується в діленому. Учні рахують шматочки — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Скільки цілих</label><input type="range" id="w-n" min="1" max="4" step="1" value="2" oninput="renderPieces()"><span id="w-n-val">2</span></div>
+                    <div class="slider-control"><label for="w-k">Дільник $\dfrac{1}{k}$, де $k$ =</label><input type="range" id="w-k" min="2" max="6" step="1" value="3" oninput="renderPieces()"><span id="w-k-val">3</span></div>
+                    <p class="readout" id="pieces-q"></p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealPieces()">Скільки вийшло?</button></p>
+                    <div class="hidden-answer" id="pieces-answer"><div class="readout" id="pieces-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="pieces-scene" role="img" aria-label="Цілі смужки, поділені на шматочки розміром 1/k"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як ділити дроби</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Дроби $\dfrac{c}{d}$ і $\dfrac{d}{c}$ — <b>обернені</b>: їх добуток дорівнює $1$.</p>
+                    <p>Щоб поділити на дріб, множимо ділене на дріб, <b>обернений до дільника</b>:</p>
+                    <p style="text-align:center;font-size:1.25rem">$\dfrac{a}{b} : \dfrac{c}{d} = \dfrac{a}{b} \cdot \dfrac{d}{c}$</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Особливі випадки</div>
+                    <p>Ціле на дріб: $3 : \dfrac{1}{4} = 3 \cdot 4 = 12$.</p>
+                    <p>Дріб на ціле: $\dfrac{3}{4} : 2 = \dfrac{3}{4} \cdot \dfrac{1}{2} = \dfrac{3}{8}$.</p>
+                    <p>Мішані числа — спершу в неправильні дроби: $1\dfrac{1}{2} : \dfrac{3}{4} = \dfrac{3}{2} \cdot \dfrac{4}{3} = 2$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Перевертаємо дільник ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задача</div>
+                    <p>Обчисли: $\dfrac{5}{6} : \dfrac{10}{9}$. Потім обчисли $2\dfrac{1}{4} : 1\dfrac{1}{2}$.</p>
+                    <p>Підказка: замінюй ділення множенням на обернений дріб, а потім скорочуй навхрест.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Перевертаємо лише дільник ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$\dfrac{3}{4} : 2 = \dfrac{3}{2}$? <b>Ні!</b> Половина від $\dfrac{3}{4}$ має бути <b>менша</b> за $\dfrac{3}{4}$.</p>
+                        <p>Правильно: $\dfrac{3}{4} \cdot \dfrac{1}{2} = \dfrac{3}{8}$. Перевертаємо <b>дільник</b> $2 = \dfrac{2}{1}$, а не ділене.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перевір множенням: частка, помножена на дільник, дає ділене. $\dfrac{3}{8} \cdot 2 = \dfrac{3}{4}$ ✓.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 220" id="trap-scene" role="img" aria-label="Смужка 3/4 поділена навпіл: кожна половина — 3/8"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $\dfrac{2}{3} : \dfrac{4}{9}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $1\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{8}{27}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{2}{3}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Переверни дільник: $\dfrac{4}{9} \to \dfrac{9}{4}$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{2}{3} \cdot \dfrac{9}{4} = \dfrac{18}{12} = \dfrac{3}{2} = 1\dfrac{1}{2}$. Б — помножили, не перевернувши.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $6 : \dfrac{3}{4}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $8$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $4\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{1}{8}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$6 \cdot \dfrac{4}{3}$. Відповідь має бути більша за $6$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$6 \cdot \dfrac{4}{3} = \dfrac{24}{3} = 8$. Б — це $6 \cdot \dfrac{3}{4}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли: $3\dfrac{1}{3} : \dfrac{5}{6}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $3\dfrac{2}{5}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2\dfrac{7}{9}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$3\dfrac{1}{3} = \dfrac{10}{3}$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{10}{3} \cdot \dfrac{6}{5} = \dfrac{2 \cdot 2}{1 \cdot 1} = 4$. В — помножили замість ділення.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Стрічку завдовжки $\dfrac{7}{8}$ м розрізали на шматки по $\dfrac{1}{16}$ м. Скільки шматків вийшло?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $14$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $7$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $\dfrac{7}{128}$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки разів $\dfrac{1}{16}$ вміщується в $\dfrac{7}{8}$? Це ділення.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\dfrac{7}{8} : \dfrac{1}{16} = \dfrac{7}{8} \cdot 16 = 14$. В — помножили дроби замість ділення.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{b} : \dfrac{c}{d} = \dfrac{a}{b} \cdot \dfrac{d}{c}$ — множимо на дріб, обернений до дільника.</p>
+                    <p>Мішані числа — у неправильні дроби; натуральне число $n = \dfrac{n}{1}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$\dfrac{5}{6} : \dfrac{10}{9} = \dfrac{5}{6} \cdot \dfrac{9}{10} = \dfrac{3}{4}$. Перевірка: $\dfrac{3}{4} \cdot \dfrac{10}{9} = \dfrac{5}{6}$ ✓.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Перевертаємо лише <b>дільник</b>: $\dfrac{3}{4} : 2 = \dfrac{3}{8}$, а не $\dfrac{3}{2}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderJuice();
+                if (currentSlide === 2) renderPieces();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const fr = (a, b) => `\\dfrac{${a}}{${b}}`;
+            // Смужка-ціле на k частин: зафарбовано m частин кольором color, нумерація з номера start (0 — без номерів)
+            function stripSvg(k, m, x0, y, w, h, color, start = 0) {
+                const cw = w / k;
+                let s = `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="cell empty"/>`;
+                for (let i = 0; i < m; i++) s += `<rect x="${(x0 + i * cw).toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${h}" class="cell ${start && i % 2 ? 'alt' : color}"/>`;
+                for (let i = 1; i < k; i++) s += `<line x1="${(x0 + i * cw).toFixed(1)}" y1="${y}" x2="${(x0 + i * cw).toFixed(1)}" y2="${y + h}" class="cut-new"/>`;
+                if (start) for (let i = 0; i < m; i++) s += `<text x="${(x0 + (i + 0.5) * cw).toFixed(1)}" y="${y + h / 2 + 5}" class="piece-num">${start + i}</text>`;
+                return s + `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="frame"/>`;
+            }
+
+            // --- Слайд 1: 3 : 1/4 ---
+            let juiceShown = false;
+            window.renderJuice = function () {
+                let svg = '';
+                for (let r = 0; r < 3; r++) svg += stripSvg(4, juiceShown ? 4 : 0, 40, 20 + r * 62, 340, 44, 'blue', juiceShown ? 1 + r * 4 : 0)
+                    + `<text x="24" y="${48 + r * 62}" class="svg-caption">1 л</text>`;
+                document.getElementById('juice-scene').innerHTML = svg
+                    + `<text x="210" y="225" class="svg-caption${juiceShown ? ' ok-text' : ''}">${juiceShown ? '12 склянок по 1/4 л' : '3 літри. Скільки чвертей?'}</text>`;
+            };
+            window.revealJuice = function () { juiceShown = true; renderJuice(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: n : 1/k ---
+            function piecesVals() { return [parseInt(document.getElementById('w-n').value, 10), parseInt(document.getElementById('w-k').value, 10)]; }
+            let piecesShown = false;
+            window.renderPieces = function () {
+                const [n, k] = piecesVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-k-val').textContent = k;
+                piecesShown = false;
+                document.getElementById('pieces-answer').classList.remove('shown');
+                const q = document.getElementById('pieces-q');
+                q.innerHTML = `$${n} : ${fr(1, k)} = \\,?$`;
+                typeset([q]);
+                drawPieces();
+            };
+            function drawPieces() {
+                const [n, k] = piecesVals();
+                let svg = '';
+                for (let r = 0; r < n; r++) svg += stripSvg(k, piecesShown ? k : 0, 40, 18 + r * 66, 340, 46, 'green', piecesShown ? 1 + r * k : 0);
+                document.getElementById('pieces-scene').innerHTML = svg;
+            }
+            window.revealPieces = function () {
+                const [n, k] = piecesVals(), out = document.getElementById('pieces-text');
+                piecesShown = true; drawPieces();
+                out.innerHTML = `$${n} : ${fr(1, k)} = ${n} \\cdot ${k} = ${n * k}$ — стільки шматочків по $${fr(1, k)}$.`;
+                document.getElementById('pieces-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 5: 3/4 : 2 = 3/8 ---
+            window.renderTrap = function () {
+                const x0 = 40, w = 360;
+                let s = stripSvg(4, 3, x0, 30, w, 44, 'blue') + `<text x="${x0 + w * 3 / 8}" y="22" class="svg-caption">3/4 смужки</text>`;
+                s += stripSvg(8, 3, x0, 120, w, 44, 'green')
+                    + `<line x1="${x0 + w * 3 / 8}" y1="112" x2="${x0 + w * 3 / 8}" y2="172" class="cut-main"/>`
+                    + `<text x="${x0 + w * 3 / 16}" y="190" class="svg-caption ok-text">половина — 3/8</text>`
+                    + `<text x="220" y="212" class="svg-caption bad-text">3/2 — більше за всю смужку!</text>`;
+                document.getElementById('trap-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$\\dfrac{5}{6} : \\dfrac{10}{9} = \\dfrac{5}{6} \\cdot $ [[$\\dfrac{9}{10}$]]', 'Ділення замінюємо множенням на дріб, обернений до дільника'],
+                ['$= \\dfrac{5 \\cdot 9}{6 \\cdot 10} = $ [[$\\dfrac{1 \\cdot 3}{2 \\cdot 2} = \\dfrac{3}{4}$]]', 'Скорочуємо навхрест: $5$ і $10$ на $5$, $9$ і $6$ на $3$'],
+                ['$2\\dfrac{1}{4} : 1\\dfrac{1}{2} = \\dfrac{9}{4} : \\dfrac{3}{2} = \\dfrac{9}{4} \\cdot \\dfrac{2}{3}$', 'Мішані числа — у неправильні дроби, потім перевертаємо дільник'],
+                ['$= \\dfrac{3 \\cdot 1}{2 \\cdot 1} = $ [[$1\\dfrac{1}{2}$]]', 'Скоротили $9$ і $3$, $2$ і $4$. Перевірка: $1\\dfrac{1}{2} \\cdot 1\\dfrac{1}{2} = 2\\dfrac{1}{4}$ ✓'],
+            ];
+@@INCLUDE steps.js
