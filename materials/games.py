@@ -84,7 +84,18 @@ def payload_list(question_ids, lessons_from):
     return result
 
 
+# Мішане число «2 3/5» (ціла частина, пробіл, дріб) — це 2 + 3/5, а не 23/5
+MIXED_NUMBER = re.compile(r'^\s*([-−]?)\s*(\d+)\s+(\d+)\s*/\s*(\d+)\s*$')
+
+
 def _number(text):
+    mixed = MIXED_NUMBER.match(text)
+    if mixed:
+        sign, whole, num, den = mixed.groups()
+        if int(den) == 0:
+            return None
+        value = int(whole) + Fraction(int(num), int(den))
+        return -value if sign else value
     text = text.strip().replace(' ', '').replace(',', '.').replace('−', '-')
     try:
         return Fraction(text)
