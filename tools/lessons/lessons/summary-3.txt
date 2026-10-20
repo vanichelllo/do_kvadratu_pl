@@ -1,0 +1,347 @@
+@@TITLE Узагальнення: Звичайні дроби
+@@CSS
+        /* Карта розділу */
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        .map-group-name { font-size: 13px; font-weight: 800; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+
+        /* Зв'язки */
+        .link-box { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; }
+        .link-text { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .link-arrow { stroke: var(--brand-green); stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
+        .link-cap { fill: var(--brand-green); font-size: 12px; font-weight: 700; text-anchor: middle; }
+        .arrowhead { fill: var(--brand-green); }
+
+        /* Яке правило потрібне */
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+
+        /* Покроковий розбір */
+        .task-text { font-weight: 600; margin-bottom: 6px; }
+        .sol-line { padding: 4px 0; animation: fade 0.3s ease; }
+        .sol-line:last-child { font-weight: 800; color: var(--brand-green); }
+
+        /* Пастки */
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+@@SLIDES
+
+        <!-- 1. Карта розділу -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 3 «Звичайні дроби» — це $8$ тем. Клікни на тему — і пригадаємо, про що вона.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 160" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Обери тему на карті.</p>
+            </div>
+        </section>
+
+        <!-- 2. Що треба знати -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Дроби</div>
+                        <p>$\dfrac{m}{n}$: знаменник $n$ — на скільки рівних частин ділимо, чисельник $m$ — скільки частин беремо.</p>
+                        <p>Правильний: $m \lt n$, менший за $1$. Неправильний: $m \ge n$. $\;\dfrac{n}{n} = 1$.</p>
+                        <p>Однакові знаменники: більший той дріб, у якого більший чисельник.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Мішані числа</div>
+                        <p>$\dfrac{13}{5} = 2\dfrac{3}{5}$, бо $13 : 5 = 2$ (ост. $3$).</p>
+                        <p>$2\dfrac{3}{5} = \dfrac{2 \cdot 5 + 3}{5} = \dfrac{13}{5}$.</p>
+                    </div>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Дії й задачі</div>
+                    <p>$\dfrac{a}{n} + \dfrac{b}{n} = \dfrac{a + b}{n}$, $\;\dfrac{a}{n} - \dfrac{b}{n} = \dfrac{a - b}{n}$.</p>
+                    <p>Мішані: цілі — з цілими, дробові — з дробовими; бракує частин — позичаємо цілу.</p>
+                    <p>Дріб від числа: $\dfrac{m}{n}$ від $a$ — це $a : n \cdot m$.</p>
+                    <p>Число за дробом: $\dfrac{m}{n}$ числа — $b$, число — $b : m \cdot n$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Зв'язки -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Як теми тримаються одна за одну 🔗</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Подивись, як це працює</div>
+                    <p>Усе починається з частин: знаменник — розмір частини, чисельник — їх кількість.</p>
+                    <p>Коли частини однакові, порівнюємо й додаємо лише їх кількість — чисельники.</p>
+                    <p>Неправильний дріб «ховає» цілі — їх виділяємо в мішане число.</p>
+                    <p>Дріб від числа і число за дробом — обернені задачі: одна перевіряє іншу.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 280" role="img" aria-label="Схема зв'язків тем розділу «Звичайні дроби»">
+                        <defs><marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="arrowhead"/></marker></defs>
+                        <rect x="135" y="10" width="130" height="40" rx="8" class="link-box"/><text x="200" y="35" class="link-text">Дріб m/n</text>
+                        <rect x="10" y="100" width="120" height="40" rx="8" class="link-box"/><text x="70" y="125" class="link-text">Порівняння</text>
+                        <rect x="140" y="100" width="120" height="40" rx="8" class="link-box"/><text x="200" y="125" class="link-text">Додавання, −</text>
+                        <rect x="270" y="100" width="120" height="40" rx="8" class="link-box"/><text x="330" y="125" class="link-text">Мішані числа</text>
+                        <path d="M170 52 L80 96" class="link-arrow"/><path d="M200 52 V96" class="link-arrow"/><path d="M230 52 L320 96" class="link-arrow"/>
+                        <text x="96" y="70" class="link-cap">однакові n</text><text x="304" y="70" class="link-cap">m ≥ n</text>
+                        <rect x="140" y="170" width="120" height="40" rx="8" class="link-box"/><text x="200" y="195" class="link-text">Дії з мішаними</text>
+                        <path d="M200 142 V166" class="link-arrow"/><path d="M330 142 L240 166" class="link-arrow"/>
+                        <rect x="10" y="230" width="170" height="40" rx="8" class="link-box"/><text x="95" y="255" class="link-text">Дріб від числа</text>
+                        <rect x="220" y="230" width="170" height="40" rx="8" class="link-box"/><text x="305" y="255" class="link-text">Число за дробом</text>
+                        <path d="M182 244 H216" class="link-arrow"/><path d="M218 258 H184" class="link-arrow"/>
+                        <text x="200" y="224" class="link-cap">обернені задачі</text>
+                        <path d="M135 30 H40 V226" class="link-arrow"/><text x="44" y="190" class="link-cap" style="text-anchor:start">a : n · m</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Розбір: яке правило потрібне -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🤔</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні кажуть, яке правило потрібне, — вчитель відкриває відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+
+        <!-- 5. Розбір: змішана задача -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Задачі з кількох тем ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Як розв'язувати</div>
+                    <p>1) Що відоме — ціле чи частина?</p>
+                    <p>2) Ціле відоме — шукаємо дріб від числа; відома частина — число за дробом.</p>
+                    <p>3) Частини однакові — додаємо й віднімаємо чисельники.</p>
+                    <p>4) Перевір: частина менша за ціле, разом виходить усе.</p>
+                </div>
+                <div class="math-widget">
+                    <p class="task-text" id="sol-task"></p>
+                    <div id="sol-lines"></div>
+                    <div class="step-controls" style="justify-content:center">
+                        <button class="btn-primary" onclick="solStep()">Покажи наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="solReset()">Спочатку</button>
+                        <button class="btn-secondary" onclick="solNext()">Інша задача</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Головні пастки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-3">
+                <div class="trap-card"><b>Чисельник і знаменник:</b> $3$ частини з $8$ — це <span class="ok">$\dfrac{3}{8}$</span>, а не $\dfrac{8}{3}$.</div>
+                <div class="trap-card"><b>$\dfrac{4}{4}$ — правильний?</b> Ні, <span class="ok">неправильний</span>: $\dfrac{4}{4} = 1$.</div>
+                <div class="trap-card"><b>Знаменники не додаємо:</b> $\dfrac{2}{8} + \dfrac{3}{8} =$ <span class="ok">$\dfrac{5}{8}$</span>, а не $\dfrac{5}{16}$.</div>
+                <div class="trap-card"><b>Цілу частину множимо:</b> $2\dfrac{3}{4} =$ <span class="ok">$\dfrac{11}{4}$</span>, а не $\dfrac{5}{4}$.</div>
+                <div class="trap-card"><b>Віднімання від цілого:</b> $3 - 1\dfrac{2}{5} =$ <span class="ok">$1\dfrac{3}{5}$</span>, а не $2\dfrac{2}{5}$.</div>
+                <div class="trap-card"><b>Ціле чи частина?</b> $\dfrac{2}{5}$ від $30$ — $30 : 5 \cdot 2 =$ <span class="ok">$12$</span>; $\dfrac{2}{5}$ числа — $12$: $12 : 2 \cdot 5 =$ <span class="ok">$30$</span>.</div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $\dfrac{9}{11} - \dfrac{4}{11} + \dfrac{2}{11}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\dfrac{7}{11}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{7}{33}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{3}{11}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Знаменник не змінюється; дії — зліва направо.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$9 - 4 + 2 = 7$: $\dfrac{7}{11}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $3\dfrac{5}{8} + 1\dfrac{7}{8}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $4\dfrac{12}{16}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $5\dfrac{4}{8}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $4\dfrac{4}{8}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$\dfrac{5}{8} + \dfrac{7}{8} = \dfrac{12}{8}$ — у ньому є ціла.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$4\dfrac{12}{8} = 5\dfrac{4}{8}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Знайди $\dfrac{2}{3}$ від $45$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $30$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $90$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Ціле відоме: ділимо на знаменник, множимо на чисельник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$45 : 3 \cdot 2 = 30$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Оля прочитала $30$ сторінок — це $\dfrac{2}{3}$ книжки. Скільки сторінок їй лишилося?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $45$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $10$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Відома частина — знайди всю книжку.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Книжка: $30 : 2 \cdot 3 = 45$ сторінок; лишилося $45 - 30 = 15$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Знаменник — розмір частини, чисельник — кількість частин.</p>
+                    <p>Однакові знаменники: порівнюємо, додаємо й віднімаємо чисельники.</p>
+                    <p>$a\dfrac{b}{n} = \dfrac{a \cdot n + b}{n}$; $\;\dfrac{m}{n}$ від $a$ — $a : n \cdot m$; число за дробом — $b : m \cdot n$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>Спершу — що відоме: ціле чи частина; потім правило; наприкінці — перевірка оберненою дією.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастки! ⚠️</div>
+                        <p>Знаменники не додаємо; цілу частину множимо на знаменник; частина менша за ціле.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 4) renderWhich();
+                if (currentSlide === 5) renderSolution();
+@@JS
+            // --- Слайд 1: карта розділу, тема розгортається по кліку ---
+            const TOPICS = [
+                { g: 0, n: '3.1', t: 'Що таке дріб', d: 'Ціле ділимо на n рівних частин і беремо m з них: m/n. Знаменник — внизу, чисельник — угорі.' },
+                { g: 0, n: '3.2', t: 'Види дробів', d: 'Правильний дріб менший за 1 (m < n); неправильний — m ≥ n. Мішане число: ціла частина й правильний дріб.' },
+                { g: 1, n: '3.3', t: 'Порівняння', d: 'Однакові знаменники — більший той дріб, у якого більший чисельник.' },
+                { g: 1, n: '3.4', t: 'Додавання, −', d: 'Однакові знаменники — додаємо й віднімаємо чисельники, знаменник той самий.' },
+                { g: 2, n: '3.5', t: 'Дріб ⇄ мішане', d: 'Ділимо чисельник на знаменник з остачею; назад — ціле × знаменник + чисельник.' },
+                { g: 2, n: '3.6', t: 'Дії з мішаними', d: 'Цілі з цілими, дробові з дробовими; виділяємо цілу або позичаємо цілу.' },
+                { g: 3, n: '3.7', t: 'Дріб від числа', d: 'm/n від a: ділимо a на знаменник і множимо на чисельник.' },
+                { g: 3, n: '3.8', t: 'Число за дробом', d: 'm/n числа — b: ділимо b на чисельник і множимо на знаменник.' },
+            ];
+            const GROUPS = [['Що таке дріб', 8], ['Дії з дробами', 178], ['Мішані числа', 348], ['Дріб і число', 518]];
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach(([name, x], g) => {
+                    const n = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="155" height="${38 + n * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}" style="stroke:none">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = GROUPS[tp.g][1] + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="139" height="40" rx="8"/>`
+                         + `<text x="${x + 69.5}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k];
+                document.getElementById('map-info').innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+            };
+
+            // --- Слайд 4: яке правило потрібне ---
+            const WHICH = [
+                ['Що важче: 5/9 кг цукерок чи 7/9 кг печива?', 'Порівняння (однакові знаменники): 7 > 5, печиво важче'],
+                ['Було 7/8 л соку, випили 3/8 л. Скільки лишилося?', 'Віднімання дробів: 7/8 − 3/8 = 4/8 л'],
+                ['Скільки цілих піц у 17/4 піци?', 'Неправильний дріб → мішане число: 17/4 = 4 1/4, тож 4 цілі'],
+                ['У класі 32 учні, 3/8 з них — хлопці. Скільки хлопців?', 'Дріб від числа: 32 : 8 · 3 = 12'],
+                ['12 хлопців — це 3/8 класу. Скільки учнів у класі?', 'Число за дробом: 12 : 3 · 8 = 32'],
+                ['Пройшли 2 3/4 км, потім ще 1 2/4 км. Скільки разом?', 'Додавання мішаних: 3 5/4 = 4 1/4 км'],
+            ];
+            window.renderWhich = function () {
+                document.getElementById('which-list').innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+            };
+
+            // --- Слайд 5: змішані задачі покроково ---
+            const TASKS = [
+                { task: 'Торт розрізали на 12 рівних шматків. Оля з\'їла 1/4 торта, Тарас — 5/12 торта. Яка частина торта лишилася?',
+                  lines: ['1/4 від 12 шматків: 12 : 4 = 3 шматки, тобто 3/12 торта.', 'Разом з\'їли: 3/12 + 5/12 = 8/12.', 'Увесь торт — 12/12.', 'Лишилося: 12/12 − 8/12 = 4/12.', 'Відповідь: 4/12 торта (4 шматки).'] },
+                { task: 'Першого дня велосипедист проїхав 3/8 маршруту — 24 км, а другого — 2/5 решти. Скільки кілометрів йому лишилося?',
+                  lines: ['Відома частина — шукаємо число за дробом: 24 : 3 · 8 = 64 км — увесь маршрут.', 'Решта після першого дня: 64 − 24 = 40 км.', 'Другого дня — дріб від числа: 40 : 5 · 2 = 16 км.', 'Лишилося: 40 − 16 = 24 км.', 'Відповідь: 24 км.'] },
+            ];
+            let taskIndex = 0, shownSol = 0;
+            window.renderSolution = function () {
+                const T = TASKS[taskIndex];
+                document.getElementById('sol-task').textContent = T.task;
+                const box = document.getElementById('sol-lines');
+                box.innerHTML = '';
+                T.lines.slice(0, shownSol).forEach(l => { const d = document.createElement('div'); d.className = 'sol-line'; d.textContent = l; box.appendChild(d); });
+            };
+            window.solStep = function () { shownSol = Math.min(shownSol + 1, TASKS[taskIndex].lines.length); renderSolution(); };
+            window.solReset = function () { shownSol = 0; renderSolution(); };
+            window.solNext = function () { taskIndex = (taskIndex + 1) % TASKS.length; shownSol = 0; renderSolution(); };
