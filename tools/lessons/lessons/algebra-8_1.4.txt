@@ -335,8 +335,8 @@
                 const x = parseInt(document.getElementById('x-val').value, 10);
                 document.getElementById('x-val-out').textContent = String(x).replace('-', '−');
                 const out = document.getElementById('ab-readout'), v = valueAt(x);
-                out.innerHTML = !shownNow ? `$x = ${x}$: $\;A = \\,?$, $\;B = \\,?$`
-                    : v.A !== null ? `$x = ${x}$: $\;A = ${v.A}$, $\;B = ${v.B}$ — <span class="ok">рівні ✓</span>`
+                out.innerHTML = !shownNow ? `$x = ${x}$: $\\;A = \\,?$, $\\;B = \\,?$`
+                    : v.A !== null ? `$x = ${x}$: $\\;A = ${v.A}$, $\\;B = ${v.B}$ — <span class="ok">рівні ✓</span>`
                         : `$x = ${x}$: <span class="bad">$A$ не має змісту</span> (знаменник $0$), а $B = ${v.B}$`;
                 typeset(out);
                 const keys = Object.keys(checks).map(Number).sort((p, q) => p - q);
