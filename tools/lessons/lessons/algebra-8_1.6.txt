@@ -1,0 +1,362 @@
+@@TITLE Раціональні рівняння
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+
+        /* Таблиця з відповідями за кліком */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table td.nm { color: var(--warning-red); font-size: 0.9rem; }
+        .val-table td.yes { color: var(--brand-green); }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+        .cand { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+        .cand .btn-secondary { min-width: 52px; font-size: 1.05rem; }
+        .cand .btn-secondary.done { background: var(--brand-blue); color: #fff; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">За скільки годин упорається другий? ⏱️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Перший майстер фарбує паркан за $6$ год. Разом із другим вони впоралися за $4$ год.</p>
+                    <p class="big-question">За скільки годин пофарбував би паркан другий майстер сам?</p>
+                    <p>Якщо другий фарбує за $x$ год, то за годину він робить $\dfrac{1}{x}$ роботи. Виходить рівняння зі змінною в знаменнику.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися відповідь</button></p>
+                </div>
+                <div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">За $12$ годин</div>
+                        <p class="big-formula">$\dfrac{1}{6} + \dfrac{1}{x} = \dfrac{1}{4}$</p>
+                        <p>$\dfrac{1}{x} = \dfrac{1}{4} - \dfrac{1}{6} = \dfrac{1}{12}$, тож $x = 12$. Це <b>раціональне рівняння</b> — сьогодні навчимося розв'язувати такі рівняння й не потрапляти в їхні пастки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Цілі й дробові рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Раціональне рівняння</b> — рівняння, обидві частини якого — раціональні вирази.</p>
+                        <p><b>Ціле</b> — без ділення на вираз зі змінною: $\dfrac{x}{3} + 2 = x$. <b>Дробове</b> — є змінна в знаменнику: $\dfrac{5}{x - 1} = 2$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Головне правило</div>
+                        <p class="big-formula">$\dfrac{A}{B} = 0 \iff A = 0$ і $B \ne 0$</p>
+                        <p>Дріб дорівнює нулю, коли нулю дорівнює чисельник, а знаменник — ні.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні визначають вид рівняння, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Рівняння</th><th>Вид</th></tr>
+                        <tr><th>$\dfrac{x - 1}{2} = \dfrac{x}{5}$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">ціле</span><span class="q">?</span></td></tr>
+                        <tr><th>$\dfrac{3}{x} = x - 2$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">дробове</span><span class="q">?</span></td></tr>
+                        <tr><th>$\dfrac{x^2 - 1}{x + 1} = 0$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">дробове</span><span class="q">?</span></td></tr>
+                        <tr><th>$0{,}5x - \dfrac{x}{4} = 7$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">ціле</span><span class="q">?</span></td></tr>
+                    </table>
+                    <p class="eval-note">Ділення на число ($\dfrac{x}{5}$) — не робить рівняння дробовим. Важливо, чи є змінна в знаменнику.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Способи розв'язування</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">1. Звести до $\dfrac{A}{B} = 0$</div>
+                        <p>Перенести все в одну частину, звести до спільного знаменника, прирівняти чисельник до нуля й перевірити знаменник.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">2. Пропорція</div>
+                        <p>$\dfrac{a}{b} = \dfrac{c}{d} \Rightarrow ad = bc$ — за основною властивістю пропорції, якщо $b \ne 0$, $d \ne 0$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">3. Помножити на спільний знаменник</div>
+                        <p>Обидві частини множимо на спільний знаменник — отримуємо ціле рівняння.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Сторонні корені</div>
+                        <p>Ціле рівняння може мати корені, при яких знаменник дорівнює нулю. Вони <b>сторонні</b> — їх відкидаємо. Тому завжди записуємо ОДЗ або перевіряємо корені.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Звідки береться сторонній корінь 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="big-formula">$\dfrac{x^2}{x + 2} = \dfrac{4}{x + 2}$</p>
+                    <p>Помножимо на $x + 2$: $x^2 = 4$, тобто $(x - 2)(x + 2) = 0$, $x = 2$ або $x = -2$. Обидва корені підходять? Перевіримо підстановкою — клікайте на числа.</p>
+                    <div class="cand" id="cand-row"></div>
+                    <p class="readout" id="cand-readout"></p>
+                </div>
+                <div>
+                    <div class="math-widget">
+                        <table class="val-table" id="cand-table"></table>
+                    </div>
+                    <div class="box theorem hidden-answer" id="cand-verdict">
+                        <div class="box-title">Висновок</div>
+                        <p>$x = 2$ — корінь. $x = -2$ — <b>сторонній</b>: при ньому знаменник $x + 2 = 0$. Множення на $x + 2$ «додало» корінь, якого у дробового рівняння немає.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Розв'язуємо дробове рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Розкласти знаменники на множники, записати ОДЗ.</p>
+                    <p>2) Знайти спільний знаменник і помножити на нього обидві частини.</p>
+                    <p>3) Розв'язати ціле рівняння.</p>
+                    <p>4) Відкинути корені, що не входять в ОДЗ. Записати відповідь.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Розв'яжемо:</b> $\dfrac{3}{x - 2} - \dfrac{1}{x} = \dfrac{4}{x^2 - 2x}$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Пропорція і сторонній корінь</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Розв'яжіть $\dfrac{x + 1}{x - 2} = \dfrac{3}{2}$.</p>
+                    <div class="step">ОДЗ: $x \ne 2$. Пропорція: $2(x + 1) = 3(x - 2)$.</div>
+                    <div class="step">$2x + 2 = 3x - 6$, $x = 8$.</div>
+                    <div class="step">$8 \ne 2$ ✓. Перевірка: $\dfrac{9}{6} = \dfrac{3}{2}$. Відповідь: $8$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Розв'яжіть $\dfrac{x^2 - 3x}{x - 3} = 0$.</p>
+                    <div class="step">Чисельник: $x^2 - 3x = x(x - 3) = 0$, тож $x = 0$ або $x = 3$.</div>
+                    <div class="step">Знаменник: $x - 3 \ne 0$, тож $x = 3$ — сторонній.</div>
+                    <div class="step">Відповідь: $x = 0$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Забули про ОДЗ</div>
+                        <p>$\dfrac{x^2 - 9}{x + 3} = 0$: відповідь лише $x = 3$. Корінь $x = -3$ обертає знаменник на нуль.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Помножили не все</div>
+                        <p>Множимо на спільний знаменник <b>кожен</b> доданок обох частин, зокрема цілі числа: $\dfrac{2}{x} + 1 = 3 \Rightarrow 2 + x = 3x$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Знак перед дробом</div>
+                        <p>$\dfrac{x}{x - 1} - \dfrac{x + 1}{x - 1}$: чисельник $x - (x + 1) = -1$, а не $x - x + 1$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Ділили на змінну</div>
+                        <p>З $x(x - 5) = 3x$ не можна просто «скоротити» $x$ — загубиться корінь $x = 0$. Переносимо все вліво: $x(x - 8) = 0$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\dfrac{x - 5}{x + 2} = 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $5$ і $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) коренів немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Чисельник $x - 5 = 0$, $x = 5$; знаменник $5 + 2 \ne 0$ ✓. При $x = -2$ дріб не має змісту.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\dfrac{6}{x - 1} = \dfrac{3}{x + 1}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $-1$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>ОДЗ: $x \ne \pm 1$. Пропорція: $6(x + 1) = 3(x - 1)$, $6x + 6 = 3x - 3$, $3x = -9$, $x = -3$.</p>
+                            <p>В і Г не входять в ОДЗ.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $\dfrac{x^2 - 4x}{x - 4} = 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $0$ і $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) коренів немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x(x - 4) = 0$: $x = 0$ або $x = 4$. Але $x \ne 4$ (знаменник). Відповідь: $0$.</p>
+                            <p>В — не відкинули сторонній корінь.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{A}{B} = 0 \iff A = 0$, $B \ne 0$.</p>
+                    <p>Дробове рівняння — множимо на спільний знаменник і отримуємо ціле. Корені, при яких знаменник $= 0$, — сторонні.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>ОДЗ → спільний знаменник → ціле рівняння → відкинути сторонні корені → відповідь.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Не перевірили ОДЗ — у відповідь потрапив сторонній корінь.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderCand();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+            // Нескоротний дріб p/q у TeX (знак — перед дробом)
+            function fracTex(p, q) {
+                if (q < 0) { p = -p; q = -q; }
+                const g = gcd(Math.abs(p), q) || 1;
+                p /= g; q /= g;
+                if (q === 1) return String(p);
+                return (p < 0 ? '-' : '') + `\\dfrac{${Math.abs(p)}}{${q}}`;
+            }
+
+            // --- Слайд 2: клік по «?» відкриває відповідь ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 4: перевірка кандидатів у x²/(x+2) = 4/(x+2) ---
+            const CANDS = [-3, -2, -1, 0, 1, 2, 3];
+            let checked = {};
+            window.checkCand = function (x) {
+                checked[x] = true;
+                renderCand();
+                const out = document.getElementById('cand-readout');
+                out.innerHTML = x === -2 ? `$x = -2$: <span class="bad">знаменник $x + 2 = 0$ — рівняння не має змісту</span>`
+                    : x === 2 ? `$x = 2$: $\\dfrac{4}{4} = \\dfrac{4}{4}$ — <span class="ok">корінь ✓</span>`
+                        : `$x = ${x}$: $${fracTex(x * x, x + 2)} \\ne ${fracTex(4, x + 2)}$ — не корінь`;
+                typeset(out);
+                if (checked[2] && checked[-2]) document.getElementById('cand-verdict').classList.add('shown');
+            };
+            window.renderCand = function () {
+                document.getElementById('cand-row').innerHTML = CANDS.map(x => `<button class="btn-secondary${checked[x] ? ' done' : ''}" onclick="checkCand(${x})">${String(x).replace('-', '−')}</button>`).join('');
+                const keys = CANDS.filter(x => checked[x]);
+                const table = document.getElementById('cand-table');
+                table.innerHTML = '<tr><th>$x$</th><th>ліва частина</th><th>права частина</th></tr>' + (keys.length ? keys.map(x => x === -2
+                    ? `<tr><th>$${x}$</th><td class="nm" colspan="2">не має змісту</td></tr>`
+                    : `<tr><th>$${x}$</th><td${x === 2 ? ' class="yes"' : ''}>$${fracTex(x * x, x + 2)}$</td><td${x === 2 ? ' class="yes"' : ''}>$${fracTex(4, x + 2)}$</td></tr>`).join('')
+                    : '<tr><td colspan="3">перевірок ще немає</td></tr>');
+                typeset(table);
+            };
+
+            // --- Слайд 5: 3/(x−2) − 1/x = 4/(x² − 2x) ---
+            const STEPS = [
+                ['$x^2 - 2x = x(x - 2)$. ОДЗ: [[$x \\ne 0$, $x \\ne 2$]]', 'Крок 1: розкладаємо знаменник, усі знаменники не нуль'],
+                ['Множимо на $x(x - 2)$: [[$3x - (x - 2) = 4$]]', 'Крок 2: кожен дріб скорочується; дужки після мінуса — обов\'язково'],
+                ['$3x - x + 2 = 4$, $2x = 2$, [[$x = 1$]]', 'Крок 3: розв\'язуємо лінійне рівняння'],
+                ['$1 \\ne 0$, $1 \\ne 2$ — входить в ОДЗ. Відповідь: [[$x = 1$]]', 'Крок 4: перевірка: $\\dfrac{3}{-1} - 1 = -4 = \\dfrac{4}{-1}$ ✓'],
+            ];
+@@INCLUDE steps.js
