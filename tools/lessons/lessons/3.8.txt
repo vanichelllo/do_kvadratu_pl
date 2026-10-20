@@ -1,0 +1,321 @@
+@@TITLE Знаходження числа за його дробом
+@@CSS
+@@INCLUDE steps.css
+        /* Смужки з частинами */
+        .strip-a { fill: var(--brand-green); fill-opacity: 0.55; }
+        .strip-q { fill: var(--brand-yellow); fill-opacity: 0.45; }
+        .strip-cell { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 400px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки сторінок у книжці? 📖</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я прочитала $24$ сторінки — це $\dfrac{3}{8}$ книжки.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> Тоді в книжці $24 : 8 \cdot 3 = 9$ сторінок!</div>
+                    <p class="big-question">Чи правий Тарас? Подумай, а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Ні! У книжці $64$ сторінки 🎉</div>
+                        <p>$24$ сторінки — це $3$ частини з $8$. Одна частина: $24 : 3 = 8$ сторінок. Уся книжка — $8$ частин: $8 \cdot 8 = 64$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" id="book-1" role="img" aria-label="Смужка з 8 частин, 3 частини — 24 сторінки"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Відновлюємо ціле за частиною 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Відомо, скільки становлять кілька частин. Яке все число? Учні кажуть відповідь — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">Знаменник</label><input type="range" id="w-n" min="2" max="8" step="1" value="5" oninput="renderWhole()"><span id="w-n-val">5</span></div>
+                    <div class="slider-control"><label for="w-m">Чисельник</label><input type="range" id="w-m" min="1" max="8" step="1" value="2" oninput="renderWhole()"><span id="w-m-val">2</span></div>
+                    <div class="slider-control"><label for="w-k">В одній частині</label><input type="range" id="w-k" min="1" max="12" step="1" value="7" oninput="renderWhole()"><span id="w-k-val">7</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealWhole()">Знайти все число</button></p>
+                    <div class="hidden-answer" id="whole-answer"><div class="readout" id="whole-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" id="whole-scene" role="img" aria-label="Смужка: відома кількість частин і їхня сума"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як знайти число за його дробом</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо $\dfrac{m}{n}$ числа дорівнюють $b$, то:</p>
+                    <p>1) ділимо $b$ на <b>чисельник</b> $m$ — знайдемо одну частину;</p>
+                    <p>2) множимо результат на <b>знаменник</b> $n$ — знайдемо все число.</p>
+                    <p>$\dfrac{3}{8}$ книжки — $24$ сторінки: $\;24 : 3 \cdot 8 = 64$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Не переплутай ⭐</div>
+                    <p><b>Дріб від числа</b> (ціле відоме): $\;a : n \cdot m$.</p>
+                    <p><b>Число за дробом</b> (відома частина): $\;b : m \cdot n$.</p>
+                    <p>Ціле більше за свою частину (якщо дріб правильний).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скільки грошей було в Тараса? ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Тарас витратив на книжку $45$ грн — це $\dfrac{3}{7}$ його грошей. Скільки грошей було в Тараса?</p>
+                    </div>
+                    <svg viewBox="0 0 400 140" class="mini-fig" id="task-scene" role="img" aria-label="Смужка з 7 частин, 3 частини — 45 грн"></svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: яке число відоме? ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$\dfrac{2}{3}$ класу — $18$ учнів. Скільки учнів у класі? $\;18 : 3 \cdot 2 = 12$? <b>Ні!</b> Тут $18$ — це частина, а не весь клас.</p>
+                        <p>Правильно: $18 : 2 \cdot 3 = 27$ учнів.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Спитай себе: відоме <b>ціле</b> чи <b>частина</b>? Перевір: $\dfrac{2}{3}$ від $27$ — $27 : 3 \cdot 2 = 18$ ✓.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" id="trap-scene" role="img" aria-label="Смужка з 3 частин, 2 частини — 18 учнів, увесь клас — 27"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. $\dfrac{1}{5}$ числа дорівнює $7$. Знайди число.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $35$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $12$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $2$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Одна частина — $7$. А всього частин — $5$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$7 \cdot 5 = 35$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. $\dfrac{3}{4}$ числа дорівнюють $30$. Знайди число.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $22$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $40$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $10$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Три частини — $30$. Скільки в одній?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$30 : 3 = 10$, $\;10 \cdot 4 = 40$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Оля пройшла $600$ м — це $\dfrac{2}{3}$ шляху до школи. Яка довжина всього шляху?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $900$ м</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $400$ м</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $1800$ м</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$600$ м — це частина шляху, весь шлях довший.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$600 : 2 \cdot 3 = 900$ м.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. У саду $40$ дерев, $\dfrac{3}{8}$ з них — яблуні. Як знайти кількість яблунь?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $40 : 3 \cdot 8$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $40 : 8 \cdot 3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $40 \cdot 8 : 3$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Тут відоме ціле — усі дерева. Шукаємо дріб від числа.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Ціле відоме — шукаємо дріб від числа: $40 : 8 \cdot 3 = 15$ яблунь.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{m}{n}$ числа дорівнюють $b$ — число дорівнює $b : m \cdot n$.</p>
+                    <p>Ділимо на чисельник — одна частина; множимо на знаменник — усі частини.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$45$ грн — це $\dfrac{3}{7}$ грошей: $\;45 : 3 \cdot 7 = 105$ грн.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Відоме ціле — $a : n \cdot m$; відома частина — $b : m \cdot n$. Шукане ціле більше за свою частину.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderBook1();
+                if (currentSlide === 2) renderWhole();
+                if (currentSlide === 4) { renderTaskFig(); renderEval(); }
+                if (currentSlide === 5) renderTrapFig();
+@@JS
+            // Смужка з n частин: перші m зелені, решта — жовті (якщо rest) або порожні; vals — підписи частин
+            function stripSvg(x, y, w, h, n, m, rest, vals) {
+                let svg = '';
+                for (let k = 0; k < n; k++) {
+                    const cx = x + k * w / n, cw = w / n;
+                    svg += `<rect x="${cx.toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${h}" class="strip-cell"/>`;
+                    const cls = k < m ? 'strip-a' : (rest ? 'strip-q' : '');
+                    if (cls) svg += `<rect x="${cx.toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${h}" class="${cls}" style="stroke:var(--text-dark);stroke-width:2"/>`;
+                    if (vals) svg += `<text x="${(cx + cw / 2).toFixed(1)}" y="${y + h / 2 + 5}" class="svg-caption">${vals}</text>`;
+                }
+                return svg;
+            }
+            // Фігурна дужка над відрізком [x1; x2] (up) або під ним, з підписом
+            function brace(x1, x2, y, up, text, col) {
+                const d = up ? -10 : 10, mid = (x1 + x2) / 2;
+                return `<path d="M${x1} ${y} q0 ${d} 10 ${d} L${mid - 8} ${y + d} q8 0 8 ${d} q0 ${-d} 8 ${-d} L${x2 - 10} ${y + d} q10 0 10 ${-d}" class="brace" style="stroke:${col}"/>`
+                    + `<text x="${mid}" y="${up ? y + 2 * d - 6 : y + 2 * d + 16}" class="svg-caption" style="fill:${col};font-size:17px">${text}</text>`;
+            }
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            // --- Слайд 1: 3/8 книжки — 24 сторінки ---
+            window.renderBook1 = function () {
+                const x = 20, w = 360, n = 8;
+                document.getElementById('book-1').innerHTML = brace(x, x + 3 * w / n, 70, true, '24 стор.', 'var(--brand-green)')
+                    + stripSvg(x, 76, w, 46, n, 3, false, '')
+                    + brace(x, x + w, 128, false, 'уся книжка — ?', 'currentColor');
+            };
+
+            // --- Слайд 2: число за дробом ---
+            function wholeVals() {
+                const n = parseInt(document.getElementById('w-n').value, 10) || 2, M = document.getElementById('w-m');
+                M.max = n - 1; if (parseInt(M.value, 10) > n - 1) M.value = n - 1;
+                return [n, parseInt(M.value, 10) || 1, parseInt(document.getElementById('w-k').value, 10) || 1];
+            }
+            function wholeScene(n, m, k, show) {
+                const x = 20, w = 360;
+                return brace(x, x + m * w / n, 70, true, `${m}/${n} — це ${m * k}`, 'var(--brand-green)')
+                    + stripSvg(x, 76, w, 46, n, m, show, show ? k : '')
+                    + brace(x, x + w, 128, false, show ? `усе число — ${n * k}` : 'усе число — ?', 'currentColor');
+            }
+            window.renderWhole = function () {
+                const [n, m, k] = wholeVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-k-val').textContent = k;
+                document.getElementById('whole-answer').classList.remove('shown');
+                document.getElementById('whole-scene').innerHTML = wholeScene(n, m, k, false);
+            };
+            window.revealWhole = function () {
+                const [n, m, k] = wholeVals(), out = document.getElementById('whole-text');
+                document.getElementById('whole-scene').innerHTML = wholeScene(n, m, k, true);
+                out.innerHTML = `$${m * k} : ${m} = ${k}$ — одна частина; $\\;${k} \\cdot ${n} = ${n * k}$ — усе число.`;
+                document.getElementById('whole-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 4: 3/7 грошей — 45 грн ---
+            window.renderTaskFig = function () {
+                const x = 20, w = 360, n = 7;
+                document.getElementById('task-scene').innerHTML = brace(x, x + 3 * w / n, 44, true, '45 грн', 'var(--brand-green)')
+                    + stripSvg(x, 50, w, 40, n, 3, false, '')
+                    + brace(x, x + w, 96, false, 'усі гроші — ?', 'currentColor');
+            };
+
+            // --- Слайд 5: 2/3 класу — 18 учнів ---
+            window.renderTrapFig = function () {
+                const x = 40, w = 320, n = 3;
+                document.getElementById('trap-scene').innerHTML = brace(x, x + 2 * w / n, 64, true, '18 учнів — частина', 'var(--brand-green)')
+                    + stripSvg(x, 70, w, 46, n, 2, true, 9)
+                    + brace(x, x + w, 122, false, 'увесь клас — 27, а не 12', 'currentColor');
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$45$ грн — це $3$ частини з $7$.', 'Відома частина, а шукаємо все число'],
+                ['Одна частина: $45 : 3 = $ [[$15$]] грн.', 'Ділимо на чисельник'],
+                ['Усі гроші: $15 \\cdot 7 = $ [[$105$]] грн.', 'Множимо на знаменник'],
+                ['Відповідь: у Тараса було $105$ грн.', 'Перевірка: $\\dfrac{3}{7}$ від $105$ — $105 : 7 \\cdot 3 = 45$ ✓'],
+            ];
+@@INCLUDE steps.js
