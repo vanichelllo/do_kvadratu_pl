@@ -537,7 +537,9 @@
             window.renderTrapFig = function () {
                 const p8 = ['strip-a', 'strip-a', 'strip-b', 'strip-b', 'strip-b'], p16 = [];
                 for (let k = 0; k < 5; k++) p16[k] = 'strip-gone';
-                document.getElementById('trap-scene').innerHTML = HATCH + stripCells(20, 30, 300, 50, 8, p8) + stripCells(20, 120, 300, 50, 16, p16)
+                // Свій id візерунка: візерунок зі слайда 2 на прихованому слайді не малюється
+                document.getElementById('trap-scene').innerHTML = HATCH.replace('id="hatch"', 'id="hatch-trap"') + stripCells(20, 30, 300, 50, 8, p8)
+                    + stripCells(20, 120, 300, 50, 16, p16).replace(/class="strip-gone" style="/g, 'class="strip-gone" style="fill:url(#hatch-trap);')
                     + lbl(372, 64, '5/8 ✓', 'var(--brand-green)') + lbl(372, 154, '5/16 ✗', 'var(--warning-red)')
                     + `<text x="170" y="195" class="svg-caption">5/16 — менше за 3/8: так не буває!</text>`;
             };

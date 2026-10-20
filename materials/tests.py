@@ -1894,6 +1894,13 @@ class GamesTests(BaseTestCase):
         self.assertFalse(short_answer_matches('0.51', '0.5'))
         self.assertFalse(short_answer_matches('', '0'))
         self.assertTrue(short_answer_matches('Так', 'так'))
+        # Мішане число: «2 3/5» = 13/5, а не 23/5
+        self.assertTrue(short_answer_matches('2 3/5', '13/5'))
+        self.assertTrue(short_answer_matches('13/5', '2 3/5'))
+        self.assertFalse(short_answer_matches('2 3/5', '23/5'))
+        self.assertTrue(short_answer_matches('−1 1/2', '-3/2'))
+        self.assertTrue(short_answer_matches('2 3/4 кг', '11/4'))
+        self.assertTrue(short_answer_matches('1 000', '1000'))
 
     def test_answer_is_checked_on_server_and_mistakes_are_tracked(self):
         q, right, wrong = self.choice(self.free)
