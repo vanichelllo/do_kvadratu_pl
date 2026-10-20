@@ -1,0 +1,346 @@
+@@TITLE Множення дробів
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        /* Дроби на піці й смужках */
+        .cell.empty { fill: var(--card-bg); }
+        .cell.blue { fill: var(--brand-blue); fill-opacity: 0.5; }
+        .cell.green { fill: var(--brand-green); fill-opacity: 0.5; }
+        .cell.red { fill: var(--warning-red); fill-opacity: 0.45; }
+        .cut-main { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+        .cut-new { stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 4 3; }
+        .frame { fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .crust { fill: none; stroke: var(--brand-yellow); stroke-width: 7; }
+        .fr-t { fill: currentColor; font-weight: 800; text-anchor: middle; }
+        .fr-bar { stroke: currentColor; stroke-width: 2.5; }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .who-name { font-size: 20px; font-weight: 800; text-anchor: end; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .slider-control label { font-weight: 800; min-width: 170px; }
+        .grid-cell { stroke: var(--text-dark); stroke-width: 1; fill: var(--card-bg); }
+        .row-on { fill: var(--brand-green); fill-opacity: 0.35; }
+        .col-on { fill: var(--brand-blue); fill-opacity: 0.35; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 420px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки шоколадки з'їв Тарас? 🍫</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я дала тобі $\dfrac{3}{4}$ плитки шоколаду.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я з'їв $\dfrac{2}{3}$ того, що ти дала. Мабуть, це $\dfrac{2}{3} + \dfrac{3}{4}$ плитки?</div>
+                    <p class="big-question">Яку частину всієї плитки з'їв Тарас? Подумай, а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealChoc()">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Половину плитки! 🎉</div>
+                        <p>«$\dfrac{2}{3}$ від $\dfrac{3}{4}$» — це множення: $\dfrac{2}{3} \cdot \dfrac{3}{4} = \dfrac{6}{12} = \dfrac{1}{2}$. На рисунку — $6$ клітинок із $12$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="choc-scene" role="img" aria-label="Плитка 3 на 4: зафарбовано 3/4, з них 2/3"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Дріб від дробу на прямокутнику 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Сині стовпчики — перший дріб, зелені рядки — другий. Там, де вони перетинаються, — добуток. Учні рахують клітинки — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-b">1-й: на скільки частин</label><input type="range" id="w-b" min="2" max="6" step="1" value="4" oninput="renderArea()"><span id="w-b-val">4</span></div>
+                    <div class="slider-control"><label for="w-a">1-й: скільки беремо</label><input type="range" id="w-a" min="1" max="5" step="1" value="3" oninput="renderArea()"><span id="w-a-val">3</span></div>
+                    <div class="slider-control"><label for="w-d">2-й: на скільки частин</label><input type="range" id="w-d" min="2" max="6" step="1" value="3" oninput="renderArea()"><span id="w-d-val">3</span></div>
+                    <div class="slider-control"><label for="w-c">2-й: скільки беремо</label><input type="range" id="w-c" min="1" max="5" step="1" value="2" oninput="renderArea()"><span id="w-c-val">2</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealArea()">Скільки вийшло?</button></p>
+                    <div class="hidden-answer" id="area-answer"><div class="readout" id="area-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="area-scene" role="img" aria-label="Прямокутник-ціле, поділений на стовпчики й рядки; перетин — добуток дробів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як множити дроби</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Чисельник множимо на чисельник, знаменник — на знаменник:</p>
+                    <p style="text-align:center;font-size:1.25rem">$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{a \cdot c}{b \cdot d}$</p>
+                    <p>Спільний знаменник шукати <b>не треба</b>. Скорочуємо ще до множення — так числа менші.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Особливі випадки</div>
+                    <p>Дріб на натуральне число: $\dfrac{3}{8} \cdot 4 = \dfrac{3 \cdot 4}{8} = \dfrac{3}{2}$.</p>
+                    <p>Мішані числа — спершу в неправильні дроби: $2\dfrac{1}{3} \cdot 1\dfrac{1}{2} = \dfrac{7}{3} \cdot \dfrac{3}{2} = \dfrac{7}{2}$.</p>
+                    <p>«$\dfrac{2}{3}$ від числа» — це множення на $\dfrac{2}{3}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скорочуємо ще до множення ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задача</div>
+                    <p>Обчисли: $\dfrac{4}{9} \cdot \dfrac{15}{16}$. Потім обчисли $2\dfrac{1}{3} \cdot 1\dfrac{1}{2}$.</p>
+                    <p>Підказка: шукай спільні дільники «навхрест» — чисельника одного дробу і знаменника іншого.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: мішане число множимо повністю ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$2\dfrac{1}{3} \cdot 3 = 6\dfrac{1}{3}$? <b>Ні!</b> На $3$ треба помножити і цілу частину, і дробову.</p>
+                        <p>Правильно: $\dfrac{7}{3} \cdot 3 = 7$. Або: $2 \cdot 3 + \dfrac{1}{3} \cdot 3 = 6 + 1 = 7$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Мішане число — завжди спершу в неправильний дріб. Помилитися значно важче.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 220" id="trap-scene" role="img" aria-label="Три смужки по 2 і 1/3: разом 7 цілих"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $\dfrac{2}{5} \cdot \dfrac{3}{7}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\dfrac{6}{35}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{5}{12}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{6}{12}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Множимо чисельники і знаменники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{2 \cdot 3}{5 \cdot 7} = \dfrac{6}{35}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $\dfrac{3}{8} \cdot 4$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{12}{32}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $1\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{3}{32}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>На натуральне число множимо лише чисельник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$\dfrac{3 \cdot 4}{8} = \dfrac{12}{8} = \dfrac{3}{2} = 1\dfrac{1}{2}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли: $\dfrac{5}{6} \cdot \dfrac{9}{10}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $\dfrac{3}{4}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{14}{16}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{5}{9}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скороти навхрест: $5$ і $10$, $9$ і $6$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{5 \cdot 9}{6 \cdot 10} = \dfrac{1 \cdot 3}{2 \cdot 2} = \dfrac{3}{4}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли: $1\dfrac{1}{2} \cdot 2\dfrac{2}{3}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $2\dfrac{1}{3}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $2\dfrac{2}{6}$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Спершу — неправильні дроби.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\dfrac{3}{2} \cdot \dfrac{8}{3} = \dfrac{24}{6} = 4$. А $2\dfrac{2}{6}$ — це перемножили окремо цілі й дробові частини.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{ac}{bd}$; спільний знаменник не потрібен.</p>
+                    <p>Скорочуй навхрест до множення; мішані числа — у неправильні дроби.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$\dfrac{4}{9} \cdot \dfrac{15}{16} = \dfrac{1 \cdot 5}{3 \cdot 4} = \dfrac{5}{12}$; $\;2\dfrac{1}{3} \cdot 1\dfrac{1}{2} = \dfrac{7}{3} \cdot \dfrac{3}{2} = 3\dfrac{1}{2}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$2\dfrac{1}{3} \cdot 3 = 7$, а не $6\dfrac{1}{3}$: множимо все мішане число.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderChoc();
+                if (currentSlide === 2) renderArea();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+
+            // --- Спільне: MathJax, дріб у SVG і смужка з частинами ---
+                        // Дріб у SVG: чисельник над рискою (MathJax у <text> не працює); y — рівень риски
+            function fracSvg(x, y, a, b, color, size = 22) {
+                const fill = color ? `;fill:${color}` : '', stroke = color ? ` style="stroke:${color}"` : '';
+                const half = String(Math.max(a, b)).length * size * 0.3 + 5;
+                return `<text x="${x}" y="${y - size * 0.3}" class="fr-t" style="font-size:${size}px${fill}">${a}</text>`
+                     + `<line x1="${x - half}" y1="${y}" x2="${x + half}" y2="${y}" class="fr-bar"${stroke}/>`
+                     + `<text x="${x}" y="${y + size * 1.05}" class="fr-t" style="font-size:${size}px${fill}">${b}</text>`;
+            }
+            // Смужка з b частин, кожну з яких поділено ще на k; зафарбовано m дрібних частин
+            function stripSvg(m, b, k, x0, y, w, h, color) {
+                const n = b * k, cw = w / n;
+                let s = `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="cell empty"/>`
+                      + `<rect x="${x0}" y="${y}" width="${m * cw}" height="${h}" class="cell ${color}"/>`;
+                for (let i = 1; i < n; i++) {
+                    const x = x0 + i * cw;
+                    s += i % k ? `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" class="cut-new"/>`
+                               : `<line x1="${x}" y1="${y - 6}" x2="${x}" y2="${y + h + 6}" class="cut-main"/>`;
+                }
+                return s + `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="frame"/>`;
+            }
+
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            const fr = (a, b) => `\\dfrac{${a}}{${b}}`;
+            // Модель площі: ціле — прямокутник; b стовпчиків (a синіх), d рядків (c зелених)
+            function areaSvg(a, b, c, d, x0, y0, W, H, showRows) {
+                const cw = W / b, rh = H / d;
+                let s = '';
+                for (let i = 0; i < b; i++) for (let j = 0; j < d; j++) {
+                    const x = x0 + i * cw, y = y0 + j * rh;
+                    s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="grid-cell"/>`;
+                    if (i < a) s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="col-on"/>`;
+                    if (showRows && i < a && j < c) s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="row-on"/>`;
+                }
+                return s + `<rect x="${x0}" y="${y0}" width="${W}" height="${H}" class="frame"/>`;
+            }
+
+            // --- Слайд 1: 2/3 від 3/4 ---
+            let chocShown = false;
+            window.renderChoc = function () {
+                document.getElementById('choc-scene').innerHTML = areaSvg(3, 4, chocShown ? 2 : 0, 3, 50, 20, 320, 210, chocShown)
+                    + `<text x="210" y="252" class="svg-caption">${chocShown ? 'зелені — 6 з 12 клітинок = 1/2 плитки' : 'сині — 3/4 плитки, які дала Оля'}</text>`;
+            };
+            window.revealChoc = function () { chocShown = true; renderChoc(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: модель площі ---
+            function areaVals() {
+                const ids = ['w-a', 'w-b', 'w-c', 'w-d'], el = ids.map(i => document.getElementById(i));
+                const b = parseInt(el[1].value, 10), d = parseInt(el[3].value, 10);
+                el[0].max = b - 1; if (parseInt(el[0].value, 10) > b - 1) el[0].value = b - 1;
+                el[2].max = d - 1; if (parseInt(el[2].value, 10) > d - 1) el[2].value = d - 1;
+                return [parseInt(el[0].value, 10), b, parseInt(el[2].value, 10), d];
+            }
+            window.renderArea = function () {
+                const [a, b, c, d] = areaVals();
+                ['a', 'b', 'c', 'd'].forEach((k, i) => { document.getElementById(`w-${k}-val`).textContent = [a, b, c, d][i]; });
+                document.getElementById('area-answer').classList.remove('shown');
+                document.getElementById('area-scene').innerHTML = areaSvg(a, b, c, d, 60, 20, 300, 240, true)
+                    + fracSvg(30, 150, c, d, 'var(--brand-green)', 18) + fracSvg(210, 286, a, b, 'var(--brand-blue)', 14);
+            };
+            window.revealArea = function () {
+                const [a, b, c, d] = areaVals(), out = document.getElementById('area-text'), g = gcd(a * c, b * d);
+                out.innerHTML = `$${fr(c, d)} \\cdot ${fr(a, b)} = ${fr(a * c, b * d)}$` + (g > 1 ? `$\; = ${fr(a * c / g, b * d / g)}$` : '')
+                    + ` — ${a * c} клітинок із ${b * d}.`;
+                document.getElementById('area-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 5: 2 1/3 · 3 = 7 ---
+            window.renderTrap = function () {
+                // Три рядки по 2 1/3: дві цілі смужки (по 3 третини) і ще одна третина
+                let svg = '';
+                for (let k = 0; k < 3; k++) {
+                    const y = 18 + k * 56;
+                    svg += stripSvg(3, 3, 1, 30, y, 120, 36, 'blue') + stripSvg(3, 3, 1, 160, y, 120, 36, 'blue')
+                         + `<rect x="290" y="${y}" width="40" height="36" class="cell green"/><rect x="290" y="${y}" width="40" height="36" class="frame"/>`;
+                }
+                document.getElementById('trap-scene').innerHTML = svg
+                    + `<text x="390" y="70" class="svg-caption ok-text" style="text-anchor:middle">3 третини</text><text x="390" y="92" class="svg-caption ok-text">= 1 ціла</text>`
+                    + `<text x="220" y="208" class="svg-caption">6 цілих + 1 ціла = 7, а не 6 1/3</text>`;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$\\dfrac{4}{9} \\cdot \\dfrac{15}{16} = \\dfrac{4 \\cdot 15}{9 \\cdot 16}$', 'Записуємо під однією рискою — ще не множимо!'],
+                ['Скорочуємо $4$ і $16$ на $4$, $15$ і $9$ на $3$: [[$\\dfrac{1 \\cdot 5}{3 \\cdot 4}$]]', 'Ділимо чисельник і знаменник на одне число'],
+                ['$= $ [[$\\dfrac{5}{12}$]]', 'Тепер множимо — числа маленькі'],
+                ['$2\\dfrac{1}{3} \\cdot 1\\dfrac{1}{2} = \\dfrac{7}{3} \\cdot \\dfrac{3}{2} = $ [[$\\dfrac{7}{2} = 3\\dfrac{1}{2}$]]', 'Мішані числа — у неправильні дроби; скоротили $3$'],
+            ];
+@@INCLUDE steps.js

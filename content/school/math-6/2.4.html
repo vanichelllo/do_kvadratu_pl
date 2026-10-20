@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Множення дробів | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        /* Дроби на піці й смужках */
+        .cell.empty { fill: var(--card-bg); }
+        .cell.blue { fill: var(--brand-blue); fill-opacity: 0.5; }
+        .cell.green { fill: var(--brand-green); fill-opacity: 0.5; }
+        .cell.red { fill: var(--warning-red); fill-opacity: 0.45; }
+        .cut-main { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+        .cut-new { stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 4 3; }
+        .frame { fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .crust { fill: none; stroke: var(--brand-yellow); stroke-width: 7; }
+        .fr-t { fill: currentColor; font-weight: 800; text-anchor: middle; }
+        .fr-bar { stroke: currentColor; stroke-width: 2.5; }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .who-name { font-size: 20px; font-weight: 800; text-anchor: end; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .slider-control label { font-weight: 800; min-width: 170px; }
+        .grid-cell { stroke: var(--text-dark); stroke-width: 1; fill: var(--card-bg); }
+        .row-on { fill: var(--brand-green); fill-opacity: 0.35; }
+        .col-on { fill: var(--brand-blue); fill-opacity: 0.35; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 420px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки шоколадки з'їв Тарас? 🍫</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я дала тобі $\dfrac{3}{4}$ плитки шоколаду.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я з'їв $\dfrac{2}{3}$ того, що ти дала. Мабуть, це $\dfrac{2}{3} + \dfrac{3}{4}$ плитки?</div>
+                    <p class="big-question">Яку частину всієї плитки з'їв Тарас? Подумай, а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealChoc()">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Половину плитки! 🎉</div>
+                        <p>«$\dfrac{2}{3}$ від $\dfrac{3}{4}$» — це множення: $\dfrac{2}{3} \cdot \dfrac{3}{4} = \dfrac{6}{12} = \dfrac{1}{2}$. На рисунку — $6$ клітинок із $12$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="choc-scene" role="img" aria-label="Плитка 3 на 4: зафарбовано 3/4, з них 2/3"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Дріб від дробу на прямокутнику 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Сині стовпчики — перший дріб, зелені рядки — другий. Там, де вони перетинаються, — добуток. Учні рахують клітинки — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-b">1-й: на скільки частин</label><input type="range" id="w-b" min="2" max="6" step="1" value="4" oninput="renderArea()"><span id="w-b-val">4</span></div>
+                    <div class="slider-control"><label for="w-a">1-й: скільки беремо</label><input type="range" id="w-a" min="1" max="5" step="1" value="3" oninput="renderArea()"><span id="w-a-val">3</span></div>
+                    <div class="slider-control"><label for="w-d">2-й: на скільки частин</label><input type="range" id="w-d" min="2" max="6" step="1" value="3" oninput="renderArea()"><span id="w-d-val">3</span></div>
+                    <div class="slider-control"><label for="w-c">2-й: скільки беремо</label><input type="range" id="w-c" min="1" max="5" step="1" value="2" oninput="renderArea()"><span id="w-c-val">2</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealArea()">Скільки вийшло?</button></p>
+                    <div class="hidden-answer" id="area-answer"><div class="readout" id="area-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="area-scene" role="img" aria-label="Прямокутник-ціле, поділений на стовпчики й рядки; перетин — добуток дробів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як множити дроби</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Чисельник множимо на чисельник, знаменник — на знаменник:</p>
+                    <p style="text-align:center;font-size:1.25rem">$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{a \cdot c}{b \cdot d}$</p>
+                    <p>Спільний знаменник шукати <b>не треба</b>. Скорочуємо ще до множення — так числа менші.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Особливі випадки</div>
+                    <p>Дріб на натуральне число: $\dfrac{3}{8} \cdot 4 = \dfrac{3 \cdot 4}{8} = \dfrac{3}{2}$.</p>
+                    <p>Мішані числа — спершу в неправильні дроби: $2\dfrac{1}{3} \cdot 1\dfrac{1}{2} = \dfrac{7}{3} \cdot \dfrac{3}{2} = \dfrac{7}{2}$.</p>
+                    <p>«$\dfrac{2}{3}$ від числа» — це множення на $\dfrac{2}{3}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скорочуємо ще до множення ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задача</div>
+                    <p>Обчисли: $\dfrac{4}{9} \cdot \dfrac{15}{16}$. Потім обчисли $2\dfrac{1}{3} \cdot 1\dfrac{1}{2}$.</p>
+                    <p>Підказка: шукай спільні дільники «навхрест» — чисельника одного дробу і знаменника іншого.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: мішане число множимо повністю ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$2\dfrac{1}{3} \cdot 3 = 6\dfrac{1}{3}$? <b>Ні!</b> На $3$ треба помножити і цілу частину, і дробову.</p>
+                        <p>Правильно: $\dfrac{7}{3} \cdot 3 = 7$. Або: $2 \cdot 3 + \dfrac{1}{3} \cdot 3 = 6 + 1 = 7$.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Мішане число — завжди спершу в неправильний дріб. Помилитися значно важче.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 220" id="trap-scene" role="img" aria-label="Три смужки по 2 і 1/3: разом 7 цілих"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Обчисли: $\dfrac{2}{5} \cdot \dfrac{3}{7}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\dfrac{6}{35}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{5}{12}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{6}{12}$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Множимо чисельники і знаменники.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{2 \cdot 3}{5 \cdot 7} = \dfrac{6}{35}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Обчисли: $\dfrac{3}{8} \cdot 4$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{12}{32}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $1\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{3}{32}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>На натуральне число множимо лише чисельник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$\dfrac{3 \cdot 4}{8} = \dfrac{12}{8} = \dfrac{3}{2} = 1\dfrac{1}{2}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Обчисли: $\dfrac{5}{6} \cdot \dfrac{9}{10}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $\dfrac{3}{4}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{14}{16}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{5}{9}$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скороти навхрест: $5$ і $10$, $9$ і $6$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{5 \cdot 9}{6 \cdot 10} = \dfrac{1 \cdot 3}{2 \cdot 2} = \dfrac{3}{4}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Обчисли: $1\dfrac{1}{2} \cdot 2\dfrac{2}{3}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $2\dfrac{1}{3}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $2\dfrac{2}{6}$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Спершу — неправильні дроби.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\dfrac{3}{2} \cdot \dfrac{8}{3} = \dfrac{24}{6} = 4$. А $2\dfrac{2}{6}$ — це перемножили окремо цілі й дробові частини.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{b} \cdot \dfrac{c}{d} = \dfrac{ac}{bd}$; спільний знаменник не потрібен.</p>
+                    <p>Скорочуй навхрест до множення; мішані числа — у неправильні дроби.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$\dfrac{4}{9} \cdot \dfrac{15}{16} = \dfrac{1 \cdot 5}{3 \cdot 4} = \dfrac{5}{12}$; $\;2\dfrac{1}{3} \cdot 1\dfrac{1}{2} = \dfrac{7}{3} \cdot \dfrac{3}{2} = 3\dfrac{1}{2}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$2\dfrac{1}{3} \cdot 3 = 7$, а не $6\dfrac{1}{3}$: множимо все мішане число.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderChoc();
+                if (currentSlide === 2) renderArea();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Спільне: MathJax, дріб у SVG і смужка з частинами ---
+                        // Дріб у SVG: чисельник над рискою (MathJax у <text> не працює); y — рівень риски
+            function fracSvg(x, y, a, b, color, size = 22) {
+                const fill = color ? `;fill:${color}` : '', stroke = color ? ` style="stroke:${color}"` : '';
+                const half = String(Math.max(a, b)).length * size * 0.3 + 5;
+                return `<text x="${x}" y="${y - size * 0.3}" class="fr-t" style="font-size:${size}px${fill}">${a}</text>`
+                     + `<line x1="${x - half}" y1="${y}" x2="${x + half}" y2="${y}" class="fr-bar"${stroke}/>`
+                     + `<text x="${x}" y="${y + size * 1.05}" class="fr-t" style="font-size:${size}px${fill}">${b}</text>`;
+            }
+            // Смужка з b частин, кожну з яких поділено ще на k; зафарбовано m дрібних частин
+            function stripSvg(m, b, k, x0, y, w, h, color) {
+                const n = b * k, cw = w / n;
+                let s = `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="cell empty"/>`
+                      + `<rect x="${x0}" y="${y}" width="${m * cw}" height="${h}" class="cell ${color}"/>`;
+                for (let i = 1; i < n; i++) {
+                    const x = x0 + i * cw;
+                    s += i % k ? `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" class="cut-new"/>`
+                               : `<line x1="${x}" y1="${y - 6}" x2="${x}" y2="${y + h + 6}" class="cut-main"/>`;
+                }
+                return s + `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="frame"/>`;
+            }
+
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            const fr = (a, b) => `\\dfrac{${a}}{${b}}`;
+            // Модель площі: ціле — прямокутник; b стовпчиків (a синіх), d рядків (c зелених)
+            function areaSvg(a, b, c, d, x0, y0, W, H, showRows) {
+                const cw = W / b, rh = H / d;
+                let s = '';
+                for (let i = 0; i < b; i++) for (let j = 0; j < d; j++) {
+                    const x = x0 + i * cw, y = y0 + j * rh;
+                    s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="grid-cell"/>`;
+                    if (i < a) s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="col-on"/>`;
+                    if (showRows && i < a && j < c) s += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${rh.toFixed(1)}" class="row-on"/>`;
+                }
+                return s + `<rect x="${x0}" y="${y0}" width="${W}" height="${H}" class="frame"/>`;
+            }
+
+            // --- Слайд 1: 2/3 від 3/4 ---
+            let chocShown = false;
+            window.renderChoc = function () {
+                document.getElementById('choc-scene').innerHTML = areaSvg(3, 4, chocShown ? 2 : 0, 3, 50, 20, 320, 210, chocShown)
+                    + `<text x="210" y="252" class="svg-caption">${chocShown ? 'зелені — 6 з 12 клітинок = 1/2 плитки' : 'сині — 3/4 плитки, які дала Оля'}</text>`;
+            };
+            window.revealChoc = function () { chocShown = true; renderChoc(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: модель площі ---
+            function areaVals() {
+                const ids = ['w-a', 'w-b', 'w-c', 'w-d'], el = ids.map(i => document.getElementById(i));
+                const b = parseInt(el[1].value, 10), d = parseInt(el[3].value, 10);
+                el[0].max = b - 1; if (parseInt(el[0].value, 10) > b - 1) el[0].value = b - 1;
+                el[2].max = d - 1; if (parseInt(el[2].value, 10) > d - 1) el[2].value = d - 1;
+                return [parseInt(el[0].value, 10), b, parseInt(el[2].value, 10), d];
+            }
+            window.renderArea = function () {
+                const [a, b, c, d] = areaVals();
+                ['a', 'b', 'c', 'd'].forEach((k, i) => { document.getElementById(`w-${k}-val`).textContent = [a, b, c, d][i]; });
+                document.getElementById('area-answer').classList.remove('shown');
+                document.getElementById('area-scene').innerHTML = areaSvg(a, b, c, d, 60, 20, 300, 240, true)
+                    + fracSvg(30, 150, c, d, 'var(--brand-green)', 18) + fracSvg(210, 286, a, b, 'var(--brand-blue)', 14);
+            };
+            window.revealArea = function () {
+                const [a, b, c, d] = areaVals(), out = document.getElementById('area-text'), g = gcd(a * c, b * d);
+                out.innerHTML = `$${fr(c, d)} \\cdot ${fr(a, b)} = ${fr(a * c, b * d)}$` + (g > 1 ? `$\; = ${fr(a * c / g, b * d / g)}$` : '')
+                    + ` — ${a * c} клітинок із ${b * d}.`;
+                document.getElementById('area-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 5: 2 1/3 · 3 = 7 ---
+            window.renderTrap = function () {
+                // Три рядки по 2 1/3: дві цілі смужки (по 3 третини) і ще одна третина
+                let svg = '';
+                for (let k = 0; k < 3; k++) {
+                    const y = 18 + k * 56;
+                    svg += stripSvg(3, 3, 1, 30, y, 120, 36, 'blue') + stripSvg(3, 3, 1, 160, y, 120, 36, 'blue')
+                         + `<rect x="290" y="${y}" width="40" height="36" class="cell green"/><rect x="290" y="${y}" width="40" height="36" class="frame"/>`;
+                }
+                document.getElementById('trap-scene').innerHTML = svg
+                    + `<text x="390" y="70" class="svg-caption ok-text" style="text-anchor:middle">3 третини</text><text x="390" y="92" class="svg-caption ok-text">= 1 ціла</text>`
+                    + `<text x="220" y="208" class="svg-caption">6 цілих + 1 ціла = 7, а не 6 1/3</text>`;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$\\dfrac{4}{9} \\cdot \\dfrac{15}{16} = \\dfrac{4 \\cdot 15}{9 \\cdot 16}$', 'Записуємо під однією рискою — ще не множимо!'],
+                ['Скорочуємо $4$ і $16$ на $4$, $15$ і $9$ на $3$: [[$\\dfrac{1 \\cdot 5}{3 \\cdot 4}$]]', 'Ділимо чисельник і знаменник на одне число'],
+                ['$= $ [[$\\dfrac{5}{12}$]]', 'Тепер множимо — числа маленькі'],
+                ['$2\\dfrac{1}{3} \\cdot 1\\dfrac{1}{2} = \\dfrac{7}{3} \\cdot \\dfrac{3}{2} = $ [[$\\dfrac{7}{2} = 3\\dfrac{1}{2}$]]', 'Мішані числа — у неправильні дроби; скоротили $3$'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
