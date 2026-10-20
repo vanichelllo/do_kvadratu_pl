@@ -1,0 +1,372 @@
+@@TITLE Властивості кутів при паралельних прямих і січній
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 120px; }
+        .slider-control span { font-weight: 700; min-width: 44px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.6em; }
+        .pair-list { min-height: 3.2em; }
+        .rail { stroke: currentColor; stroke-width: 5; }
+        .sleeper { stroke: var(--brand-yellow); stroke-width: 7; }
+        .zz { stroke: var(--brand-green); stroke-width: 3; fill: none; }
+        .aux { stroke: var(--brand-blue); stroke-width: 2; stroke-dasharray: 6 4; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Один кут — і всі вісім відомі? 📐</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Відомо, що прямі $a$ і $b$ паралельні (як рейки), а січна $c$ утворює з прямою $a$ кут $65^\circ$.</p>
+                    <p class="big-question">Чи можна без транспортира знайти всі вісім кутів, які утворює січна з обома прямими?</p>
+                    <p>Минулого разу ми за кутами доводили паралельність. Тепер — навпаки: прямі паралельні, а що це означає для кутів?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealAll1()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Так! Лише два значення</div>
+                        <p>Усі гострі кути дорівнюють $65^\circ$, усі тупі — $180^\circ - 65^\circ = 115^\circ$. Чому так — сьогоднішні теореми.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="intro-scene" role="img" aria-label="Паралельні прямі a і b, січна c; один кут 65°"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Ознака і властивість — обернені теореми</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box remark">
+                        <div class="box-title">Що від чого</div>
+                        <p><b>Ознака:</b> кути рівні (або сума $180^\circ$) $\Rightarrow$ прямі паралельні.</p>
+                        <p><b>Властивість:</b> прямі паралельні $\Rightarrow$ кути рівні (або сума $180^\circ$).</p>
+                        <p>Умова й висновок помінялися місцями — це <b>обернені</b> теореми.</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary" id="pair-btn-0" onclick="setPair(0)">Відповідні</button>
+                        <button class="btn-secondary" id="pair-btn-1" onclick="setPair(1)">Внутрішні різносторонні</button>
+                        <button class="btn-secondary" id="pair-btn-2" onclick="setPair(2)">Внутрішні односторонні</button>
+                    </div>
+                    <p class="pair-list" id="pair-list">Пригадаймо пари кутів: оберіть вид пари.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="pairs-scene" role="img" aria-label="Дві паралельні прямі, січна і вісім кутів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості паралельних прямих</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Якщо $a \parallel b$, то при будь-якій січній $c$:</div>
+                    <p>1) внутрішні різносторонні кути <b>рівні</b>;</p>
+                    <p>2) відповідні кути <b>рівні</b>;</p>
+                    <p>3) сума внутрішніх односторонніх кутів дорівнює $180^\circ$.</p>
+                    <p><b>Наслідок:</b> пряма, перпендикулярна до однієї з паралельних прямих, перпендикулярна і до другої.</p>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Ідея доведення (від супротивного)</div>
+                    <p>Нехай $a \parallel b$, але різносторонні кути $\angle 3 \ne \angle 6$. Проведемо через точку $A$ пряму $a_1$ так, щоб кути стали рівні. За <b>ознакою</b> $a_1 \parallel b$.</p>
+                    <p>Тоді через $A$ проходять дві різні прямі $a$ і $a_1$, паралельні $b$, — суперечність з аксіомою паралельних. Отже, $\angle 3 = \angle 6$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Повертаємо січну 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Прямі $a$ і $b$ паралельні. Повертаємо січну — відомий лише кут $1$. Учні називають решту кутів, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="theta">Кут $1$</label><input type="range" id="theta" min="30" max="150" step="5" value="65" oninput="thetaInput()"><span id="theta-val"></span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealAngles()">Показати всі кути</button></p>
+                    <p class="readout" id="theta-readout"></p>
+                    <div class="box theorem hidden-answer" id="theta-answer"><p>Скільки б ми не повертали січну, кути набувають лише двох значень: $\alpha$ і $180^\circ - \alpha$. Відповідні й різносторонні — рівні, односторонні — у сумі $180^\circ$.</p></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="theta-scene" role="img" aria-label="Паралельні прямі, січна під заданим кутом і вісім кутів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як знайти кути при паралельних прямих</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0"><b>Дано:</b> $a \parallel b$, $\angle 1$ і $\angle 2$ — внутрішні односторонні, $\angle 2 = 3 \cdot \angle 1$. Знайти кути.</p>
+                    <div class="box theorem">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Переконатися, що прямі паралельні (дано або доведено ознакою).</p>
+                        <p>2) Визначити вид пари кутів і застосувати властивість.</p>
+                        <p>3) Скласти рівняння, якщо кути пов'язані умовою.</p>
+                    </div>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="algo-scene" role="img" aria-label="Внутрішні односторонні кути 1 і 2 при паралельних прямих"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Різниця кутів і «зигзаг»</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> $a \parallel b$. Один із внутрішніх односторонніх кутів на $40^\circ$ більший за інший. Знайдіть ці кути.</p>
+                    <div class="step">Нехай менший — $x$, більший — $x + 40^\circ$.</div>
+                    <div class="step">За властивістю: $x + x + 40^\circ = 180^\circ$, $\;2x = 140^\circ$.</div>
+                    <div class="step">$x = 70^\circ$; кути — $70^\circ$ і $110^\circ$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> $a \parallel b$; кути при $A$ і $B$ — на рисунку. Знайдіть $\angle AMB$.</p>
+                    <svg viewBox="0 0 420 220" style="max-height:170px;display:block;margin:0 auto" role="img" aria-label="Паралельні прямі a і b, точка M між ними, ламана A-M-B">
+                        <line x1="20" y1="40" x2="400" y2="40" class="geo-line"/><text x="405" y="46" class="line-name" style="text-anchor:start">a</text>
+                        <line x1="20" y1="180" x2="400" y2="180" class="geo-line"/><text x="405" y="186" class="line-name" style="text-anchor:start">b</text>
+                        <polyline points="90,40 290,110 110,180" class="zz"/>
+                        <line x1="20" y1="110" x2="400" y2="110" class="aux hidden-answer" id="aux-0"/>
+                        <circle cx="90" cy="40" r="4" class="geo-dot"/><text x="84" y="28" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">A</text>
+                        <circle cx="290" cy="110" r="4" class="geo-dot"/><text x="306" y="114" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">M</text>
+                        <circle cx="110" cy="180" r="4" class="geo-dot"/><text x="104" y="206" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">B</text>
+                        <text x="140" y="60" class="angle-label">30°</text><text x="160" y="170" class="angle-label">50°</text>
+                        <text x="262" y="114" class="angle-label">?</text>
+                    </svg>
+                    <div class="step">Через $M$ — пряма, паралельна $a$ (пунктир); вона паралельна й $b$.</div>
+                    <div class="step">Частини кута $M$ — різносторонні з кутами $30^\circ$ і $50^\circ$.</div>
+                    <div class="step">$\angle AMB = 30^\circ + 50^\circ = 80^\circ$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b'); document.getElementById('aux-0').classList.add('shown')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Властивість без паралельності</div>
+                        <p>Не можна писати «відповідні кути рівні», якщо не відомо, що $a \parallel b$. Спершу — ознака або умова задачі.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Односторонні — не рівні</div>
+                        <p>При $a \parallel b$ односторонні кути в сумі дають $180^\circ$. Рівні вони лише тоді, коли обидва прямі.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Ознака замість властивості</div>
+                        <p>«Кути рівні, бо прямі паралельні» — властивість. «Прямі паралельні, бо кути рівні» — ознака. Не плутайте, що дано, а що доводимо.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">У «зигзагу» кути додають</div>
+                        <p>Кут при $M$ дорівнює <b>сумі</b> кутів при паралельних прямих, а не різниці: $30^\circ + 50^\circ = 80^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$, $c$ — січна. Один із відповідних кутів дорівнює $47^\circ$. Чому дорівнює другий?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $47^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $133^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $43^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $94^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>При паралельних прямих відповідні кути рівні: $47^\circ$.</p>
+                            <p>Б — так для односторонніх; В — доповнення до $90^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$. Один із внутрішніх односторонніх кутів на $50^\circ$ більший за інший. Знайдіть більший кут.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $115^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $65^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $130^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $90^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x + x + 50^\circ = 180^\circ$, $x = 65^\circ$; більший — $115^\circ$.</p>
+                            <p>Б — це менший кут; В — забули поділити на $2$ при складанні рівняння.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$, $\angle MAa = 35^\circ$, $\angle MBb = 40^\circ$ (як у прикладі б на попередньому слайді). Знайдіть $\angle AMB$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $75^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $5^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $105^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $145^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $70^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Через $M$ проводимо пряму, паралельну $a$ і $b$. Кут $M$ розпадається на $35^\circ$ і $40^\circ$ (різносторонні кути).</p>
+                            <p>$\angle AMB = 35^\circ + 40^\circ = 75^\circ$. Б — відняли; В — $180^\circ - 75^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо $a \parallel b$: відповідні кути рівні, різносторонні рівні, односторонні в сумі $180^\circ$.</p>
+                    <p>Ознака: кути $\Rightarrow$ паралельність. Властивість: паралельність $\Rightarrow$ кути.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Перевірте, що $a \parallel b$ → визначте вид пари → властивість або рівняння. «Зигзаг» — допоміжна паралельна пряма.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Властивості — лише для паралельних прямих. Односторонні кути не рівні, а в сумі $180^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 2) renderPairs();
+                if (currentSlide === 4) renderTheta();
+                if (currentSlide === 5) { renderEval(); renderAlgo(); }
+@@JS
+@@INCLUDE transversal.js
+
+            const TC = 65;   // напрям січної на слайді 2
+            // Нумерація кутів: при A — 1 (UL), 2 (UR), 3 (LL), 4 (LR); при B — 5 (UL), 6 (UR), 7 (LL), 8 (LR)
+            const NUM = { 1: ['A', 'UL'], 2: ['A', 'UR'], 3: ['A', 'LL'], 4: ['A', 'LR'], 5: ['B', 'UL'], 6: ['B', 'UR'], 7: ['B', 'LL'], 8: ['B', 'LR'] };
+            const PAIRS = [
+                { name: 'Відповідні', pairs: [[1, 5], [2, 6], [3, 7], [4, 8]], text: 'Відповідні: $1$ і $5$, $\\ 2$ і $6$, $\\ 3$ і $7$, $\\ 4$ і $8$ — при $a \\parallel b$ <b>рівні</b>.' },
+                { name: 'Внутрішні різносторонні', pairs: [[3, 6], [4, 5]], text: 'Внутрішні різносторонні: $3$ і $6$, $\\ 4$ і $5$ — при $a \\parallel b$ <b>рівні</b>.' },
+                { name: 'Внутрішні односторонні', pairs: [[3, 5], [4, 6]], text: 'Внутрішні односторонні: $3$ і $5$, $\\ 4$ і $6$ — при $a \\parallel b$ у сумі <b>$180^\\circ$</b>.' },
+            ];
+            const COLORS = ['g', 'b', 'r', ''];
+            let pairIndex = null;
+            window.setPair = function (i) {
+                pairIndex = i;
+                PAIRS.forEach((_, k) => document.getElementById(`pair-btn-${k}`).classList.toggle('on', k === i));
+                const el = document.getElementById('pair-list');
+                el.innerHTML = PAIRS[i].text;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+                renderPairs();
+            };
+            window.renderPairs = function () {
+                const colorOf = {};
+                if (pairIndex !== null) PAIRS[pairIndex].pairs.forEach(([p, q], k) => { colorOf[p] = colorOf[q] = COLORS[k]; });
+                const angles = Object.entries(NUM).map(([n, [at, which]]) => ({ at, which, label: n, cls: n in colorOf ? (colorOf[n] || 'y') : 'none' }));
+                document.getElementById('pairs-scene').innerHTML = transversalSvg(TC, 0, angles);
+            };
+
+            // Усі вісім кутів зі значеннями (гострі — зелені, тупі — сині)
+            function allAngles(theta, shown) {
+                return Object.entries(NUM).map(([n, [at, which]]) => {
+                    const v = angleValue(theta, 0, at, which);
+                    return { at, which, label: shown ? `${v}°` : n, cls: shown ? (v <= 90 ? 'g' : 'b') : 'none' };
+                });
+            }
+
+            // --- Слайд 1: відомий один кут ---
+            let introShown = false;
+            window.renderIntro = function () {
+                const angles = introShown ? allAngles(TC, true) : [{ at: 'A', which: 'UR', label: '65°', cls: 'g' }];
+                document.getElementById('intro-scene').innerHTML = transversalSvg(TC, 0, angles);
+            };
+            window.revealAll1 = function () { introShown = true; renderIntro(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 4: повертаємо січну ---
+            let thetaShown = false;
+            window.thetaInput = function () { thetaShown = false; renderTheta(); };
+            window.revealAngles = function () { thetaShown = true; renderTheta(); document.getElementById('theta-answer').classList.add('shown'); };
+            window.renderTheta = function () {
+                const t = parseInt(document.getElementById('theta').value, 10);
+                document.getElementById('theta-val').textContent = `${t}°`;
+                const angles = thetaShown ? allAngles(t, true) : [{ at: 'A', which: 'UR', label: `${t}°`, cls: 'g' }];
+                document.getElementById('theta-scene').innerHTML = transversalSvg(t, 0, angles);
+                document.getElementById('theta-readout').textContent = thetaShown ? `Кути: ${t}° і ${180 - t}°` : `Кут 1 = ${t}°. Які решта кутів?`;
+            };
+
+            // --- Слайд 5: алгоритм на прикладі ---
+            window.renderAlgo = function () {
+                const done = shown >= 3;
+                document.getElementById('algo-scene').innerHTML = transversalSvg(45, 0, [
+                    { at: 'A', which: 'LR', label: done ? '135°' : '2', cls: 'b' }, { at: 'B', which: 'UR', label: done ? '45°' : '1', cls: 'g' }]);
+            };
+            const STEPS = [
+                ['$\\angle 1$ і $\\angle 2$ — внутрішні односторонні, $a \\parallel b$: [[$\\angle 1 + \\angle 2 = 180^\\circ$]]', 'Властивість паралельних прямих'],
+                ['Нехай $\\angle 1 = x$, тоді $\\angle 2 = 3x$: [[$x + 3x = 180^\\circ$]]', 'Складаємо рівняння'],
+                ['$4x = 180^\\circ$, [[$x = 45^\\circ$]]', 'Розв\'язуємо'],
+                ['$\\angle 1 = 45^\\circ$, $\\angle 2 = 135^\\circ$', 'Перевірка: $45^\\circ + 135^\\circ = 180^\\circ$ ✓'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };

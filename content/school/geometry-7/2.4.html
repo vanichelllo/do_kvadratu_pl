@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Властивості кутів при паралельних прямих і січній | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Геометричні креслення */
+        .geo-line { stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+        .geo-line.sec { stroke: var(--brand-blue); }
+        .geo-dot { fill: currentColor; }
+        .line-name { fill: currentColor; font-size: 18px; font-weight: 700; font-style: italic; text-anchor: middle; }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); }
+        .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; }
+        .angle-arc.r { fill: var(--warning-red); opacity: 0.45; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .angle-arc.none { fill: var(--border-color); opacity: 0.6; }
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 120px; }
+        .slider-control span { font-weight: 700; min-width: 44px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.6em; }
+        .pair-list { min-height: 3.2em; }
+        .rail { stroke: currentColor; stroke-width: 5; }
+        .sleeper { stroke: var(--brand-yellow); stroke-width: 7; }
+        .zz { stroke: var(--brand-green); stroke-width: 3; fill: none; }
+        .aux { stroke: var(--brand-blue); stroke-width: 2; stroke-dasharray: 6 4; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Один кут — і всі вісім відомі? 📐</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Відомо, що прямі $a$ і $b$ паралельні (як рейки), а січна $c$ утворює з прямою $a$ кут $65^\circ$.</p>
+                    <p class="big-question">Чи можна без транспортира знайти всі вісім кутів, які утворює січна з обома прямими?</p>
+                    <p>Минулого разу ми за кутами доводили паралельність. Тепер — навпаки: прямі паралельні, а що це означає для кутів?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealAll1()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Так! Лише два значення</div>
+                        <p>Усі гострі кути дорівнюють $65^\circ$, усі тупі — $180^\circ - 65^\circ = 115^\circ$. Чому так — сьогоднішні теореми.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="intro-scene" role="img" aria-label="Паралельні прямі a і b, січна c; один кут 65°"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Ознака і властивість — обернені теореми</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box remark">
+                        <div class="box-title">Що від чого</div>
+                        <p><b>Ознака:</b> кути рівні (або сума $180^\circ$) $\Rightarrow$ прямі паралельні.</p>
+                        <p><b>Властивість:</b> прямі паралельні $\Rightarrow$ кути рівні (або сума $180^\circ$).</p>
+                        <p>Умова й висновок помінялися місцями — це <b>обернені</b> теореми.</p>
+                    </div>
+                    <div class="modes">
+                        <button class="btn-secondary" id="pair-btn-0" onclick="setPair(0)">Відповідні</button>
+                        <button class="btn-secondary" id="pair-btn-1" onclick="setPair(1)">Внутрішні різносторонні</button>
+                        <button class="btn-secondary" id="pair-btn-2" onclick="setPair(2)">Внутрішні односторонні</button>
+                    </div>
+                    <p class="pair-list" id="pair-list">Пригадаймо пари кутів: оберіть вид пари.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="pairs-scene" role="img" aria-label="Дві паралельні прямі, січна і вісім кутів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості паралельних прямих</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Якщо $a \parallel b$, то при будь-якій січній $c$:</div>
+                    <p>1) внутрішні різносторонні кути <b>рівні</b>;</p>
+                    <p>2) відповідні кути <b>рівні</b>;</p>
+                    <p>3) сума внутрішніх односторонніх кутів дорівнює $180^\circ$.</p>
+                    <p><b>Наслідок:</b> пряма, перпендикулярна до однієї з паралельних прямих, перпендикулярна і до другої.</p>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Ідея доведення (від супротивного)</div>
+                    <p>Нехай $a \parallel b$, але різносторонні кути $\angle 3 \ne \angle 6$. Проведемо через точку $A$ пряму $a_1$ так, щоб кути стали рівні. За <b>ознакою</b> $a_1 \parallel b$.</p>
+                    <p>Тоді через $A$ проходять дві різні прямі $a$ і $a_1$, паралельні $b$, — суперечність з аксіомою паралельних. Отже, $\angle 3 = \angle 6$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Повертаємо січну 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Прямі $a$ і $b$ паралельні. Повертаємо січну — відомий лише кут $1$. Учні називають решту кутів, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="theta">Кут $1$</label><input type="range" id="theta" min="30" max="150" step="5" value="65" oninput="thetaInput()"><span id="theta-val"></span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealAngles()">Показати всі кути</button></p>
+                    <p class="readout" id="theta-readout"></p>
+                    <div class="box theorem hidden-answer" id="theta-answer"><p>Скільки б ми не повертали січну, кути набувають лише двох значень: $\alpha$ і $180^\circ - \alpha$. Відповідні й різносторонні — рівні, односторонні — у сумі $180^\circ$.</p></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="theta-scene" role="img" aria-label="Паралельні прямі, січна під заданим кутом і вісім кутів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як знайти кути при паралельних прямих</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0"><b>Дано:</b> $a \parallel b$, $\angle 1$ і $\angle 2$ — внутрішні односторонні, $\angle 2 = 3 \cdot \angle 1$. Знайти кути.</p>
+                    <div class="box theorem">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Переконатися, що прямі паралельні (дано або доведено ознакою).</p>
+                        <p>2) Визначити вид пари кутів і застосувати властивість.</p>
+                        <p>3) Скласти рівняння, якщо кути пов'язані умовою.</p>
+                    </div>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="algo-scene" role="img" aria-label="Внутрішні односторонні кути 1 і 2 при паралельних прямих"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Різниця кутів і «зигзаг»</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> $a \parallel b$. Один із внутрішніх односторонніх кутів на $40^\circ$ більший за інший. Знайдіть ці кути.</p>
+                    <div class="step">Нехай менший — $x$, більший — $x + 40^\circ$.</div>
+                    <div class="step">За властивістю: $x + x + 40^\circ = 180^\circ$, $\;2x = 140^\circ$.</div>
+                    <div class="step">$x = 70^\circ$; кути — $70^\circ$ і $110^\circ$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> $a \parallel b$; кути при $A$ і $B$ — на рисунку. Знайдіть $\angle AMB$.</p>
+                    <svg viewBox="0 0 420 220" style="max-height:170px;display:block;margin:0 auto" role="img" aria-label="Паралельні прямі a і b, точка M між ними, ламана A-M-B">
+                        <line x1="20" y1="40" x2="400" y2="40" class="geo-line"/><text x="405" y="46" class="line-name" style="text-anchor:start">a</text>
+                        <line x1="20" y1="180" x2="400" y2="180" class="geo-line"/><text x="405" y="186" class="line-name" style="text-anchor:start">b</text>
+                        <polyline points="90,40 290,110 110,180" class="zz"/>
+                        <line x1="20" y1="110" x2="400" y2="110" class="aux hidden-answer" id="aux-0"/>
+                        <circle cx="90" cy="40" r="4" class="geo-dot"/><text x="84" y="28" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">A</text>
+                        <circle cx="290" cy="110" r="4" class="geo-dot"/><text x="306" y="114" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">M</text>
+                        <circle cx="110" cy="180" r="4" class="geo-dot"/><text x="104" y="206" class="v-name" style="fill:currentColor;font-weight:800;font-style:italic">B</text>
+                        <text x="140" y="60" class="angle-label">30°</text><text x="160" y="170" class="angle-label">50°</text>
+                        <text x="262" y="114" class="angle-label">?</text>
+                    </svg>
+                    <div class="step">Через $M$ — пряма, паралельна $a$ (пунктир); вона паралельна й $b$.</div>
+                    <div class="step">Частини кута $M$ — різносторонні з кутами $30^\circ$ і $50^\circ$.</div>
+                    <div class="step">$\angle AMB = 30^\circ + 50^\circ = 80^\circ$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b'); document.getElementById('aux-0').classList.add('shown')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Властивість без паралельності</div>
+                        <p>Не можна писати «відповідні кути рівні», якщо не відомо, що $a \parallel b$. Спершу — ознака або умова задачі.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Односторонні — не рівні</div>
+                        <p>При $a \parallel b$ односторонні кути в сумі дають $180^\circ$. Рівні вони лише тоді, коли обидва прямі.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Ознака замість властивості</div>
+                        <p>«Кути рівні, бо прямі паралельні» — властивість. «Прямі паралельні, бо кути рівні» — ознака. Не плутайте, що дано, а що доводимо.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">У «зигзагу» кути додають</div>
+                        <p>Кут при $M$ дорівнює <b>сумі</b> кутів при паралельних прямих, а не різниці: $30^\circ + 50^\circ = 80^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$, $c$ — січна. Один із відповідних кутів дорівнює $47^\circ$. Чому дорівнює другий?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $47^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $133^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $43^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $94^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>При паралельних прямих відповідні кути рівні: $47^\circ$.</p>
+                            <p>Б — так для односторонніх; В — доповнення до $90^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$. Один із внутрішніх односторонніх кутів на $50^\circ$ більший за інший. Знайдіть більший кут.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $115^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $65^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $130^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $90^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x + x + 50^\circ = 180^\circ$, $x = 65^\circ$; більший — $115^\circ$.</p>
+                            <p>Б — це менший кут; В — забули поділити на $2$ при складанні рівняння.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">$a \parallel b$, $\angle MAa = 35^\circ$, $\angle MBb = 40^\circ$ (як у прикладі б на попередньому слайді). Знайдіть $\angle AMB$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $75^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $5^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $105^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $145^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $70^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Через $M$ проводимо пряму, паралельну $a$ і $b$. Кут $M$ розпадається на $35^\circ$ і $40^\circ$ (різносторонні кути).</p>
+                            <p>$\angle AMB = 35^\circ + 40^\circ = 75^\circ$. Б — відняли; В — $180^\circ - 75^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо $a \parallel b$: відповідні кути рівні, різносторонні рівні, односторонні в сумі $180^\circ$.</p>
+                    <p>Ознака: кути $\Rightarrow$ паралельність. Властивість: паралельність $\Rightarrow$ кути.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Перевірте, що $a \parallel b$ → визначте вид пари → властивість або рівняння. «Зигзаг» — допоміжна паралельна пряма.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Властивості — лише для паралельних прямих. Односторонні кути не рівні, а в сумі $180^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 2) renderPairs();
+                if (currentSlide === 4) renderTheta();
+                if (currentSlide === 5) { renderEval(); renderAlgo(); }
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Дві прямі a, b і січна c. Кути при точках A (на a) і B (на b) ---
+            // thetaC — напрям січної (°), delta — нахил прямої b (°). Кути: UR, UL, LL, LR при вершині A чи B.
+            function transversalGeom(thetaC, delta) {
+                const rad = (d) => d * Math.PI / 180, u = 55, cx = 210, cy = 150;
+                const A = [1.3 * Math.cos(rad(thetaC)), 1.3 * Math.sin(rad(thetaC))], B = [-A[0], -A[1]];
+                const S = ([x, y]) => [cx + u * x, cy - u * y];
+                const along = (P, deg, t) => [P[0] + t * Math.cos(rad(deg)), P[1] + t * Math.sin(rad(deg))];
+                // Межі кутів (проти годинникової стрілки) при кожній вершині
+                const sectors = {
+                    A: { UR: [0, thetaC], UL: [thetaC, 180], LL: [180, thetaC + 180], LR: [thetaC + 180, 360] },
+                    B: { UR: [delta, thetaC], UL: [thetaC, 180 + delta], LL: [180 + delta, thetaC + 180], LR: [thetaC + 180, 360 + delta] },
+                };
+                return { A, B, S, along, sectors, rad };
+            }
+            function transversalSvg(thetaC, delta, angles = []) {
+                const G = transversalGeom(thetaC, delta), { A, B, S, along } = G;
+                const line = (P, Q, cls) => { const [x1, y1] = S(P), [x2, y2] = S(Q); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${cls}"/>`; };
+                const text = (P, s, cls) => { const [x, y] = S(P); return `<text x="${x}" y="${y + 6}" class="${cls}">${s}</text>`; };
+                let svg = '';
+                angles.forEach(({ at, which, label, cls }) => {
+                    const [s0, s1] = G.sectors[at][which], V = at === 'A' ? A : B, r = 0.5;
+                    const [vx, vy] = S(V), [x0, y0] = S(along(V, s0, r)), [x1, y1] = S(along(V, s1, r));
+                    svg += `<path d="M${vx} ${vy} L${x0} ${y0} A${r * 55} ${r * 55} 0 ${s1 - s0 > 180 ? 1 : 0} 0 ${x1} ${y1} Z" class="angle-arc ${cls || ''}"/>`;
+                    if (label) svg += text(along(V, (s0 + s1) / 2, 0.86), label, `angle-label ${cls || ''}`);
+                });
+                svg += line(along(A, 0, -4.2), along(A, 0, 4.2), 'geo-line')
+                     + line(along(B, delta, -4.2), along(B, delta, 4.2), 'geo-line')
+                     + line(along([0, 0], thetaC, -2.7), along([0, 0], thetaC, 2.7), 'geo-line sec')
+                     + text(along(along(A, 0, 3.3 - A[0]), 90, 0.32), 'a', 'line-name') + text(along(along(B, delta, (3.3 - B[0]) / Math.cos(G.rad(delta))), delta + 90, 0.32), 'b', 'line-name')
+                     + text(along(along([0, 0], thetaC, 2.55), thetaC + 90, 0.3), 'c', 'line-name');
+                [A, B].forEach((P) => { const [x, y] = S(P); svg += `<circle cx="${x}" cy="${y}" r="4.5" class="geo-dot"/>`; });
+                return svg;
+            }
+            function angleValue(thetaC, delta, at, which) {
+                const [s0, s1] = transversalGeom(thetaC, delta).sectors[at][which];
+                return Math.round(s1 - s0);
+            }
+            const TC = 65;   // напрям січної на слайді 2
+            // Нумерація кутів: при A — 1 (UL), 2 (UR), 3 (LL), 4 (LR); при B — 5 (UL), 6 (UR), 7 (LL), 8 (LR)
+            const NUM = { 1: ['A', 'UL'], 2: ['A', 'UR'], 3: ['A', 'LL'], 4: ['A', 'LR'], 5: ['B', 'UL'], 6: ['B', 'UR'], 7: ['B', 'LL'], 8: ['B', 'LR'] };
+            const PAIRS = [
+                { name: 'Відповідні', pairs: [[1, 5], [2, 6], [3, 7], [4, 8]], text: 'Відповідні: $1$ і $5$, $\\ 2$ і $6$, $\\ 3$ і $7$, $\\ 4$ і $8$ — при $a \\parallel b$ <b>рівні</b>.' },
+                { name: 'Внутрішні різносторонні', pairs: [[3, 6], [4, 5]], text: 'Внутрішні різносторонні: $3$ і $6$, $\\ 4$ і $5$ — при $a \\parallel b$ <b>рівні</b>.' },
+                { name: 'Внутрішні односторонні', pairs: [[3, 5], [4, 6]], text: 'Внутрішні односторонні: $3$ і $5$, $\\ 4$ і $6$ — при $a \\parallel b$ у сумі <b>$180^\\circ$</b>.' },
+            ];
+            const COLORS = ['g', 'b', 'r', ''];
+            let pairIndex = null;
+            window.setPair = function (i) {
+                pairIndex = i;
+                PAIRS.forEach((_, k) => document.getElementById(`pair-btn-${k}`).classList.toggle('on', k === i));
+                const el = document.getElementById('pair-list');
+                el.innerHTML = PAIRS[i].text;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+                renderPairs();
+            };
+            window.renderPairs = function () {
+                const colorOf = {};
+                if (pairIndex !== null) PAIRS[pairIndex].pairs.forEach(([p, q], k) => { colorOf[p] = colorOf[q] = COLORS[k]; });
+                const angles = Object.entries(NUM).map(([n, [at, which]]) => ({ at, which, label: n, cls: n in colorOf ? (colorOf[n] || 'y') : 'none' }));
+                document.getElementById('pairs-scene').innerHTML = transversalSvg(TC, 0, angles);
+            };
+
+            // Усі вісім кутів зі значеннями (гострі — зелені, тупі — сині)
+            function allAngles(theta, shown) {
+                return Object.entries(NUM).map(([n, [at, which]]) => {
+                    const v = angleValue(theta, 0, at, which);
+                    return { at, which, label: shown ? `${v}°` : n, cls: shown ? (v <= 90 ? 'g' : 'b') : 'none' };
+                });
+            }
+
+            // --- Слайд 1: відомий один кут ---
+            let introShown = false;
+            window.renderIntro = function () {
+                const angles = introShown ? allAngles(TC, true) : [{ at: 'A', which: 'UR', label: '65°', cls: 'g' }];
+                document.getElementById('intro-scene').innerHTML = transversalSvg(TC, 0, angles);
+            };
+            window.revealAll1 = function () { introShown = true; renderIntro(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 4: повертаємо січну ---
+            let thetaShown = false;
+            window.thetaInput = function () { thetaShown = false; renderTheta(); };
+            window.revealAngles = function () { thetaShown = true; renderTheta(); document.getElementById('theta-answer').classList.add('shown'); };
+            window.renderTheta = function () {
+                const t = parseInt(document.getElementById('theta').value, 10);
+                document.getElementById('theta-val').textContent = `${t}°`;
+                const angles = thetaShown ? allAngles(t, true) : [{ at: 'A', which: 'UR', label: `${t}°`, cls: 'g' }];
+                document.getElementById('theta-scene').innerHTML = transversalSvg(t, 0, angles);
+                document.getElementById('theta-readout').textContent = thetaShown ? `Кути: ${t}° і ${180 - t}°` : `Кут 1 = ${t}°. Які решта кутів?`;
+            };
+
+            // --- Слайд 5: алгоритм на прикладі ---
+            window.renderAlgo = function () {
+                const done = shown >= 3;
+                document.getElementById('algo-scene').innerHTML = transversalSvg(45, 0, [
+                    { at: 'A', which: 'LR', label: done ? '135°' : '2', cls: 'b' }, { at: 'B', which: 'UR', label: done ? '45°' : '1', cls: 'g' }]);
+            };
+            const STEPS = [
+                ['$\\angle 1$ і $\\angle 2$ — внутрішні односторонні, $a \\parallel b$: [[$\\angle 1 + \\angle 2 = 180^\\circ$]]', 'Властивість паралельних прямих'],
+                ['Нехай $\\angle 1 = x$, тоді $\\angle 2 = 3x$: [[$x + 3x = 180^\\circ$]]', 'Складаємо рівняння'],
+                ['$4x = 180^\\circ$, [[$x = 45^\\circ$]]', 'Розв\'язуємо'],
+                ['$\\angle 1 = 45^\\circ$, $\\angle 2 = 135^\\circ$', 'Перевірка: $45^\\circ + 135^\\circ = 180^\\circ$ ✓'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
