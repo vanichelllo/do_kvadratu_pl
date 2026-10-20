@@ -1,0 +1,409 @@
+@@TITLE Прямокутник, ромб, квадрат
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .side { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.08; }
+        .diag { stroke: var(--brand-green); stroke-width: 2.4; stroke-dasharray: 7 5; }
+        .diag2 { stroke: var(--warning-red); stroke-width: 2.4; stroke-dasharray: 7 5; }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 2; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .set { fill-opacity: 0.12; stroke-width: 2.5; }
+        .set-p { fill: var(--brand-blue); stroke: var(--brand-blue); }
+        .set-r { fill: var(--brand-green); stroke: var(--brand-green); }
+        .set-h { fill: var(--brand-yellow); stroke: #c98a2b; }
+        .set-name { font-size: 15px; font-weight: 800; text-anchor: middle; fill: currentColor; }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        .slider-control span { font-weight: 800; min-width: 48px; text-align: right; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 2.4em; }
+        .readout .name { color: var(--brand-green); font-size: 1.25rem; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Як столяр перевіряє раму? 🪚</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Столяр зібрав віконну раму: протилежні сторони рівні, отже, це паралелограм. Але чи прямі в нього кути? Косинця під рукою немає — є лише рулетка.</p>
+                    <p class="big-question">Що треба виміряти рулеткою, щоб переконатися, що рама — прямокутник?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Діагоналі!</div>
+                        <p>Якщо в паралелограма діагоналі <b>рівні</b>, то він — прямокутник. Це ознака прямокутника, яку сьогодні доведемо.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="frame-scene" role="img" aria-label="Паралелограм і прямокутник з однаковими сторонами: у прямокутника діагоналі рівні"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Три «особливі» паралелограми</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Прямокутник</b> — паралелограм, у якого всі кути прямі (досить одного прямого кута).</p>
+                        <p><b>Ромб</b> — паралелограм, у якого всі сторони рівні (досить двох сусідніх).</p>
+                        <p><b>Квадрат</b> — прямокутник, у якого всі сторони рівні. Отже, квадрат — це і прямокутник, і ромб.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Усе, що вміє паралелограм</div>
+                        <p>Протилежні сторони й кути рівні, діагоналі точкою перетину діляться навпіл — це правильно для всіх трьох фігур.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" role="img" aria-label="Схема: усередині паралелограмів — прямокутники і ромби, їх спільна частина — квадрати">
+                        <rect x="10" y="10" width="400" height="240" rx="18" class="set set-p"/>
+                        <text x="210" y="34" class="set-name">Паралелограми</text>
+                        <ellipse cx="150" cy="145" rx="120" ry="85" class="set set-r"/>
+                        <ellipse cx="270" cy="145" rx="120" ry="85" class="set set-h"/>
+                        <text x="88" y="150" class="set-name">Прямокутники</text>
+                        <text x="338" y="150" class="set-name">Ромби</text>
+                        <text x="210" y="150" class="set-name">Квадрати</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості й ознаки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивості</div>
+                        <p><b>Прямокутник:</b> діагоналі рівні.</p>
+                        <p><b>Ромб:</b> діагоналі перпендикулярні й ділять його кути навпіл (є бісектрисами).</p>
+                        <p><b>Квадрат:</b> діагоналі рівні, перпендикулярні, ділять кути навпіл.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Чому діагоналі прямокутника рівні</div>
+                        <p>$\triangle ABD = \triangle BAC$ за двома катетами: $AB$ — спільна, $AD = BC$. Отже, $BD = AC$.</p>
+                    </div>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Ознаки (для паралелограма)</div>
+                    <p>Діагоналі <b>рівні</b> — це прямокутник.</p>
+                    <p>Діагоналі <b>перпендикулярні</b> — це ромб.</p>
+                    <p>Діагональ ділить кут <b>навпіл</b> — це ромб.</p>
+                    <p>Важливо: ознаки працюють лише для паралелограма! У довільного чотирикутника рівні чи перпендикулярні діагоналі нічого не гарантують.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Змінюємо паралелограм 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо кут і сторону паралелограма. Учні кажуть, яка це фігура і що з діагоналями, — потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-ang">Кут $A$</label><input type="range" id="w-ang" min="40" max="140" step="5" value="65" oninput="renderPar()"><span id="w-ang-val"></span></div>
+                    <div class="slider-control"><label for="w-side">Сторона $AD$</label><input type="range" id="w-side" min="2" max="6" step="1" value="3" oninput="renderPar()"><span id="w-side-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealPar()">Що це за фігура?</button></p>
+                    <p class="readout" id="par-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="par-scene" role="img" aria-label="Паралелограм ABCD з діагоналями; сторона AB = 4"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Задача з діагоналями прямокутника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як розв'язувати</div>
+                        <p>1) Позначте точку $O$ перетину діагоналей.</p>
+                        <p>2) Запишіть, які відрізки рівні: у прямокутнику $AO = BO = CO = DO$.</p>
+                        <p>3) Знайдіть рівнобедрені трикутники і скористайтеся їхніми кутами.</p>
+                    </div>
+                    <svg viewBox="0 0 400 200" class="mini-fig" id="task-scene" role="img" aria-label="Прямокутник ABCD, діагоналі перетинаються в O, кут AOB = 60°" style="max-width:380px;display:block;margin:0 auto"></svg>
+                </div>
+                <div class="math-widget">
+                    <p><b>Задача.</b> Діагоналі прямокутника $ABCD$ перетинаються в точці $O$, $\angle AOB = 60^\circ$, $AC = 10$ см. Знайдіть $AB$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Ромб і бісектриса в прямокутнику</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Сторона ромба — $6$ см, один із кутів — $120^\circ$. Знайдіть меншу діагональ.</p>
+                    <div class="step">Сусідній кут ромба: $180^\circ - 120^\circ = 60^\circ$.</div>
+                    <div class="step">Менша діагональ лежить навпроти кута $60^\circ$ і відтинає трикутник зі сторонами $6$ і $6$ та кутом $60^\circ$ між ними.</div>
+                    <div class="step">Рівнобедрений трикутник із кутом $60^\circ$ — рівносторонній. Менша діагональ — $6$ см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Бісектриса кута $A$ прямокутника $ABCD$ перетинає $BC$ у точці $K$, $BK = 4$ см, $KC = 3$ см. Знайдіть периметр.</p>
+                    <div class="step">$\angle BAK = 45^\circ$ (бісектриса прямого кута), $\angle B = 90^\circ$, тож $\angle BKA = 45^\circ$.</div>
+                    <div class="step">$\triangle ABK$ рівнобедрений: $AB = BK = 4$ см; $BC = 4 + 3 = 7$ см.</div>
+                    <div class="step">$P = 2(4 + 7) = 22$ см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Рівні діагоналі — отже, прямокутник»</div>
+                        <p>Лише для <b>паралелограма</b>. У рівнобічної трапеції діагоналі теж рівні, але вона не прямокутник.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">«Перпендикулярні діагоналі — отже, ромб»</div>
+                        <p>Знову лише для паралелограма: у «повітряного змія» (дельтоїда) діагоналі перпендикулярні, а сторони не всі рівні.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Діагоналі ромба рівні?</div>
+                        <p>Ні! У ромба діагоналі перпендикулярні, але рівні лише тоді, коли ромб — квадрат.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Хто чий окремий випадок</div>
+                        <p>Квадрат — завжди ромб і прямокутник. А ромб чи прямокутник — квадрат не завжди.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Діагональ прямокутника дорівнює $8$ см. Яка довжина другої діагоналі?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $8$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $4$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $16$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) визначити неможливо</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Діагоналі прямокутника рівні: $8$ см.</p>
+                            <p>Б — це половина діагоналі ($AO$); Г — так було б для довільного паралелограма.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">У ромбі $ABCD$ кут $A = 70^\circ$. Знайдіть кут $ABD$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $55^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $35^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $70^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $110^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\angle B = 180^\circ - 70^\circ = 110^\circ$. Діагональ $BD$ ділить кут $B$ навпіл: $\angle ABD = 55^\circ$.</p>
+                            <p>Б — це половина кута $A$ ($\angle BAC$); Г — увесь кут $B$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Діагоналі прямокутника перетинаються під кутом $50^\circ$. Знайдіть кут між діагоналлю і більшою стороною.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $25^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $65^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $50^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $40^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $130^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Більша сторона лежить навпроти тупого кута між діагоналями: $180^\circ - 50^\circ = 130^\circ$.</p>
+                            <p>Трикутник при більшій стороні рівнобедрений ($AO = BO$): кути при основі $\dfrac{180^\circ - 130^\circ}{2} = 25^\circ$.</p>
+                            <p>Б — кут з меншою стороною: $\dfrac{180^\circ - 50^\circ}{2} = 65^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Прямокутник</b> — паралелограм із прямим кутом; діагоналі рівні.</p>
+                    <p><b>Ромб</b> — паралелограм із рівними сусідніми сторонами; діагоналі перпендикулярні й ділять кути навпіл.</p>
+                    <p><b>Квадрат</b> — і прямокутник, і ромб: має всі ці властивості.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Позначте $O$; запишіть рівні відрізки діагоналей; шукайте рівнобедрені й рівносторонні трикутники.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Ознаки через діагоналі працюють лише для паралелограма. Рівнобічна трапеція й дельтоїд — контрприклади.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderFrame();
+                if (currentSlide === 4) renderPar();
+                if (currentSlide === 5) { renderTaskFig(); renderEval(); }
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const rad = (d) => d * Math.PI / 180, f1 = (v) => v.toFixed(1);
+            // Підпис вершини: трохи назовні від центру фігури
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            // Паралелограм ABCD: A — початок, AB = a по горизонталі, AD = b під кутом ang; s — масштаб
+            function parPts(a, b, ang, s, x0, y0) {
+                const A = [x0, y0], B = [x0 + a * s, y0], D = [x0 + b * s * Math.cos(rad(ang)), y0 - b * s * Math.sin(rad(ang))];
+                return [A, B, [B[0] + D[0] - A[0], B[1] + D[1] - A[1]], D];
+            }
+            function parSvg(P, opts) {
+                const [A, B, C, D] = P, c = [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2];
+                let s = `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="side"/>`;
+                if (opts.diag) s += `<line x1="${f1(A[0])}" y1="${f1(A[1])}" x2="${f1(C[0])}" y2="${f1(C[1])}" class="diag"/><line x1="${f1(B[0])}" y1="${f1(B[1])}" x2="${f1(D[0])}" y2="${f1(D[1])}" class="diag2"/>`;
+                if (opts.right) s += `<path d="M${f1(A[0] + 16)} ${f1(A[1])} V${f1(A[1] - 16)} H${f1(A[0])}" class="right-mark"/>`;
+                return s + ['A', 'B', 'C', 'D'].map((n, k) => vName(P[k], c, n)).join('');
+            }
+
+            // --- Слайд 1: паралелограм і прямокутник ---
+            window.renderFrame = function () {
+                const P1 = parPts(4, 3, 65, 26, 20, 200), P2 = parPts(4, 3, 90, 26, 240, 200);
+                const d = (P, i, j) => Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]) / 26;
+                document.getElementById('frame-scene').innerHTML = parSvg(P1, { diag: true }) + parSvg(P2, { diag: true, right: true })
+                    + `<text x="90" y="245" class="svg-caption">${d(P1, 0, 2).toFixed(1).replace('.', ',')} ≠ ${d(P1, 1, 3).toFixed(1).replace('.', ',')}</text>`
+                    + `<text x="292" y="245" class="svg-caption" style="fill:var(--brand-green)">5 = 5 ✓</text>`;
+            };
+
+            // --- Слайд 4: паралелограм з повзунками ---
+            let parShown = false;
+            function parVals() { return [parseInt(document.getElementById('w-ang').value, 10), parseInt(document.getElementById('w-side').value, 10)]; }
+            function parScene(ang, b, show) {
+                const a = 4, s = Math.min(330 / (a + b * Math.abs(Math.cos(rad(ang)))), 200 / (b * Math.sin(rad(ang)) || 1), 52);
+                const minX = Math.min(0, b * Math.cos(rad(ang))) * s;
+                const width = (a + b * Math.abs(Math.cos(rad(ang)))) * s, height = b * Math.sin(rad(ang)) * s;
+                const x0 = 210 - width / 2 - minX, y0 = 135 + height / 2;
+                const P = parPts(a, b, ang, s, x0, y0);
+                let svg = parSvg(P, { diag: true, right: ang === 90 });
+                if (show && b === a) {
+                    // однакові позначки на сторонах ромба
+                    for (let k = 0; k < 4; k++) {
+                        const p = P[k], q = P[(k + 1) % 4], m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+                        const nx = -(q[1] - p[1]), ny = q[0] - p[0], L = Math.hypot(nx, ny);
+                        svg += `<line x1="${f1(m[0] - nx / L * 7)}" y1="${f1(m[1] - ny / L * 7)}" x2="${f1(m[0] + nx / L * 7)}" y2="${f1(m[1] + ny / L * 7)}" class="tick-mark"/>`;
+                    }
+                }
+                return svg;
+            }
+            function parInfo(ang, b) {
+                const a = 4, c = Math.cos(rad(ang)), sn = Math.sin(rad(ang));
+                const d1 = Math.hypot(a + b * c, b * sn), d2 = Math.hypot(b * c - a, b * sn);
+                const dot = (a + b * c) * (b * c - a) + b * sn * b * sn;
+                const between = Math.acos(Math.min(1, Math.abs(dot) / (d1 * d2))) * 180 / Math.PI;
+                let name = 'паралелограм';
+                if (ang === 90 && b === a) name = 'квадрат'; else if (ang === 90) name = 'прямокутник'; else if (b === a) name = 'ромб';
+                return { name, d1, d2, between };
+            }
+            window.renderPar = function () {
+                const [ang, b] = parVals();
+                document.getElementById('w-ang-val').textContent = ang + '°';
+                document.getElementById('w-side-val').textContent = b;
+                parShown = false;
+                document.getElementById('par-readout').innerHTML = 'Сторона $AB = 4$. Яка це фігура?';
+                typeset(document.getElementById('par-readout'));
+                document.getElementById('par-scene').innerHTML = parScene(ang, b, false);
+            };
+            window.revealPar = function () {
+                const [ang, b] = parVals(), I = parInfo(ang, b), out = document.getElementById('par-readout');
+                const eq = Math.abs(I.d1 - I.d2) < 1e-9, perp = Math.abs(I.between - 90) < 1e-6;
+                document.getElementById('par-scene').innerHTML = parScene(ang, b, true);
+                out.innerHTML = `<span class="name">Це ${I.name}.</span><br>Діагоналі: $${I.d1.toFixed(2).replace('.', '{,}')}$ і $${I.d2.toFixed(2).replace('.', '{,}')}$ — ${eq ? '<b>рівні</b>' : 'не рівні'}; кут між ними — $${Math.round(I.between)}^\\circ$${perp ? ' — <b>перпендикулярні</b>' : ''}.`;
+                typeset(out);
+            };
+
+            // --- Слайд 5: прямокутник з кутом AOB = 60° ---
+            window.renderTaskFig = function () {
+                // AB : AD = 1 : √3, щоб кут AOB = 60°
+                const w = 105, h = w * Math.sqrt(3), x0 = 200 - h / 2, y0 = 170;
+                const P = [[x0, y0], [x0 + h, y0], [x0 + h, y0 - w], [x0, y0 - w]];
+                const O = [x0 + h / 2, y0 - w / 2], c = O;
+                let s = `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="side"/>`
+                    + `<line x1="${f1(P[0][0])}" y1="${f1(P[0][1])}" x2="${f1(P[2][0])}" y2="${f1(P[2][1])}" class="diag"/>`
+                    + `<line x1="${f1(P[1][0])}" y1="${f1(P[1][1])}" x2="${f1(P[3][0])}" y2="${f1(P[3][1])}" class="diag"/>`
+                    + `<circle cx="${f1(O[0])}" cy="${f1(O[1])}" r="4" class="geo-dot"/><text x="${f1(O[0])}" y="${f1(O[1] - 12)}" class="v-name">O</text>`
+                    + ['A', 'D', 'C', 'B'].map((n, k) => vName(P[k], c, n)).join('');
+                // кут AOB — при меншій стороні AB (ліворуч): вершини P[0] і P[3]
+                s += `<text x="${f1(O[0] - 34)}" y="${f1(O[1] + 6)}" class="angle-label">60°</text>`;
+                document.getElementById('task-scene').innerHTML = s;
+            };
+
+            // --- Слайд 5: кроки ---
+            const STEPS = [
+                ['Діагоналі прямокутника рівні й діляться навпіл: $AO = BO = \\dfrac{AC}{2} = $ [[$5$ см]].', 'Властивість паралелограма + властивість прямокутника'],
+                ['$\\triangle AOB$ — рівнобедрений, тож $\\angle OAB = \\angle OBA = \\dfrac{180^\\circ - 60^\\circ}{2} = $ [[$60^\\circ$]].', 'Кути при основі рівнобедреного трикутника рівні'],
+                ['Усі кути $\\triangle AOB$ по $60^\\circ$ — він [[рівносторонній]].', 'Тому $AB = AO$'],
+                ['Відповідь: $AB = 5$ см.', 'Корисно запам\'ятати: кут $60^\\circ$ між діагоналями — менша сторона дорівнює половині діагоналі'],
+            ];
+@@INCLUDE steps.js
