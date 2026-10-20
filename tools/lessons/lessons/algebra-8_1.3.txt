@@ -1,0 +1,365 @@
+@@TITLE Додавання і віднімання раціональних дробів
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+
+        /* Таблиця перевірок */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.nm { color: var(--warning-red); font-size: 0.9rem; }
+
+        /* Схема додаткових множників */
+        .dm-box { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; }
+        .dm-text { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .dm-mult { fill: var(--brand-green); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .dm-arrow { stroke: var(--brand-green); stroke-width: 2; fill: none; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки зроблять двоє за годину? 🛠️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Перший майстер викладає плитку у ванній за $x$ год, другий — за $x + 2$ год. За $1$ год перший виконує $\dfrac{1}{x}$ роботи, другий — $\dfrac{1}{x + 2}$.</p>
+                    <p class="big-question">Яку частину роботи вони виконають разом за $1$ год?</p>
+                    <p>Треба додати $\dfrac{1}{x} + \dfrac{1}{x + 2}$ — дроби, у знаменниках яких змінні. Як це зробити, щоб відповідь працювала для будь-якого $x$?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися відповідь</button></p>
+                </div>
+                <div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Так само, як звичайні дроби</div>
+                        <p>Зводимо до спільного знаменника $x(x + 2)$:</p>
+                        <p class="big-formula">$\dfrac{1}{x} + \dfrac{1}{x + 2} = \dfrac{x + 2 + x}{x(x + 2)} = \dfrac{2x + 2}{x(x + 2)}$</p>
+                        <p>Наприклад, при $x = 4$: $\;\dfrac{10}{24} = \dfrac{5}{12}$ роботи за годину. Сьогодні — правила й пастки таких перетворень.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Однакові знаменники</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Правило</div>
+                        <p>Щоб додати (відняти) раціональні дроби з <b>однаковими знаменниками</b>, додають (віднімають) чисельники, а знаменник залишають тим самим:</p>
+                        <p class="big-formula">$\dfrac{a}{c} + \dfrac{b}{c} = \dfrac{a + b}{c}, \qquad \dfrac{a}{c} - \dfrac{b}{c} = \dfrac{a - b}{c}$</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Після дії — спробуйте скоротити</div>
+                        <p>Результат часто скорочується. Але скорочувати можна лише <b>множники</b>, а не доданки.</p>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-0">
+                    <p><b>Приклад.</b> $\dfrac{3x}{x - 2} - \dfrac{6}{x - 2}$</p>
+                    <div class="step">$= \dfrac{3x - 6}{x - 2}$ — знаменники однакові, віднімаємо чисельники.</div>
+                    <div class="step">$= \dfrac{3(x - 2)}{x - 2}$ — винесли спільний множник.</div>
+                    <div class="step">$= 3$ при $x \ne 2$ — скоротили на $x - 2$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-0')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Різні знаменники: спільний знаменник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Як і зі звичайними дробами</div>
+                        <p>За основною властивістю дробу $\dfrac{a}{b} = \dfrac{ak}{bk}$ ($k \ne 0$) зводимо дроби до <b>спільного знаменника</b>. Множник $k$ — <b>додатковий множник</b>.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Найпростіший спільний знаменник</div>
+                        <p>Розкладіть знаменники на множники й візьміть кожен множник у найбільшому степені.</p>
+                        <p>$x^2 - 9 = (x - 3)(x + 3)$, тож для $\dfrac{1}{x^2 - 9}$ і $\dfrac{1}{x + 3}$ досить $(x - 3)(x + 3)$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 230" role="img" aria-label="Схема: дроби 1/x і 1/(x+2) зводимо до знаменника x(x+2) додатковими множниками x+2 і x">
+                        <rect x="20" y="20" width="150" height="56" rx="10" class="dm-box"/><text x="95" y="54" class="dm-text">1 / x</text>
+                        <rect x="250" y="20" width="150" height="56" rx="10" class="dm-box"/><text x="325" y="54" class="dm-text">1 / (x + 2)</text>
+                        <path d="M95 80 V140" class="dm-arrow"/><path d="M325 80 V140" class="dm-arrow"/>
+                        <text x="95" y="114" class="dm-mult" style="text-anchor:start" dx="8">· (x + 2)</text>
+                        <text x="325" y="114" class="dm-mult" style="text-anchor:start" dx="8">· x</text>
+                        <rect x="10" y="144" width="170" height="56" rx="10" class="dm-box"/><text x="95" y="178" class="dm-text">(x + 2) / x(x + 2)</text>
+                        <rect x="240" y="144" width="170" height="56" rx="10" class="dm-box"/><text x="325" y="178" class="dm-text">x / x(x + 2)</text>
+                        <text x="210" y="222" class="dm-text" style="fill:var(--brand-green)">разом: (2x + 2) / x(x + 2)</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Перевіряємо відповідь числами 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо $x$. Учні обчислюють $A = \dfrac{1}{x} + \dfrac{1}{x + 2}$ і $B = \dfrac{2x + 2}{x(x + 2)}$ — потім перевіряємо. При яких $x$ вирази не мають змісту?</p>
+                    <div class="slider-control"><label for="x-val">x</label><input type="range" id="x-val" min="-4" max="5" step="1" value="1" oninput="xInput()"><span id="x-val-out">1</span></div>
+                    <p class="center"><button class="btn-primary" onclick="computeAB()">Обчислити $A$ і $B$</button></p>
+                    <p class="readout" id="ab-readout"></p>
+                </div>
+                <div>
+                    <div class="math-widget">
+                        <table class="val-table" id="ab-table"></table>
+                    </div>
+                    <div class="box theorem hidden-answer" id="ab-verdict">
+                        <div class="box-title">Висновок</div>
+                        <p>Значення збігаються — так і має бути: ми робили <b>тотожні</b> перетворення. Але лише при $x \ne 0$ і $x \ne -2$: там знаменник дорівнює нулю.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Дроби з різними знаменниками крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Розкласти знаменники на множники.</p>
+                    <p>2) Знайти найпростіший спільний знаменник.</p>
+                    <p>3) Знайти додаткові множники й домножити чисельники.</p>
+                    <p>4) Додати (відняти) чисельники; мінус перед дробом — у дужки.</p>
+                    <p>5) Спростити чисельник і скоротити дріб, якщо можна.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Спростимо:</b> $\dfrac{2}{x - 3} - \dfrac{12}{x^2 - 9}$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Протилежні знаменники і «зручні» різниці</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Спростіть $\dfrac{x}{x - y} + \dfrac{y}{y - x}$.</p>
+                    <div class="step">$y - x = -(x - y)$, тож $\dfrac{y}{y - x} = -\dfrac{y}{x - y}$.</div>
+                    <div class="step">$\dfrac{x}{x - y} - \dfrac{y}{x - y} = \dfrac{x - y}{x - y}$.</div>
+                    <div class="step">$= 1$ при $x \ne y$. Спільний знаменник знайшли, просто змінивши знак.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Спростіть $\dfrac{1}{a} - \dfrac{1}{a + 1}$.</p>
+                    <div class="step">Спільний знаменник $a(a + 1)$; додаткові множники: $a + 1$ і $a$.</div>
+                    <div class="step">$\dfrac{(a + 1) - a}{a(a + 1)} = \dfrac{1}{a(a + 1)}$.</div>
+                    <div class="step">Наслідок: $\dfrac{1}{2} - \dfrac{1}{3} = \dfrac{1}{6}$, $\;\dfrac{1}{3} - \dfrac{1}{4} = \dfrac{1}{12}$ — так обчислюють суми на кшталт $\dfrac{1}{1 \cdot 2} + \dfrac{1}{2 \cdot 3} + \ldots$</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Знаменники не додають</div>
+                        <p>$\dfrac{1}{a} + \dfrac{1}{b} \ne \dfrac{2}{a + b}$. Контрприклад $a = b = 1$: $\;2 \ne 1$. Правильно: $\dfrac{a + b}{ab}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Мінус перед дробом</div>
+                        <p>$\dfrac{x}{x - 1} - \dfrac{x + 1}{x - 1} = \dfrac{x - (x + 1)}{x - 1} = \dfrac{-1}{x - 1}$, а не $\dfrac{x - x + 1}{x - 1}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Скорочують доданки</div>
+                        <p>$\dfrac{x + 3}{x} \ne 3$ і $\dfrac{x + 3}{x} \ne 1 + 3$. Скорочують лише множники: $\dfrac{x + 3}{x} = 1 + \dfrac{3}{x}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Забувають про ОДЗ</div>
+                        <p>$\dfrac{3x - 6}{x - 2} = 3$ лише при $x \ne 2$: при $x = 2$ ліва частина не має змісту.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Спростіть $\dfrac{5a}{a + b} + \dfrac{5b}{a + b}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\dfrac{5a + 5b}{2a + 2b}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\dfrac{10}{a + b}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $5(a + b)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{5a + 5b}{a + b} = \dfrac{5(a + b)}{a + b} = 5$ (при $a + b \ne 0$).</p>
+                            <p>Б — додали знаменники; В — «додали» $a$ і $b$ як числа; Г — помножили замість ділення.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть $\dfrac{3}{x} - \dfrac{2}{x + 1}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{1}{x(x + 1)}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $\dfrac{x + 3}{x(x + 1)}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{x - 3}{x(x + 1)}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $\dfrac{5x + 3}{x(x + 1)}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{3(x + 1) - 2x}{x(x + 1)} = \dfrac{3x + 3 - 2x}{x(x + 1)} = \dfrac{x + 3}{x(x + 1)}$.</p>
+                            <p>А — забули додаткові множники; В — помилка в знаку: $3(x + 1) = 3x + 3$; Г — додали $2x$ замість віднімання.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Спростіть $\dfrac{x}{x - 2} - \dfrac{4}{x^2 - 2x}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $\dfrac{x + 2}{x}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{x - 2}{x}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{x - 4}{x - 2}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\dfrac{x^2 - 4}{x - 2}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x^2 - 2x = x(x - 2)$ — спільний знаменник. Додатковий множник першого дробу — $x$.</p>
+                            <p>$\dfrac{x \cdot x - 4}{x(x - 2)} = \dfrac{(x - 2)(x + 2)}{x(x - 2)} = \dfrac{x + 2}{x}$ ($x \ne 0$, $x \ne 2$).</p>
+                            <p>В — забули додатковий множник; Д — загубили множник $x$ у знаменнику.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$\dfrac{a}{c} \pm \dfrac{b}{c} = \dfrac{a \pm b}{c}$. Різні знаменники — зводимо до спільного: $\dfrac{a}{b} + \dfrac{c}{d} = \dfrac{ad + bc}{bd}$.</p>
+                    <p>Найпростіший спільний знаменник — після розкладання знаменників на множники.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Розклади знаменники → спільний знаменник → додаткові множники → чисельники в дужках → скороти.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Знаменники не додають: $\dfrac{1}{a} + \dfrac{1}{b} \ne \dfrac{2}{a + b}$. Мінус перед дробом змінює знак усього чисельника.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderAB();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+            // Нескоротний дріб p/q у TeX (знак — перед дробом)
+            function fracTex(p, q) {
+                if (q < 0) { p = -p; q = -q; }
+                const g = gcd(Math.abs(p), q) || 1;
+                p /= g; q /= g;
+                if (q === 1) return String(p);
+                return (p < 0 ? '-' : '') + `\\dfrac{${Math.abs(p)}}{${q}}`;
+            }
+
+            // --- Слайд 4: A = 1/x + 1/(x+2) і B = (2x+2)/(x(x+2)) при цілих x ---
+            let checks = {}, shownNow = false;
+            window.xInput = function () { shownNow = false; renderAB(); };
+            window.computeAB = function () {
+                const x = parseInt(document.getElementById('x-val').value, 10);
+                checks[x] = true; shownNow = true; renderAB();
+                if (Object.keys(checks).length >= 3) document.getElementById('ab-verdict').classList.add('shown');
+            };
+            function valueAt(x) {
+                if (x === 0 || x === -2) return null;
+                return { A: fracTex(x + 2 + x, x * (x + 2)), B: fracTex(2 * x + 2, x * (x + 2)) };
+            }
+            window.renderAB = function () {
+                const x = parseInt(document.getElementById('x-val').value, 10);
+                document.getElementById('x-val-out').textContent = String(x).replace('-', '−');
+                const out = document.getElementById('ab-readout'), v = valueAt(x);
+                out.innerHTML = !shownNow ? `$x = ${x}$: $\\;A = \\,?$, $\\;B = \\,?$`
+                    : v ? `$x = ${x}$: $\\;A = ${v.A}$, $\\;B = ${v.B}$ — <span class="ok">рівні ✓</span>`
+                        : `$x = ${x}$: <span class="bad">знаменник дорівнює $0$ — вирази не мають змісту</span>`;
+                typeset(out);
+                const keys = Object.keys(checks).map(Number).sort((p, q) => p - q);
+                const table = document.getElementById('ab-table');
+                table.innerHTML = '<tr><th>$x$</th><th>$A$</th><th>$B$</th></tr>' + (keys.length ? keys.map(k => {
+                    const w = valueAt(k);
+                    return w ? `<tr><th>$${k}$</th><td>$${w.A}$</td><td>$${w.B}$</td></tr>`
+                             : `<tr><th>$${k}$</th><td class="nm" colspan="2">не має змісту</td></tr>`;
+                }).join('') : '<tr><td colspan="3">перевірок ще немає</td></tr>');
+                typeset(table);
+            };
+
+            // --- Слайд 5: 2/(x−3) − 12/(x²−9) ---
+            const STEPS = [
+                ['$x^2 - 9 = $ [[$(x - 3)(x + 3)$]]', 'Крок 1: розкладаємо знаменники на множники'],
+                ['Спільний знаменник: [[$(x - 3)(x + 3)$]]; додатковий множник першого дробу — $x + 3$', 'Крок 2–3: другий дріб уже має цей знаменник'],
+                ['$\\dfrac{2(x + 3) - 12}{(x - 3)(x + 3)} = $ [[$\\dfrac{2x - 6}{(x - 3)(x + 3)}$]]', 'Крок 4: віднімаємо чисельники'],
+                ['$= \\dfrac{2(x - 3)}{(x - 3)(x + 3)} = $ [[$\\dfrac{2}{x + 3}$]]', 'Крок 5: виносимо $2$ і скорочуємо на $x - 3$'],
+                ['Відповідь: $\\dfrac{2}{x + 3}$ при $x \\ne \\pm 3$', 'Перевірка при $x = 0$: $-\\dfrac{2}{3} + \\dfrac{12}{9} = \\dfrac{2}{3}$ ✓'],
+            ];
+@@INCLUDE steps.js
