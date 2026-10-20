@@ -1,0 +1,412 @@
+@@TITLE Трапеція. Середня лінія трапеції
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .side { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.08; }
+        .base { stroke: var(--brand-blue); stroke-width: 4; stroke-linecap: round; }
+        .mid { stroke: var(--brand-green); stroke-width: 3.4; stroke-linecap: round; }
+        .aux { stroke: var(--warning-red); stroke-width: 2.2; stroke-dasharray: 7 5; }
+        .rung { stroke: #b07a3a; stroke-width: 6; stroke-linecap: round; }
+        .rail { stroke: #8a5a2b; stroke-width: 7; stroke-linecap: round; }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .svg-caption.g { fill: var(--brand-green); }
+        .svg-caption.b { fill: var(--brand-blue); }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 2.4em; }
+        .readout .ok { color: var(--brand-green); }
+        .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; font-weight: 700; }
+        .kinds svg { width: 100%; height: auto; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Яка довжина середньої сходинки? 🪜</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>У драбини, що звужується догори, нижня сходинка — $80$ см, верхня — $40$ см. Середню сходинку прикріпили рівно посередині бічних брусів.</p>
+                    <p class="big-question">Якої довжини середня сходинка? Чи можна відповісти, не вимірюючи?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealLadder()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$\dfrac{80 + 40}{2} = 60$ см</div>
+                        <p>Драбина — трапеція, середня сходинка — її <b>середня лінія</b>. Вона дорівнює півсумі основ. Сьогодні доведемо це.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="ladder-scene" role="img" aria-label="Драбина-трапеція: нижня сходинка 80 см, верхня 40 см, середня — посередині"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке трапеція</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Трапеція</b> — чотирикутник, у якого дві сторони паралельні, а дві інші — ні.</p>
+                        <p>Паралельні сторони $AD$ і $BC$ — <b>основи</b>, $AB$ і $CD$ — <b>бічні сторони</b>. Перпендикуляр між основами — <b>висота</b>.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Особливі трапеції</div>
+                        <div class="kinds" id="kinds-trap"></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="def-scene" role="img" aria-label="Трапеція ABCD з основами AD і BC та висотою BH"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості і середня лінія</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Кути трапеції</div>
+                        <p>Кути, прилеглі до бічної сторони, у сумі дають $180^\circ$: $\angle A + \angle B = 180^\circ$ (односторонні при $AD \parallel BC$).</p>
+                        <p><b>Рівнобічна</b> трапеція: кути при кожній основі рівні, діагоналі рівні.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Середня лінія трапеції</div>
+                        <p>Відрізок, що сполучає середини <b>бічних</b> сторін. Він паралельний основам і дорівнює їх <b>півсумі</b>:</p>
+                        <p class="center">$MN = \dfrac{AD + BC}{2}$</p>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-proof">
+                    <p><b>Доведення</b> (через середні лінії трикутників).</p>
+                    <div class="step">1) Проведемо діагональ $AC$. Через $M$ — середину $AB$ — проведемо пряму, паралельну основам; вона перетне $AC$ у його середині $K$.</div>
+                    <div class="step">2) $MK$ — середня лінія $\triangle ABC$: $MK = \dfrac{BC}{2}$.</div>
+                    <div class="step">3) $KN$ — середня лінія $\triangle ACD$: $KN = \dfrac{AD}{2}$, і $KN \parallel AD$, тож $M$, $K$, $N$ на одній прямій.</div>
+                    <div class="step">4) $MN = MK + KN = \dfrac{BC + AD}{2}$ ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-proof')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Змінюємо основи 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо основи й нахил. Учні передбачають довжину середньої лінії, потім вимірюємо.</p>
+                    <div class="slider-control"><label for="w-a">Основа $AD$</label><input type="range" id="w-a" min="4" max="10" step="1" value="9" oninput="renderTrap()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-b">Основа $BC$</label><input type="range" id="w-b" min="1" max="8" step="1" value="3" oninput="renderTrap()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-s">Зсув $B$</label><input type="range" id="w-s" min="-2" max="6" step="0.5" value="2" oninput="renderTrap()"><span id="w-s-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealTrap()">Виміряти</button></p>
+                    <p class="readout" id="trap-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="trap-scene" role="img" aria-label="Трапеція ABCD із середньою лінією MN і діагоналлю AC"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Рівнобічна трапеція: висоти з вершин</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як розв'язувати</div>
+                        <p>1) Опустити висоти $BH$ і $CK$. 2) $HBCK$ — прямокутник, $HK = BC$. 3) У рівнобічній трапеції $AH = KD = \dfrac{AD - BC}{2}$. 4) Розв'язати прямокутний $\triangle ABH$.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 200" id="algo-scene" role="img" aria-label="Рівнобічна трапеція з висотами BH і CK"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Задача.</b> Основи рівнобічної трапеції — $6$ і $14$ см, гострий кут — $60^\circ$. Знайдіть бічну сторону, периметр і середню лінію.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Основи й кути</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Середня лінія трапеції — $12$ см, одна основа на $6$ см більша за іншу. Знайдіть основи.</p>
+                    <div class="step">Сума основ: $2 \cdot 12 = 24$ см.</div>
+                    <div class="step">$x + (x + 6) = 24$, $x = 9$.</div>
+                    <div class="step">Основи: $9$ і $15$ см. Перевірка: $\dfrac{9 + 15}{2} = 12$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Один з кутів рівнобічної трапеції — $115^\circ$. Знайдіть інші кути.</p>
+                    <div class="step">$115^\circ$ — тупий, тож це кут при меншій основі; другий кут при ній теж $115^\circ$.</div>
+                    <div class="step">Прилеглий до тієї самої бічної сторони: $180^\circ - 115^\circ = 65^\circ$.</div>
+                    <div class="step">Кути: $65^\circ$, $115^\circ$, $115^\circ$, $65^\circ$. Сума $360^\circ$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Півсума, а не різниця</div>
+                        <p>Основи $4$ і $10$: середня лінія $\dfrac{4 + 10}{2} = 7$, а не $\dfrac{10 - 4}{2} = 3$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Не ті середини</div>
+                        <p>Середня лінія трапеції сполучає середини <b>бічних</b> сторін, а не основ.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Рівні кути при основі</div>
+                        <p>Кути при основі рівні лише в <b>рівнобічній</b> трапеції. У довільній рівна $180^\circ$ сума кутів при бічній стороні.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Паралелограм — не трапеція</div>
+                        <p>У трапеції паралельна рівно <b>одна</b> пара сторін. Якщо паралельні обидві — це паралелограм.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Основи трапеції — $7$ см і $13$ см. Знайдіть середню лінію.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $10$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $3$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $20$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $6{,}5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{7 + 13}{2} = 10$ см. Б — піврізниця; В — сума без ділення; Г — половина однієї основи.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Середня лінія трапеції — $9$ см, одна з основ — $5$ см. Знайдіть другу основу.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $13$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $4$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $7$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $14$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Сума основ $18$ см: $18 - 5 = 13$ см. Б — $9 - 5$; Г — $9 + 5$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Основи рівнобічної трапеції — $5$ см і $11$ см, гострий кут — $60^\circ$. Знайдіть периметр трапеції.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $28$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $22$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $34$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $16$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $25$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$AH = \dfrac{11 - 5}{2} = 3$ см. У $\triangle ABH$ $\angle ABH = 30^\circ$, тож $AB = 2 \cdot AH = 6$ см.</p>
+                            <p>$P = 5 + 11 + 6 + 6 = 28$ см. Б — бічна взята $3$ см; Г — лише сума основ.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Трапеція: одна пара паралельних сторін (основи). Кути при бічній стороні — у сумі $180^\circ$.</p>
+                    <p>Середня лінія: $MN \parallel AD$, $MN = \dfrac{AD + BC}{2}$.</p>
+                    <p>Рівнобічна: рівні кути при основі й рівні діагоналі.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>У рівнобічній трапеції опускаємо дві висоти: $AH = \dfrac{AD - BC}{2}$, далі — прямокутний трикутник.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Середня лінія — <b>півсума</b> основ, і вона сполучає середини <b>бічних</b> сторін.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderLadder();
+                if (currentSlide === 2) { renderDef(); renderKinds(); }
+                if (currentSlide === 4) renderTrap();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const f1 = (v) => v.toFixed(1), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            const num = (v) => String(v).replace('.', '{,}'), numS = (v) => String(v).replace('.', ',');
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            function ticks(p, q, n) {
+                const m = mid(p, q), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+                let s = '';
+                for (let k = 0; k < n; k++) {
+                    const o = (k - (n - 1) / 2) * 6, c = [m[0] + ux * o, m[1] + uy * o];
+                    s += seg([c[0] - uy * 7, c[1] + ux * 7], [c[0] + uy * 7, c[1] - ux * 7], 'tick-mark');
+                }
+                return s;
+            }
+            // Трапеція ABCD: A, D — нижня основа, B, C — верхня; підписи вершин
+            function trapNames(A, B, C, D) {
+                const c = [(A[0] + B[0] + C[0] + D[0]) / 4, (A[1] + B[1] + C[1] + D[1]) / 4];
+                return [[A, 'A'], [B, 'B'], [C, 'C'], [D, 'D']].map(([p, n]) => vName(p, c, n)).join('');
+            }
+            const rightMark = (H, up) => `<path d="M${f1(H[0] + 12)} ${f1(H[1])} V${f1(H[1] - 12)} H${f1(H[0])}" class="right-mark"/>`;
+
+            // --- Слайд 1: драбина ---
+            let ladderShown = false;
+            window.renderLadder = function () {
+                const A = [90, 250], D = [330, 250], B = [150, 40], C = [270, 40], M = mid(A, B), N = mid(D, C);
+                let s = seg(A, B, 'rail') + seg(D, C, 'rail') + seg(A, D, 'rung') + seg(B, C, 'rung');
+                s += seg(M, N, ladderShown ? 'mid' : 'rung');
+                s += `<text x="210" y="272" class="svg-caption">80 см</text><text x="210" y="28" class="svg-caption">40 см</text>`;
+                s += `<text x="210" y="${f1(M[1] - 12)}" class="svg-caption${ladderShown ? ' g' : ''}">${ladderShown ? '60 см' : '?'}</text>`;
+                s += ticks(A, M, 1) + ticks(M, B, 1) + ticks(D, N, 2) + ticks(N, C, 2);
+                document.getElementById('ladder-scene').innerHTML = s;
+            };
+            window.revealLadder = function () { ladderShown = true; renderLadder(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: означення і види ---
+            window.renderDef = function () {
+                const A = [40, 220], B = [140, 50], C = [290, 50], D = [385, 220], H = [140, 220];
+                let s = poly([A, B, C, D], 'side') + seg(A, D, 'base') + seg(B, C, 'base') + seg(B, H, 'aux') + rightMark(H) + trapNames(A, B, C, D);
+                s += `<text x="${H[0]}" y="${H[1] + 24}" class="v-name">H</text><text x="215" y="40" class="svg-caption b">основа</text><text x="260" y="245" class="svg-caption b">основа</text>`;
+                document.getElementById('def-scene').innerHTML = s;
+            };
+            window.renderKinds = function () {
+                const fig = (P, extra, name) => `<div><svg viewBox="0 0 130 90">${poly(P, 'side')}${extra}</svg>${name}</div>`;
+                const iso = [[10, 80], [40, 15], [90, 15], [120, 80]], rt = [[15, 80], [15, 15], [75, 15], [120, 80]];
+                document.getElementById('kinds-trap').innerHTML =
+                    fig([[8, 80], [55, 15], [100, 15], [124, 80]], '', 'довільна')
+                    + fig(iso, ticks(iso[0], iso[1], 1) + ticks(iso[3], iso[2], 1), 'рівнобічна')
+                    + fig(rt, `<path d="M27 80 V68 H15" class="right-mark"/>`, 'прямокутна');
+            };
+
+            // --- Слайд 4: трапеція з повзунками ---
+            let trapShown = false;
+            function trapVals() { return ['w-a', 'w-b', 'w-s'].map(id => parseFloat(document.getElementById(id).value)); }
+            function trapScene(show) {
+                const [a, b, sh] = trapVals();
+                const xmin = Math.min(0, sh), xmax = Math.max(a, sh + b), s = Math.min(380 / (xmax - xmin), 42), x0 = 210 - (xmin + xmax) / 2 * s;
+                const A = [x0, 235], D = [x0 + a * s, 235], B = [x0 + sh * s, 75], C = [x0 + (sh + b) * s, 75];
+                const M = mid(A, B), N = mid(D, C), K = mid(A, C);
+                let svg = poly([A, B, C, D], 'side') + seg(A, D, 'base') + seg(B, C, 'base') + seg(A, C, 'aux') + seg(M, N, 'mid');
+                svg += ticks(A, M, 1) + ticks(M, B, 1) + ticks(D, N, 2) + ticks(N, C, 2) + dot(M) + dot(N) + dot(K) + trapNames(A, B, C, D);
+                svg += `<text x="${f1(M[0] - 18)}" y="${f1(M[1] + 6)}" class="v-name">M</text><text x="${f1(N[0] + 18)}" y="${f1(N[1] + 6)}" class="v-name">N</text><text x="${f1(K[0])}" y="${f1(K[1] - 10)}" class="v-name">K</text>`;
+                svg += `<text x="${f1((A[0] + D[0]) / 2)}" y="262" class="svg-caption b">${a}</text><text x="${f1((B[0] + C[0]) / 2)}" y="64" class="svg-caption b">${b}</text>`;
+                if (show) svg += `<text x="${f1((M[0] + K[0]) / 2)}" y="${f1(M[1] + 22)}" class="svg-caption g">${numS(b / 2)}</text><text x="${f1((K[0] + N[0]) / 2)}" y="${f1(M[1] + 22)}" class="svg-caption g">${numS(a / 2)}</text>`;
+                return svg;
+            }
+            window.renderTrap = function () {
+                const [a, b, sh] = trapVals();
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('w-s-val').textContent = String(sh).replace('.', ',').replace('-', '−');
+                trapShown = false;
+                const out = document.getElementById('trap-readout');
+                out.innerHTML = a === b ? 'Основи рівні — це паралелограм, а не трапеція! Змініть основу.' : `$AD = ${a}$, $BC = ${b}$. Яка довжина $MN$?`;
+                typeset(out);
+                document.getElementById('trap-scene').innerHTML = trapScene(false);
+            };
+            window.revealTrap = function () {
+                const [a, b] = trapVals(), out = document.getElementById('trap-readout');
+                document.getElementById('trap-scene').innerHTML = trapScene(true);
+                out.innerHTML = `$MK = ${num(b / 2)}$, $KN = ${num(a / 2)}$: <span class="ok">$MN = ${num((a + b) / 2)} = \\dfrac{${a} + ${b}}{2}$ ✓</span><br>Зсув вершини $B$ на довжину не впливає.`;
+                typeset(out);
+            };
+
+            // --- Слайд 5: рівнобічна трапеція з висотами ---
+            window.renderAlgo = function () {
+                const st = shown, s = 20, x0 = 70, y0 = 180, h = 4 * Math.sqrt(3) * s;
+                const A = [x0, y0], D = [x0 + 14 * s, y0], B = [x0 + 4 * s, y0 - h], C = [x0 + 10 * s, y0 - h], H = [B[0], y0], K = [C[0], y0];
+                let svg = poly([A, B, C, D], 'side') + trapNames(A, B, C, D);
+                svg += `<path d="M${f1(A[0])} ${f1(A[1])} L${f1(A[0] + 26)} ${f1(A[1])} A26 26 0 0 0 ${f1(A[0] + 13)} ${f1(A[1] - 22.5)} Z" class="angle-arc g"/><text x="${f1(A[0] + 46)}" y="${f1(A[1] - 8)}" class="angle-label">60°</text>`;
+                if (st >= 1) svg += seg(B, H, 'aux') + seg(C, K, 'aux') + rightMark(H) + rightMark(K) + `<text x="${H[0]}" y="${y0 + 22}" class="v-name">H</text><text x="${K[0]}" y="${y0 + 22}" class="v-name">K</text>`;
+                if (st >= 2) svg += `<text x="${f1((A[0] + H[0]) / 2 + 6)}" y="${y0 + 18}" class="svg-caption g">4</text><text x="${f1((K[0] + D[0]) / 2 - 6)}" y="${y0 + 18}" class="svg-caption g">4</text>`;
+                if (st >= 3) svg += `<text x="${f1((A[0] + B[0]) / 2 - 16)}" y="${f1((A[1] + B[1]) / 2)}" class="svg-caption g">8</text>`;
+                if (st >= 4) svg += seg(mid(A, B), mid(D, C), 'mid');
+                document.getElementById('algo-scene').innerHTML = svg;
+            };
+            const STEPS = [
+                ['Опускаємо висоти $BH$ і $CK$: [[$HK = BC = 6$]] см', '$HBCK$ — прямокутник'],
+                ['$AH = KD = \\dfrac{14 - 6}{2} = $ [[$4$ см]]', 'Прямокутні трикутники $ABH$ і $DCK$ рівні (рівнобічна трапеція)'],
+                ['У $\\triangle ABH$ $\\angle ABH = 30^\\circ$, тож [[$AB = 2 \\cdot AH = 8$ см]]', 'Катет проти кута $30^\\circ$ — половина гіпотенузи'],
+                ['$P = 6 + 14 + 8 + 8 = $ [[$36$ см]], $\\;MN = \\dfrac{6 + 14}{2} = $ [[$10$ см]]', 'Середня лінія — півсума основ'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
