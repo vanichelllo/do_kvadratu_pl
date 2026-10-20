@@ -1,0 +1,432 @@
+@@TITLE Перша і друга ознаки рівності трикутників
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .tri { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.1; }
+        .tri.g { fill: var(--brand-green); fill-opacity: 0.14; }
+        .tri.r { fill: var(--warning-red); fill-opacity: 0.12; stroke: var(--warning-red); stroke-dasharray: 7 5; }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .hl { stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round; }
+        .ray { stroke: currentColor; stroke-width: 1.6; stroke-dasharray: 6 5; opacity: 0.6; }
+        .arc-guide { fill: none; stroke: var(--warning-red); stroke-width: 1.6; stroke-dasharray: 6 5; opacity: 0.8; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 80px; }
+        .slider-control span { font-weight: 800; min-width: 44px; text-align: right; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 2.4em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки вимірювань досить? 📐</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Майстер хоче вирізати з фанери трикутник, рівний зразку. У трикутника $6$ елементів: $3$ сторони і $3$ кути.</p>
+                    <p class="big-question">Чи треба вимірювати всі шість? Яких трьох вимірювань досить?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealCopy()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Досить трьох</div>
+                        <p>Наприклад, двох сторін і кута між ними: відклали кут, на його сторонах — відрізки, з'єднали кінці. Трикутник визначається <b>однозначно</b>. Це перша ознака рівності.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="copy-scene" role="img" aria-label="Трикутник-зразок і його копія за двома сторонами й кутом між ними"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Перша ознака: дві сторони й кут між ними</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема (перша ознака)</div>
+                        <p>Якщо дві сторони і кут <b>між ними</b> одного трикутника дорівнюють відповідно двом сторонам і куту між ними іншого трикутника, то такі трикутники рівні.</p>
+                        <p>$AB = A_1B_1$, $AC = A_1C_1$, $\angle A = \angle A_1$ $\Rightarrow$ $\triangle ABC = \triangle A_1B_1C_1$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Ідея доведення</div>
+                        <p>Накладемо $\triangle A_1B_1C_1$ на $\triangle ABC$ так, щоб кути $A_1$ і $A$ сумістилися. Рівні відрізки на сторонах кута сумістяться, тож $B_1 = B$, $C_1 = C$ — збіжаться й треті сторони.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 240" id="sas-scene" role="img" aria-label="Два трикутники з рівними двома сторонами й кутом між ними"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Друга ознака: сторона й два прилеглі кути</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема (друга ознака)</div>
+                        <p>Якщо сторона і два <b>прилеглі до неї</b> кути одного трикутника дорівнюють відповідно стороні й двом прилеглим кутам іншого, то трикутники рівні.</p>
+                        <p>$AB = A_1B_1$, $\angle A = \angle A_1$, $\angle B = \angle B_1$ $\Rightarrow$ $\triangle ABC = \triangle A_1B_1C_1$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Ідея доведення</div>
+                        <p>Сумістимо $A_1B_1$ з $AB$. Промені $A_1C_1$ і $B_1C_1$ підуть уздовж $AC$ і $BC$ (кути рівні), а два промені перетинаються лише в одній точці — $C_1 = C$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 240" id="asa-scene" role="img" aria-label="Два трикутники з рівною стороною і двома прилеглими кутами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Чому кут має бути між сторонами? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="mode-0" onclick="setMode(0)">Кут між сторонами</button>
+                        <button class="btn-secondary" id="mode-1" onclick="setMode(1)">Кут не між ними</button>
+                    </div>
+                    <div class="slider-control"><label for="w-c">$AB$</label><input type="range" id="w-c" min="4" max="8" step="1" value="7" oninput="renderBuild()"><span id="w-c-val"></span></div>
+                    <div class="slider-control"><label for="w-al">$\angle A$</label><input type="range" id="w-al" min="25" max="80" step="5" value="35" oninput="renderBuild()"><span id="w-al-val"></span></div>
+                    <div class="slider-control"><label for="w-s" id="w-s-lab">$AC$</label><input type="range" id="w-s" min="3" max="8" step="0.5" value="5" oninput="renderBuild()"><span id="w-s-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealBuild()">Скільки трикутників?</button></p>
+                    <p class="readout" id="build-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="build-scene" role="img" aria-label="Побудова трикутника за двома сторонами й кутом"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Як доводити рівність трикутників</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Назвати трикутники, рівність яких доводимо. 2) Знайти три пари рівних елементів і <b>обґрунтувати</b> кожну (за умовою, спільна сторона, вертикальні кути…). 3) Назвати ознаку. 4) Зробити висновок про відповідні елементи.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 200" id="algo-scene" role="img" aria-label="Відрізки AB і CD перетинаються в точці O — середині кожного"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Задача.</b> Відрізки $AB$ і $CD$ перетинаються в точці $O$, яка є серединою кожного з них. Доведіть, що $AC = BD$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Спільна сторона й бісектриса</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> $AB = AD$, $\angle BAC = \angle DAC$. Доведіть, що $BC = DC$.</p>
+                    <div class="step">Розглянемо $\triangle ABC$ і $\triangle ADC$: $AB = AD$ (за умовою), $\angle BAC = \angle DAC$ (за умовою), $AC$ — спільна.</div>
+                    <div class="step">За першою ознакою $\triangle ABC = \triangle ADC$.</div>
+                    <div class="step">Тому $BC = DC$ — відповідні сторони ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> $BD$ — бісектриса кута $ABC$, а $\angle ADB = \angle CDB$ ($D$ на $AC$). Доведіть, що $AB = CB$.</p>
+                    <div class="step">$\triangle ABD$ і $\triangle CBD$: $BD$ — спільна; $\angle ABD = \angle CBD$ (бісектриса); $\angle ADB = \angle CDB$ (за умовою).</div>
+                    <div class="step">Сторона $BD$ і два прилеглі до неї кути — друга ознака: $\triangle ABD = \triangle CBD$.</div>
+                    <div class="step">Тому $AB = CB$ ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Кут не між сторонами</div>
+                        <p>Дві сторони й кут <b>не між ними</b> — це не ознака: як на слайді 4, можуть вийти два різні трикутники.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Кути не прилеглі</div>
+                        <p>У другій ознаці обидва кути прилягають до <b>тієї самої</b> сторони. «Сторона й два кути» в довільному розташуванні — інша ситуація.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Без обґрунтування</div>
+                        <p>Кожну пару рівних елементів пояснюємо: «за умовою», «спільна сторона», «вертикальні кути», «бісектриса».</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Порядок вершин</div>
+                        <p>Записуйте рівність так, щоб відповідні вершини стояли на тих самих місцях: $\triangle AOC = \triangle BOD$, а не $\triangle AOC = \triangle DOB$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Яких даних досить, щоб $\triangle ABC = \triangle KLM$ за першою ознакою?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $AB = KL$, $AC = KM$, $\angle A = \angle K$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $AB = KL$, $AC = KM$, $\angle B = \angle L$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $AB = KL$, $\angle A = \angle K$, $\angle B = \angle L$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\angle A = \angle K$, $\angle B = \angle L$, $\angle C = \angle M$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Кут $A$ лежить між сторонами $AB$ і $AC$ ✓. Б — кут не між сторонами; В — це друга ознака; Г — рівні кути ще не дають рівних трикутників (трикутник можна «збільшити»).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$AB = A_1B_1$, $\angle A = \angle A_1$, $\angle B = \angle B_1$. За якою ознакою $\triangle ABC = \triangle A_1B_1C_1$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) За другою</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) За першою</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) Трикутники не обов'язково рівні</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) За третьою</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Кути $A$ і $B$ прилеглі до сторони $AB$ — сторона й два прилеглі кути, друга ознака.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Відрізки $AB$ і $CD$ перетинаються в точці $O$, $AO = OB$, $\angle CAO = \angle DBO$, $CO = 5$ см. Знайдіть $OD$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $10$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2{,}5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) визначити не можна</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $7{,}5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\triangle AOC$ і $\triangle BOD$: $AO = OB$, $\angle CAO = \angle DBO$, $\angle AOC = \angle BOD$ (вертикальні). Сторона $AO$ і прилеглі кути — друга ознака.</p>
+                            <p>Отже, $OD = OC = 5$ см.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Перша ознака:</b> дві сторони й кут між ними.</p>
+                    <p><b>Друга ознака:</b> сторона й два прилеглі до неї кути.</p>
+                    <p>З рівності трикутників — рівність усіх відповідних елементів.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Назвати трикутники → три пари рівних елементів з обґрунтуванням → ознака → висновок.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Кут має лежати <b>між</b> рівними сторонами (перша ознака), кути — <b>прилягати</b> до рівної сторони (друга).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderCopy();
+                if (currentSlide === 2) renderSas();
+                if (currentSlide === 3) renderAsa();
+                if (currentSlide === 4) renderBuild();
+                if (currentSlide === 5) { renderAlgo(); renderEval(); }
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const f1 = (v) => v.toFixed(1), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], rad = (d) => d * Math.PI / 180;
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            // Сектор кута при вершині V між напрямками на P і Q (менший з кутів)
+            function angleArc(V, P, Q, r, cls) {
+                let a1 = Math.atan2(P[1] - V[1], P[0] - V[0]), a2 = Math.atan2(Q[1] - V[1], Q[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            // n рисок посередині відрізка pq
+            function ticks(p, q, n) {
+                const m = mid(p, q), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+                let s = '';
+                for (let k = 0; k < n; k++) {
+                    const o = (k - (n - 1) / 2) * 6, c = [m[0] + ux * o, m[1] + uy * o];
+                    s += seg([c[0] - uy * 7, c[1] + ux * 7], [c[0] + uy * 7, c[1] - ux * 7], 'tick-mark');
+                }
+                return s;
+            }
+            const names = (P, N) => { const c = [(P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3]; return P.map((p, k) => vName(p, c, N[k])).join(''); };
+            // Трикутник ABC зі зсувом (dx, dy) і масштабом s у системі «A в нулі, AB по осі x, y — угору»
+            const place = (pts, x0, y0, s) => pts.map(([x, y]) => [x0 + x * s, y0 - y * s]);
+            const BASE = [[0, 0], [5, 0], [1.6, 3]];
+
+            // --- Слайд 1: зразок і копія ---
+            let copyShown = false;
+            window.renderCopy = function () {
+                const T1 = place(BASE, 15, 200, 30), T2 = place(BASE, 235, 200, 30);
+                let s = poly(T1, 'tri') + names(T1, ['A', 'B', 'C']) + `<text x="90" y="240" class="svg-caption">зразок</text>`;
+                s += seg(T2[0], T2[1], 'hl') + seg(T2[0], T2[2], 'hl') + angleArc(T2[0], T2[1], T2[2], 26, 'g');
+                if (copyShown) s += poly(T2, 'tri g') + `<text x="310" y="240" class="svg-caption" style="fill:var(--brand-green)">копія ✓</text>`;
+                else s += `<text x="310" y="240" class="svg-caption">дві сторони і кут</text>`;
+                s += names(T2, ['A₁', 'B₁', 'C₁']);
+                document.getElementById('copy-scene').innerHTML = s;
+            };
+            window.revealCopy = function () { copyShown = true; renderCopy(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайди 2–3: позначення рівних елементів ---
+            function pairScene(id, kind) {
+                const T1 = place(BASE, 15, 200, 30), T2 = place(BASE, 235, 200, 30);
+                let s = '';
+                [[T1, ['A', 'B', 'C']], [T2, ['A₁', 'B₁', 'C₁']]].forEach(([T, N]) => {
+                    if (kind === 'sas') s += angleArc(T[0], T[1], T[2], 28, 'g') + poly(T, 'tri') + ticks(T[0], T[1], 1) + ticks(T[0], T[2], 2);
+                    else s += angleArc(T[0], T[1], T[2], 28, 'g') + angleArc(T[1], T[0], T[2], 24, 'b') + poly(T, 'tri') + ticks(T[0], T[1], 1);
+                    s += names(T, N);
+                });
+                document.getElementById(id).innerHTML = s;
+            }
+            window.renderSas = () => pairScene('sas-scene', 'sas');
+            window.renderAsa = () => pairScene('asa-scene', 'asa');
+
+            // --- Слайд 4: дві сторони й кут ---
+            let mode = 0, buildShown = false;
+            window.setMode = function (m) {
+                mode = m;
+                [0, 1].forEach(j => document.getElementById('mode-' + j).classList.toggle('on', j === m));
+                document.getElementById('w-s-lab').innerHTML = m === 0 ? '$AC$' : '$BC$';
+                typeset(document.getElementById('w-s-lab'));
+                renderBuild();
+            };
+            function buildVals() { return [parseInt(document.getElementById('w-c').value, 10), parseInt(document.getElementById('w-al').value, 10), parseFloat(document.getElementById('w-s').value)]; }
+            // Вершини C: для «кута між сторонами» — одна; для «не між» — точки перетину променя з колом радіуса BC навколо B
+            function apexes(c, al, s) {
+                const u = [Math.cos(rad(al)), Math.sin(rad(al))];
+                if (mode === 0) return [[s * u[0], s * u[1]]];
+                const p = c * Math.cos(rad(al)), D = s * s - c * c * Math.sin(rad(al)) ** 2;
+                if (D < 0) return [];
+                const ts = D === 0 ? [p] : [p - Math.sqrt(D), p + Math.sqrt(D)];
+                return ts.filter(t => t > 1e-6).map(t => [t * u[0], t * u[1]]);
+            }
+            function buildScene(show) {
+                const [c, al, s] = buildVals(), S = 36, x0 = 40, y0 = 230, P = (q) => [x0 + q[0] * S, y0 - q[1] * S];
+                const A = P([0, 0]), B = P([c, 0]), far = P([11 * Math.cos(rad(al)), 11 * Math.sin(rad(al))]);
+                let svg = seg(A, far, 'ray') + angleArc(A, B, far, 30, 'g');
+                if (mode === 1) svg += `<circle cx="${f1(B[0])}" cy="${f1(B[1])}" r="${f1(s * S)}" class="arc-guide"/>`;
+                const C = apexes(c, al, s);
+                if (show) C.forEach((q, k) => { svg += poly([A, B, P(q)], k ? 'tri r' : 'tri g') + dot(P(q)) + `<text x="${f1(P(q)[0] - 14)}" y="${f1(P(q)[1] - 8)}" class="v-name">C${C.length > 1 ? (k ? '₂' : '₁') : ''}</text>`; });
+                svg += seg(A, B, 'hl') + dot(A) + dot(B) + `<text x="${f1(A[0])}" y="${y0 + 24}" class="v-name">A</text><text x="${f1(B[0])}" y="${y0 + 24}" class="v-name">B</text>`;
+                if (mode === 0 && !show) svg += seg(A, P(C[0]), 'hl');
+                return svg;
+            }
+            window.renderBuild = function () {
+                const [c, al, s] = buildVals();
+                document.getElementById('w-c-val').textContent = c;
+                document.getElementById('w-al-val').textContent = al + '°';
+                document.getElementById('w-s-val').textContent = String(s).replace('.', ',');
+                buildShown = false;
+                const out = document.getElementById('build-readout');
+                out.innerHTML = mode === 0 ? `Дано $AB = ${c}$, $AC = ${String(s).replace('.', '{,}')}$ і кут між ними. Скільки трикутників можна побудувати?`
+                    : `Дано $AB = ${c}$, $BC = ${String(s).replace('.', '{,}')}$ і $\\angle A$ — кут не між ними. Скільки трикутників?`;
+                typeset(out);
+                document.getElementById('build-scene').innerHTML = buildScene(false);
+            };
+            window.revealBuild = function () {
+                const [c, al, s] = buildVals(), n = apexes(c, al, s).length, out = document.getElementById('build-readout');
+                document.getElementById('build-scene').innerHTML = buildScene(true);
+                out.innerHTML = mode === 0 ? '<span class="ok">Рівно один</span> — кінці сторін на променях кута визначені однозначно.'
+                    : n === 2 ? '<span class="bad">Два різні трикутники</span> $ABC_1$ і $ABC_2$ з тими самими даними! Тому «кут не між сторонами» — не ознака.'
+                        : n === 1 ? 'Тут один трикутник, але за інших довжин їх буває два — гарантії немає.' : 'Коло не дістає променя — трикутника немає.';
+                typeset(out);
+            };
+
+            // --- Слайд 5: середина O двох відрізків ---
+            window.renderAlgo = function () {
+                const O = [210, 100], A = [70, 60], C = [110, 175], B = [2 * O[0] - A[0], 2 * O[1] - A[1]], D = [2 * O[0] - C[0], 2 * O[1] - C[1]];
+                const st = shown;
+                let s = seg(A, B, 'geo-line') + seg(C, D, 'geo-line');
+                if (st >= 2) s += angleArc(O, A, C, 22, 'g') + angleArc(O, B, D, 22, 'g');
+                s += seg(A, C, st >= 4 ? 'hl' : 'geo-line') + seg(B, D, st >= 4 ? 'hl' : 'geo-line');
+                if (st >= 1) s += ticks(A, O, 1) + ticks(O, B, 1) + ticks(C, O, 2) + ticks(O, D, 2);
+                s += [A, B, C, D, O].map(dot).join('') + `<text x="${A[0] - 16}" y="${A[1]}" class="v-name">A</text><text x="${B[0] + 16}" y="${B[1] + 6}" class="v-name">B</text>`
+                    + `<text x="${C[0] - 16}" y="${C[1] + 10}" class="v-name">C</text><text x="${D[0] + 16}" y="${D[1]}" class="v-name">D</text><text x="${O[0]}" y="${O[1] - 14}" class="v-name">O</text>`;
+                document.getElementById('algo-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['$\\triangle AOC$ і $\\triangle BOD$: [[$AO = OB$, $CO = OD$]] — за умовою', 'Крок 1–2: називаємо трикутники й рівні сторони'],
+                ['[[$\\angle AOC = \\angle BOD$]] — вертикальні', 'Кут між цими сторонами в кожному трикутнику'],
+                ['За першою ознакою [[$\\triangle AOC = \\triangle BOD$]]', 'Крок 3: дві сторони й кут між ними'],
+                ['Тому [[$AC = BD$]] — відповідні сторони ∎', 'Крок 4: висновок з рівності трикутників'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
+            setMode(0);
