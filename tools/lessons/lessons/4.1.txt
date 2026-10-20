@@ -1,0 +1,327 @@
+@@TITLE Уявлення про десяткові дроби
+@@CSS
+@@INCLUDE steps.css
+        /* Квадрати 10 × 10 і таблиця розрядів */
+        .g-cell { fill: var(--card-bg); stroke: var(--text-light); stroke-width: 0.8; }
+        .g-cell.t { fill: var(--brand-blue); fill-opacity: 0.6; }
+        .g-cell.h { fill: var(--brand-green); fill-opacity: 0.7; }
+        .g-cell.w { fill: var(--brand-yellow); fill-opacity: 0.6; }
+        .g-frame { fill: none; stroke: var(--text-dark); stroke-width: 2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .pv-head { fill: currentColor; font-size: 14px; font-weight: 800; text-anchor: middle; }
+        .pv-digit { fill: currentColor; font-size: 30px; font-weight: 800; text-anchor: middle; }
+        .pv-box { fill: var(--card-bg); stroke: var(--text-dark); stroke-width: 2; }
+        .slider-control label { font-weight: 800; min-width: 110px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .mini-fig { display: block; width: 100%; max-width: 400px; margin: 6px auto; color: var(--text-dark); }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Що показують ваги? ⚖️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Ваги показують $32{,}4$ кг. Що означає цифра після коми?</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> Це $32$ кг і $4$ грами!</div>
+                    <p class="big-question">Чи правий Тарас? Подумай, а потім перевіримо.</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Ні! Це $32$ кг $400$ г 🎉</div>
+                        <p>Цифра одразу після коми — <b>десяті</b>: $0{,}4$ кг $= \dfrac{4}{10}$ кг. Десята частина кілограма — $100$ г, тож $4$ десятих — $400$ г.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" id="scale-1" role="img" aria-label="Кілограм, поділений на 10 частин по 100 г; зафарбовано 4 частини"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Десяті й соті на квадраті 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Великий квадрат — одна ціла. Стовпчик — одна десята, клітинка — одна сота. Обираємо, скільки зафарбувати. Учні записують число — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-w">Цілі</label><input type="range" id="w-w" min="0" max="2" step="1" value="0" oninput="renderGrid()"><span id="w-w-val">0</span></div>
+                    <div class="slider-control"><label for="w-t">Десяті</label><input type="range" id="w-t" min="0" max="9" step="1" value="3" oninput="renderGrid()"><span id="w-t-val">3</span></div>
+                    <div class="slider-control"><label for="w-h">Соті</label><input type="range" id="w-h" min="0" max="9" step="1" value="7" oninput="renderGrid()"><span id="w-h-val">7</span></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealGrid()">Записати числом</button></p>
+                    <div class="hidden-answer" id="grid-answer"><div class="readout" id="grid-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 210" id="grid-scene" role="img" aria-label="Квадрати 10 на 10: зафарбовані цілі, десяті та соті"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Що таке десятковий дріб</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Дроби зі знаменником $10$, $100$, $1000$ зручно записувати через кому — це <b>десяткові дроби</b>.</p>
+                    <p>$\dfrac{3}{10} = 0{,}3$, $\;\dfrac{47}{100} = 0{,}47$, $\;2\dfrac{5}{1000} = 2{,}005$.</p>
+                    <p>Кома відділяє цілу частину. Після коми — стільки цифр, скільки нулів у знаменнику.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Розряди після коми</div>
+                    <p>Перша цифра — <b>десяті</b>, друга — <b>соті</b>, третя — <b>тисячні</b>.</p>
+                    <p>$4{,}25$ читаємо: «чотири цілих двадцять п'ять сотих».</p>
+                    <p>$1$ см $= 0{,}01$ м, $\;1$ г $= 0{,}001$ кг.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Записуємо десятковим дробом ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Задача</div>
+                        <p>Запиши десятковим дробом: $\dfrac{7}{100}$; $\;3\dfrac{25}{1000}$; $\;64$ см у метрах.</p>
+                    </div>
+                    <svg viewBox="0 0 400 130" class="mini-fig" id="task-scene" role="img" aria-label="Таблиця розрядів для числа 3,025"></svg>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Обережно: рахуй нулі ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>$\dfrac{7}{100} = 0{,}7$? <b>Ні!</b> У знаменнику два нулі — після коми мають бути дві цифри: $\dfrac{7}{100} = 0{,}07$.</p>
+                        <p>$0{,}7$ — це $7$ десятих, у десять разів більше.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Скільки нулів у знаменнику — стільки цифр після коми. Бракує цифр — дописуй нулі одразу після коми.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 200" id="trap-scene" role="img" aria-label="Два квадрати: 0,7 — сім стовпчиків, 0,07 — сім клітинок"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Запиши десятковим дробом: $\dfrac{9}{10}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $0{,}9$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $9{,}10$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $0{,}09$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Один нуль у знаменнику — одна цифра після коми.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$\dfrac{9}{10} = 0{,}9$ — нуль цілих дев'ять десятих.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Як прочитати $0{,}35$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) Тридцять п'ять десятих</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) Нуль цілих тридцять п'ять сотих</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) Нуль цілих тридцять п'ять тисячних</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Дві цифри після коми — це соті.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$0{,}35 = \dfrac{35}{100}$ — нуль цілих тридцять п'ять сотих.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Скільки це метрів: $5$ см?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $0{,}05$ м</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $0{,}5$ м</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $5{,}100$ м</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$1$ см — це $\dfrac{1}{100}$ м.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$5$ см $= \dfrac{5}{100}$ м $= 0{,}05$ м.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Яким звичайним дробом записати $2{,}008$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $2\dfrac{8}{100}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $2\dfrac{8}{1000}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $\dfrac{2008}{100}$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки цифр після коми?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Три цифри після коми — тисячні: $2{,}008 = 2\dfrac{8}{1000}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Десятковий дріб — запис дробу зі знаменником $10$, $100$, $1000$ через кому.</p>
+                    <p>Після коми: десяті, соті, тисячні. $\;3{,}025 = 3\dfrac{25}{1000}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>$\dfrac{7}{100} = 0{,}07$; $\;64$ см $= \dfrac{64}{100}$ м $= 0{,}64$ м.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>Скільки нулів у знаменнику — стільки цифр після коми: $\dfrac{7}{100} \ne 0{,}7$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderScale1();
+                if (currentSlide === 2) renderGrid();
+                if (currentSlide === 4) { renderTaskFig(); renderEval(); }
+                if (currentSlide === 5) renderTrapFig();
+@@JS
+            // Квадрат 10 × 10 зі стороною s: full — увесь зафарбований (ціла), інакше t стовпчиків і ще h клітинок
+            function gridSvg(x, y, s, full, t, h) {
+                const c = s / 10;
+                let svg = '';
+                for (let col = 0; col < 10; col++) for (let row = 0; row < 10; row++) {
+                    const cls = full ? ' w' : (col < t ? ' t' : (col === t && row < h ? ' h' : ''));
+                    svg += `<rect x="${(x + col * c).toFixed(1)}" y="${(y + row * c).toFixed(1)}" width="${c.toFixed(1)}" height="${c.toFixed(1)}" class="g-cell${cls}"/>`;
+                }
+                return svg + `<rect x="${x}" y="${y}" width="${s}" height="${s}" class="g-frame"/>`;
+            }
+            // Смужка з n частин, перші m зафарбовано
+            function stripSvg(x, y, w, hgt, n, m, cls) {
+                let svg = '';
+                for (let k = 0; k < n; k++) svg += `<rect x="${(x + k * w / n).toFixed(1)}" y="${y}" width="${(w / n).toFixed(1)}" height="${hgt}" class="g-cell${k < m ? ' ' + cls : ''}" style="stroke:var(--text-dark);stroke-width:1.5"/>`;
+                return svg;
+            }
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const lbl = (x, y, t, col) => `<text x="${x}" y="${y}" class="svg-caption" style="fill:${col};font-size:18px">${t}</text>`;
+
+            // --- Слайд 1: 0,4 кг ---
+            window.renderScale1 = function () {
+                let svg = lbl(200, 26, '1 кг = 10 частин по 100 г', 'currentColor') + stripSvg(20, 40, 360, 50, 10, 4, 't');
+                for (let k = 0; k < 10; k++) svg += `<text x="${38 + k * 36}" y="70" class="svg-caption" style="font-size:12px">100 г</text>`;
+                svg += lbl(92, 120, '0,4 кг = 4/10 кг', 'var(--brand-blue)') + lbl(200, 170, '32,4 кг = 32 кг 400 г', 'var(--brand-green)');
+                document.getElementById('scale-1').innerHTML = svg;
+            };
+
+            // --- Слайд 2: квадрати ---
+            function gridVals() {
+                return ['w-w', 'w-t', 'w-h'].map(id => parseInt(document.getElementById(id).value, 10) || 0);
+            }
+            function gridScene(w, t, h, show) {
+                const s = 120, gap = 14, n = w + 1, x0 = (400 - n * s - (n - 1) * gap) / 2;
+                let svg = '';
+                for (let i = 0; i < w; i++) svg += gridSvg(x0 + i * (s + gap), 30, s, true, 0, 0);
+                svg += gridSvg(x0 + w * (s + gap), 30, s, false, t, h);
+                svg += lbl(200, 186, show ? `${w},${t}${h}` : 'Яке це число?', show ? 'var(--brand-green)' : 'currentColor');
+                return svg;
+            }
+            window.renderGrid = function () {
+                const [w, t, h] = gridVals();
+                document.getElementById('w-w-val').textContent = w;
+                document.getElementById('w-t-val').textContent = t;
+                document.getElementById('w-h-val').textContent = h;
+                document.getElementById('grid-answer').classList.remove('shown');
+                document.getElementById('grid-scene').innerHTML = gridScene(w, t, h, false);
+            };
+            window.revealGrid = function () {
+                const [w, t, h] = gridVals(), out = document.getElementById('grid-text');
+                document.getElementById('grid-scene').innerHTML = gridScene(w, t, h, true);
+                const hundredths = t * 10 + h;
+                out.innerHTML = hundredths === 0 ? `$${w}{,}00 = ${w}$ — лише цілі.` : `$${w}{,}${t}${h} = ${w > 0 ? w : ''}\\dfrac{${hundredths}}{100}$: $\\;${t}$ десят${t === 1 ? 'а' : (t >= 2 && t <= 4 ? 'і' : 'их')}, $${h}$ сот${h === 1 ? 'а' : (h >= 2 && h <= 4 ? 'і' : 'их')}.`;
+                document.getElementById('grid-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 4: таблиця розрядів для 3,025 ---
+            window.renderTaskFig = function () {
+                const heads = ['цілі', 'десяті', 'соті', 'тисячні'], digits = ['3', '0', '2', '5'];
+                let svg = '';
+                heads.forEach((hd, k) => {
+                    const x = 30 + k * 88;
+                    svg += `<text x="${x + 40}" y="22" class="pv-head">${hd}</text><rect x="${x}" y="32" width="80" height="56" rx="6" class="pv-box"/><text x="${x + 40}" y="72" class="pv-digit">${digits[k]}</text>`;
+                });
+                svg += `<text x="114" y="92" class="pv-digit" style="fill:var(--warning-red);font-size:48px">,</text>`
+                    + `<text x="200" y="118" class="svg-caption">3 25/1000 = 3,025: після коми три цифри</text>`;
+                document.getElementById('task-scene').innerHTML = svg;
+            };
+
+            // --- Слайд 5: 0,7 і 0,07 ---
+            window.renderTrapFig = function () {
+                document.getElementById('trap-scene').innerHTML = gridSvg(40, 20, 130, false, 7, 0) + gridSvg(230, 20, 130, false, 0, 7)
+                    + lbl(105, 176, '0,7 = 70/100', 'var(--brand-blue)') + lbl(295, 176, '0,07 = 7/100', 'var(--brand-green)');
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$\\dfrac{7}{100} = $ [[$0{,}07$]].', 'Два нулі — дві цифри після коми; бракує цифри — дописуємо нуль'],
+                ['$3\\dfrac{25}{1000} = $ [[$3{,}025$]].', 'Три нулі — три цифри після коми: $025$'],
+                ['$64$ см $= \\dfrac{64}{100}$ м $= $ [[$0{,}64$]] м.', '$1$ м $= 100$ см, тож $1$ см — сота частина метра'],
+                ['Читаємо: «нуль цілих сім сотих», «три цілих двадцять п\'ять тисячних».', 'Назва — за останнім розрядом: соті, тисячні'],
+            ];
+@@INCLUDE steps.js
