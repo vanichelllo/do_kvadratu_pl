@@ -1,0 +1,387 @@
+@@TITLE Степінь з натуральним показником та його властивості
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+
+        /* Таблиця перевірок */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.nm { color: var(--warning-red); font-size: 0.9rem; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary { font-size: 1rem; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+
+        .pow-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; }
+        .pow-chip { min-width: 40px; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 1.15rem; text-align: center; background: var(--widget-bg); border: 2px solid var(--brand-blue); }
+        .pow-chip.b { border-color: var(--brand-green); }
+        /* Схема додаткових множників */
+        .dm-box { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; }
+        .dm-text { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .dm-mult { fill: var(--brand-green); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .dm-arrow { stroke: var(--brand-green); stroke-width: 2; fill: none; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки предків у 20 поколіннях? 🌳</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>У кожної людини $2$ батьків, $4$ бабусь і дідусів, $8$ прабабусь і прадідусів… Щопокоління кількість подвоюється.</p>
+                    <p class="big-question">Як коротко записати кількість предків у $20$-му поколінні? І скільки це?</p>
+                    <p>Писати $2 \cdot 2 \cdot 2 \cdot \ldots \cdot 2$ двадцять разів — довго. Для добутку однакових множників є окремий запис.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися відповідь</button></p>
+                </div>
+                <div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Степінь</div>
+                        <p class="big-formula">$\underbrace{2 \cdot 2 \cdot \ldots \cdot 2}_{20} = 2^{20} = 1\,048\,576$</p>
+                        <p>Понад мільйон! А щоб рахувати такі вирази без калькулятора, знадобляться <b>властивості степеня</b>: наприклад, $2^{20} = 2^{10} \cdot 2^{10} = 1024 \cdot 1024$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке степінь</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Степенем</b> числа $a$ з натуральним показником $n$ ($n \gt 1$) називають добуток $n$ множників, кожен з яких дорівнює $a$:</p>
+                        <p class="big-formula">$a^n = \underbrace{a \cdot a \cdot \ldots \cdot a}_{n}$</p>
+                        <p>$a$ — <b>основа</b>, $n$ — <b>показник</b>. Окремо: $a^1 = a$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Знак степеня</div>
+                        <p>Від'ємне число в <b>парному</b> степені — додатне, у <b>непарному</b> — від'ємне: $(-2)^4 = 16$, $(-2)^3 = -8$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні обчислюють, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Вираз</th><th>$3^2$</th><th>$2^5$</th><th>$(-3)^3$</th><th>$-3^2$</th><th>$0^7$</th></tr>
+                        <tr><th>Значення</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$9$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$32$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-27$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-9$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$0$</span><span class="q">?</span></td></tr>
+                    </table>
+                    <p class="eval-note">$-3^2 = -(3^2) = -9$: у степінь підносимо лише $3$. А $(-3)^2 = 9$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості степеня</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Для будь-якого $a$ і натуральних $m$, $n$</div>
+                    <p>1) $a^m \cdot a^n = a^{m + n}$ — показники <b>додаємо</b>.</p>
+                    <p>2) $a^m : a^n = a^{m - n}$ ($a \ne 0$, $m \gt n$) — показники <b>віднімаємо</b>.</p>
+                    <p>3) $(a^m)^n = a^{mn}$ — показники <b>множимо</b>.</p>
+                    <p>4) $(ab)^n = a^n b^n$, $\;\left(\dfrac{a}{b}\right)^n = \dfrac{a^n}{b^n}$ ($b \ne 0$).</p>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Чому $a^m \cdot a^n = a^{m + n}$</div>
+                    <p>$a^3 \cdot a^2 = (a \cdot a \cdot a) \cdot (a \cdot a) = a^5$: усього $3 + 2$ множники.</p>
+                    <p>$(a^3)^2 = a^3 \cdot a^3 = a^6$: двічі по $3$ множники.</p>
+                    <p>Окремо домовились: $a^0 = 1$ при $a \ne 0$ (тоді $a^n : a^n = a^0 = 1$).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Рахуємо множники 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо дію і показники. Учні кажуть, яким буде показник результату, — потім розгортаємо множники й перевіряємо.</p>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="op-0" onclick="setOp(0)">$a^m \cdot a^n$</button>
+                        <button class="btn-secondary" id="op-1" onclick="setOp(1)">$a^m : a^n$</button>
+                        <button class="btn-secondary" id="op-2" onclick="setOp(2)">$(a^m)^n$</button>
+                    </div>
+                    <div class="slider-control"><label for="w-m">m</label><input type="range" id="w-m" min="1" max="6" step="1" value="3" oninput="renderPow()"><span id="w-m-val">3</span></div>
+                    <div class="slider-control"><label for="w-n">n</label><input type="range" id="w-n" min="1" max="4" step="1" value="2" oninput="renderPow()"><span id="w-n-val">2</span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealPow()">Розгорнути множники</button></p>
+                    <p class="readout" id="pow-readout"></p>
+                </div>
+                <div class="math-widget">
+                    <p class="big-formula" id="pow-task"></p>
+                    <div id="pow-chips"></div>
+                    <p class="readout" id="pow-result"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Обчислюємо вираз зі степенями</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Запишіть усі степені з однаковою основою (наприклад, $4 = 2^2$, $8 = 2^3$).</p>
+                    <p>2) Застосуйте властивості: множення — додаємо показники, ділення — віднімаємо, степінь степеня — множимо.</p>
+                    <p>3) Обчисліть степінь, що лишився.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Обчисліть:</b> $\dfrac{4^5 \cdot 8^2}{2^{14}}$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Спрощуємо й порівнюємо</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Спростіть $(x^3)^4 \cdot x^2 : x^9$.</p>
+                    <div class="step">$(x^3)^4 = x^{12}$ — показники множимо.</div>
+                    <div class="step">$x^{12} \cdot x^2 = x^{14}$ — показники додаємо.</div>
+                    <div class="step">$x^{14} : x^9 = x^5$ (при $x \ne 0$) — показники віднімаємо.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Що більше: $2^{30}$ чи $3^{20}$?</p>
+                    <div class="step">Зробимо однакові показники: $2^{30} = (2^3)^{10} = 8^{10}$.</div>
+                    <div class="step">$3^{20} = (3^2)^{10} = 9^{10}$.</div>
+                    <div class="step">$8 \lt 9$, тож $8^{10} \lt 9^{10}$: більше $3^{20}$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Показники перемножують при множенні</div>
+                        <p>$a^3 \cdot a^4 \ne a^{12}$. Множимо степені — показники <b>додаємо</b>: $a^7$. Множимо показники лише в $(a^3)^4 = a^{12}$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Основу множать на показник</div>
+                        <p>$3^4 \ne 12$. $3^4 = 3 \cdot 3 \cdot 3 \cdot 3 = 81$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">$-a^2$ і $(-a)^2$</div>
+                        <p>$-5^2 = -25$, а $(-5)^2 = 25$. Мінус без дужок у степінь не підноситься.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Степінь суми</div>
+                        <p>$(a + b)^2 \ne a^2 + b^2$: $(1 + 2)^2 = 9$, а $1^2 + 2^2 = 5$. Властивість $(ab)^n = a^n b^n$ — лише для <b>добутку</b>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Подайте у вигляді степеня: $a^5 \cdot a^3$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $a^{15}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $a^8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $a^2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $2a^8$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$a^5 \cdot a^3 = a^{5 + 3} = a^8$.</p>
+                            <p>А — перемножили показники; В — відняли; Г — «додали» основи.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Обчисліть $\dfrac{3^7 \cdot 3^5}{(3^5)^2}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $27$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $1$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Чисельник: $3^{12}$; знаменник: $3^{10}$. $3^{12} : 3^{10} = 3^2 = 9$.</p>
+                            <p>Г — порахували знаменник як $3^{5 + 2} = 3^7$: показники в $(3^5)^2$ множать.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Знайдіть значення виразу $\dfrac{25^3 \cdot 4^7}{20^6}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Г) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\dfrac{5}{4}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$25^3 = 5^6$, $\;4^7 = 2^{14}$, $\;20^6 = (2^2 \cdot 5)^6 = 2^{12} \cdot 5^6$.</p>
+                            <p>$\dfrac{5^6 \cdot 2^{14}}{2^{12} \cdot 5^6} = 2^2 = 4$.</p>
+                            <p>В — вважали $20^6 = 2^6 \cdot 5^6$, забувши, що $20 = 2^2 \cdot 5$; А — так було б, якби $4^6$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$a^n = a \cdot a \cdot \ldots \cdot a$ ($n$ множників), $a^1 = a$, $a^0 = 1$ ($a \ne 0$).</p>
+                    <p>$a^m a^n = a^{m + n}$, $\;a^m : a^n = a^{m - n}$, $\;(a^m)^n = a^{mn}$, $\;(ab)^n = a^n b^n$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Зведіть до однакових основ ($4 = 2^2$, $8 = 2^3$, $25 = 5^2$) → застосуйте властивості → обчисліть.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Множимо степені — показники додаємо, а не множимо: $a^3 a^4 = a^7$. І $-a^2 \ne (-a)^2$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderPow();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+
+            // --- Слайд 2: клік по «?» відкриває значення ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 4: розгортаємо множники ---
+            let op = 0, powShown = false;
+            window.setOp = function (k) {
+                op = k;
+                [0, 1, 2].forEach(j => document.getElementById('op-' + j).classList.toggle('on', j === k));
+                renderPow();
+            };
+            function powVals() {
+                const M = document.getElementById('w-m'), N = document.getElementById('w-n');
+                if (op === 1) {
+                    M.min = 2;
+                    if (parseInt(M.value, 10) < 2) M.value = 2;
+                    N.max = parseInt(M.value, 10) - 1;
+                    if (parseInt(N.value, 10) > parseInt(N.max, 10)) N.value = N.max;
+                } else { M.min = 1; N.max = 4; }
+                return [parseInt(M.value, 10), parseInt(N.value, 10)];
+            }
+            const chip = (cls, crossed) => `<span class="pow-chip ${cls}"${crossed ? ' style="opacity:0.35;text-decoration:line-through"' : ''}>$a$</span>`;
+            window.renderPow = function () {
+                const [m, n] = powVals();
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-n-val').textContent = n;
+                powShown = false;
+                const task = document.getElementById('pow-task');
+                task.innerHTML = op === 0 ? `$a^{${m}} \\cdot a^{${n}} = a^{\\,?}$` : op === 1 ? `$a^{${m}} : a^{${n}} = a^{\\,?}$` : `$(a^{${m}})^{${n}} = a^{\\,?}$`;
+                document.getElementById('pow-chips').innerHTML = '';
+                document.getElementById('pow-result').innerHTML = '';
+                document.getElementById('pow-readout').innerHTML = 'Який показник вийде?';
+                typeset(task);
+            };
+            window.revealPow = function () {
+                const [m, n] = powVals(), box = document.getElementById('pow-chips'), res = document.getElementById('pow-result');
+                let html = '', r;
+                if (op === 0) {
+                    html = `<div class="pow-row">${Array(m).fill(chip('', false)).join('')}<b style="align-self:center">·</b>${Array(n).fill(chip('b', false)).join('')}</div>`;
+                    r = m + n; res.innerHTML = `$${m} + ${n} = ${r}$ множників: $a^{${m}} \\cdot a^{${n}} = a^{${r}}$`;
+                } else if (op === 1) {
+                    html = `<div class="pow-row">${Array(m).fill(0).map((_, k) => chip('', k >= m - n)).join('')}</div><div class="pow-row">${Array(n).fill(chip('b', true)).join('')}</div>`;
+                    r = m - n; res.innerHTML = `скоротили $${n}$ множники: $a^{${m}} : a^{${n}} = a^{${r}}$ ($a \\ne 0$)`;
+                } else {
+                    html = Array(n).fill(`<div class="pow-row">${Array(m).fill(chip('', false)).join('')}</div>`).join('');
+                    r = m * n; res.innerHTML = `$${n}$ групи по $${m}$: $(a^{${m}})^{${n}} = a^{${r}}$`;
+                }
+                box.innerHTML = html;
+                document.getElementById('pow-readout').innerHTML = op === 0 ? 'Показники <b>додаємо</b>' : op === 1 ? 'Показники <b>віднімаємо</b>' : 'Показники <b>множимо</b>';
+                typeset(box); typeset(res);
+            };
+
+            // --- Слайд 5: (4⁵ · 8²) / 2¹⁴ ---
+            const STEPS = [
+                ['$4^5 = (2^2)^5 = $ [[$2^{10}$]], $\;8^2 = (2^3)^2 = $ [[$2^6$]]', 'Крок 1: однакова основа $2$; у степені степеня показники множимо'],
+                ['Чисельник: $2^{10} \\cdot 2^6 = $ [[$2^{16}$]]', 'Крок 2: при множенні показники додаємо'],
+                ['$2^{16} : 2^{14} = $ [[$2^2$]]', 'При діленні показники віднімаємо'],
+                ['$2^2 = $ [[$4$]]', 'Крок 3: обчислюємо. Відповідь: $4$'],
+            ];
+@@INCLUDE steps.js
+
+            setOp(0);
