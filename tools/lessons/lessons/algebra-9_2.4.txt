@@ -1,0 +1,421 @@
+@@TITLE Розв'язування квадратних нерівностей
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; font-size: 1.15rem; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-weight: 700; min-height: 1.5em; font-size: 1.15rem; }
+        .readout .ok { color: var(--brand-green); }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; justify-content: center; }
+        .modes .btn-secondary { min-width: 52px; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .zero { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2.5; }
+        .zero.fill { fill: var(--brand-blue); }
+        .band { stroke: var(--brand-green); stroke-width: 7; stroke-linecap: round; opacity: 0.85; }
+        .level { stroke: var(--warning-red); stroke-width: 1.8; stroke-dasharray: 6 5; }
+        .lvl-label { fill: var(--warning-red); font-size: 13px; font-weight: 800; }
+        .cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; font-size: 0.95rem; }
+        .cases svg.pic { width: 100%; height: auto; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Коли м'яч вище за $15$ м? ⚽</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Висота м'яча через $t$ секунд — $h(t) = -5t^2 + 20t$ метрів.</p>
+                    <p class="big-question">Скільки часу м'яч був вище за $15$ м?</p>
+                    <p>Потрібно розв'язати <b>нерівність</b> $-5t^2 + 20t \gt 15$, а не рівняння.</p>
+                    <p class="center"><button class="btn-primary" onclick="revealBall()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$2$ секунди: від $t = 1$ до $t = 3$</div>
+                        <p>$-5t^2 + 20t - 15 \gt 0 \iff t^2 - 4t + 3 \lt 0$. Нулі $1$ і $3$; парабола $t^2 - 4t + 3$ під віссю між нулями: $1 \lt t \lt 3$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="ball-scene" role="img" aria-label="Графік висоти м'яча і рівень 15 м"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке квадратна нерівність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Квадратна нерівність</b> — нерівність виду $ax^2 + bx + c \gt 0$ (або $\lt$, $\ge$, $\le$), де $a \ne 0$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Ідея розв'язування</div>
+                        <p>Графік $y = ax^2 + bx + c$ — парабола. $y \gt 0$ там, де парабола <b>над</b> віссю $Ox$, $y \lt 0$ — де <b>під</b> нею. Межі — нулі функції.</p>
+                        <p>Тож треба знати лише нулі й напрям гілок, будувати точний графік не потрібно.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="idea-scene" role="img" aria-label="Парабола y = x² − 2x − 3: над віссю — додатна, під віссю — від'ємна"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Три випадки за дискримінантом ($a \gt 0$)</h2>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget">
+                    <div class="cases" id="cases"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="box theorem">
+                        <div class="box-title">$D \gt 0$, нулі $x_1 \lt x_2$</div>
+                        <p>$y \gt 0$ на $(-\infty;\,x_1) \cup (x_2;\,+\infty)$ — «зовні» нулів; $y \lt 0$ на $(x_1;\,x_2)$ — «між» нулями.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">$D = 0$ і $D \lt 0$</div>
+                        <p>$D = 0$: $y \ge 0$ скрізь, $y = 0$ лише в $x_0$. $\;D \lt 0$: $y \gt 0$ при всіх $x$. При $a \lt 0$ — усе навпаки (або помножте нерівність на $-1$, змінивши знак).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Читаємо розв'язок з параболи 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="slider-control"><label for="w-a">a</label><input type="range" id="w-a" min="-2" max="2" step="0.5" value="1" oninput="renderIneq()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-b">b</label><input type="range" id="w-b" min="-4" max="4" step="1" value="-2" oninput="renderIneq()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-c">c</label><input type="range" id="w-c" min="-4" max="4" step="1" value="-3" oninput="renderIneq()"><span id="w-c-val"></span></div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="op-0" onclick="setOp(0)">$\gt 0$</button>
+                        <button class="btn-secondary" id="op-1" onclick="setOp(1)">$\lt 0$</button>
+                        <button class="btn-secondary" id="op-2" onclick="setOp(2)">$\ge 0$</button>
+                        <button class="btn-secondary" id="op-3" onclick="setOp(3)">$\le 0$</button>
+                    </div>
+                    <p class="readout" id="ineq-task"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealIneq()">Показати розв'язок</button></p>
+                    <p class="readout" id="ineq-answer"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="ineq-scene" role="img" aria-label="Парабола і проміжки, де виконується нерівність"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Розв'язуємо $-x^2 + 2x + 3 \ge 0$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Метод інтервалів по параболі</div>
+                        <p>1) Знайти нулі $ax^2 + bx + c$. 2) Позначити їх на осі (зафарбовані — для $\ge$, $\le$; порожні — для $\gt$, $\lt$). 3) Ескіз параболи за знаком $a$. 4) Вибрати проміжки за знаком нерівності.</p>
+                    </div>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="algo-scene" role="img" aria-label="Покрокове розв'язання нерівності −x² + 2x + 3 ≥ 0"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Коли $D \le 0$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Розв'яжіть $x^2 - 6x + 9 \gt 0$.</p>
+                    <div class="step">$x^2 - 6x + 9 = (x - 3)^2$; $D = 0$, нуль $x = 3$.</div>
+                    <div class="step">$(x - 3)^2 \ge 0$ завжди, а $= 0$ лише при $x = 3$.</div>
+                    <div class="step">Відповідь: $(-\infty;\,3) \cup (3;\,+\infty)$, тобто $x \ne 3$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Розв'яжіть $x^2 + x + 1 \lt 0$.</p>
+                    <div class="step">$D = 1 - 4 = -3 \lt 0$ — нулів немає.</div>
+                    <div class="step">$a = 1 \gt 0$: парабола цілком над віссю, $x^2 + x + 1 \gt 0$ при всіх $x$.</div>
+                    <div class="step">Нерівність $\lt 0$ розв'язків не має: $\varnothing$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Забули про знак $a$</div>
+                        <p>$-x^2 + 4 \gt 0$ — це не «зовні нулів». Гілки вниз, тож $y \gt 0$ між нулями: $(-2;\,2)$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Множення на від'ємне</div>
+                        <p>$-x^2 + 4 \gt 0 \iff x^2 - 4 \lt 0$: при множенні на $-1$ знак нерівності змінюється.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Дужки</div>
+                        <p>Для $\ge$, $\le$ нулі входять у відповідь — дужки квадратні. Нескінченність — завжди в круглій дужці.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">«$x^2 \gt 9$, тож $x \gt 3$»</div>
+                        <p>Загубили половину: $x^2 \gt 9 \iff x \lt -3$ або $x \gt 3$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть нерівність $x^2 - 9 \lt 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $(-3;\,3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $(-\infty;\,3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(-\infty;\,-3) \cup (3;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $[-3;\,3]$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Нулі $\pm 3$, гілки вгору; $\lt 0$ — між нулями, нулі не входять. В — розв'язок $\gt 0$; Г — для $\le 0$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть нерівність $x^2 - 5x + 6 \ge 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $(-\infty;\,2] \cup [3;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $[2;\,3]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(-\infty;\,2) \cup (3;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $(-\infty;\,-3] \cup [-2;\,+\infty)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Нулі $2$ і $3$, гілки вгору: $\ge 0$ — зовні нулів, разом з нулями.</p>
+                            <p>В — загубили нулі; Г — помилка в знаках коренів.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Знайдіть найменший цілий розв'язок нерівності $-x^2 + 4x + 5 \gt 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $-1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) такого немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x^2 - 4x - 5 \lt 0$: нулі $-1$ і $5$, розв'язок $(-1;\,5)$. Найменше ціле — $0$.</p>
+                            <p>Б — $-1$ не входить (нерівність строга); Д — сплутали напрям гілок.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Розв'язок читаємо з параболи: $\gt 0$ — де вона над $Ox$, $\lt 0$ — де під.</p>
+                    <p>$a \gt 0$, $D \gt 0$: «$\lt 0$» — між нулями, «$\gt 0$» — зовні. $D \lt 0$: знак не змінюється.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Нулі → точки на осі (зафарбовані чи порожні) → ескіз параболи → проміжки за знаком.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Знак $a$ і дужки: гілки вниз перевертають картинку; нулі входять лише для $\ge$, $\le$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderBall();
+                if (currentSlide === 2) renderIdea();
+                if (currentSlide === 3) renderCases();
+                if (currentSlide === 4) renderIneq();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const fmtN = (v) => (Math.round(v * 100) / 100).toString().replace('.', ',').replace('-', '−');
+            const tx = (v) => (Math.round(v * 100) / 100).toString().replace(',', '.').replace('.', '{,}');
+            const zeroDot = (P, x, filled) => `<circle cx="${P.sx(x)}" cy="${P.sy(0)}" r="5.5" class="zero${filled ? ' fill' : ''}"/>`;
+            const band = (P, x1, x2) => `<line x1="${P.sx(Math.max(x1, P.x0))}" y1="${P.sy(0)}" x2="${P.sx(Math.min(x2, P.x1))}" y2="${P.sy(0)}" class="band"/>`;
+            const sgn = (x, y) => (y > 1e-9 ? 'pos' : y < -1e-9 ? 'neg' : 'pos');
+
+            // --- Слайд 1: м'яч і рівень 15 м ---
+            const PB = plane(-0.5, 4.5, -3, 24);
+            let ballShown = false;
+            window.renderBall = function () {
+                const h = (t) => (t >= 0 && t <= 4 ? -5 * t * t + 20 * t : NaN);
+                let svg = axesSvg(PB, 1, 5, 't, с', 'h, м') + `<line x1="${PB.sx(-0.5)}" y1="${PB.sy(15)}" x2="${PB.sx(4.5)}" y2="${PB.sy(15)}" class="level"/><text x="${PB.sx(4.1)}" y="${PB.sy(15) - 6}" class="lvl-label">15 м</text>`;
+                svg += curveSvg(PB, h, 0, 4, (t, y) => (ballShown && y > 15 ? 'pos' : ''));
+                if (ballShown) svg += band(PB, 1, 3) + zeroDot(PB, 1, false) + zeroDot(PB, 3, false);
+                document.getElementById('ball-scene').innerHTML = svg;
+            };
+            window.revealBall = function () { ballShown = true; renderBall(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: ідея ---
+            const P0 = plane(-4, 6, -5, 7);
+            window.renderIdea = function () {
+                const f = (x) => x * x - 2 * x - 3;
+                document.getElementById('idea-scene').innerHTML = axesSvg(P0) + curveSvg(P0, f, -4, 6, sgn) + zeroDot(P0, -1, true) + zeroDot(P0, 3, true)
+                    + `<text x="${P0.sx(-3.4)}" y="${P0.sy(5)}" class="lvl-label" style="fill:var(--brand-green)">y &gt; 0</text><text x="${P0.sx(0.4)}" y="${P0.sy(-4.4)}" class="lvl-label">y &lt; 0</text>`;
+            };
+
+            // --- Слайд 3: три випадки ---
+            window.renderCases = function () {
+                const PC = plane(-3, 3, -2, 4, 220, 160, 14);
+                const pic = (f, zs, cap) => `<div><svg class="pic" viewBox="0 0 220 160">${axesSvg(PC, 1, 1, '', '').replace(/<text[^>]*class="tick"[^>]*>[^<]*<\/text>/g, '')}${curveSvg(PC, f, -3, 3, sgn)}${zs.map(z => zeroDot(PC, z, true)).join('')}</svg>${cap}</div>`;
+                document.getElementById('cases').innerHTML = pic((x) => x * x - 1.5, [-Math.sqrt(1.5), Math.sqrt(1.5)], '$D \\gt 0$: два нулі')
+                    + pic((x) => x * x, [0], '$D = 0$: один нуль') + pic((x) => x * x + 1, [], '$D \\lt 0$: нулів немає');
+                typeset(document.getElementById('cases'));
+            };
+
+            // --- Слайд 4: нерівність з повзунками ---
+            const PQ = plane(-6, 6, -6, 8);
+            const OPS = ['\\gt', '\\lt', '\\ge', '\\le'];
+            let op = 0, ineqShown = false;
+            function qVals() {
+                const A = document.getElementById('w-a');
+                if (parseFloat(A.value) === 0) A.value = 0.5;
+                return [parseFloat(A.value), parseInt(document.getElementById('w-b').value, 10), parseInt(document.getElementById('w-c').value, 10)];
+            }
+            function qTex(a, b, c) {
+                const ta = a === 1 ? '' : a === -1 ? '-' : tx(a);
+                const tb = b === 0 ? '' : b === 1 ? ' + x' : b === -1 ? ' - x' : b > 0 ? ` + ${b}x` : ` - ${-b}x`;
+                const tc = c === 0 ? '' : c > 0 ? ` + ${c}` : ` - ${-c}`;
+                return `${ta}x^2${tb}${tc}`;
+            }
+            window.setOp = function (k) {
+                op = k;
+                [0, 1, 2, 3].forEach(j => document.getElementById('op-' + j).classList.toggle('on', j === k));
+                renderIneq();
+            };
+            // Множина розв'язків як список проміжків [l, r, lIncl, rIncl]; числові корені або ±Infinity
+            function solveSet(a, b, c) {
+                const D = b * b - 4 * a * c, wantPos = op === 0 || op === 2, strict = op < 2;
+                const pos = a > 0 ? wantPos : !wantPos; // шукаємо «зовні» нулів, якщо true
+                if (D < 0) return (a > 0) === wantPos ? [[-Infinity, Infinity, false, false]] : [];
+                if (D === 0) {
+                    const x0 = -b / (2 * a);
+                    if (pos) return strict ? [[-Infinity, x0, false, false], [x0, Infinity, false, false]] : [[-Infinity, Infinity, false, false]];
+                    return strict ? [] : [[x0, x0, true, true]];
+                }
+                const r = [(-b - Math.sqrt(D)) / (2 * a), (-b + Math.sqrt(D)) / (2 * a)].sort((p, q) => p - q);
+                return pos ? [[-Infinity, r[0], false, !strict], [r[1], Infinity, !strict, false]] : [[r[0], r[1], !strict, !strict]];
+            }
+            function setTex(S) {
+                if (!S.length) return '\\varnothing';
+                const t = (v) => (v === Infinity ? '+\\infty' : v === -Infinity ? '-\\infty' : (Number.isInteger(Math.round(v * 1000) / 1000) ? String(Math.round(v)) : `\\approx ${tx(v)}`));
+                return S.map(([l, r, li, ri]) => (l === r ? `\\{${t(l)}\\}` : `${li ? '[' : '('}${t(l)};\\,${t(r)}${ri ? ']' : ')'}`)).join(' \\cup ');
+            }
+            function ineqScene(show) {
+                const [a, b, c] = qVals(), f = (x) => a * x * x + b * x + c, D = b * b - 4 * a * c;
+                let svg = axesSvg(PQ) + curveSvg(PQ, f, -6, 6, show ? sgn : () => '');
+                if (show) {
+                    solveSet(a, b, c).forEach(([l, r]) => { svg += l === r ? '' : band(PQ, l, r); });
+                    const zs = D > 0 ? [(-b - Math.sqrt(D)) / (2 * a), (-b + Math.sqrt(D)) / (2 * a)] : D === 0 ? [-b / (2 * a)] : [];
+                    zs.forEach(z => { if (z >= PQ.x0 && z <= PQ.x1) svg += zeroDot(PQ, z, op >= 2); });
+                }
+                return svg;
+            }
+            window.renderIneq = function () {
+                const [a, b, c] = qVals();
+                document.getElementById('w-a-val').textContent = fmtN(a);
+                document.getElementById('w-b-val').textContent = fmtN(b);
+                document.getElementById('w-c-val').textContent = fmtN(c);
+                ineqShown = false;
+                const task = document.getElementById('ineq-task');
+                task.innerHTML = `$${qTex(a, b, c)} ${OPS[op]} 0$`;
+                document.getElementById('ineq-answer').innerHTML = '';
+                typeset(task);
+                document.getElementById('ineq-scene').innerHTML = ineqScene(false);
+            };
+            window.revealIneq = function () {
+                const [a, b, c] = qVals(), out = document.getElementById('ineq-answer');
+                document.getElementById('ineq-scene').innerHTML = ineqScene(true);
+                out.innerHTML = `$x \\in$ <span class="ok">$${setTex(solveSet(a, b, c))}$</span>`;
+                typeset(out);
+            };
+
+            // --- Слайд 5: −x² + 2x + 3 ≥ 0 ---
+            const PA = plane(-3, 5, -4, 6);
+            window.renderAlgo = function () {
+                const st = shown, f = (x) => -x * x + 2 * x + 3;
+                let svg = axesSvg(PA);
+                if (st >= 3) svg += curveSvg(PA, f, -3, 5, st >= 4 ? sgn : () => '');
+                if (st >= 4) svg += band(PA, -1, 3);
+                if (st >= 2) svg += zeroDot(PA, -1, true) + zeroDot(PA, 3, true);
+                document.getElementById('algo-scene').innerHTML = svg;
+            };
+            const STEPS = [
+                ['Нулі: $-x^2 + 2x + 3 = 0 \\iff x^2 - 2x - 3 = 0$: [[$x = -1$, $x = 3$]]', 'Крок 1: за Вієтом $-1 + 3 = 2$, $-1 \\cdot 3 = -3$'],
+                ['Точки $-1$ і $3$ — [[зафарбовані]] (нерівність нестрога)', 'Крок 2: при $\\ge$ нулі входять у відповідь'],
+                ['$a = -1 \\lt 0$ — гілки [[вниз]]', 'Крок 3: ескіз — парабола, що перетинає вісь у нулях'],
+                ['$\\ge 0$ — де парабола над віссю: [[$x \\in [-1;\\,3]$]]', 'Крок 4: між нулями, разом з нулями'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
+            setOp(0);
