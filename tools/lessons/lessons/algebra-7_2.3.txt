@@ -1,0 +1,390 @@
+@@TITLE Одночлени. Піднесення одночленів до степеня
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+
+        /* Таблиця з відповідями за кліком */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+
+        /* Квадрат 3a × 3a */
+        .sq-cell { fill: var(--brand-blue); fill-opacity: 0.12; stroke: var(--brand-blue); stroke-width: 1.5; }
+        .sq-cell.on { fill: var(--brand-green); fill-opacity: 0.35; }
+        .sq-frame { fill: none; stroke: currentColor; stroke-width: 3; }
+        .sq-label { fill: currentColor; font-size: 18px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .sq-caption { fill: currentColor; font-size: 16px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Сторона втричі більша — а площа? 📐</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Сторона квадрата — $a$ см, площа — $a^2$ см². Сторону збільшили втричі: тепер вона $3a$ см.</p>
+                    <p class="big-question">У скільки разів збільшилася площа? Багато хто каже «утричі». А ви?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealSquare()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">У $9$ разів!</div>
+                        <p class="big-formula">$(3a)^2 = 3a \cdot 3a = 9a^2$</p>
+                        <p>У степінь підноситься <b>і число, і змінна</b>. Як працювати з такими виразами — одночленами — сьогодні.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="sq-scene" role="img" aria-label="Квадрат зі стороною 3a, поділений на 9 квадратів зі стороною a"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке одночлен</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Одночлен</b> — добуток чисел, змінних та їх натуральних степенів: $5a^2b$, $\;-x$, $\;\dfrac{1}{2}xy^3$, $\;7$.</p>
+                        <p>Не одночлени: $a + b$ (сума), $\dfrac{2}{x}$ (ділення на змінну).</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Стандартний вигляд</div>
+                        <p>Спереду — одне число (<b>коефіцієнт</b>), далі кожна змінна <b>один раз</b> зі своїм степенем: $3a \cdot 2ab^2 = 6a^2b^2$.</p>
+                        <p><b>Степінь одночлена</b> — сума показників усіх змінних: у $6a^2b^2$ степінь $2 + 2 = 4$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні зводять до стандартного вигляду, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Одночлен</th><th>Стандартний вигляд</th><th>Коеф.</th><th>Степінь</th></tr>
+                        <tr><th>$2a \cdot 5b \cdot a$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$10a^2b$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$10$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3$</span><span class="q">?</span></td></tr>
+                        <tr><th>$-x^2 \cdot 3x \cdot y$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-3x^3y$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-3$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$4$</span><span class="q">?</span></td></tr>
+                        <tr><th>$m \cdot n \cdot m^3$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$m^4n$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$1$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$5$</span><span class="q">?</span></td></tr>
+                    </table>
+                    <p class="eval-note">Коли числа немає, коефіцієнт $1$ (або $-1$ для $-m^4n$). Степінь числа без змінних — $0$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Множення і піднесення до степеня</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Множення одночленів</div>
+                        <p>Коефіцієнти перемножуємо, показники однакових змінних <b>додаємо</b>:</p>
+                        <p class="big-formula">$-2a^3b \cdot 4ab^2 = -8a^4b^3$</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Звідки це</div>
+                        <p>Переставили множники ($ab = ba$) і застосували $a^m \cdot a^n = a^{m + n}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Піднесення до степеня</div>
+                        <p>У степінь підносимо <b>кожен множник</b>: коефіцієнт — у степінь, показники змінних — <b>множимо</b>:</p>
+                        <p class="big-formula">$(k a^m b^n)^p = k^p a^{mp} b^{np}$</p>
+                        <p>$(-2x^3y)^2 = 4x^6y^2$, $\;(-2x^3y)^3 = -8x^9y^3$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Знак</div>
+                        <p>Від'ємний коефіцієнт у парному степені стає додатним, у непарному — лишається від'ємним.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Підносимо одночлен до степеня 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо коефіцієнт, показник змінної і степінь. Учні записують результат, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-k">k</label><input type="range" id="w-k" min="-3" max="3" step="1" value="-2" oninput="renderMono()"><span id="w-k-val"></span></div>
+                    <div class="slider-control"><label for="w-m">m</label><input type="range" id="w-m" min="1" max="4" step="1" value="3" oninput="renderMono()"><span id="w-m-val"></span></div>
+                    <div class="slider-control"><label for="w-p">p</label><input type="range" id="w-p" min="1" max="4" step="1" value="2" oninput="renderMono()"><span id="w-p-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealMono()">Перевірити</button></p>
+                </div>
+                <div class="math-widget">
+                    <p class="big-formula" id="mono-task"></p>
+                    <div id="mono-expand" class="readout"></div>
+                    <p class="readout" id="mono-result"></p>
+                    <p class="eval-note" id="mono-note"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Спрощуємо вираз з одночленами</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Піднести до степеня кожен одночлен: коефіцієнт — у степінь, показники — помножити.</p>
+                    <p>2) Перемножити коефіцієнти (стежимо за знаком).</p>
+                    <p>3) Однакові змінні — додати показники.</p>
+                    <p>4) Записати в стандартному вигляді.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Спростимо:</b> $(-2a^3b)^2 \cdot (3ab^2)^3$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Квадрат одночлена і значення виразу</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Подайте $16x^4y^8$ у вигляді квадрата одночлена.</p>
+                    <div class="step">Коефіцієнт: $16 = 4^2$.</div>
+                    <div class="step">Показники ділимо на $2$: $x^4 = (x^2)^2$, $y^8 = (y^4)^2$.</div>
+                    <div class="step">$16x^4y^8 = (4x^2y^4)^2$. Підходить і $(-4x^2y^4)^2$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Знайдіть значення $-0{,}5a^2b \cdot (2ab)^3$ при $a = -1$, $b = 2$.</p>
+                    <div class="step">Спершу спрощуємо: $(2ab)^3 = 8a^3b^3$.</div>
+                    <div class="step">$-0{,}5 \cdot 8 \cdot a^{2 + 3} b^{1 + 3} = -4a^5b^4$.</div>
+                    <div class="step">$-4 \cdot (-1)^5 \cdot 2^4 = -4 \cdot (-1) \cdot 16 = 64$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Забули про коефіцієнт</div>
+                        <p>$(2a)^3 \ne 2a^3$. У степінь підносимо і число: $(2a)^3 = 8a^3$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Додали замість множити</div>
+                        <p>$(a^2)^3 = a^6$, а не $a^5$. Додаємо показники лише при <b>множенні</b> степенів.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Знак</div>
+                        <p>$(-3x)^2 = 9x^2$, але $-3x^2$ — це $-3 \cdot x^2$: у квадрат підноситься лише $x$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Коефіцієнт і степінь</div>
+                        <p>У $-ab$ коефіцієнт $-1$, а не $0$. Степінь $5ab$ — $2$ (сума показників), а не $5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Запишіть у стандартному вигляді: $2a \cdot 3b \cdot a$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $6a^2b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $5a^2b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $6ab$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $6a^3b$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2 \cdot 3 = 6$, $a \cdot a = a^2$: $6a^2b$. Б — додали коефіцієнти; В — загубили другий множник $a$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Піднесіть до степеня: $(-3a^2b^3)^2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $9a^4b^6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $-9a^4b^6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $6a^4b^6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $9a^4b^5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$(-3)^2 = 9$, $(a^2)^2 = a^4$, $(b^3)^2 = b^6$. Б — парний степінь робить знак «плюс»; В — помножили $-3$ на $2$; Г — додали показники.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Спростіть: $-2x^2y \cdot (-3xy^2)^2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $-18x^4y^5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $18x^4y^5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $-18x^3y^4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $36x^4y^5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $12x^4y^5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$(-3xy^2)^2 = 9x^2y^4$. Тоді $-2 \cdot 9 = -18$, $x^{2 + 2} = x^4$, $y^{1 + 4} = y^5$: $-18x^4y^5$.</p>
+                            <p>Б — знак: квадрат дає $+9$, але $-2$ лишається; В — не піднесли $x$ і $y^2$ до квадрата; Д — $(-3)^2$ порахували як $-6$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Одночлен у стандартному вигляді: коефіцієнт, потім кожна змінна один раз. Степінь — сума показників.</p>
+                    <p>Множення: коефіцієнти множимо, показники додаємо. Степінь: $(k a^m)^p = k^p a^{mp}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Піднести кожен одночлен до степеня → перемножити коефіцієнти → додати показники однакових змінних.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>$(2a)^3 = 8a^3$: у степінь підносимо й коефіцієнт. $(a^2)^3 = a^6$ — показники множимо.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderSquare();
+                if (currentSlide === 4) renderMono();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+
+            // --- Слайд 2: клік по «?» відкриває значення ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 1: квадрат 3a × 3a ---
+            let sqShown = false;
+            window.renderSquare = function () {
+                const x0 = 90, y0 = 20, c = 76;
+                let s = '';
+                for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+                    const on = sqShown || (i === 0 && j === 0);
+                    s += `<rect x="${x0 + i * c}" y="${y0 + j * c}" width="${c}" height="${c}" class="sq-cell${on ? ' on' : ''}"/>`;
+                }
+                s += `<rect x="${x0}" y="${y0}" width="${3 * c}" height="${3 * c}" class="sq-frame"/>`;
+                for (let i = 0; i < 3; i++) s += `<text x="${x0 + i * c + c / 2}" y="${y0 + 3 * c + 24}" class="sq-label">a</text><text x="${x0 - 16}" y="${y0 + i * c + c / 2 + 6}" class="sq-label">a</text>`;
+                s += `<text x="${x0 + c / 2}" y="${y0 + c / 2 + 6}" class="sq-label">a²</text>`;
+                s += `<text x="${x0 + 1.5 * c}" y="${y0 + 3 * c + 50}" class="sq-caption">${sqShown ? '9 квадратиків по a²: площа 9a²' : 'Сторона 3a. Скільки таких квадратиків a²?'}</text>`;
+                document.getElementById('sq-scene').innerHTML = s;
+            };
+            window.revealSquare = function () { sqShown = true; renderSquare(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 4: (k·a^m·b)^p ---
+            function monoVals() {
+                const K = document.getElementById('w-k');
+                if (parseInt(K.value, 10) === 0) K.value = 1;
+                return [parseInt(K.value, 10), parseInt(document.getElementById('w-m').value, 10), parseInt(document.getElementById('w-p').value, 10)];
+            }
+            // Одночлен k·a^m·b^n у TeX
+            function monoTex(k, m, n) {
+                const coef = k === 1 ? '' : k === -1 ? '-' : String(k);
+                const pw = (v, e) => e === 0 ? '' : e === 1 ? v : `${v}^{${e}}`;
+                return coef + pw('a', m) + pw('b', n);
+            }
+            window.renderMono = function () {
+                const [k, m, p] = monoVals();
+                document.getElementById('w-k-val').textContent = String(k).replace('-', '−');
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-p-val').textContent = p;
+                const task = document.getElementById('mono-task');
+                task.innerHTML = `$\\left(${monoTex(k, m, 1)}\\right)^{${p}} = \\,?$`;
+                ['mono-expand', 'mono-result', 'mono-note'].forEach(id => { document.getElementById(id).innerHTML = ''; });
+                typeset(task);
+            };
+            window.revealMono = function () {
+                const [k, m, p] = monoVals(), kp = Math.pow(k, p);
+                const ex = document.getElementById('mono-expand'), res = document.getElementById('mono-result'), note = document.getElementById('mono-note');
+                const kt = k < 0 ? `(${k})` : String(k);
+                ex.innerHTML = p === 1 ? '' : `$${Array(p).fill(`\\left(${monoTex(k, m, 1)}\\right)`).join(' \\cdot ')}$`;
+                res.innerHTML = `$= ${kt}^{${p}} \\cdot a^{${m} \\cdot ${p}} \\cdot b^{${p}} = $ <span class="ok">$${monoTex(kp, m * p, p)}$</span>`;
+                note.innerHTML = k < 0 ? (p % 2 ? 'Непарний степінь — знак «мінус» лишається.' : 'Парний степінь — знак «мінус» зникає.') : 'Коефіцієнт — у степінь, показник $a$ — множимо на $p$.';
+                typeset(ex); typeset(res); typeset(note);
+            };
+
+            // --- Слайд 5: (−2a³b)² · (3ab²)³ ---
+            const STEPS = [
+                ['$(-2a^3b)^2 = $ [[$4a^6b^2$]]', 'Крок 1: $(-2)^2 = 4$, показники множимо на $2$'],
+                ['$(3ab^2)^3 = $ [[$27a^3b^6$]]', 'Крок 1: $3^3 = 27$, показники множимо на $3$'],
+                ['$4a^6b^2 \\cdot 27a^3b^6 = $ [[$108$]]$\\,a^{6 + 3}b^{2 + 6}$', 'Кроки 2–3: коефіцієнти множимо, показники однакових змінних додаємо'],
+                ['$= $ [[$108a^9b^8$]] — одночлен $17$-го степеня', 'Крок 4: стандартний вигляд. Степінь: $9 + 8 = 17$'],
+            ];
+@@INCLUDE steps.js
