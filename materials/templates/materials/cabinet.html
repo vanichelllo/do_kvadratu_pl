@@ -930,6 +930,10 @@
                 </select>
             </div>
 
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                {% include "materials/_report_summary_fields.html" with select_style="width: 100%; padding: 8px; border: 2px solid var(--brand-blue); border-radius: 8px; background: white; font-family: inherit; font-weight: bold; box-sizing: border-box; font-size: 0.85rem;" %}
+            </div>
+
             <div>
                 <label style="font-weight: 900; font-size: 0.9rem; color: var(--brand-blue);">Коментар (необов'язково)</label>
                 <textarea name="teacher_comment" rows="2" placeholder="Пару слів про успіхи..." style="width: 100%; padding: 10px; border: 2px solid var(--brand-blue); border-radius: 8px; font-family: inherit; box-sizing: border-box;"></textarea>

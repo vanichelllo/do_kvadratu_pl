@@ -1,0 +1,10 @@
+{% comment %}Короткий підсумок заняття для батьків: три вибори одним кліком. select_style — інлайн-стиль select (для кабінету).{% endcomment %}
+{% for name, label, choices in summary_fields %}
+<label class="summary-field"{% if select_style %} style="flex: 1; min-width: 150px; font-weight: 900; font-size: 0.8rem; color: var(--brand-blue);"{% endif %}>
+    <small>{{ label }}</small>
+    <select name="{{ name }}"{% if select_style %} style="{{ select_style }}"{% endif %}>
+        <option value="">—</option>
+        {% for value, text in choices %}<option value="{{ value }}">{{ text }}</option>{% endfor %}
+    </select>
+</label>
+{% endfor %}

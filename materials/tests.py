@@ -813,6 +813,25 @@ class TeacherFormsTests(BaseTestCase):
         self.client.post('/cabinet/add-report/', self.report_data())
         self.assertEqual(StudentReport.objects.get().nush_solving, 9)
 
+    def test_parent_sees_short_summary_of_lesson(self):
+        # Батьки просили «у два слова»: підготовка, відповіді, старанність — угорі сторінки
+        self.client.post('/cabinet/add-report/', self.report_data(readiness='ready', answers='hints', effort='trying',
+                                                                 teacher_comment='Молодець'))
+        report = StudentReport.objects.get()
+        self.assertEqual(report.summary_items, ['✅ Підготовка: добра', '💬 Відповіді: з підказками', '💪 Старається',
+                                                'ДЗ: 🟢 Виконано повністю'])
+        page = Client().get(f'/parents/{self.student.parent_token}/')
+        self.assertContains(page, 'Останнє заняття')
+        self.assertContains(page, '💬 Відповіді: з підказками', count=1)
+        self.assertNotContains(page, 'Попередні заняття')
+        self.assertContains(page, '<details class="nush-details', html=False)
+
+    def test_summary_is_optional(self):
+        self.client.post('/cabinet/add-report/', self.report_data(homework_status='not_assigned'))
+        self.assertEqual(StudentReport.objects.get().summary_items, [])
+        self.client.post('/cabinet/add-report/', self.report_data(effort='hack'))
+        self.assertEqual(StudentReport.objects.count(), 1)
+
     def test_bad_report_shows_error_instead_of_500(self):
         for bad in ({'nush_modeling': ''}, {'nush_modeling': 13}, {'curriculum_topic': ''}, {'homework_status': 'hack'}):
             response = self.client.post('/cabinet/add-report/', self.report_data(**bad))

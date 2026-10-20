@@ -68,6 +68,8 @@
         .report button { border: none; cursor: pointer; font-size: 1rem; }
         .report button.btn-secondary { border: 1.5px solid var(--brand-blue); background: none; }
         .report-row input[type=date] { display: block; margin-top: 4px; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-family: inherit; }
+        .report-summary { grid-template-columns: repeat(3, 1fr); }
+        .report-summary small { display: block; }
         .hw-row { align-items: center; }
         .report .btn-danger { background: none; color: var(--red); border: 1.5px solid var(--red); }
         @media (max-width: 600px) { .report-row { grid-template-columns: 1fr; } }
@@ -166,6 +168,9 @@
                 <label class="grade"><small>Моделювання</small><input type="number" name="nush_modeling" min="1" max="12" value="{{ attempt.nush_modeling|default_if_none:'' }}" required></label>
                 <label class="grade"><small>Розв'язування</small><input type="number" name="nush_solving" min="1" max="12" value="{{ attempt.nush_solving|default_if_none:'' }}" required></label>
                 <label class="grade"><small>Аналіз</small><input type="number" name="nush_analysis" min="1" max="12" value="{{ attempt.nush_analysis|default_if_none:'' }}" required></label>
+            </div>
+            <div class="report-row report-summary">
+                {% include "materials/_report_summary_fields.html" %}
             </div>
             <div class="report-row">
                 <label>Домашнє завдання

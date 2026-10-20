@@ -901,7 +901,26 @@ class StudentReport(models.Model):
     nush_solving = models.PositiveIntegerField(default=0, verbose_name="Розв'язування (1-12)")
     nush_analysis = models.PositiveIntegerField(default=0, verbose_name="Аналіз результатів (1-12)")
 
+    # Короткий підсумок для батьків: «чи був готовий, як відповідав, чи старається»
+    READINESS_CHOICES = (
+        ('ready', '✅ Підготовка: добра'),
+        ('partly', '🟡 Підготовка: часткова'),
+        ('weak', '🔴 Підготовка: слабка'),
+    )
+    ANSWERS_CHOICES = (
+        ('confident', '💬 Відповіді: впевнені'),
+        ('hints', '💬 Відповіді: з підказками'),
+        ('unsure', '💬 Відповіді: невпевнені'),
+    )
+    EFFORT_CHOICES = (
+        ('trying', '💪 Старається'),
+        ('more', '🙂 Варто старатися більше'),
+    )
+
     homework_status = models.CharField(max_length=20, choices=HW_CHOICES, default='not_assigned', verbose_name="Домашнє завдання")
+    readiness = models.CharField(max_length=20, choices=READINESS_CHOICES, blank=True, default='', verbose_name="Підготовка до уроку")
+    answers = models.CharField(max_length=20, choices=ANSWERS_CHOICES, blank=True, default='', verbose_name="Як відповідав")
+    effort = models.CharField(max_length=20, choices=EFFORT_CHOICES, blank=True, default='', verbose_name="Старанність")
     teacher_comment = models.TextField(blank=True, verbose_name="Коментар викладача")
 
     class Meta:
@@ -911,3 +930,18 @@ class StudentReport(models.Model):
 
     def __str__(self):
         return f"{self.date.strftime('%d.%m.%Y')} - {self.student.real_name} ({self.curriculum_topic})"
+
+    @classmethod
+    def summary_fields(cls):
+        """Поля короткого підсумку для форм звіту: (ім'я, підпис, варіанти)."""
+        return [(name, cls._meta.get_field(name).verbose_name, cls._meta.get_field(name).choices)
+                for name in ('readiness', 'answers', 'effort')]
+
+    @property
+    def summary_items(self):
+        """Короткий підсумок заняття для батьків: підготовка, відповіді, старанність, ДЗ (лише заповнене)."""
+        items = [self.get_readiness_display(), self.get_answers_display(), self.get_effort_display()]
+        items = [item for item in items if item]
+        if self.homework_status != 'not_assigned':
+            items.append(f'ДЗ: {self.get_homework_status_display()}')
+        return items
