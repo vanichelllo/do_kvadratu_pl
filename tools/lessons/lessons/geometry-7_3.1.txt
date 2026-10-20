@@ -1,0 +1,439 @@
+@@TITLE Трикутник і його елементи. Рівність геометричних фігур
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .tri { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.1; }
+        .tri.g { fill: var(--brand-green); fill-opacity: 0.12; }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .side-label { fill: var(--brand-blue); font-size: 16px; font-weight: 800; text-anchor: middle; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .arc-guide { fill: none; stroke: var(--brand-blue); stroke-width: 1.6; stroke-dasharray: 6 5; opacity: 0.7; }
+        .arc-guide.b { stroke: var(--brand-green); }
+        .seg-a { stroke: var(--brand-blue); stroke-width: 4; stroke-linecap: round; }
+        .seg-b { stroke: var(--brand-green); stroke-width: 4; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .slider-control label { font-weight: 800; min-width: 60px; font-style: italic; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 2.4em; }
+        .readout .ok { color: var(--brand-green); }
+        .readout .bad { color: var(--warning-red); }
+        .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; font-weight: 700; }
+        .kinds svg { width: 100%; height: auto; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Чи складеться трикутник? 📏</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>У Марка три палички: $3$ см, $4$ см і $8$ см. Він хоче скласти з них трикутник, з'єднавши кінці.</p>
+                    <p class="big-question">Чи вдасться? А з паличок $3$, $4$ і $6$ см?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealSticks()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$3 + 4 \lt 8$ — не вийде</div>
+                        <p>Дві короткі палички разом коротші за довгу — їхні кінці не зійдуться. А $3 + 4 \gt 6$ — трикутник складеться. Сьогодні — з чого складається трикутник і коли трикутники рівні.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="sticks-scene" role="img" aria-label="Палички 3, 4 і 8 см не сходяться; палички 3, 4 і 6 см утворюють трикутник"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Елементи трикутника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Трикутник</b> — фігура з трьох точок, що не лежать на одній прямій (<b>вершин</b>), і трьох відрізків, що їх сполучають (<b>сторін</b>).</p>
+                        <p>Позначення: $\triangle ABC$. Кути $\angle A$, $\angle B$, $\angle C$ — <b>кути трикутника</b>.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Протилежні й прилеглі</div>
+                        <p>Сторона $BC$ <b>протилежна</b> куту $A$; кути $B$ і $C$ <b>прилеглі</b> до сторони $BC$.</p>
+                        <p><b>Периметр</b> — сума довжин сторін: $P = AB + BC + AC$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="elem-scene" role="img" aria-label="Трикутник ABC: сторона BC протилежна куту A"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Види трикутників і нерівність трикутника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">За сторонами</div>
+                        <div class="kinds" id="kinds-sides"></div>
+                        <p>У рівнобедреного рівні дві <b>бічні</b> сторони, третя — <b>основа</b>. Рівносторонній — окремий випадок рівнобедреного.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">За кутами</div>
+                        <p><b>Гострокутний</b> — усі кути гострі; <b>прямокутний</b> — є прямий кут; <b>тупокутний</b> — є тупий кут.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Нерівність трикутника</div>
+                        <p>Кожна сторона трикутника <b>менша</b> за суму двох інших. Щоб перевірити три відрізки, досить порівняти <b>найбільший</b> із сумою двох інших.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Будуємо трикутник циркулем 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Відкладаємо $AB$, а з кінців — дуги радіусами $AC$ і $BC$. Учні передбачають: чи перетнуться дуги і який вийде трикутник?</p>
+                    <div class="slider-control"><label for="w-c">AB</label><input type="range" id="w-c" min="2" max="10" step="1" value="8" oninput="renderBuild()"><span id="w-c-val"></span></div>
+                    <div class="slider-control"><label for="w-b">AC</label><input type="range" id="w-b" min="1" max="10" step="1" value="3" oninput="renderBuild()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-a">BC</label><input type="range" id="w-a" min="1" max="10" step="1" value="4" oninput="renderBuild()"><span id="w-a-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealBuild()">Перевірити</button></p>
+                    <p class="readout" id="build-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="build-scene" role="img" aria-label="Побудова трикутника за трьома сторонами: дуги з кінців основи"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Рівні фігури й рівні трикутники</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Рівність фігур</div>
+                        <p>Фігури <b>рівні</b>, якщо їх можна сумістити накладанням. У рівних трикутників рівні <b>відповідні</b> сторони й кути.</p>
+                        <p>У записі $\triangle ABC = \triangle MNP$ відповідні вершини стоять <b>на тих самих місцях</b>: $A \leftrightarrow M$, $B \leftrightarrow N$, $C \leftrightarrow P$.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 200" id="eq-scene" role="img" aria-label="Рівні трикутники ABC і MNP, один — дзеркальне відображення іншого"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Задача.</b> $\triangle ABC = \triangle MNP$, $AB = 5$ см, $BC = 7$ см, $\angle C = 40^\circ$. Знайдіть $MN$, $NP$ і $\angle P$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Периметр і сторони</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Сторони рівнобедреного трикутника — $3$ см і $7$ см. Знайдіть периметр.</p>
+                    <div class="step">Варіант 1: бічні по $3$, основа $7$. Але $3 + 3 \lt 7$ — такого трикутника немає.</div>
+                    <div class="step">Варіант 2: бічні по $7$, основа $3$: $7 \lt 7 + 3$ ✓ — трикутник існує.</div>
+                    <div class="step">$P = 7 + 7 + 3 = 17$ см — єдина відповідь.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Периметр трикутника — $36$ см, сторони відносяться як $3 : 4 : 5$. Знайдіть сторони.</p>
+                    <div class="step">Нехай сторони $3x$, $4x$, $5x$: $3x + 4x + 5x = 36$.</div>
+                    <div class="step">$12x = 36$, $x = 3$.</div>
+                    <div class="step">Сторони: $9$, $12$, $15$ см. Перевірка: $15 \lt 9 + 12$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Порядок вершин</div>
+                        <p>З $\triangle ABC = \triangle MNP$ випливає $AC = MP$, а не $AC = MN$. Відповідність — за місцем букви в записі, а не за розташуванням на рисунку.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Не перевірили існування</div>
+                        <p>«Рівнобедрений зі сторонами $3$ і $7$» — бічні не можуть бути по $3$: $3 + 3 \lt 7$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Перевіряють не ту сторону</div>
+                        <p>Для $2$, $3$, $6$: $2 \lt 3 + 6$ — правда, але $6 \gt 2 + 3$. Порівнюємо <b>найбільшу</b> сторону.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Рівність — це рівно</div>
+                        <p>Якщо $a = b + c$, кінці «сходяться» лише на прямій — трикутника немає. Потрібна строга нерівність.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">З яких відрізків можна скласти трикутник?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $4$, $5$, $8$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $2$, $3$, $5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $1$, $2$, $4$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $3$, $3$, $7$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$8 \lt 4 + 5$ ✓. Б: $5 = 2 + 3$ — відрізки лягають на пряму; В: $4 \gt 3$; Г: $7 \gt 6$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$\triangle ABC = \triangle DEF$. Яка рівність обов'язково правильна?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $BC = EF$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $BC = DE$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $AB = EF$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $\angle A = \angle F$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$B \leftrightarrow E$, $C \leftrightarrow F$, тож $BC = EF$. Решта пар не відповідні: $A \leftrightarrow D$, тому $\angle A = \angle D$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Дві сторони рівнобедреного трикутника — $4$ см і $9$ см. Знайдіть його периметр.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $22$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $17$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $17$ см або $22$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $13$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $26$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Бічні по $4$: $4 + 4 \lt 9$ — не існує. Бічні по $9$: $9 + 9 + 4 = 22$ см.</p>
+                            <p>Б і В — не перевірили нерівність трикутника.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Трикутник: $3$ вершини, $3$ сторони, $3$ кути; периметр — сума сторін.</p>
+                    <p>За сторонами: різносторонній, рівнобедрений, рівносторонній. За кутами: гострокутний, прямокутний, тупокутний.</p>
+                    <p>Кожна сторона менша за суму двох інших.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Рівні трикутники ✍️</div>
+                        <p>Суміщаються накладанням; відповідні сторони й кути рівні. Відповідність — за порядком букв у записі.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>У рівнобедреному з двома різними відомими сторонами перевіряйте обидва варіанти нерівністю трикутника.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderSticks();
+                if (currentSlide === 2) renderElem();
+                if (currentSlide === 3) renderKinds();
+                if (currentSlide === 4) renderBuild();
+                if (currentSlide === 5) { renderEq(); renderEval(); }
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const f1 = (v) => v.toFixed(1), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            // Сектор кута при вершині V між напрямками на P і Q (менший з кутів)
+            function angleArc(V, P, Q, r, cls) {
+                let a1 = Math.atan2(P[1] - V[1], P[0] - V[0]), a2 = Math.atan2(Q[1] - V[1], Q[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            // n рисок посередині відрізка pq
+            function ticks(p, q, n) {
+                const m = mid(p, q), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+                let s = '';
+                for (let k = 0; k < n; k++) {
+                    const o = (k - (n - 1) / 2) * 6, c = [m[0] + ux * o, m[1] + uy * o];
+                    s += seg([c[0] - uy * 7, c[1] + ux * 7], [c[0] + uy * 7, c[1] - ux * 7], 'tick-mark');
+                }
+                return s;
+            }
+            // Вершина C трикутника з основою AB = c (по горизонталі), AC = b, BC = a; null — трикутника немає
+            function apex(a, b, c) {
+                const x = (b * b + c * c - a * a) / (2 * c), h2 = b * b - x * x;
+                return h2 > 1e-9 ? [x, Math.sqrt(h2)] : null;
+            }
+
+            // --- Слайд 1: палички ---
+            let sticksShown = false;
+            window.renderSticks = function () {
+                const s = 26;
+                // 3, 4, 8: основа 8, «руки» 3 і 4 не дотягуються
+                const A1 = [20, 110], B1 = [20 + 8 * s, 110];
+                let svg = seg(A1, B1, 'geo-line') + seg(A1, [A1[0] + 3 * s * Math.cos(-1.0), A1[1] + 3 * s * Math.sin(-1.0)], 'seg-a')
+                    + seg(B1, [B1[0] - 4 * s * Math.cos(-0.8), B1[1] + 4 * s * Math.sin(-0.8)], 'seg-b');
+                svg += `<text x="${A1[0] + 4 * s}" y="${A1[1] + 22}" class="svg-caption">8</text><text x="38" y="78" class="svg-caption" style="fill:var(--brand-blue)">3</text><text x="${B1[0] - 30}" y="45" class="svg-caption" style="fill:var(--brand-green)">4</text>`;
+                if (sticksShown) svg += `<text x="${A1[0] + 4 * s}" y="20" class="svg-caption" style="fill:var(--warning-red)">3 + 4 &lt; 8 — не сходяться</text>`;
+                // 3, 4, 6: трикутник
+                const C2 = apex(4, 3, 6), A2 = [80, 255], B2 = [80 + 6 * s, 255];
+                if (sticksShown) {
+                    const C = [A2[0] + C2[0] * s, A2[1] - C2[1] * s];
+                    svg += poly([A2, B2, C], 'tri g') + seg(A2, C, 'seg-a') + seg(B2, C, 'seg-b') + seg(A2, B2, 'geo-line');
+                    svg += `<text x="${A2[0] + 3 * s}" y="${A2[1] + 20}" class="svg-caption">6</text><text x="300" y="215" class="svg-caption" style="fill:var(--brand-green)">3 + 4 &gt; 6 ✓</text>`;
+                } else svg += `<text x="210" y="220" class="svg-caption">А з паличок 3, 4 і 6?</text>`;
+                document.getElementById('sticks-scene').innerHTML = svg;
+            };
+            window.revealSticks = function () { sticksShown = true; renderSticks(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: елементи ---
+            window.renderElem = function () {
+                const A = [50, 230], B = [370, 230], C = [150, 40], c = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+                let s = angleArc(A, B, C, 34, 'g') + angleArc(B, A, C, 30, 'b') + angleArc(C, A, B, 30, 'b') + poly([A, B, C], 'tri');
+                s += seg(B, C, 'geo-line sec') + vName(A, c, 'A') + vName(B, c, 'B') + vName(C, c, 'C');
+                const m = mid(B, C);
+                s += `<text x="${f1(m[0] + 78)}" y="${f1(m[1] - 10)}" class="side-label">BC — проти ∠A</text>`;
+                document.getElementById('elem-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: види за сторонами ---
+            window.renderKinds = function () {
+                const fig = (P, marks, name) => {
+                    let s = poly(P, 'tri');
+                    marks.forEach(([i, j, n]) => { s += ticks(P[i], P[j], n); });
+                    return `<div><svg viewBox="0 0 120 100">${s}</svg>${name}</div>`;
+                };
+                document.getElementById('kinds-sides').innerHTML =
+                    fig([[10, 90], [110, 90], [30, 15]], [], 'різносторонній')
+                    + fig([[15, 90], [105, 90], [60, 10]], [[0, 2, 1], [1, 2, 1]], 'рівнобедрений')
+                    + fig([[12, 92], [108, 92], [60, 9]], [[0, 1, 1], [1, 2, 1], [0, 2, 1]], 'рівносторонній');
+            };
+
+            // --- Слайд 4: побудова за трьома сторонами ---
+            let buildShown = false;
+            function buildVals() { return ['w-a', 'w-b', 'w-c'].map(id => parseInt(document.getElementById(id).value, 10)); }
+            function buildScene(show) {
+                const [a, b, c] = buildVals();
+                const xmin = Math.min(0, -b), xmax = Math.max(c, c + a), ymax = Math.max(a, b);
+                const s = Math.min(380 / (xmax - xmin), 220 / ymax), x0 = 210 - (xmin + xmax) / 2 * s, y0 = 250;
+                const A = [x0, y0], B = [x0 + c * s, y0];
+                let svg = `<path d="M${f1(A[0] - b * s)} ${y0} A${f1(b * s)} ${f1(b * s)} 0 0 1 ${f1(A[0] + b * s)} ${y0}" class="arc-guide"/>`
+                    + `<path d="M${f1(B[0] - a * s)} ${y0} A${f1(a * s)} ${f1(a * s)} 0 0 1 ${f1(B[0] + a * s)} ${y0}" class="arc-guide b"/>`;
+                const P = apex(a, b, c);
+                if (show && P) {
+                    const C = [x0 + P[0] * s, y0 - P[1] * s], cc = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+                    svg += poly([A, B, C], 'tri g') + seg(A, C, 'seg-a') + seg(B, C, 'seg-b') + dot(C) + vName(C, cc, 'C');
+                }
+                svg += seg(A, B, 'geo-line') + dot(A) + dot(B)
+                    + `<text x="${f1(A[0])}" y="${y0 + 24}" class="v-name">A</text><text x="${f1(B[0])}" y="${y0 + 24}" class="v-name">B</text>`;
+                return svg;
+            }
+            window.renderBuild = function () {
+                const [a, b, c] = buildVals();
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('w-c-val').textContent = c;
+                buildShown = false;
+                document.getElementById('build-readout').innerHTML = 'Чи перетнуться дуги? Який вийде трикутник?';
+                document.getElementById('build-scene').innerHTML = buildScene(false);
+            };
+            window.revealBuild = function () {
+                const [a, b, c] = buildVals(), out = document.getElementById('build-readout');
+                const L = Math.max(a, b, c), rest = a + b + c - L;
+                document.getElementById('build-scene').innerHTML = buildScene(true);
+                if (L >= rest) {
+                    out.innerHTML = `<span class="bad">Трикутника немає:</span> $${L} ${L === rest ? '=' : '\\gt'} ${rest}$ — найбільша сторона не менша за суму двох інших${L === rest ? ', відрізки лягають на одну пряму' : ''}.`;
+                } else {
+                    const bySides = a === b && b === c ? 'рівносторонній' : (a === b || b === c || a === c) ? 'рівнобедрений' : 'різносторонній';
+                    const q = L * L - (a * a + b * b + c * c - L * L);
+                    const byAngles = q < 0 ? 'гострокутний' : q === 0 ? 'прямокутний' : 'тупокутний';
+                    out.innerHTML = `<span class="ok">Трикутник є:</span> $${L} \\lt ${rest}$. Він ${bySides} і ${byAngles}.`;
+                }
+                typeset(out);
+            };
+
+            // --- Слайд 5: рівні трикутники ---
+            window.renderEq = function () {
+                const A = [30, 170], B = [180, 170], C = [70, 40], M = [390, 170], N = [240, 170], P = [350, 40];
+                const c1 = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3], c2 = [(M[0] + N[0] + P[0]) / 3, (M[1] + N[1] + P[1]) / 3];
+                let s = angleArc(C, A, B, 26, 'g') + angleArc(P, M, N, 26, 'g') + poly([A, B, C], 'tri') + poly([M, N, P], 'tri');
+                s += ticks(A, B, 1) + ticks(M, N, 1) + ticks(B, C, 2) + ticks(N, P, 2) + ticks(A, C, 3) + ticks(M, P, 3);
+                s += [[A, 'A'], [B, 'B'], [C, 'C']].map(([p, n]) => vName(p, c1, n)).join('') + [[M, 'M'], [N, 'N'], [P, 'P']].map(([p, n]) => vName(p, c2, n)).join('');
+                document.getElementById('eq-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['Відповідність за порядком букв: [[$A \\leftrightarrow M$, $B \\leftrightarrow N$, $C \\leftrightarrow P$]]', 'Перша буква — з першою, друга — з другою, третя — з третьою'],
+                ['$MN$ відповідає $AB$: [[$MN = 5$ см]]', 'Перші дві букви в обох записах'],
+                ['$NP$ відповідає $BC$: [[$NP = 7$ см]]', 'Друга і третя букви'],
+                ['$\\angle P$ відповідає $\\angle C$: [[$\\angle P = 40^\\circ$]]', 'Третя буква. Рисунок може бути «дзеркальним» — дивимося на запис'],
+            ];
+@@INCLUDE steps.js
