@@ -1,0 +1,382 @@
+@@TITLE Многочлени. Додавання і віднімання многочленів
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; }
+        .readout .ok { color: var(--brand-green); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; justify-content: center; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+
+        /* Таблиці */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table td.res { color: var(--brand-green); }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Фокус з одинадцятьма 🎩</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Задумайте число. Помножте його на $5$ і додайте $8$ — це перше число. Знову помножте задумане на $5$ і відніміть $3$ — це друге число.</p>
+                    <p class="big-question">Від першого числа відніміть друге. Чому в усіх вийшло $11$?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Розгадати фокус</button></p>
+                </div>
+                <div>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Віднімаємо многочлени</div>
+                        <p class="big-formula">$(5x + 8) - (5x - 3) = 5x + 8 - 5x + 3 = 11$</p>
+                        <p>Члени з $x$ знищуються, лишається $11$ — при будь-якому $x$. Вирази $5x + 8$ і $5x - 3$ — <b>многочлени</b>. Сьогодні вчимося їх додавати й віднімати.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке многочлен</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Многочлен</b> — сума одночленів, які називають його <b>членами</b>: $3x^2 - 5x + 1$ має члени $3x^2$, $-5x$, $1$.</p>
+                        <p><b>Подібні члени</b> мають однакову буквену частину: $4ab$ і $-ab$, а $x^2y$ і $xy^2$ — не подібні.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Стандартний вигляд і степінь</div>
+                        <p>Зводимо подібні члени, кожен член — у стандартному вигляді. <b>Степінь многочлена</b> — найбільший зі степенів його членів: у $x^3 - 2x^2y^2 + 7$ степінь $4$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні зводять подібні члени, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Многочлен</th><th>Стандартний вигляд</th><th>Степінь</th></tr>
+                        <tr><th>$3x + 5 - x - 2$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$2x + 3$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$1$</span><span class="q">?</span></td></tr>
+                        <tr><th>$a^2 + 4ab - a^2 + b^2$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$4ab + b^2$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$2$</span><span class="q">?</span></td></tr>
+                        <tr><th>$2x^3 - x + x^3 + x$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3x^3$</span><span class="q">?</span></td>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3$</span><span class="q">?</span></td></tr>
+                    </table>
+                    <p class="eval-note">Подібні члени додаємо, як коефіцієнти: $3x - x = 2x$. Члени $-x$ і $x$ знищуються.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Додавання й віднімання многочленів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Розкриття дужок</div>
+                        <p>Перед дужками «$+$» — знаки членів не змінюються: $a + (b - c) = a + b - c$.</p>
+                        <p>Перед дужками «$-$» — знаки <b>усіх</b> членів змінюються: $a - (b - c) = a - b + c$.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Алгоритм</div>
+                        <p>Розкрити дужки → звести подібні члени → записати в стандартному вигляді.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box example">
+                        <div class="box-title">Додавання</div>
+                        <p>$(2x^2 - 3x + 1) + (x^2 + 5x - 4)$</p>
+                        <p>$= 2x^2 - 3x + 1 + x^2 + 5x - 4 = 3x^2 + 2x - 3$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Віднімання</div>
+                        <p>$(2x^2 - 3x + 1) - (x^2 + 5x - 4)$</p>
+                        <p>$= 2x^2 - 3x + 1 - x^2 - 5x + 4 = x^2 - 8x + 5$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Додаємо й віднімаємо «стовпчиком» 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>$P = ax^2 + bx + c$, $\;Q = x^2 - 2x + 4$. Обираємо коефіцієнти $P$ і дію. Учні записують результат, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-a">a</label><input type="range" id="w-a" min="-3" max="3" step="1" value="2" oninput="renderPoly()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-b">b</label><input type="range" id="w-b" min="-3" max="3" step="1" value="1" oninput="renderPoly()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-c">c</label><input type="range" id="w-c" min="-3" max="3" step="1" value="-3" oninput="renderPoly()"><span id="w-c-val"></span></div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="op-0" onclick="setOp(0)">$P + Q$</button>
+                        <button class="btn-secondary" id="op-1" onclick="setOp(1)">$P - Q$</button>
+                    </div>
+                    <p class="center"><button class="btn-primary" onclick="revealPoly()">Перевірити</button></p>
+                </div>
+                <div class="math-widget">
+                    <p class="readout" id="poly-task"></p>
+                    <table class="val-table" id="poly-table"></table>
+                    <p class="readout" id="poly-result"></p>
+                    <p class="eval-note" id="poly-note"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Віднімаємо многочлени крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Записати многочлени в дужках зі знаком дії.</p>
+                    <p>2) Розкрити дужки: після «$-$» змінити знаки всіх членів.</p>
+                    <p>3) Підкреслити й звести подібні члени.</p>
+                    <p>4) Записати відповідь у стандартному вигляді.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Спростимо:</b> $(3a^2 - 2ab + b^2) - (a^2 - 5ab + 2b^2)$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Доводимо за допомогою многочленів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Доведіть, що значення виразу $(4x^2 - 3x + 1) - (x^2 - 3x - 5) - 3x^2$ не залежить від $x$.</p>
+                    <div class="step">Розкриваємо дужки: $4x^2 - 3x + 1 - x^2 + 3x + 5 - 3x^2$.</div>
+                    <div class="step">Зводимо: $(4 - 1 - 3)x^2 + (-3 + 3)x + (1 + 5)$.</div>
+                    <div class="step">$= 6$ — при будь-якому $x$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Доведіть, що сума трьох послідовних натуральних чисел ділиться на $3$.</p>
+                    <div class="step">Числа: $n$, $n + 1$, $n + 2$.</div>
+                    <div class="step">Сума: $n + (n + 1) + (n + 2) = 3n + 3$.</div>
+                    <div class="step">$3n + 3 = 3(n + 1)$ — ділиться на $3$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Мінус перед дужками</div>
+                        <p>$5a - (2a - 3) \ne 5a - 2a - 3$. Знак змінюють <b>усі</b> члени: $5a - 2a + 3 = 3a + 3$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">«Зводять» неподібні</div>
+                        <p>$3x + 2x^2 \ne 5x^3$ і $\ne 5x^2$. Члени з різними степенями не подібні — сума так і лишається.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">$x^2y$ і $xy^2$</div>
+                        <p>Однакові букви, але різні степені — не подібні: $x^2y + xy^2$ не спрощується.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Степінь многочлена</div>
+                        <p>Не сума степенів членів, а найбільший з них: $x^3 + x^2 + x$ — третього степеня, а не шостого.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть суму $(2x + 5) + (3x - 1)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $5x + 4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $5x + 6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $9x$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $6x - 5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2x + 3x = 5x$, $5 - 1 = 4$: $5x + 4$. В — додали неподібні члени.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть різницю $(5a - 2b) - (3a - 4b)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $2a + 2b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $2a - 6b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $8a - 6b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $2a - 2b$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$5a - 2b - 3a + 4b = 2a + 2b$. Б — не змінили знак у $-4b$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Спростіть $3x^2 - (2x^2 - x + 4) + (x - 1)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $x^2 + 2x - 5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $x^2 - 5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $x^2 + 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $5x^2 + 2x - 5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $x^2 + 2x + 3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$3x^2 - 2x^2 + x - 4 + x - 1 = x^2 + 2x - 5$.</p>
+                            <p>Б — не змінили знак $-x$; Д — не змінили знак $4$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Многочлен — сума одночленів. Подібні члени — з однаковою буквеною частиною.</p>
+                    <p>Степінь многочлена — найбільший степінь його членів (у стандартному вигляді).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Розкрити дужки → звести подібні → записати в стандартному вигляді.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Мінус перед дужками змінює знаки <b>всіх</b> членів у дужках.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderPoly();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+
+            // --- Слайд 2: клік по «?» відкриває відповідь ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 4: P ± Q ---
+            const Q = [1, -2, 4];
+            let op = 0, polyShown = false;
+            // Многочлен ax² + bx + c у TeX
+            function polyTex([a, b, c]) {
+                const parts = [];
+                [[a, 'x^2'], [b, 'x'], [c, '']].forEach(([k, v]) => {
+                    if (k === 0) return;
+                    const abs = Math.abs(k), body = v ? (abs === 1 ? v : abs + v) : String(abs);
+                    parts.push(parts.length ? (k > 0 ? ` + ${body}` : ` - ${body}`) : (k > 0 ? body : `-${body}`));
+                });
+                return parts.length ? parts.join('') : '0';
+            }
+            const termTex = (k, v) => k === 0 ? '0' : v ? (k === 1 ? v : k === -1 ? `-${v}` : `${k}${v}`) : String(k);
+            function polyVals() { return ['w-a', 'w-b', 'w-c'].map(id => parseInt(document.getElementById(id).value, 10)); }
+            window.setOp = function (k) {
+                op = k;
+                [0, 1].forEach(j => document.getElementById('op-' + j).classList.toggle('on', j === k));
+                renderPoly();
+            };
+            function polyTable(P, show) {
+                const R = P.map((p, i) => op === 0 ? p + Q[i] : p - Q[i]), V = ['x^2', 'x', ''];
+                const row = (name, arr, cls = '') => `<tr><th>${name}</th>${arr.map((k, i) => `<td${cls ? ` class="${cls}"` : ''}>$${termTex(k, V[i])}$</td>`).join('')}</tr>`;
+                return '<tr><th></th><th>$x^2$</th><th>$x$</th><th>число</th></tr>' + row('$P$', P) + row(op === 0 ? '$+\\,Q$' : '$-\\,Q$', op === 0 ? Q : Q.map(q => -q))
+                    + (show ? row('разом', R, 'res') : '<tr><th>разом</th><td>?</td><td>?</td><td>?</td></tr>');
+            }
+            window.renderPoly = function () {
+                const P = polyVals();
+                ['a', 'b', 'c'].forEach((k, i) => { document.getElementById(`w-${k}-val`).textContent = String(P[i]).replace('-', '−'); });
+                polyShown = false;
+                const task = document.getElementById('poly-task'), table = document.getElementById('poly-table');
+                task.innerHTML = `$(${polyTex(P)}) ${op === 0 ? '+' : '-'} (${polyTex(Q)}) = \\,?$`;
+                table.innerHTML = polyTable(P, false);
+                document.getElementById('poly-result').innerHTML = '';
+                document.getElementById('poly-note').innerHTML = op === 1 ? 'Мінус перед дужками: у рядку $-Q$ знаки всіх членів змінено.' : '';
+                typeset(task); typeset(table); typeset(document.getElementById('poly-note'));
+            };
+            window.revealPoly = function () {
+                const P = polyVals(), R = P.map((p, i) => op === 0 ? p + Q[i] : p - Q[i]);
+                const table = document.getElementById('poly-table'), res = document.getElementById('poly-result');
+                table.innerHTML = polyTable(P, true);
+                res.innerHTML = `$= $ <span class="ok">$${polyTex(R)}$</span>`;
+                typeset(table); typeset(res);
+            };
+
+            // --- Слайд 5: (3a² − 2ab + b²) − (a² − 5ab + 2b²) ---
+            const STEPS = [
+                ['$= 3a^2 - 2ab + b^2$ [[$- a^2 + 5ab - 2b^2$]]', 'Крок 2: мінус перед дужками — знаки всіх трьох членів змінюються'],
+                ['$= (3a^2 - a^2) + (-2ab + 5ab) + (b^2 - 2b^2)$', 'Крок 3: групуємо подібні члени'],
+                ['$= $ [[$2a^2 + 3ab - b^2$]]', 'Крок 4: зводимо: $3 - 1 = 2$, $-2 + 5 = 3$, $1 - 2 = -1$'],
+                ['Перевірка: $a = b = 1$: $(3 - 2 + 1) - (1 - 5 + 2) = 2 + 2 = 4$ і $2 + 3 - 1 = 4$ ✓', 'Підстановка числа не доводить, але ловить помилки'],
+            ];
+@@INCLUDE steps.js
+
+            setOp(0);
