@@ -13,7 +13,8 @@ class StudentReportForm(forms.ModelForm):
     class Meta:
         model = StudentReport
         # Змінили 'topic' на 'curriculum_topic'
-        fields = ['curriculum_topic', 'nush_modeling', 'nush_solving', 'nush_analysis', 'homework_status', 'teacher_comment']
+        fields = ['curriculum_topic', 'nush_modeling', 'nush_solving', 'nush_analysis', 'homework_status',
+                  'readiness', 'answers', 'effort', 'teacher_comment']
         widgets = {
             'nush_modeling': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12, 'value': 0}),
             'nush_solving': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12, 'value': 0}),

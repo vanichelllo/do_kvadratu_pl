@@ -1256,6 +1256,7 @@ def school_results_context(request, attempt, results):
         if student:
             context['report_student'] = student
             context['hw_choices'] = StudentReport.HW_CHOICES
+            context['summary_fields'] = StudentReport.summary_fields()
             context['hw_default'] = homework.report_status(student)
             context['default_due'] = timezone.localdate() + datetime.timedelta(days=7)
             context['again_url'] += f'?student={student.id}'
@@ -1635,6 +1636,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 topics = topics.filter(chapter__grade_id__in=grades)
             context['all_curriculum_topics'] = topics.select_related('chapter__grade').order_by(
                 'chapter__grade__subject__order', 'chapter__grade__order', 'chapter__order', 'order')
+            context['summary_fields'] = StudentReport.summary_fields()
         elif getattr(user, 'role', '') == 'teacher':
             context['tutor_offer'] = True
             context['trial_available'] = teachers.trial_available(user)
@@ -2307,8 +2309,10 @@ def parent_dashboard_view(request, parent_token):
             attempt.level_label = (f'рівень: {practice.level_name(grade)}' if grade else
                                    'діагностика' if attempt.answers_json.get('kind') == 'diagnostic' else '')
         context['school_attempts'] = school_attempts
-        reports = StudentReport.objects.filter(student=student_request).order_by('-date')
+        reports = list(StudentReport.objects.filter(student=student_request)
+                       .select_related('curriculum_topic__chapter__grade').order_by('-date', '-id'))
         context['reports'] = reports
+        context['last_report'] = reports[0] if reports else None
         context['is_nmt'] = False
         context['training'] = practice.topic_progress(
             PracticeAttempt.objects.filter(user=student_request.user).select_related('material')
