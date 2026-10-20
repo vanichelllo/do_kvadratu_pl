@@ -1,0 +1,396 @@
+@@TITLE Квадратична функція, її графік та властивості
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; font-size: 1.15rem; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-weight: 700; min-height: 1.5em; font-size: 1.15rem; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; }
+        .vertex { fill: var(--warning-red); stroke: var(--card-bg); stroke-width: 2; }
+        .vlabel { fill: var(--warning-red); font-size: 14px; font-weight: 800; text-anchor: start; }
+        .pt { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 2; }
+        .plabel { fill: var(--brand-blue); font-size: 13px; font-weight: 800; text-anchor: start; }
+        .sym-axis { stroke: var(--warning-red); stroke-width: 1.8; stroke-dasharray: 6 5; }
+        .prop-list { margin: 6px 0 0; padding-left: 1.1em; font-size: 1.02rem; }
+        .prop-list li { margin: 3px 0; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Як високо злетить м'яч? ⚽</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>М'яч підкинули вгору. Його висота через $t$ секунд — $h(t) = -5t^2 + 20t$ метрів.</p>
+                    <p class="big-question">Яка найбільша висота м'яча і коли він її досягне?</p>
+                    <p>Підставляти $t = 1, 2, 3, \ldots$ можна, але чи впевнені ми, що не пропустили вершину між ними?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealBall()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$20$ м через $2$ с</div>
+                        <p>Графік — парабола гілками вниз, найвища точка — вершина: $t_0 = -\dfrac{20}{2 \cdot (-5)} = 2$, $h(2) = 20$. Сьогодні — як знаходити вершину й інші властивості.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="ball-scene" role="img" aria-label="Графік висоти м'яча h(t) = −5t² + 20t"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке квадратична функція</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Квадратична функція</b> — функція виду $y = ax^2 + bx + c$, де $a \ne 0$.</p>
+                        <p>Її графік — <b>парабола</b>. При $a \gt 0$ гілки напрямлені вгору, при $a \lt 0$ — униз.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Вершина і вісь</div>
+                        <p class="big-formula">$x_0 = -\dfrac{b}{2a}$, $\quad y_0 = y(x_0)$</p>
+                        <p>Пряма $x = x_0$ — <b>вісь симетрії</b> параболи. Перетин з віссю $Oy$ — точка $(0;\,c)$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="def-scene" role="img" aria-label="Парабола y = x² − 2x − 3: вершина, вісь симетрії, точка перетину з Oy"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Звідки формула вершини і які властивості</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Виділяємо повний квадрат</div>
+                        <p>$x^2 - 2x - 3 = (x^2 - 2x + 1) - 4 = (x - 1)^2 - 4$.</p>
+                        <p>Узагалі $ax^2 + bx + c = a(x - x_0)^2 + y_0$: графік — парабола $y = ax^2$, зсунута так, що вершина в $(x_0;\,y_0)$ (тема 2.2).</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Нулі</div>
+                        <p>Нулі — корені рівняння $ax^2 + bx + c = 0$. Їх два, один або жодного — залежно від знака $D$.</p>
+                    </div>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Властивості при $a \gt 0$</div>
+                    <ul class="prop-list">
+                        <li>$D(y) = \mathbb{R}$, $\;E(y) = [y_0;\,+\infty)$</li>
+                        <li>спадає на $(-\infty;\,x_0]$, зростає на $[x_0;\,+\infty)$</li>
+                        <li>найменше значення $y_0$ — у вершині</li>
+                    </ul>
+                    <p>При $a \lt 0$ — навпаки: $E(y) = (-\infty;\,y_0]$, зростає до вершини, спадає після, $y_0$ — найбільше значення.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Коефіцієнти $a$, $b$, $c$ на графіку 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо коефіцієнти. Учні передбачають: куди гілки, де вершина, скільки нулів, — потім учитель відкриває.</p>
+                    <div class="slider-control"><label for="w-a">a</label><input type="range" id="w-a" min="-2" max="2" step="0.5" value="1" oninput="renderQ()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-b">b</label><input type="range" id="w-b" min="-4" max="4" step="1" value="-2" oninput="renderQ()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-c">c</label><input type="range" id="w-c" min="-4" max="4" step="1" value="-3" oninput="renderQ()"><span id="w-c-val"></span></div>
+                    <p class="readout" id="q-formula"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealQ()">Показати властивості</button></p>
+                    <div id="q-props"></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="q-scene" role="img" aria-label="Графік квадратичної функції з коефіцієнтами a, b, c"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Будуємо $y = x^2 - 4x + 3$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Порядок побудови</div>
+                        <p>1) Напрям гілок за знаком $a$. 2) Вершина й вісь симетрії. 3) Точка $(0;\,c)$ і симетрична їй. 4) Нулі (якщо є). 5) Плавна крива.</p>
+                    </div>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="algo-scene" role="img" aria-label="Покрокова побудова параболи y = x² − 4x + 3"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Властивості за формулою</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Опишіть властивості $y = -x^2 + 2x + 3$.</p>
+                    <div class="step">$a = -1 \lt 0$ — гілки вниз. $x_0 = -\dfrac{2}{-2} = 1$, $y_0 = -1 + 2 + 3 = 4$.</div>
+                    <div class="step">$E(y) = (-\infty;\,4]$; зростає на $(-\infty;\,1]$, спадає на $[1;\,+\infty)$.</div>
+                    <div class="step">Нулі: $-x^2 + 2x + 3 = 0 \Rightarrow x = -1$, $x = 3$; $y \gt 0$ на $(-1;\,3)$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Вершина параболи $y = x^2 + bx + c$ — точка $(2;\,-5)$. Знайдіть $b$ і $c$.</p>
+                    <div class="step">$x_0 = -\dfrac{b}{2} = 2 \Rightarrow b = -4$.</div>
+                    <div class="step">$y(2) = 4 - 8 + c = -5 \Rightarrow c = -1$.</div>
+                    <div class="step">$y = x^2 - 4x - 1 = (x - 2)^2 - 5$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Губиться мінус у $x_0$</div>
+                        <p>Для $y = x^2 - 6x$: $x_0 = -\dfrac{-6}{2} = 3$, а не $-3$. Підставляйте $b$ разом зі знаком.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$c$ — не вершина</div>
+                        <p>$c$ — ордината точки перетину з $Oy$. Вершина на $Oy$ лише тоді, коли $b = 0$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Область значень</div>
+                        <p>$E(y)$ визначає вершина й знак $a$, а не нулі: для $y = -x^2 + 2x + 3$ $E = (-\infty;\,4]$, а не $[-1;\,3]$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Проміжки монотонності</div>
+                        <p>Межа проміжків — абсциса вершини $x_0$, а не нулі функції.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть вершину параболи $y = x^2 - 6x + 5$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $(3;\,-4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $(-3;\,-4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(3;\,5)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(6;\,5)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x_0 = -\dfrac{-6}{2} = 3$, $y_0 = 9 - 18 + 5 = -4$. Б — загубили мінус; В — взяли $c$ замість $y_0$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть область значень функції $y = -2x^2 + 8x - 3$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $(-\infty;\,5]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $[5;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(-\infty;\,2]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $(-\infty;\,-3]$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x_0 = -\dfrac{8}{-4} = 2$, $y_0 = -8 + 16 - 3 = 5$. Гілки вниз: $E = (-\infty;\,5]$.</p>
+                            <p>Б — сплутали напрям гілок; В — взяли $x_0$ замість $y_0$; Г — взяли $c$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Укажіть проміжок зростання функції $y = x^2 + 4x - 1$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $[-2;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $(-\infty;\,-2]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $[2;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $[-5;\,+\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $(-\infty;\,+\infty)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x_0 = -\dfrac{4}{2} = -2$; гілки вгору — зростає праворуч від вершини: $[-2;\,+\infty)$.</p>
+                            <p>Б — проміжок спадання; В — загубили мінус; Г — $y_0 = -5$, це ордината, а не абсциса.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$y = ax^2 + bx + c$, $a \ne 0$ — парабола; $a \gt 0$ — гілки вгору, $a \lt 0$ — униз.</p>
+                    <p>Вершина: $x_0 = -\dfrac{b}{2a}$, $y_0 = y(x_0)$; вісь $x = x_0$; перетин з $Oy$ — $(0;\,c)$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Гілки → вершина й вісь → $(0;\,c)$ і симетрична точка → нулі → крива. Властивості читаємо з вершини.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>$x_0 = -\dfrac{b}{2a}$ — з мінусом. Межа монотонності й $E(y)$ — у вершині, а не в нулях.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderBall();
+                if (currentSlide === 2) renderDef();
+                if (currentSlide === 4) renderQ();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const fmtN = (v) => (Math.round(v * 100) / 100).toString().replace('.', ',').replace('-', '−');
+            const vdot = (P, x, y, label, dx = 8, dy = -8) => `<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="5" class="vertex"/>` + (label ? `<text x="${P.sx(x) + dx}" y="${P.sy(y) + dy}" class="vlabel">${label}</text>` : '');
+            const pdot = (P, x, y, label, dx = 8, dy = 16) => `<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="4.5" class="pt"/>` + (label ? `<text x="${P.sx(x) + dx}" y="${P.sy(y) + dy}" class="plabel">${label}</text>` : '');
+            const symAxis = (P, x0) => `<line x1="${P.sx(x0)}" y1="${P.sy(P.y0)}" x2="${P.sx(x0)}" y2="${P.sy(P.y1)}" class="sym-axis"/>`;
+
+            // --- Слайд 1: м'яч ---
+            const PB = plane(-0.5, 4.5, -3, 24);
+            let ballShown = false;
+            window.renderBall = function () {
+                const h = (t) => (t >= 0 && t <= 4 ? -5 * t * t + 20 * t : NaN);
+                let svg = axesSvg(PB, 1, 5, 't, с', 'h, м') + curveSvg(PB, h, 0, 4, () => 'pos');
+                if (ballShown) svg += symAxis(PB, 2) + vdot(PB, 2, 20, '(2; 20)');
+                document.getElementById('ball-scene').innerHTML = svg;
+            };
+            window.revealBall = function () { ballShown = true; renderBall(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: y = x² − 2x − 3 ---
+            const P0 = plane(-4, 6, -5, 7);
+            window.renderDef = function () {
+                const f = (x) => x * x - 2 * x - 3;
+                document.getElementById('def-scene').innerHTML = axesSvg(P0) + symAxis(P0, 1) + curveSvg(P0, f, -4, 6, () => 'pos')
+                    + pdot(P0, 0, -3, '(0; c)', -58, 5) + pdot(P0, 2, -3) + vdot(P0, 1, -4, '(x₀; y₀)', 10, 16);
+            };
+
+            // --- Слайд 4: коефіцієнти a, b, c ---
+            const PQ = plane(-6, 6, -6, 8);
+            let qShown = false;
+            function qVals() {
+                const A = document.getElementById('w-a');
+                if (parseFloat(A.value) === 0) A.value = 0.5;
+                return [parseFloat(A.value), parseInt(document.getElementById('w-b').value, 10), parseInt(document.getElementById('w-c').value, 10)];
+            }
+            function qTex(a, b, c) {
+                const ta = a === 1 ? '' : a === -1 ? '-' : fmtN(a).replace('−', '-').replace(',', '{,}');
+                const tb = b === 0 ? '' : b === 1 ? ' + x' : b === -1 ? ' - x' : b > 0 ? ` + ${b}x` : ` - ${-b}x`;
+                const tc = c === 0 ? '' : c > 0 ? ` + ${c}` : ` - ${-c}`;
+                return `y = ${ta}x^2${tb}${tc}`;
+            }
+            function qScene() {
+                const [a, b, c] = qVals(), f = (x) => a * x * x + b * x + c, x0 = -b / (2 * a), y0 = f(x0);
+                let svg = axesSvg(PQ);
+                if (qShown && x0 >= PQ.x0 && x0 <= PQ.x1) svg += symAxis(PQ, x0);
+                svg += curveSvg(PQ, f, -6, 6, () => 'pos');
+                if (qShown) {
+                    svg += pdot(PQ, 0, c);
+                    const D = b * b - 4 * a * c;
+                    if (D >= 0) [(-b - Math.sqrt(D)) / (2 * a), (-b + Math.sqrt(D)) / (2 * a)].forEach(r => { if (r >= PQ.x0 && r <= PQ.x1) svg += pdot(PQ, r, 0); });
+                    if (x0 >= PQ.x0 && x0 <= PQ.x1 && y0 >= PQ.y0 && y0 <= PQ.y1) svg += vdot(PQ, x0, y0, `(${fmtN(x0)}; ${fmtN(y0)})`);
+                }
+                return svg;
+            }
+            window.renderQ = function () {
+                const [a, b, c] = qVals();
+                document.getElementById('w-a-val').textContent = fmtN(a);
+                document.getElementById('w-b-val').textContent = fmtN(b);
+                document.getElementById('w-c-val').textContent = fmtN(c);
+                qShown = false;
+                const out = document.getElementById('q-formula');
+                out.innerHTML = `$${qTex(a, b, c)}$`;
+                document.getElementById('q-props').innerHTML = '';
+                typeset(out);
+                document.getElementById('q-scene').innerHTML = qScene();
+            };
+            window.revealQ = function () {
+                const [a, b, c] = qVals(), x0 = -b / (2 * a), y0 = a * x0 * x0 + b * x0 + c, D = b * b - 4 * a * c;
+                const t = (v) => fmtN(v).replace('−', '-').replace(',', '{,}');
+                qShown = true;
+                document.getElementById('q-scene').innerHTML = qScene();
+                const zeros = D > 0 ? 'два нулі' : D === 0 ? 'один нуль' : 'нулів немає';
+                const box = document.getElementById('q-props');
+                box.innerHTML = `<ul class="prop-list"><li>Гілки ${a > 0 ? 'вгору' : 'вниз'} ($a ${a > 0 ? '\\gt' : '\\lt'} 0$)</li>`
+                    + `<li>Вершина $(${t(x0)};\\,${t(y0)})$, вісь $x = ${t(x0)}$</li>`
+                    + `<li>Перетин з $Oy$: $(0;\\,${c})$; $D = ${t(D)}$ — ${zeros}</li>`
+                    + `<li>$E(y) = ${a > 0 ? `[${t(y0)};\\,+\\infty)` : `(-\\infty;\\,${t(y0)}]`}$</li></ul>`;
+                typeset(box);
+            };
+
+            // --- Слайд 5: покроково y = x² − 4x + 3 ---
+            const PA = plane(-2, 6, -3, 7);
+            window.renderAlgo = function () {
+                const st = shown, f = (x) => x * x - 4 * x + 3;
+                let svg = axesSvg(PA);
+                if (st >= 2) svg += symAxis(PA, 2) + vdot(PA, 2, -1, '(2; −1)', -62, 18);
+                if (st >= 3) svg += pdot(PA, 0, 3, '(0; 3)') + pdot(PA, 4, 3, '(4; 3)');
+                if (st >= 4) svg += pdot(PA, 1, 0, '', 0) + pdot(PA, 3, 0, '', 0);
+                if (st >= 5) svg += curveSvg(PA, f, -2, 6, () => 'pos');
+                document.getElementById('algo-scene').innerHTML = svg;
+            };
+            const STEPS = [
+                ['$a = 1 \\gt 0$ — гілки [[вгору]]', 'Крок 1: напрям гілок — за знаком $a$'],
+                ['$x_0 = -\\dfrac{-4}{2} = 2$, $y_0 = 4 - 8 + 3 = -1$: вершина [[$(2;\\,-1)$]], вісь $x = 2$', 'Крок 2: вершина і вісь симетрії'],
+                ['$c = 3$: точка [[$(0;\\,3)$]] і симетрична їй $(4;\\,3)$', 'Крок 3: точка на $Oy$; симетрична — на тій самій відстані від осі'],
+                ['$x^2 - 4x + 3 = 0$: нулі [[$x = 1$, $x = 3$]]', 'Крок 4: за теоремою Вієта $1 + 3 = 4$, $1 \\cdot 3 = 3$'],
+                ['Проводимо [[параболу]] через усі точки', 'Крок 5: плавна крива, симетрична відносно $x = 2$'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
