@@ -1,0 +1,428 @@
+@@TITLE Середня лінія трикутника
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .side { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.08; }
+        .mid { stroke: var(--brand-green); stroke-width: 3.4; stroke-linecap: round; }
+        .mid.faint { stroke-opacity: 0.35; }
+        .aux { stroke: var(--warning-red); stroke-width: 2.4; stroke-dasharray: 7 5; }
+        .diag { stroke: var(--brand-blue); stroke-width: 2.2; stroke-dasharray: 7 5; }
+        .diag.on { stroke: var(--brand-green); stroke-dasharray: none; stroke-width: 2.6; }
+        .diag2.on { stroke: var(--warning-red); stroke-dasharray: none; stroke-width: 2.6; }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .svg-caption.g { fill: var(--brand-green); }
+        .lake { fill: var(--brand-blue); fill-opacity: 0.25; stroke: var(--brand-blue); stroke-width: 2; }
+        .part { stroke: none; }
+        .part.p1 { fill: var(--brand-green); fill-opacity: 0.18; }
+        .part.p2 { fill: var(--brand-yellow); fill-opacity: 0.3; }
+        .var-fill { fill: var(--brand-green); fill-opacity: 0.15; stroke: var(--brand-green); stroke-width: 3; }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 2.4em; }
+        .readout .ok { color: var(--brand-green); }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Як виміряти ширину озера? 🏞️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Треба знайти відстань між точками $A$ і $B$ на різних берегах озера. Перейти озеро з рулеткою не можна.</p>
+                    <p>Геодезист обрав точку $C$ на суші, знайшов середини $M$ і $N$ відрізків $CA$ і $CB$ та виміряв $MN = 60$ м.</p>
+                    <p class="big-question">Яка ширина озера $AB$?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown'); renderLake(true)">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$AB = 2 \cdot MN = 120$ м</div>
+                        <p>$MN$ — середня лінія трикутника $ABC$. Вона вдвічі коротша від сторони $AB$ і паралельна їй. Сьогодні доведемо це.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="lake-scene" role="img" aria-label="Озеро між точками A і B; точка C на суші; середини M і N відрізків CA і CB"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке середня лінія</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Середня лінія трикутника</b> — відрізок, що сполучає <b>середини двох сторін</b> трикутника.</p>
+                        <p>На рисунку $AM = MB$, $BN = NC$, тож $MN$ — середня лінія. Третю сторону $AC$ вона не перетинає.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Скільки їх?</div>
+                        <p>У кожного трикутника <b>три</b> середні лінії — для кожної пари сторін. Вони утворюють трикутник усередині.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="def-scene" role="img" aria-label="Трикутник ABC, M — середина AB, N — середина BC, відрізок MN"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема про середню лінію</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Середня лінія трикутника <b>паралельна</b> третій стороні і дорівнює її <b>половині</b>:</p>
+                        <p class="center">$MN \parallel AC$, $\quad MN = \dfrac{1}{2}AC$.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 230" id="proof-scene" role="img" aria-label="Доведення: продовжуємо MN за точку N на NK = MN"></svg>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-proof">
+                    <p><b>Доведення.</b></p>
+                    <div class="step">1) Продовжимо $MN$ за точку $N$ на відрізок $NK = MN$.</div>
+                    <div class="step">2) $\triangle MBN = \triangle KCN$ за двома сторонами й кутом між ними: $BN = NC$, $MN = NK$, кути при $N$ вертикальні. Отже, $CK = BM = AM$ і $\angle MBN = \angle KCN$.</div>
+                    <div class="step">3) Ці кути — внутрішні різносторонні при прямих $AB$, $CK$ і січній $BC$, тому $AB \parallel CK$.</div>
+                    <div class="step">4) У чотирикутнику $AMKC$ сторони $AM$ і $CK$ рівні й паралельні — це паралелограм. Тому $MK \parallel AC$ і $MK = AC$, а $MN = \dfrac{1}{2}MK = \dfrac{1}{2}AC$ ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-proof')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Змінюємо трикутник 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо основу $AC$ і положення вершини $B$. Учні передбачають довжину $MN$, потім вимірюємо.</p>
+                    <div class="slider-control"><label for="w-a">Основа $AC$</label><input type="range" id="w-a" min="4" max="9" step="1" value="6" oninput="renderTri()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-x">$B$ уздовж</label><input type="range" id="w-x" min="0" max="8" step="0.5" value="2" oninput="renderTri()"><span id="w-x-val"></span></div>
+                    <div class="slider-control"><label for="w-y">Висота $B$</label><input type="range" id="w-y" min="2" max="6" step="0.5" value="5" oninput="renderTri()"><span id="w-y-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealTri()">Виміряти</button> <button class="btn-secondary" onclick="toggleAll()">Усі три середні лінії</button></p>
+                    <p class="readout" id="tri-readout"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 280" id="tri-scene" role="img" aria-label="Трикутник ABC з середньою лінією MN; вершину B і основу AC можна змінювати"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Середини сторін чотирикутника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як застосовувати</div>
+                        <p>1) Знайти середини сторін. 2) Назвати трикутник, у якому відрізок — середня лінія. 3) Він паралельний <b>третій</b> стороні й дорівнює її половині.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container">
+                        <svg viewBox="0 0 420 200" id="var-scene" role="img" aria-label="Чотирикутник ABCD, K, L, M, N — середини сторін, діагоналі AC і BD"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p><b>Задача.</b> $K$, $L$, $M$, $N$ — середини сторін $AB$, $BC$, $CD$, $DA$ чотирикутника $ABCD$; $AC = 10$, $BD = 8$. Доведіть, що $KLMN$ — паралелограм, і знайдіть його периметр.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Периметр і кути</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Сторони трикутника — $6$, $8$ і $10$ см. Знайдіть периметр трикутника, вершини якого — середини сторін даного.</p>
+                    <div class="step">Сторони нового трикутника — середні лінії: $3$, $4$ і $5$ см.</div>
+                    <div class="step">$P = 3 + 4 + 5 = 12$ см — рівно половина периметра $24$ см.</div>
+                    <div class="step">Висновок: три середні лінії ділять трикутник на $4$ рівні трикутники.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> У $\triangle ABC$ $\angle A = 50^\circ$, $\angle C = 70^\circ$; $MN$ — середня лінія ($M \in AB$, $N \in BC$). Знайдіть кути $\triangle MBN$.</p>
+                    <div class="step">$MN \parallel AC$, тож $\angle BMN = \angle A = 50^\circ$ — відповідні кути при січній $AB$.</div>
+                    <div class="step">Так само $\angle BNM = \angle C = 70^\circ$ (січна $BC$).</div>
+                    <div class="step">$\angle B = 180^\circ - 50^\circ - 70^\circ = 60^\circ$ — спільний для обох трикутників.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Половина не тієї сторони</div>
+                        <p>$MN$ з кінцями на $AB$ і $BC$ дорівнює половині <b>третьої</b> сторони $AC$, а не $AB$ чи $BC$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Будь-який відрізок усередині</div>
+                        <p>Відрізок з кінцями на двох сторонах — середня лінія, лише якщо обидва кінці — <b>середини</b> сторін.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Удвічі» в інший бік</div>
+                        <p>Відома середня лінія $7$ — третя сторона $14$, а не $3{,}5$. Сторона вдвічі <b>довша</b> за середню лінію.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Периметр</div>
+                        <p>Периметр трикутника з середніх ліній — половина периметра даного, а не третина чи чверть.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">У $\triangle ABC$ $AC = 14$ см, $MN$ — середня лінія, паралельна $AC$. Знайдіть $MN$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $7$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $14$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $28$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $3{,}5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$MN = \dfrac{1}{2}AC = 7$ см. В — помножили замість поділити; Г — поділили двічі.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Периметр трикутника — $36$ см. Знайдіть периметр трикутника, сторони якого — середні лінії даного.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $18$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $9$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $12$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $72$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Кожна середня лінія — половина сторони, тож периметр — половина: $\dfrac{a}{2} + \dfrac{b}{2} + \dfrac{c}{2} = \dfrac{36}{2} = 18$ см.</p>
+                            <p>Б — «чверть» плутають з чотирма трикутниками; В — поділили на $3$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Діагоналі чотирикутника дорівнюють $12$ см і $16$ см. Знайдіть периметр чотирикутника, вершини якого — середини сторін даного.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $28$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $14$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $56$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $24$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $32$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Сторони — середні лінії трикутників, на які діагоналі ділять чотирикутник: дві по $6$ і дві по $8$ см.</p>
+                            <p>$P = 2 \cdot (6 + 8) = 28$ см — це сума діагоналей. Б — взяли кожну сторону лише раз.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Середня лінія сполучає <b>середини двох сторін</b>.</p>
+                    <p>Вона паралельна третій стороні й дорівнює її половині: $MN \parallel AC$, $MN = \dfrac{1}{2}AC$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Корисні наслідки ✍️</div>
+                        <p>Три середні лінії ділять трикутник на $4$ рівні трикутники; периметр «середнього» — половина.</p>
+                        <p>Середини сторін будь-якого чотирикутника — вершини паралелограма з периметром $d_1 + d_2$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Половина <b>третьої</b> сторони — тієї, якої середня лінія не торкається.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderLake(false);
+                if (currentSlide === 2) renderDef();
+                if (currentSlide === 3) renderProof();
+                if (currentSlide === 4) renderTri();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const f1 = (v) => v.toFixed(1), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            // Підпис точки: трохи назовні від центру c
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            // n рисок у середині відрізка pq (позначка рівних частин)
+            function ticks(p, q, n) {
+                const m = mid(p, q), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+                let s = '';
+                for (let k = 0; k < n; k++) {
+                    const o = (k - (n - 1) / 2) * 6, c = [m[0] + ux * o, m[1] + uy * o];
+                    s += seg([c[0] - uy * 7, c[1] + ux * 7], [c[0] + uy * 7, c[1] - ux * 7], 'tick-mark');
+                }
+                return s;
+            }
+            // Трикутник ABC (A, C — основа) з середньою лінією MN: M — середина AB, N — середина BC
+            function triWithMid(A, B, C, opts = {}) {
+                const M = mid(A, B), N = mid(B, C), c = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+                let s = poly([A, B, C], 'side');
+                s += ticks(A, M, 1) + ticks(M, B, 1) + ticks(B, N, 2) + ticks(N, C, 2) + seg(M, N, 'mid') + dot(M) + dot(N);
+                s += vName(A, c, 'A') + vName(B, c, 'B') + vName(C, c, 'C');
+                s += `<text x="${f1(M[0] - 18)}" y="${f1(M[1] + 2)}" class="v-name">M</text><text x="${f1(N[0] + 18)}" y="${f1(N[1] + 2)}" class="v-name">N</text>`;
+                return { svg: s, M, N };
+            }
+
+            // --- Слайд 1: озеро ---
+            window.renderLake = function (show) {
+                const A = [70, 60], B = [350, 70], C = [230, 255], M = mid(C, A), N = mid(C, B);
+                let s = '<ellipse cx="210" cy="64" rx="150" ry="42" class="lake"/>';
+                s += seg(C, A, 'geo-line') + seg(C, B, 'geo-line') + (show ? seg(A, B, 'aux') : '');
+                s += ticks(C, M, 1) + ticks(M, A, 1) + ticks(C, N, 2) + ticks(N, B, 2) + seg(M, N, 'mid');
+                s += [A, B, C, M, N].map(dot).join('');
+                s += `<text x="${A[0] - 18}" y="${A[1] + 6}" class="v-name">A</text><text x="${B[0] + 18}" y="${B[1] + 6}" class="v-name">B</text><text x="${C[0]}" y="${C[1] + 22}" class="v-name">C</text>`;
+                s += `<text x="${f1(M[0] - 18)}" y="${f1(M[1] + 6)}" class="v-name">M</text><text x="${f1(N[0] + 18)}" y="${f1(N[1] + 6)}" class="v-name">N</text>`;
+                s += `<text x="${f1((M[0] + N[0]) / 2)}" y="${f1((M[1] + N[1]) / 2 - 10)}" class="svg-caption g">60 м</text>`;
+                s += `<text x="210" y="${show ? 125 : 70}" class="svg-caption">${show ? 'AB = 120 м' : '?'}</text>`;
+                document.getElementById('lake-scene').innerHTML = s;
+            };
+
+            // --- Слайд 2: означення ---
+            window.renderDef = function () {
+                document.getElementById('def-scene').innerHTML = triWithMid([40, 235], [150, 30], [385, 235]).svg;
+            };
+
+            // --- Слайд 3: доведення ---
+            window.renderProof = function () {
+                const A = [30, 205], B = [130, 25], C = [300, 205], T = triWithMid(A, B, C);
+                const K = [2 * T.N[0] - T.M[0], 2 * T.N[1] - T.M[1]];
+                let s = T.svg + seg(T.N, K, 'aux') + seg(C, K, 'aux') + dot(K);
+                s += `<text x="${f1(K[0] + 16)}" y="${f1(K[1] + 6)}" class="v-name">K</text>`;
+                document.getElementById('proof-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: трикутник з повзунками ---
+            const S4 = 36, X0 = 40, Y0 = 250;
+            let triShown = false, allMid = false;
+            function triPts() {
+                const a = parseFloat(document.getElementById('w-a').value), bx = parseFloat(document.getElementById('w-x').value), by = parseFloat(document.getElementById('w-y').value);
+                return { a, bx, by, A: [X0, Y0], B: [X0 + bx * S4, Y0 - by * S4], C: [X0 + a * S4, Y0] };
+            }
+            const num = (v) => String(v).replace('.', '{,}');
+            function triScene() {
+                const t = triPts(), T = triWithMid(t.A, t.B, t.C);
+                let s = '';
+                if (allMid) {
+                    const K = mid(t.A, t.C);
+                    s += poly([T.M, T.N, K], 'part p2') + poly([t.A, T.M, K], 'part p1') + poly([K, T.N, t.C], 'part p1') + poly([T.M, t.B, T.N], 'part p1');
+                    s += seg(T.M, K, 'mid faint') + seg(T.N, K, 'mid faint') + dot(K);
+                }
+                s += T.svg;
+                if (triShown) s += `<text x="${f1((T.M[0] + T.N[0]) / 2)}" y="${f1(T.M[1] - 10)}" class="svg-caption g">${num(t.a / 2)}</text><text x="${f1((t.A[0] + t.C[0]) / 2)}" y="${Y0 + 24}" class="svg-caption">${t.a}</text>`;
+                return s;
+            }
+            window.renderTri = function () {
+                const t = triPts();
+                document.getElementById('w-a-val').textContent = t.a;
+                document.getElementById('w-x-val').textContent = String(t.bx).replace('.', ',');
+                document.getElementById('w-y-val').textContent = String(t.by).replace('.', ',');
+                triShown = false;
+                const out = document.getElementById('tri-readout');
+                out.innerHTML = `$AC = ${t.a}$. Яка довжина $MN$? Чи паралельна вона $AC$?`;
+                typeset(out);
+                document.getElementById('tri-scene').innerHTML = triScene();
+            };
+            window.revealTri = function () {
+                const t = triPts(), out = document.getElementById('tri-readout');
+                triShown = true;
+                out.innerHTML = `$MN = ${num(t.a / 2)}$, $AC = ${t.a}$: <span class="ok">$MN = \\dfrac{1}{2}AC$ ✓</span><br>$M$ і $N$ на однаковій висоті $${num(t.by / 2)}$ — <span class="ok">$MN \\parallel AC$ ✓</span>`;
+                typeset(out);
+                document.getElementById('tri-scene').innerHTML = triScene();
+            };
+            window.toggleAll = function () {
+                allMid = !allMid;
+                document.getElementById('tri-scene').innerHTML = triScene();
+            };
+
+            // --- Слайд 5: середини сторін чотирикутника ---
+            window.renderVar = function () {
+                const A = [40, 165], B = [110, 25], C = [350, 50], D = [300, 180];
+                const K = mid(A, B), L = mid(B, C), M = mid(C, D), N = mid(D, A);
+                const c = [(A[0] + B[0] + C[0] + D[0]) / 4, (A[1] + B[1] + C[1] + D[1]) / 4], st = shown;
+                let s = poly([A, B, C, D], 'side');
+                s += seg(A, C, 'diag' + (st <= 2 ? ' on' : '')) + seg(B, D, 'diag diag2' + (st === 4 ? ' on' : ''));
+                if (st >= 3) s += poly([K, L, M, N], 'var-fill');
+                else s += seg(K, L, 'mid') + (st >= 2 ? seg(N, M, 'mid') : '');
+                s += [K, L, M, N].map(dot).join('') + [A, B, C, D].map((p, k) => vName(p, c, 'ABCD'[k])).join('') + [K, L, M, N].map((p, k) => vName(p, c, 'KLMN'[k])).join('');
+                document.getElementById('var-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['$KL$ — середня лінія $\\triangle ABC$: [[$KL \\parallel AC$, $KL = 5$]].', 'Кінці $K$ і $L$ — середини сторін $AB$ і $BC$; третя сторона — діагональ $AC$'],
+                ['$NM$ — середня лінія $\\triangle ADC$: [[$NM \\parallel AC$, $NM = 5$]].', 'Той самий трикутник «з іншого боку» діагоналі $AC$'],
+                ['$KL \\parallel NM$ і $KL = NM$, тож $KLMN$ — [[паралелограм]].', 'Ознака: дві протилежні сторони рівні й паралельні'],
+                ['Так само $KN = LM = \\dfrac{1}{2}BD = 4$. $\\;P = 2 \\cdot (5 + 4) = $ [[$18$]].', 'Периметр дорівнює сумі діагоналей: $10 + 8 = 18$'],
+            ];
+@@INCLUDE steps.js
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderVar(); };
