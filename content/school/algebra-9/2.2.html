@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Перетворення графіків функцій | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Координатна площина і графіки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.pos, .curve.up { stroke: var(--brand-green); }
+        .curve.neg { stroke: var(--warning-red); }
+        .curve.down { stroke: var(--brand-yellow); }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .end-dot { fill: var(--brand-blue); }
+        .probe { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 2; }
+        .probe-line { stroke: var(--brand-blue); stroke-width: 1.5; stroke-dasharray: 5 4; }
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        .center { text-align: center; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .modes { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .modes .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; font-size: 1.15rem; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-weight: 700; min-height: 1.5em; font-size: 1.15rem; }
+        .fn-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+        .fn-table th, .fn-table td { border-bottom: 1px solid var(--border-color); padding: 7px 6px; text-align: left; vertical-align: top; }
+        .fn-table th { color: var(--brand-blue); }
+        .vertex { fill: var(--warning-red); stroke: var(--card-bg); stroke-width: 2; }
+        .vlabel { fill: var(--warning-red); font-size: 14px; font-weight: 800; text-anchor: start; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Алгебра (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Будуємо графік без таблиці 📈</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Графік $y = x^2$ ми знаємо. А як побудувати $y = (x - 3)^2 + 1$? Можна скласти таблицю на десяток точок… але є спосіб швидший.</p>
+                    <p class="big-question">Як пов'язані графіки $y = x^2$ і $y = (x - 3)^2 + 1$?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealIntro()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Це та сама парабола, лише зсунута</div>
+                        <p>На $3$ одиниці <b>праворуч</b> і на $1$ <b>угору</b>: вершина з $(0; 0)$ переходить у $(3; 1)$. Сьогодні — правила таких перетворень.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="intro-scene" role="img" aria-label="Параболи y = x² і y = (x − 3)² + 1"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Паралельні перенесення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Зсув уздовж осі $y$</div>
+                        <p>Графік $y = f(x) + b$ — це графік $y = f(x)$, перенесений на $|b|$ одиниць <b>угору</b> при $b \gt 0$ і <b>вниз</b> при $b \lt 0$.</p>
+                        <p>Кожна точка $(x; y)$ переходить у $(x; y + b)$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Зсув уздовж осі $x$</div>
+                        <p>Графік $y = f(x - a)$ — це графік $y = f(x)$, перенесений на $|a|$ одиниць <b>праворуч</b> при $a \gt 0$ і <b>ліворуч</b> при $a \lt 0$.</p>
+                        <p>Кожна точка $(x; y)$ переходить у $(x + a; y)$.</p>
+                    </div>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Чому «мінус» — праворуч</div>
+                    <p>У $y = (x - 3)^2$ значення $0$ досягається при $x = 3$, а не при $x = 0$: усе, що в $y = x^2$ відбувалося при $x$, тепер відбувається при $x + 3$.</p>
+                    <p>$y = f(x - 3)$ «запізнюється» на $3$ — графік зсувається праворуч. $y = f(x + 3)$ — ліворуч.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Розтяг, стиск і симетрія</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Множник перед функцією</div>
+                    <p>$y = kf(x)$, $k \gt 0$: ординати всіх точок множаться на $k$ — <b>розтяг</b> від осі $x$ при $k \gt 1$, <b>стиск</b> до осі $x$ при $0 \lt k \lt 1$.</p>
+                    <p>$y = -f(x)$: <b>симетрія</b> відносно осі $x$, точка $(x; y)$ переходить у $(x; -y)$.</p>
+                    <p>Нулі функції при розтязі й симетрії не змінюються.</p>
+                </div>
+                <div>
+                    <table class="fn-table">
+                        <tr><th>Формула</th><th>Що робимо з графіком $y = f(x)$</th></tr>
+                        <tr><td>$f(x) + b$</td><td>угору на $b$ (вниз, якщо $b \lt 0$)</td></tr>
+                        <tr><td>$f(x - a)$</td><td>праворуч на $a$ (ліворуч, якщо $a \lt 0$)</td></tr>
+                        <tr><td>$kf(x)$, $k \gt 0$</td><td>розтяг/стиск від осі $x$ у $k$ разів</td></tr>
+                        <tr><td>$-f(x)$</td><td>симетрія відносно осі $x$</td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Керуємо графіком 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="modes">
+                        <button class="btn-secondary on" id="base-0" onclick="setBase(0)">$y = x^2$</button>
+                        <button class="btn-secondary" id="base-1" onclick="setBase(1)">$y = \sqrt{x}$</button>
+                        <button class="btn-secondary" id="base-2" onclick="setBase(2)">$y = \dfrac{1}{x}$</button>
+                    </div>
+                    <div class="slider-control"><label for="w-k">k</label><input type="range" id="w-k" min="-2" max="2" step="0.5" value="1" oninput="renderTr()"><span id="w-k-val">1</span></div>
+                    <div class="slider-control"><label for="w-a">a</label><input type="range" id="w-a" min="-4" max="4" step="1" value="0" oninput="renderTr()"><span id="w-a-val">0</span></div>
+                    <div class="slider-control"><label for="w-b">b</label><input type="range" id="w-b" min="-3" max="3" step="1" value="0" oninput="renderTr()"><span id="w-b-val">0</span></div>
+                    <p class="readout" id="tr-formula"></p>
+                    <p>Учні кажуть, куди переміститься графік (пунктир — початковий), — потім учитель відкриває.</p>
+                    <p class="center"><button class="btn-primary" onclick="revealTr()">Показати новий графік</button></p>
+                    <p class="readout" id="tr-text"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="tr-scene" role="img" aria-label="Початковий і перетворений графіки"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Будуємо $y = -2(x + 1)^2 + 3$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Порядок перетворень</div>
+                        <p>1) Розтяг/стиск: $kf(x)$. $\;$2) Симетрія, якщо $k \lt 0$. $\;$3) Зсув по $x$. $\;$4) Зсув по $y$.</p>
+                    </div>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="algo-scene" role="img" aria-label="Покрокове перетворення параболи"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Від графіка до формули і навпаки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Як побудувати графік $y = \sqrt{x - 2} - 1$?</p>
+                    <div class="step">Базовий графік — $y = \sqrt{x}$ з початком у $(0; 0)$.</div>
+                    <div class="step">$x - 2$: зсув праворуч на $2$; $\;-1$: зсув униз на $1$.</div>
+                    <div class="step">Графік починається в точці $(2; -1)$; область визначення $x \ge 2$, область значень $y \ge -1$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Параболу $y = x^2$ перенесли на $2$ одиниці ліворуч і на $4$ вниз. Запишіть формулу і знайдіть нулі.</p>
+                    <div class="step">Ліворуч на $2$: $(x + 2)^2$. Униз на $4$: $y = (x + 2)^2 - 4$.</div>
+                    <div class="step">Нулі: $(x + 2)^2 = 4$, $\;x + 2 = \pm 2$.</div>
+                    <div class="step">$x = 0$ або $x = -4$. Вершина $(-2; -4)$ — посередині між нулями ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Не той напрям по $x$</div>
+                        <p>$y = (x - 3)^2$ — зсув <b>праворуч</b> на $3$, а не ліворуч. Перевірка: нуль функції — $x = 3$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$f(x) + b$ і $f(x + b)$</div>
+                        <p>$x^2 + 2$ — угору на $2$; $(x + 2)^2$ — ліворуч на $2$. Дужки вирішують усе.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Розтяг змінює вершину?</div>
+                        <p>Ні: $y = 3x^2$ має ту саму вершину $(0; 0)$ — «вужча» парабола. Розтяг від осі $x$ не рухає точки на цій осі.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$-f(x)$ і $f(-x)$</div>
+                        <p>$-f(x)$ — симетрія відносно осі $x$. Для $\sqrt{x}$: $-\sqrt{x}$ — «вниз», а $\sqrt{-x}$ — дзеркально відносно осі $y$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Графік $y = x^2 + 3$ отримують з графіка $y = x^2$…</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) зсувом угору на $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) зсувом униз на $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) зсувом праворуч на $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) зсувом ліворуч на $3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$f(x) + 3$ — до кожної ординати додаємо $3$: зсув угору.</p>
+                            <p>Зсув по $x$ був би при записі $(x \pm 3)^2$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Укажіть координати вершини параболи $y = (x - 4)^2 - 2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $(4; -2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $(-4; -2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(4; 2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $(-4; 2)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$y = x^2$ зсунуто праворуч на $4$ і вниз на $2$: вершина $(0; 0) \to (4; -2)$.</p>
+                            <p>Б — помилка в напрямі зсуву по $x$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Графік функції $y = f(x)$ проходить через точку $(1; 5)$. Через яку точку обов'язково проходить графік $y = f(x + 2) - 3$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $(-1; 2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $(3; 2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $(-1; 8)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $(3; 8)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $(1; 2)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$f(x + 2)$ — ліворуч на $2$: $x = 1 - 2 = -1$; $\;-3$ — вниз: $y = 5 - 3 = 2$.</p>
+                            <p>Перевірка: $f(-1 + 2) - 3 = f(1) - 3 = 2$ ✓. Б — зсунули праворуч.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$f(x) + b$ — по осі $y$ на $b$; $\;f(x - a)$ — по осі $x$ на $a$ (мінус — праворуч).</p>
+                    <p>$kf(x)$ — розтяг у $k$ разів від осі $x$; $\;-f(x)$ — симетрія відносно осі $x$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>$y = k(x - a)^2 + b$: розтяг $k$ → (симетрія) → праворуч на $a$ → угору на $b$. Вершина $(a; b)$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>$(x - 3)^2$ — праворуч, $(x + 3)^2$ — ліворуч. Перевіряйте за нулем або вершиною.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 4) renderTr();
+                if (currentSlide === 5) { renderEval(); renderAlgo(); }
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Координатна площина: спільні перетворення координат ---
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y') {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 4}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) if (x !== 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${String(x).replace('-', '−').replace('.', ',')}</text>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) if (y !== 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${String(y).replace('-', '−').replace('.', ',')}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Гладка крива через точки екстремумів: між сусідніми точками s(t) = 3t² − 2t³
+            const smooth = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) { const t = (x - ax) / (bx - ax); return ay + (by - ay) * (3 * t * t - 2 * t * t * t); }
+                }
+                return NaN;
+            };
+            // Ламана через точки
+            const broken = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) return ay + (by - ay) * (x - ax) / (bx - ax);
+                }
+                return NaN;
+            };
+            // Крива, розфарбована за класом кожної точки (cls(x, y) → 'pos' / 'neg' / 'up' / …)
+            function curveSvg(P, f, a, b, cls = () => '') {
+                let svg = '', d = '', cur = null;
+                const N = 240;
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.05 || y > P.y1 + 0.05) { if (d) svg += `<path d="${d}" class="curve ${cur}"/>`; d = ''; continue; }
+                    const c = cls(x, y);
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    if (d && c !== cur) { svg += `<path d="${d} L${pt}" class="curve ${cur}"/>`; d = ''; }
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                    cur = c;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cur}"/>`;
+                return svg;
+            }
+            const num = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',').replace('-', '−');
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const P0 = plane(-6, 6, -5, 6);
+            const fmtN = (v) => String(v).replace('.', ',').replace('-', '−');
+            const dot = (P, x, y, label) => `<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="5" class="vertex"/>` + (label ? `<text x="${P.sx(x) + 8}" y="${P.sy(y) - 8}" class="vlabel">${label}</text>` : '');
+
+            // --- Слайд 1 ---
+            let introShown = false;
+            window.renderIntro = function () {
+                let svg = axesSvg(P0) + curveSvg(P0, (x) => x * x, -3, 3, () => 'ghost') + dot(P0, 0, 0, '(0; 0)');
+                if (introShown) svg += curveSvg(P0, (x) => (x - 3) * (x - 3) + 1, 0, 6, () => 'pos') + dot(P0, 3, 1, '(3; 1)');
+                document.getElementById('intro-scene').innerHTML = svg;
+            };
+            window.revealIntro = function () { introShown = true; renderIntro(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 4: базова функція і параметри k, a, b ---
+            const BASES = [
+                { f: (x) => x * x, tex: (u) => `${u}^2`, key: [0, 0], name: 'вершина' },
+                { f: (x) => (x >= 0 ? Math.sqrt(x) : NaN), tex: (u) => `\\sqrt{${u}}`, key: [0, 0], name: 'початок' },
+                { f: (x) => (Math.abs(x) > 1e-6 ? 1 / x : NaN), tex: (u) => `\\dfrac{1}{${u}}`, key: null, name: '' },
+            ];
+            let base = 0, trShown = false;
+            window.setBase = function (i) {
+                base = i;
+                [0, 1, 2].forEach(j => document.getElementById('base-' + j).classList.toggle('on', j === i));
+                renderTr();
+            };
+            function trVals() {
+                let k = parseFloat(document.getElementById('w-k').value);
+                if (k === 0) { k = 0.5; document.getElementById('w-k').value = 0.5; }
+                return [k, parseInt(document.getElementById('w-a').value, 10), parseInt(document.getElementById('w-b').value, 10)];
+            }
+            function trTex(k, a, b) {
+                const inner = a === 0 ? 'x' : a > 0 ? `x - ${a}` : `x + ${-a}`;
+                const B = BASES[base], core = B.tex(base === 0 && a !== 0 ? `(${inner})` : inner);
+                const kk = k === 1 ? '' : k === -1 ? '-' : `${fmtN(k)}`.replace('−', '-');
+                const bb = b === 0 ? '' : b > 0 ? ` + ${b}` : ` - ${-b}`;
+                return `y = ${kk}${core}${bb}`;
+            }
+            window.renderTr = function () {
+                const [k, a, b] = trVals();
+                document.getElementById('w-k-val').textContent = fmtN(k);
+                document.getElementById('w-a-val').textContent = fmtN(a);
+                document.getElementById('w-b-val').textContent = fmtN(b);
+                trShown = false;
+                const f = document.getElementById('tr-formula');
+                f.innerHTML = `$${trTex(k, a, b)}$`;
+                typeset(f);
+                document.getElementById('tr-text').innerHTML = '';
+                drawTr(k, a, b);
+            };
+            function drawTr(k, a, b) {
+                const B = BASES[base], g = (x) => k * B.f(x - a) + b;
+                let svg = axesSvg(P0) + curveSvg(P0, B.f, -6, 6, () => 'ghost');
+                if (base === 2) svg += curveSvg(P0, B.f, -6, -0.05, () => 'ghost').slice(0, 0);
+                if (trShown) {
+                    if (base === 2) svg += curveSvg(P0, g, -6, a - 0.02, () => 'pos') + curveSvg(P0, g, a + 0.02, 6, () => 'pos');
+                    else svg += curveSvg(P0, g, -6, 6, () => 'pos');
+                    if (B.key) svg += dot(P0, B.key[0] + a, k * B.key[1] + b, `(${fmtN(a)}; ${fmtN(b)})`);
+                }
+                document.getElementById('tr-scene').innerHTML = svg;
+            }
+            window.revealTr = function () {
+                const [k, a, b] = trVals(), out = document.getElementById('tr-text');
+                trShown = true; drawTr(k, a, b);
+                const parts = [];
+                if (Math.abs(k) !== 1) parts.push(Math.abs(k) > 1 ? `розтяг від осі $x$ у $${fmtN(Math.abs(k))}$ рази` : `стиск до осі $x$ у $${fmtN(1 / Math.abs(k))}$ рази`);
+                if (k < 0) parts.push('симетрія відносно осі $x$');
+                if (a) parts.push(`${a > 0 ? 'праворуч' : 'ліворуч'} на $${Math.abs(a)}$`);
+                if (b) parts.push(`${b > 0 ? 'угору' : 'вниз'} на $${Math.abs(b)}$`);
+                out.innerHTML = parts.length ? parts.join('; ') + '.' : 'Графік не змінився.';
+                if (BASES[base].key) out.innerHTML += ` ${BASES[base].name[0].toUpperCase() + BASES[base].name.slice(1)}: $(${a}; ${b})$.`;
+                if (base === 2) out.innerHTML += ` Асимптоти: $x = ${a}$, $y = ${b}$.`;
+                typeset(out);
+            };
+
+            // --- Слайд 5: покроково −2(x + 1)² + 3 ---
+            const ALGO = [
+                { f: (x) => x * x, v: [0, 0] },
+                { f: (x) => 2 * x * x, v: [0, 0] },
+                { f: (x) => -2 * x * x, v: [0, 0] },
+                { f: (x) => -2 * (x + 1) * (x + 1), v: [-1, 0] },
+                { f: (x) => -2 * (x + 1) * (x + 1) + 3, v: [-1, 3] },
+            ];
+            window.renderAlgo = function () {
+                const i = Math.min(shown - 1, ALGO.length - 1), prev = ALGO[Math.max(0, i - 1)], cur = ALGO[i];
+                document.getElementById('algo-scene').innerHTML = axesSvg(P0)
+                    + (i > 0 ? curveSvg(P0, prev.f, -6, 6, () => 'ghost') : '')
+                    + curveSvg(P0, cur.f, -6, 6, () => 'pos') + dot(P0, cur.v[0], cur.v[1], `(${fmtN(cur.v[0])}; ${fmtN(cur.v[1])})`);
+            };
+            const STEPS = [
+                ['Починаємо з $y = x^2$', 'Вершина $(0; 0)$'],
+                ['$y = 2x^2$ — [[розтяг у $2$ рази]] від осі $x$', 'Ординати множимо на $2$: парабола «вужча»'],
+                ['$y = -2x^2$ — [[симетрія]] відносно осі $x$', 'Гілки вниз'],
+                ['$y = -2(x + 1)^2$ — [[ліворуч на $1$]]', '$x + 1 = x - (-1)$, тож зсув на $-1$'],
+                ['$y = -2(x + 1)^2 + 3$ — [[угору на $3$]]. Вершина $(-1; 3)$', 'Найбільше значення функції — $3$'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+            const baseRender = window.renderEval;
+            window.renderEval = function () { baseRender(); renderAlgo(); };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
