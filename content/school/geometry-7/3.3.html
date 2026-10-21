@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Рівнобедрений трикутник і його властивості | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Геометричні креслення */
+        .geo-line { stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+        .geo-line.sec { stroke: var(--brand-blue); }
+        .geo-dot { fill: currentColor; }
+        .line-name { fill: currentColor; font-size: 18px; font-weight: 700; font-style: italic; text-anchor: middle; }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); }
+        .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; }
+        .angle-arc.r { fill: var(--warning-red); opacity: 0.45; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .angle-arc.none { fill: var(--border-color); opacity: 0.6; }
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        .center { text-align: center; }
+        .tri { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.1; }
+        .tri.g { fill: var(--brand-green); fill-opacity: 0.14; }
+        .roof { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-yellow); fill-opacity: 0.25; }
+        .wall { stroke: currentColor; stroke-width: 2.5; fill: var(--widget-bg); }
+        .v-name { fill: currentColor; font-size: 19px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .tick-mark { stroke: var(--brand-blue); stroke-width: 3; }
+        .hl { stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round; }
+        .bis { stroke: var(--brand-green); stroke-width: 2.6; stroke-dasharray: 8 5; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .svg-caption.ok { fill: var(--brand-green); }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        .slider-control span { font-weight: 800; min-width: 44px; text-align: right; }
+        @media (max-width: 760px) { .slider-control label { min-width: 0; flex: 0 0 38%; font-size: 0.9rem; } .slider-control input[type=range] { min-width: 0; } }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 1.6em; }
+        .readout .ok { color: var(--brand-green); }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; margin: 6px 0; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 800; }
+        .val-table td.eq { color: var(--brand-green); }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки кутів міряти? 🏠</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Фронтон даху — трикутник із двома рівними сторонами: обидва схили однакової довжини. Майстер виміряв кут між лівим схилом і стелею — $35^\circ$.</p>
+                    <p class="big-question">Чи треба міряти кут праворуч? Яким він буде?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealRoof()">Подивитися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Теж $35^\circ$ — міряти не треба</div>
+                        <p>Якщо дві сторони трикутника рівні, то рівні й кути, що лежать навпроти них. Сьогодні доведемо це за першою ознакою рівності трикутників.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="roof-scene" role="img" aria-label="Будинок з дахом у формі трикутника з рівними схилами; кут при лівому краї 35°"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Рівнобедрений трикутник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Трикутник, у якого дві сторони рівні, називають <b>рівнобедреним</b>. Рівні сторони — <b>бічні сторони</b>, третя — <b>основа</b>.</p>
+                        <p>Кути, прилеглі до основи, — <b>кути при основі</b>; кут між бічними сторонами — <b>кут при вершині</b>.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Рівносторонній трикутник</div>
+                        <p>Усі три сторони рівні. Це окремий випадок рівнобедреного: за основу можна взяти будь-яку сторону.</p>
+                        <p>Периметр рівнобедреного: $P = 2a + b$, де $a$ — бічна сторона, $b$ — основа.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="parts-scene" role="img" aria-label="Рівнобедрений трикутник ABC з основою AC: позначено бічні сторони, основу і кути"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія: кути при основі -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Кути при основі рівні</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема (властивість кутів при основі)</div>
+                        <p>У рівнобедреному трикутнику кути при основі рівні: якщо $AB = BC$, то $\angle A = \angle C$.</p>
+                    </div>
+                    <div class="box example" id="proof-1">
+                        <div class="box-title">Доведення</div>
+                        <div class="step">1) Проведемо бісектрису $BD$ кута $B$; точка $D$ лежить на основі $AC$.</div>
+                        <div class="step">2) У $\triangle ABD$ і $\triangle CBD$: $AB = CB$ (за умовою), $\angle ABD = \angle CBD$ ($BD$ — бісектриса), $BD$ — спільна сторона.</div>
+                        <div class="step">3) Отже, $\triangle ABD = \triangle CBD$ за першою ознакою. Відповідні кути рівні: $\angle A = \angle C$. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('proof-1')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="proof-scene" role="img" aria-label="Трикутник ABC з бісектрисою BD, що ділить його на два рівні трикутники"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Теорія: бісектриса і ознака -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Бісектриса до основи. Ознака рівнобедреного</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивість бісектриси</div>
+                        <p>Бісектриса кута при вершині рівнобедреного трикутника <b>ділить основу навпіл</b> і <b>перпендикулярна до неї</b>.</p>
+                        <p>З $\triangle ABD = \triangle CBD$: $AD = DC$ і $\angle ADB = \angle CDB$. Ці кути суміжні, тож кожен — $90^\circ$: $BD \perp AC$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Ознака рівнобедреного трикутника</div>
+                        <p>Якщо в трикутнику два кути рівні, то він рівнобедрений: $\angle A = \angle C \Rightarrow AB = CB$.</p>
+                        <p><i>Ідея:</i> $\triangle ABC = \triangle CBA$ за другою ознакою ($AC = CA$, $\angle A = \angle C$, $\angle C = \angle A$), тому $AB = CB$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="bis-scene" role="img" aria-label="Бісектриса BD ділить основу AC навпіл і перпендикулярна до неї"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Дослідження -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Коли кути при основі рівні? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Основа $AC$ — $6$ см. Рухаємо вершину $B$. Перед кліком учні передбачають: де має стояти $B$, щоб $AB = BC$? Що тоді з кутами?</p>
+                    <div class="slider-control"><label for="w-x">$B$ ліворуч / праворуч</label><input type="range" id="w-x" min="0.5" max="5.5" step="0.25" value="2" oninput="renderLab()"><span id="w-x-val"></span></div>
+                    <div class="slider-control"><label for="w-h">Висота вершини $B$</label><input type="range" id="w-h" min="1.5" max="4.5" step="0.25" value="3.5" oninput="renderLab()"><span id="w-h-val"></span></div>
+                    <table class="val-table">
+                        <tr><th>$AB$</th><th>$BC$</th><th>$\angle A$</th><th>$\angle C$</th></tr>
+                        <tr><td id="lab-ab"></td><td id="lab-bc"></td><td id="lab-a"></td><td id="lab-c"></td></tr>
+                    </table>
+                    <p class="center"><button class="btn-primary" onclick="centerApex()">Поставити $B$ над серединою $AC$</button></p>
+                    <p class="readout center" id="lab-note"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 270" id="lab-scene" role="img" aria-label="Трикутник ABC з рухомою вершиною B"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Периметр рівнобедреного трикутника — $32$ см, основа на $4$ см менша за бічну сторону. Знайдіть сторони трикутника.</p>
+                    <div class="step">Бічна сторона — $x$ см, основа — $(x - 4)$ см.</div>
+                    <div class="step">$P = x + x + (x - 4) = 32$, $3x = 36$, $x = 12$.</div>
+                    <div class="step">Сторони: $12$ см, $12$ см, $8$ см. Перевірка: $12 + 12 + 8 = 32$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> У $\triangle ABC$ кути, суміжні з кутами $A$ і $C$, дорівнюють по $120^\circ$; $AB = 7$ см, $AC = 5$ см. Знайдіть периметр.</p>
+                    <div class="step">$\angle A = 180^\circ - 120^\circ = 60^\circ$, так само $\angle C = 60^\circ$.</div>
+                    <div class="step">$\angle A = \angle C$ — за ознакою трикутник рівнобедрений з основою $AC$: $BC = AB = 7$ см.</div>
+                    <div class="step">$P = 7 + 7 + 5 = 19$ см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Не ті кути</div>
+                        <p>Якщо $AB = BC$, то рівні $\angle A$ і $\angle C$ — кути <b>навпроти</b> рівних сторін, а не $\angle A$ і $\angle B$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Основа — не обов'язково «знизу»</div>
+                        <p>Основа — сторона між двома рівними кутами, як би не був повернутий трикутник. Шукайте її за рівними сторонами.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Два випадки</div>
+                        <p>«Сторони рівнобедреного трикутника — $5$ см і $7$ см». Бічною може бути і $5$, і $7$: $P = 17$ см або $P = 19$ см.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Будь-яка бісектриса?</div>
+                        <p>Ділить основу навпіл лише бісектриса кута <b>при вершині</b>. Бісектриса кута при основі протилежну сторону навпіл, як правило, не ділить.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">У рівнобедреному $\triangle ABC$ з основою $AC$ кут $A$ дорівнює $65^\circ$. Знайдіть кут $C$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $50^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $115^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">В) $65^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $130^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\angle A$ і $\angle C$ — кути при основі, вони рівні: $\angle C = 65^\circ$. Б — це кут, суміжний з $\angle A$; Г — подвоєний кут $A$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Периметр рівнобедреного трикутника — $30$ см, бічна сторона — $11$ см. Знайдіть основу.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $9{,}5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $8$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $19$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $10$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Бічних сторін дві: $30 - 2 \cdot 11 = 8$ см.</p>
+                            <p>А — прийняли $11$ см за основу; В — відняли лише одну бічну сторону; Г — поділили периметр на $3$, ніби трикутник рівносторонній.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Дві сторони рівнобедреного трикутника — $5$ см і $7$ см. Яким може бути його периметр?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) лише $17$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) лише $19$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $17$ см або $19$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $12$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $24$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Бічні по $5$: $5 + 5 + 7 = 17$ см. Бічні по $7$: $7 + 7 + 5 = 19$ см. Обидва трикутники існують.</p>
+                            <p>А і Б — розглянули лише один випадок; Г — додали лише дві сторони; Д — $5 + 7 + 5 + 7$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$AB = BC$ $\Leftrightarrow$ $\angle A = \angle C$: рівні сторони — рівні кути навпроти них, і навпаки.</p>
+                    <p>Бісектриса кута при вершині ділить основу навпіл і перпендикулярна до неї.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>Знайти рівні сторони → визначити основу → рівні кути при основі. Периметр: $P = 2a + b$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Не сказано, яка сторона бічна, — розглядайте обидва випадки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderRoof();
+                if (currentSlide === 2) renderParts();
+                if (currentSlide === 3) renderProof();
+                if (currentSlide === 4) renderBis();
+                if (currentSlide === 5) renderLab();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const f1 = (v) => v.toFixed(1), mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            const txt = (p, s, cls = 'svg-caption') => `<text x="${f1(p[0])}" y="${f1(p[1])}" class="${cls}">${s}</text>`;
+            function vName(p, c, name) {
+                const dx = p[0] - c[0], dy = p[1] - c[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * 18)}" y="${f1(p[1] + dy / L * 18 + 6)}" class="v-name">${name}</text>`;
+            }
+            // Сектор кута при вершині V між напрямками на P і Q (менший з кутів)
+            function angleArc(V, P, Q, r, cls) {
+                const a1 = Math.atan2(P[1] - V[1], P[0] - V[0]), a2 = Math.atan2(Q[1] - V[1], Q[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            // n рисок посередині відрізка pq
+            function ticks(p, q, n) {
+                const m = mid(p, q), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+                let s = '';
+                for (let k = 0; k < n; k++) {
+                    const o = (k - (n - 1) / 2) * 6, c = [m[0] + ux * o, m[1] + uy * o];
+                    s += seg([c[0] - uy * 7, c[1] + ux * 7], [c[0] + uy * 7, c[1] - ux * 7], 'tick-mark');
+                }
+                return s;
+            }
+            const names = (P, N) => { const c = [(P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3]; return P.map((p, k) => vName(p, c, N[k])).join(''); };
+            // Стандартний рівнобедрений трикутник: A, B (вершина), C
+            const ISO = [[80, 220], [210, 50], [340, 220]];
+
+            // --- Слайд 1: дах ---
+            let roofShown = false;
+            window.renderRoof = function () {
+                const L = [60, 130], R = [360, 130], T = [210, 25];
+                let s = `<rect x="90" y="130" width="240" height="110" class="wall"/><rect x="185" y="175" width="50" height="65" class="wall"/>`;
+                s += angleArc(L, R, T, 46, 'g') + angleArc(R, L, T, 46, roofShown ? 'g' : 'none') + poly([L, T, R], 'roof');
+                s += ticks(L, T, 1) + ticks(R, T, 1);
+                s += txt([128, 122], '35°') + txt([292, 122], roofShown ? '35°' : '?');
+                if (roofShown) s += txt([210, 258], 'рівні схили → рівні кути', 'svg-caption ok');
+                document.getElementById('roof-scene').innerHTML = s;
+            };
+            window.revealRoof = function () { roofShown = true; renderRoof(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: елементи ---
+            window.renderParts = function () {
+                const [A, B, C] = ISO;
+                let s = angleArc(A, C, B, 34, 'g') + angleArc(C, A, B, 34, 'g') + angleArc(B, A, C, 30, 'b') + poly(ISO, 'tri');
+                s += ticks(A, B, 1) + ticks(B, C, 1) + seg(A, C, 'hl') + names(ISO, ['A', 'B', 'C']);
+                s += txt([108, 128], 'бічна') + txt([312, 128], 'бічна') + txt([210, 248], 'основа AC');
+                s += txt([300, 52], 'кут при вершині') + txt([210, 200], 'кути при основі');
+                document.getElementById('parts-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: доведення ---
+            window.renderProof = function () {
+                const [A, B, C] = ISO, D = mid(A, C);
+                let s = angleArc(B, A, D, 40, 'b') + angleArc(B, C, D, 46, 'b') + angleArc(A, C, B, 32, 'g') + angleArc(C, A, B, 32, 'g');
+                s += poly([A, B, D], 'tri') + poly([C, B, D], 'tri g') + seg(B, D, 'bis') + ticks(A, B, 1) + ticks(B, C, 1);
+                s += names(ISO, ['A', 'B', 'C']) + `<text x="${D[0]}" y="${D[1] + 26}" class="v-name">D</text>` + dot(D);
+                document.getElementById('proof-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: бісектриса ---
+            window.renderBis = function () {
+                const [A, B, C] = ISO, D = mid(A, C);
+                let s = angleArc(B, A, D, 40, 'b') + angleArc(B, C, D, 46, 'b') + poly(ISO, 'tri') + seg(B, D, 'bis');
+                s += ticks(A, B, 1) + ticks(B, C, 1) + ticks(A, D, 2) + ticks(D, C, 2);
+                s += `<path d="M${D[0] + 14} ${D[1]} V${D[1] - 14} H${D[0]}" class="right-mark"/>`;
+                s += names(ISO, ['A', 'B', 'C']) + `<text x="${D[0]}" y="${D[1] + 26}" class="v-name">D</text>` + dot(D);
+                s += txt([120, 262], 'AD = DC') + txt([300, 262], 'BD ⊥ AC');
+                document.getElementById('bis-scene').innerHTML = s;
+            };
+
+            // --- Слайд 5: рухома вершина ---
+            const U = 45, X0 = 75, Y0 = 230;   // 1 см = 45 одиниць рисунка; A(0; 0), C(6; 0)
+            const toSvg = ([x, y]) => [X0 + x * U, Y0 - y * U];
+            const num = (v, d = 1) => v.toFixed(d).replace('.', ',');
+            window.renderLab = function () {
+                const x = parseFloat(document.getElementById('w-x').value), h = parseFloat(document.getElementById('w-h').value);
+                document.getElementById('w-x-val').textContent = num(x, 2);
+                document.getElementById('w-h-val').textContent = num(h, 2);
+                const ab = Math.hypot(x, h), bc = Math.hypot(6 - x, h);
+                const angA = Math.atan2(h, x) * 180 / Math.PI, angC = Math.atan2(h, 6 - x) * 180 / Math.PI;
+                const iso = Math.abs(x - 3) < 1e-9;
+                document.getElementById('lab-ab').textContent = num(ab) + ' см';
+                document.getElementById('lab-bc').textContent = num(bc) + ' см';
+                document.getElementById('lab-a').textContent = Math.round(angA) + '°';
+                document.getElementById('lab-c').textContent = Math.round(angC) + '°';
+                ['lab-ab', 'lab-bc', 'lab-a', 'lab-c'].forEach(id => document.getElementById(id).classList.toggle('eq', iso));
+                document.getElementById('lab-note').innerHTML = iso ? '<span class="ok">$AB = BC$ і $\\angle A = \\angle C$ — трикутник рівнобедрений ✓</span>' : 'Сторони $AB$ і $BC$ різні — і кути $A$ і $C$ різні';
+                typeset(document.getElementById('lab-note'));
+                const P = [[0, 0], [x, h], [6, 0]].map(toSvg);
+                let s = angleArc(P[0], P[2], P[1], 34, iso ? 'g' : '') + angleArc(P[2], P[0], P[1], 34, iso ? 'g' : 'b') + poly(P, iso ? 'tri g' : 'tri');
+                if (iso) s += ticks(P[0], P[1], 1) + ticks(P[1], P[2], 1);
+                s += names(P, ['A', 'B', 'C']) + txt([X0 + 3 * U, Y0 + 30], 'AC = 6 см');
+                document.getElementById('lab-scene').innerHTML = s;
+            };
+            window.centerApex = function () { document.getElementById('w-x').value = 3; renderLab(); };
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

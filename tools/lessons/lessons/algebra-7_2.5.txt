@@ -1,0 +1,391 @@
+@@TITLE Множення одночлена на многочлен
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 22px; font-style: italic; font-size: 1.2rem; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; font-size: 1.2rem; }
+        .readout { font-size: 1.15rem; font-weight: 700; min-height: 1.7em; text-align: center; }
+        .readout .ok { color: var(--brand-green); }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 10px 0; overflow-x: auto; overflow-y: hidden; }
+
+        /* Прямокутники-площі */
+        svg.fig { width: 100%; max-height: 260px; color: var(--text-dark); }
+        .part { stroke: currentColor; stroke-width: 2; }
+        .part.p1 { fill: var(--brand-blue); fill-opacity: 0.3; }
+        .part.p2 { fill: var(--brand-green); fill-opacity: 0.3; }
+        .part.p3 { fill: var(--brand-yellow); fill-opacity: 0.35; }
+        .side { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; font-style: italic; }
+        .area { fill: currentColor; font-size: 19px; font-weight: 800; text-anchor: middle; }
+        .area.q { fill: var(--text-muted); }
+
+        /* Таблиці */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Площа городу 🥕</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Прямокутний город має ширину $3a$ м. Уздовж нього — три грядки завдовжки $a$ м, $2b$ м і $4$ м.</p>
+                    <p class="big-question">Як записати площу городу без дужок?</p>
+                    <p class="center"><button class="btn-primary" onclick="revealGarden()">Порахувати площу</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Два способи — одна площа</div>
+                        <p class="big-formula">$3a(a + 2b + 4) = 3a^2 + 6ab + 12a$</p>
+                        <p>Ліворуч — уся довжина на ширину, праворуч — сума площ грядок. Сьогодні: як <b>множити одночлен на многочлен</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <svg class="fig" viewBox="0 0 420 240" id="garden-scene" role="img" aria-label="Прямокутник шириною 3a, поділений на частини завдовжки a, 2b і 4"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Правило множення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Правило</div>
+                        <p>Щоб помножити <b>одночлен на многочлен</b>, треба помножити одночлен на <b>кожен член</b> многочлена й отримані добутки додати:</p>
+                        <p class="big-formula">$a(b + c - d) = ab + ac - ad$</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Нагадування: добуток одночленів</div>
+                        <p>Коефіцієнти перемножуємо, показники степенів з однаковою основою додаємо: $2x^2 \cdot 3x = 6x^3$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні множать, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Добуток</th><th>Многочлен</th></tr>
+                        <tr><th>$3(x + 4)$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3x + 12$</span><span class="q">?</span></td></tr>
+                        <tr><th>$x(x - 7)$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$x^2 - 7x$</span><span class="q">?</span></td></tr>
+                        <tr><th>$-2a(a^2 - 3)$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$-2a^3 + 6a$</span><span class="q">?</span></td></tr>
+                        <tr><th>$4xy(x - 2y + 1)$</th>
+                            <td class="cell" onclick="showCell(this)"><span class="hidden-answer">$4x^2y - 8xy^2 + 4xy$</span><span class="q">?</span></td></tr>
+                    </table>
+                    <p class="eval-note">Множник з мінусом змінює знаки всіх членів: $-2a \cdot (-3) = +6a$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Чому правило працює</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Розподільна властивість</div>
+                        <p>$a(b + c) = ab + ac$ — відома з 5–6 класів. Для трьох доданків застосуємо її двічі:</p>
+                        <p>$a(b + c + d) = a\bigl((b + c) + d\bigr)$</p>
+                        <p>$= a(b + c) + ad = ab + ac + ad$.</p>
+                        <p>Так само — для будь-якої кількості членів.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Результат — многочлен</div>
+                        <p>Добуток одночлена на многочлен завжди можна записати многочленом стандартного вигляду. Це перетворення називають <b>розкриттям дужок</b>.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box example">
+                        <div class="box-title">Приклад</div>
+                        <p>$2x(3x^2 - x + 5)$</p>
+                        <p>$= 2x \cdot 3x^2 + 2x \cdot (-x) + 2x \cdot 5$</p>
+                        <p>$= 6x^3 - 2x^2 + 10x$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Множник праворуч</div>
+                        <p>$(a - 3b) \cdot (-5a) = -5a^2 + 15ab$ — від перестановки множників добуток не змінюється.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Площа як добуток 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Прямокутник: ширина $kx$, довжина $mx + n$. Учні записують площу без дужок, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-k">k</label><input type="range" id="w-k" min="1" max="4" step="1" value="2" oninput="renderArea()"><span id="w-k-val"></span></div>
+                    <div class="slider-control"><label for="w-m">m</label><input type="range" id="w-m" min="1" max="3" step="1" value="3" oninput="renderArea()"><span id="w-m-val"></span></div>
+                    <div class="slider-control"><label for="w-n">n</label><input type="range" id="w-n" min="1" max="6" step="1" value="5" oninput="renderArea()"><span id="w-n-val"></span></div>
+                    <p class="readout" id="area-task"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealArea()">Перевірити</button></p>
+                    <p class="readout" id="area-result"></p>
+                </div>
+                <div class="math-widget">
+                    <svg class="fig" viewBox="0 0 420 260" id="area-scene" role="img" aria-label="Прямокутник kx на mx + n, поділений на дві частини"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Множимо крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Помножити одночлен на кожен член многочлена, враховуючи знак члена.</p>
+                    <p>2) Кожен добуток записати в стандартному вигляді: коефіцієнти перемножити, показники додати.</p>
+                    <p>3) Звести подібні члени, якщо вони є.</p>
+                    <p>4) Перевірити кількість членів: скільки членів у дужках — стільки добутків.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>Перетворимо:</b> $-3a^2(2a^3 - ab + 4)$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Спрощуємо й розв'язуємо рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Спростіть вираз $2x(x - 3) - x(2x + 5)$.</p>
+                    <div class="step">Розкриваємо дужки: $2x^2 - 6x - (2x^2 + 5x)$.</div>
+                    <div class="step">Мінус перед дужками: $2x^2 - 6x - 2x^2 - 5x$.</div>
+                    <div class="step">Зводимо подібні: $-11x$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Розв'яжіть рівняння $x(x + 4) - x(x - 2) = 18$.</p>
+                    <div class="step">Розкриваємо дужки: $x^2 + 4x - x^2 + 2x = 18$.</div>
+                    <div class="step">$x^2$ знищуються: $6x = 18$ — лінійне рівняння.</div>
+                    <div class="step">$x = 3$. Перевірка: $3 \cdot 7 - 3 \cdot 1 = 18$ ✓.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Помножили не всі члени</div>
+                        <p>$3(x + 5) \ne 3x + 5$. Множимо <b>кожен</b> член: $3x + 15$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Загубили знак</div>
+                        <p>$-2x(x - 4) \ne -2x^2 - 8x$. Мінус на мінус: $-2x \cdot (-4) = +8x$, тож $-2x^2 + 8x$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Перемножили показники</div>
+                        <p>$x^2 \cdot x^3 = x^5$, а не $x^6$: показники <b>додаємо</b>. $x^2(x^3 - 1) = x^5 - x^2$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Мінус перед добутком</div>
+                        <p>$5x - 2(x - 3) \ne 5x - 2x - 6$. Множимо на $-2$: $5x - 2x + 6 = 3x + 6$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Перетворіть на многочлен: $4x(x - 3)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $4x^2 - 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $4x^2 - 12x$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $4x^2 - 12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $4x^2 + 12x$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$4x \cdot x = 4x^2$, $4x \cdot (-3) = -12x$. А — помножили лише перший член; В — загубили $x$; Г — загубили знак.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть: $3a(a - 2) - a(3a + 1)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $-5a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $-7a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $6a^2 - 7a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $-6a + 1$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$3a^2 - 6a - 3a^2 - a = -7a$.</p>
+                            <p>А — після мінуса не змінили знак у $a$; В — не змінили знак у $3a^2$; Г — не помножили $1$ на $a$ і не змінили знак.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння $2x(x - 3) - 2x^2 + x = 15$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $-\dfrac{15}{7}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $18$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) коренів немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2x^2 - 6x - 2x^2 + x = 15$, $-5x = 15$, $x = -3$.</p>
+                            <p>Б — загубили знак; В — $-6x - x$ замість $-6x + x$; Г — помножили на $2x$ лише перший член: вийшло $2x^2 - 3$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p class="big-formula">$a(b + c - d) = ab + ac - ad$</p>
+                    <p>Одночлен множимо на <b>кожен</b> член многочлена — це розподільна властивість множення.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Помножити на кожен член зі знаком → записати добутки в стандартному вигляді → звести подібні.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Множник з мінусом змінює знаки <b>всіх</b> членів: $-2x(x - 4) = -2x^2 + 8x$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderGarden();
+                if (currentSlide === 4) renderArea();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+
+            // --- Слайд 1: город 3a × (a + 2b + 4) ---
+            let gardenShown = false;
+            window.renderGarden = function () {
+                const x0 = 50, y0 = 40, h = 150, ws = [100, 150, 90], labels = ['a', '2b', '4'], areas = ['3a²', '6ab', '12a'];
+                let s = '', x = x0;
+                ws.forEach((w, i) => {
+                    s += `<rect x="${x}" y="${y0}" width="${w}" height="${h}" class="part p${i + 1}"/>`
+                        + `<text x="${x + w / 2}" y="${y0 - 10}" class="side">${labels[i]}</text>`
+                        + `<text x="${x + w / 2}" y="${y0 + h / 2 + 7}" class="area${gardenShown ? '' : ' q'}">${gardenShown ? areas[i] : '?'}</text>`;
+                    x += w;
+                });
+                s += `<text x="${x0 - 22}" y="${y0 + h / 2 + 6}" class="side">3a</text>`;
+                s += `<text x="${x0 + 170}" y="${y0 + h + 32}" class="area${gardenShown ? '' : ' q'}">${gardenShown ? 'S = 3a² + 6ab + 12a' : 'S = ?'}</text>`;
+                document.getElementById('garden-scene').innerHTML = s;
+            };
+            window.revealGarden = function () { gardenShown = true; renderGarden(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: клік по «?» відкриває відповідь ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) v.classList.add('shown');
+            };
+
+            // --- Слайд 4: kx(mx + n) ---
+            const coef = (c, v) => (c === 1 ? '' : c) + v;   // 1x → x
+            function areaVals() { return ['w-k', 'w-m', 'w-n'].map(id => parseInt(document.getElementById(id).value, 10)); }
+            let areaShown = false;
+            function drawArea() {
+                const [k, m, n] = areaVals(), X = 55, U = 11, x0 = 40, y0 = 40;
+                const w1 = m * X, w2 = n * U * 2, h = k * 40;      // схематично: x ≈ 55 px, 1 ≈ 22 px по довжині
+                let s = `<rect x="${x0}" y="${y0}" width="${w1}" height="${h}" class="part p1"/><rect x="${x0 + w1}" y="${y0}" width="${w2}" height="${h}" class="part p2"/>`;
+                s += `<text x="${x0 + w1 / 2}" y="${y0 - 10}" class="side">${coef(m, 'x')}</text><text x="${x0 + w1 + w2 / 2}" y="${y0 - 10}" class="side">${n}</text>`;
+                s += `<text x="${x0 - 8}" y="${y0 + h / 2 + 6}" class="side" style="text-anchor:end">${coef(k, 'x')}</text>`;
+                s += `<text x="${x0 + w1 / 2}" y="${y0 + h / 2 + 7}" class="area${areaShown ? '' : ' q'}">${areaShown ? coef(k * m, 'x²') : '?'}</text>`;
+                s += `<text x="${x0 + w1 + w2 / 2}" y="${y0 + h / 2 + 7}" class="area${areaShown ? '' : ' q'}">${areaShown ? k * n + 'x' : '?'}</text>`;
+                document.getElementById('area-scene').innerHTML = s;
+            }
+            window.renderArea = function () {
+                const [k, m, n] = areaVals();
+                document.getElementById('w-k-val').textContent = k;
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-n-val').textContent = n;
+                areaShown = false;
+                const t = document.getElementById('area-task');
+                t.innerHTML = `$S = ${coef(k, 'x')}(${coef(m, 'x')} + ${n}) = \\,?$`;
+                document.getElementById('area-result').innerHTML = '';
+                typeset(t);
+                drawArea();
+            };
+            window.revealArea = function () {
+                const [k, m, n] = areaVals(), r = document.getElementById('area-result');
+                areaShown = true; drawArea();
+                r.innerHTML = `$${coef(k, 'x')} \\cdot ${coef(m, 'x')} + ${coef(k, 'x')} \\cdot ${n} = $ <span class="ok">$${coef(k * m, 'x^2')} + ${k * n}x$</span>`;
+                typeset(r);
+            };
+
+            // --- Слайд 5: −3a²(2a³ − ab + 4) ---
+            const STEPS = [
+                ['$= -3a^2 \\cdot 2a^3 + (-3a^2) \\cdot (-ab) + (-3a^2) \\cdot 4$', 'Крок 1: множимо на кожен з трьох членів, разом зі знаком'],
+                ['$= $ [[$-6a^5$]] $+ 3a^2 \\cdot ab - 12a^2$', 'Крок 2: $-3 \\cdot 2 = -6$, $a^2 \\cdot a^3 = a^5$ — показники додаємо'],
+                ['$= -6a^5 + $ [[$3a^3b$]] $- 12a^2$', 'Мінус на мінус — плюс: $(-3a^2) \\cdot (-ab) = 3a^3b$'],
+                ['Відповідь: $-6a^5 + 3a^3b - 12a^2$ — три члени ✓', 'Крок 4: у дужках три члени — і в результаті три добутки, подібних немає'],
+            ];
+@@INCLUDE steps.js

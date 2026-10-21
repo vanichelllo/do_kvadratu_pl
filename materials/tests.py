@@ -2924,6 +2924,22 @@ class LearningSituationsTests(BaseTestCase):
         self.assertEqual({a.user for a in PracticeAttempt.objects.all()}, {self.pupil, other_user})
         self.assertEqual(PracticeRun.objects.filter(finished_at=None).count(), 0)
 
+    def test_group_page_checks_answer_for_the_current_pupil(self):
+        """Адреса перевірки в JS — без «&amp;»: інакше сервер не бачить учня групи (409) і сторінка лише перезавантажується."""
+        other = TutorStudentRequest.objects.create(user=self.make_user('p6@example.com'), real_name='Марко',
+                                                   course='grade_5', status='approved')
+        self.bank(self.topic)
+        self.client.force_login(self.teacher)
+        query = f'?g={self.request.id}&g={other.id}&student={other.id}'
+        page = self.client.get(f'/practice/{self.lesson.id}/{query}')
+        url = json.loads('"%s"' % re.search(r"fetch\('([^']*)'", page.content.decode()).group(1))
+        self.assertEqual(url, f'/practice/{self.lesson.id}/check/{query}')
+        q = page.context['question']
+        response = self.client.post(url, json.dumps({'question_id': q.id, 'answer': str(q.options.get(is_correct=True).id)}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['correct'])
+
     def test_review_task_on_top_step_does_not_hide_a_criterion(self):
         """Повторення на третій сходинці — легке завдання: критерій з нього не вважається «пройденим» на вершині."""
         self.bank(self.topic)

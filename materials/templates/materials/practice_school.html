@@ -666,7 +666,7 @@
             button.disabled = true;
             let data;
             try {
-                const res = await fetch('{{ check_url }}', {
+                const res = await fetch('{{ check_url|escapejs }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({ question_id: card.dataset.qid, answer: answer,
@@ -730,6 +730,9 @@
 
         if (kind) {
             kind.render();
+            // Підказка «Спершу дай відповідь…» стосується попередньої спроби — прибираємо її, щойно відповідь змінюють
+            const clearMsg = () => { document.getElementById('form-msg').textContent = ''; };
+            ['click', 'input'].forEach(ev => widget.addEventListener(ev, clearMsg));
             document.getElementById('btn-check').addEventListener('click', checkAnswer);
             typeset(card);
         }

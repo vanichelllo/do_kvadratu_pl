@@ -1,0 +1,359 @@
+@@TITLE Знаходження числа за його дробом
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        /* Смужки й бочка */
+        .cell.empty { fill: var(--card-bg); }
+        .cell.blue { fill: var(--brand-blue); fill-opacity: 0.5; }
+        .cell.green { fill: var(--brand-green); fill-opacity: 0.5; }
+        .cell.yellow { fill: var(--brand-yellow); fill-opacity: 0.55; }
+        .cell.pop { animation: grow 0.9s ease both; transform-box: fill-box; transform-origin: bottom; }
+        @keyframes grow { from { transform: scaleY(0); } to { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .cell.pop { animation: none; } }
+        .cut-new { stroke: currentColor; stroke-width: 1.4; stroke-dasharray: 4 3; }
+        .frame { fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .brace { fill: none; stroke: currentColor; stroke-width: 2; }
+        .brace.ok { stroke: var(--brand-green); }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .piece-num { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .slider-control label { font-weight: 800; min-width: 215px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 2.6em; color: var(--brand-green); }
+        .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
+        .vs-row > div { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px; }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } .slider-control label { min-width: 120px; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки води в повній бочці? 🛢️</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Бочка для поливу заповнена на $\dfrac{2}{3}$. Там $40$ літрів води.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> То в повній бочці $40 \cdot \dfrac{2}{3}$? Ні, тоді вийде менше за $40$…</div>
+                    <p class="big-question">Скільки літрів уміщує вся бочка?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealBarrel()">Дізнатися відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$60$ літрів! 🎉</div>
+                        <p>Дві третини — це $40$ л, тож одна третина — $40 : 2 = 20$ л. Уся бочка — три третини: $20 \cdot 3 = 60$ л.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="barrel-scene" role="img" aria-label="Бочка поділена на три рівні частини, дві нижні заповнені водою — 40 літрів"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Відновлюємо ціле за частиною 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Знаємо, скільки становлять кілька частин. Учні шукають одну частину, а потім усе число — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-n">На скільки частин ціле</label><input type="range" id="w-n" min="2" max="8" step="1" value="5" oninput="renderWhole()"><span id="w-n-val">5</span></div>
+                    <div class="slider-control"><label for="w-m">Скільки частин відомо</label><input type="range" id="w-m" min="1" max="7" step="1" value="3" oninput="renderWhole()"><span id="w-m-val">3</span></div>
+                    <div class="slider-control"><label for="w-k">Відоме число</label><input type="range" id="w-k" min="1" max="9" step="1" value="4" oninput="renderWhole()"><span id="w-k-val">12</span></div>
+                    <p class="readout" id="whole-q"></p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealWhole()">Яке все число?</button></p>
+                    <div class="hidden-answer" id="whole-answer"><div class="readout" id="whole-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 220" id="whole-scene" role="img" aria-label="Смужка-ціле: відома частина зафарбована, над нею — відоме число"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Як знайти число за його дробом</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Щоб знайти число за його дробом, треба <b>поділити відоме значення на цей дріб</b>:</p>
+                    <p style="text-align:center;font-size:1.25rem">$\dfrac{m}{n}$ числа $= a$ &nbsp;⟹&nbsp; число $= a : \dfrac{m}{n}$</p>
+                    <p>Бочка: $40 : \dfrac{2}{3} = 40 \cdot \dfrac{3}{2} = 60$ л.</p>
+                    <p>«По частинках» — те саме: $40 : 2 \cdot 3 = 60$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Множити чи ділити? 🤔</div>
+                    <div class="vs-row">
+                        <div><b>Відоме все число</b><br>шукаємо частину<br>$N \cdot \dfrac{m}{n}$</div>
+                        <div><b>Відома частина</b><br>шукаємо все число<br>$a : \dfrac{m}{n}$</div>
+                    </div>
+                    <p>Значення може бути й дробом: $\dfrac{2}{3}$ числа $= \dfrac{4}{9}$, тоді число $= \dfrac{4}{9} : \dfrac{2}{3} = \dfrac{2}{3}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Скільки ще йти? ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1. За перший день туристи пройшли $12$ км — це $\dfrac{3}{5}$ маршруту. Скільки кілометрів їм залишилося?</p>
+                    <p>2. $\dfrac{3}{4}$ числа дорівнюють $1\dfrac{1}{2}$. Знайди число.</p>
+                    <p>Підказка: відома частина — отже, ділимо на дріб.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Якій частині відповідає число? ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Оля витратила $\dfrac{3}{5}$ своїх грошей, і в неї <b>залишилося</b> $80$ грн. Скільки грошей було?</p>
+                        <p>Не $80 : \dfrac{3}{5}$! $80$ грн — це залишок: $1 - \dfrac{3}{5} = \dfrac{2}{5}$ грошей. Тоді $80 : \dfrac{2}{5} = 80 \cdot \dfrac{5}{2} = 200$ грн.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Перевір: $\dfrac{3}{5}$ від $200$ — це $120$ грн, $200 - 120 = 80$ ✓.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 220" id="trap-scene" role="img" aria-label="Смужка грошей на 5 частин: 3 витратила, 2 залишилося — 80 гривень"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. $\dfrac{3}{4}$ числа дорівнюють $18$. Знайди число.</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $13\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $24$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $6$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Число має бути більше за $18$ — це ж лише його частина.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$18 : \dfrac{3}{4} = 18 \cdot \dfrac{4}{3} = 24$. А — помножили на дріб, В — лише одна частина.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. $\dfrac{2}{5}$ числа дорівнюють $\dfrac{4}{15}$. Знайди число.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{8}{75}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $1\dfrac{1}{2}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $\dfrac{2}{3}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Ділимо $\dfrac{4}{15}$ на $\dfrac{2}{5}$: перевертаємо дільник.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$\dfrac{4}{15} \cdot \dfrac{5}{2} = \dfrac{2}{3}$. А — помножили на дріб, Б — перевернули не той дріб.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Велосипедист проїхав $2\dfrac{1}{4}$ км — це $\dfrac{3}{8}$ шляху. Яка довжина всього шляху?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $6$ км</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $\dfrac{27}{32}$ км</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $18$ км</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$2\dfrac{1}{4} = \dfrac{9}{4}$. Поділи на $\dfrac{3}{8}$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{9}{4} \cdot \dfrac{8}{3} = \dfrac{3 \cdot 2}{1 \cdot 1} = 6$ км. В — поділили на $\dfrac{1}{8}$, а не на $\dfrac{3}{8}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Тарас прочитав $\dfrac{4}{7}$ книжки, і йому залишилося прочитати $36$ сторінок. Скільки сторінок у книжці?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $63$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">Б) $84$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $48$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>$36$ сторінок — це не $\dfrac{4}{7}$ книжки, а залишок. Яка це частина?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>Залишок — $1 - \dfrac{4}{7} = \dfrac{3}{7}$. $36 : \dfrac{3}{7} = 36 \cdot \dfrac{7}{3} = 84$. А — поділили на $\dfrac{4}{7}$, В — це прочитані сторінки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо $\dfrac{m}{n}$ числа дорівнюють $a$, то</p>
+                    <p style="text-align:center;font-size:1.2rem">число $= a : \dfrac{m}{n} = a \cdot \dfrac{n}{m}$</p>
+                    <p>Відоме все — множимо на дріб; відома частина — ділимо на дріб.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>1) Якій частині відповідає відоме число? 2) Ділимо число на цей дріб. 3) Перевіряємо: дріб від відповіді дає відоме число.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>«Витратила $\dfrac{3}{5}$, залишилося $80$ грн» — $80$ грн становлять $\dfrac{2}{5}$, а не $\dfrac{3}{5}$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderBarrel();
+                if (currentSlide === 2) renderWhole();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const fr = (a, b) => `\\dfrac{${a}}{${b}}`;
+            // Горизонтальна смужка-ціле на k частин: зафарбовано m частин кольором color; labels — підписи частин
+            function stripSvg(k, m, x0, y, w, h, color, labels = null) {
+                const cw = w / k;
+                let s = `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="cell empty"/>`;
+                for (let i = 0; i < m; i++) s += `<rect x="${(x0 + i * cw).toFixed(1)}" y="${y}" width="${cw.toFixed(1)}" height="${h}" class="cell ${color}"/>`;
+                for (let i = 1; i < k; i++) s += `<line x1="${(x0 + i * cw).toFixed(1)}" y1="${y}" x2="${(x0 + i * cw).toFixed(1)}" y2="${y + h}" class="cut-new"/>`;
+                if (labels) for (let i = 0; i < k; i++) s += `<text x="${(x0 + (i + 0.5) * cw).toFixed(1)}" y="${y + h / 2 + 5}" class="piece-num">${labels}</text>`;
+                return s + `<rect x="${x0}" y="${y}" width="${w}" height="${h}" class="frame"/>`;
+            }
+            // Фігурна дужка над (up) або під відрізком [x1; x2]
+            function braceSvg(x1, x2, y, up, cls = '') {
+                const d = up ? -10 : 10, xm = (x1 + x2) / 2;
+                return `<path d="M${x1} ${y} q0 ${d} 10 ${d} H${xm - 8} q8 0 8 ${d} q0 ${-d} 8 ${-d} H${x2 - 10} q10 0 10 ${-d}" class="brace ${cls}"/>`;
+            }
+
+            // --- Слайд 1: бочка, 2/3 = 40 л ---
+            let barrelShown = false;
+            window.renderBarrel = function () {
+                const x = 150, w = 120, y0 = 20, h = 70;   // три третини по 70 одиниць висоти, знизу вгору
+                let s = '';
+                for (let i = 0; i < 3; i++) {
+                    const y = y0 + (2 - i) * h, filled = i < 2;
+                    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" class="cell ${filled ? 'blue' : (barrelShown ? 'green pop' : 'empty')}"/>`;
+                    if (barrelShown) s += `<text x="${x + w / 2}" y="${y + h / 2 + 6}" class="piece-num">20 л</text>`;
+                }
+                s += `<line x1="${x}" y1="${y0 + h}" x2="${x + w}" y2="${y0 + h}" class="cut-new"/><line x1="${x}" y1="${y0 + 2 * h}" x2="${x + w}" y2="${y0 + 2 * h}" class="cut-new"/>`;
+                s += `<rect x="${x}" y="${y0}" width="${w}" height="${3 * h}" rx="6" class="frame"/>`;
+                // дужка праворуч від води: 2/3 = 40 л
+                s += `<path d="M${x + w + 12} ${y0 + h} q10 0 10 10 V${y0 + 2 * h - 8} q0 8 8 8 q-8 0 -8 8 V${y0 + 3 * h - 10} q0 10 -10 10" class="brace"/>`;
+                s += `<text x="${x + w + 70}" y="${y0 + 2 * h - 4}" class="svg-caption">2/3 —</text><text x="${x + w + 70}" y="${y0 + 2 * h + 18}" class="svg-caption">40 л</text>`;
+                if (barrelShown) {
+                    s += `<path d="M${x - 12} ${y0} q-10 0 -10 10 V${y0 + 1.5 * h - 8} q0 8 -8 8 q8 0 8 8 V${y0 + 3 * h - 10} q0 10 10 10" class="brace ok"/>`;
+                    s += `<text x="${x - 72}" y="${y0 + 1.5 * h - 4}" class="svg-caption ok-text">уся —</text><text x="${x - 72}" y="${y0 + 1.5 * h + 18}" class="svg-caption ok-text">60 л</text>`;
+                } else s += `<text x="${x - 60}" y="${y0 + 1.5 * h + 6}" class="svg-caption">? л</text>`;
+                document.getElementById('barrel-scene').innerHTML = s
+                    + `<text x="210" y="252" class="svg-caption${barrelShown ? ' ok-text' : ''}">${barrelShown ? '40 : 2 · 3 = 60 л' : 'Скільки в одній третині?'}</text>`;
+            };
+            window.revealBarrel = function () { barrelShown = true; renderBarrel(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: m/n числа = a, знайти число ---
+            function wholeVals() {
+                const n = parseInt(document.getElementById('w-n').value, 10), mEl = document.getElementById('w-m');
+                if (parseInt(mEl.value, 10) >= n) mEl.value = n - 1;   // відома частина — менша за ціле
+                return [n, parseInt(mEl.value, 10), parseInt(document.getElementById('w-k').value, 10)];
+            }
+            let wholeShown = false;
+            window.renderWhole = function () {
+                const [n, m, k] = wholeVals();
+                document.getElementById('w-n-val').textContent = n;
+                document.getElementById('w-m-val').textContent = m;
+                document.getElementById('w-k-val').textContent = m * k;
+                wholeShown = false;
+                document.getElementById('whole-answer').classList.remove('shown');
+                const q = document.getElementById('whole-q');
+                q.innerHTML = `$${fr(m, n)}$ числа $= ${m * k}$. Яке число?`;
+                typeset([q]);
+                drawWhole();
+            };
+            function drawWhole() {
+                const [n, m, k] = wholeVals(), x0 = 30, w = 360, y = 70, cw = w / n;
+                let s = stripSvg(n, m, x0, y, w, 56, 'blue', wholeShown ? String(k) : null);
+                s += braceSvg(x0, x0 + m * cw, y - 4, true) + `<text x="${x0 + m * cw / 2}" y="${y - 26}" class="svg-caption">${m}/${n} — це ${m * k}</text>`;
+                s += braceSvg(x0, x0 + w, y + 62, false, wholeShown ? 'ok' : '')
+                    + `<text x="${x0 + w / 2}" y="${y + 100}" class="svg-caption${wholeShown ? ' ok-text' : ''}">${wholeShown ? 'усе число — ' + k * n : 'усе число — ?'}</text>`;
+                document.getElementById('whole-scene').innerHTML = s;
+            }
+            window.revealWhole = function () {
+                const [n, m, k] = wholeVals(), out = document.getElementById('whole-text');
+                wholeShown = true; drawWhole();
+                out.innerHTML = `Одна частина: $${m * k} : ${m} = ${k}$, усе: $${k} \\cdot ${n} = ${k * n}$.<br>Коротко: $${m * k} : ${fr(m, n)} = ${m * k} \\cdot ${fr(n, m)} = ${k * n}$.`;
+                document.getElementById('whole-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 5: витратила 3/5, залишилося 80 грн ---
+            window.renderTrap = function () {
+                const x0 = 30, w = 380, y = 70, cw = w / 5;
+                let s = stripSvg(5, 3, x0, y, w, 56, 'yellow');
+                s += `<rect x="${x0 + 3 * cw}" y="${y}" width="${2 * cw}" height="56" class="cell green"/>`;
+                for (let i = 0; i < 5; i++) s += (i ? `<line x1="${x0 + i * cw}" y1="${y}" x2="${x0 + i * cw}" y2="${y + 56}" class="cut-new"/>` : '')
+                    + `<text x="${x0 + (i + 0.5) * cw}" y="${y + 33}" class="piece-num">40</text>`;
+                s += `<rect x="${x0}" y="${y}" width="${w}" height="56" class="frame"/>`;
+                s += braceSvg(x0, x0 + 3 * cw, y - 4, true) + `<text x="${x0 + 1.5 * cw}" y="${y - 26}" class="svg-caption">витратила 3/5</text>`;
+                s += braceSvg(x0 + 3 * cw, x0 + w, y - 4, true, 'ok') + `<text x="${x0 + 4 * cw}" y="${y - 26}" class="svg-caption ok-text">2/5 — 80 грн</text>`;
+                s += braceSvg(x0, x0 + w, y + 62, false) + `<text x="${x0 + w / 2}" y="${y + 100}" class="svg-caption">усі гроші: 40 · 5 = 200 грн</text>`;
+                s += `<text x="${x0 + w / 2}" y="${y + 135}" class="svg-caption bad-text">80 : 3/5 — не та частина!</text>`;
+                document.getElementById('trap-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$12 : \\dfrac{3}{5} = 12 \\cdot $ [[$\\dfrac{5}{3}$]]', 'Відома частина маршруту ($12$ км) — шукаємо весь маршрут: ділимо на дріб'],
+                ['$= \\dfrac{12 \\cdot 5}{3} = $ [[$20$ км]]', 'Скоротили $12$ і $3$ на $3$: $4 \\cdot 5 = 20$ — це весь маршрут'],
+                ['$20 - 12 = $ [[$8$ км]]', 'Стільки залишилося. Перевірка: $\\dfrac{3}{5}$ від $20$ — це $12$ ✓'],
+                ['$1\\dfrac{1}{2} : \\dfrac{3}{4} = \\dfrac{3}{2} \\cdot $ [[$\\dfrac{4}{3}$]]', 'Друга задача: мішане число — у неправильний дріб, перевертаємо дільник'],
+                ['$= \\dfrac{1 \\cdot 2}{1 \\cdot 1} = $ [[$2$]]', 'Скоротили $3$ і $3$, $4$ і $2$. Перевірка: $\\dfrac{3}{4}$ від $2$ — це $1\\dfrac{1}{2}$ ✓'],
+            ];
+@@INCLUDE steps.js
