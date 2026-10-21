@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, Count, F, Prefetch, Q, When
+from django.db.models import Case, Count, F, Min, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
@@ -36,7 +36,7 @@ from .games import record_game_answer, short_answer_matches
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, SchoolPriceRule, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME, ClassPlan,
 )
@@ -1387,8 +1387,33 @@ def web_manifest(request):
     return response
 
 
+# Формати занять з викладачем (сторінки «Записатися» й «Ціни»)
+LESSON_FORMATS = (
+    {'name': 'Міні-групи', 'note': 'До 4 учнів. Динамічна робота та дружня атмосфера.', 'price': 240},
+    {'name': 'Індивідуально (День)', 'note': 'Будні дні з 16:00 до 19:00. Максимум уваги.', 'price': 490},
+    {'name': 'Індивідуально (Прайм)', 'note': 'Будні з 19:00 до 21:00 та Вихідні з 09:00 до 13:00.', 'price': 590},
+)
+
+
 def booking_view(request):
-    return render(request, 'booking.html')
+    formats = [dict(f, promo_price=f['price'] * 4 // 5) for f in LESSON_FORMATS]   # під час акції −20%
+    return render(request, 'booking.html', {'lesson_formats': formats})
+
+
+def prices_view(request):
+    """Усі способи навчання й ціни на одній сторінці"""
+    rules = list(SchoolPriceRule.objects.all())
+    lesson_min = StudyMaterial.objects.filter(is_published=True, is_free=False, is_bundle=False,
+                                              price__gt=0).aggregate(m=Min('price'))['m']
+    tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
+    return render(request, 'materials/prices.html', {
+        'lesson_min': lesson_min,
+        'first_topic_free': any(r.first_topic_free for r in rules),
+        'class_plans': subscriptions.plans_on_sale(),
+        'lesson_formats': LESSON_FORMATS,
+        'tutor_min': tutor_monthly,
+        'trial_days': teachers.TRIAL_DAYS,
+    })
 
 
 # ==========================================

@@ -38,6 +38,7 @@ from materials.views import (
     diagnostic_offer_view,
     diagnostic_test_view,
     download_material_view,
+    prices_view,
     material_preview_view,
     math_sprint_game,
     mono_webhook,
@@ -139,6 +140,7 @@ urlpatterns = [
 
     # Календар запису
     path('booking/', booking_view, name='booking'),
+    path('prices/', prices_view, name='prices'),
     path('request-student/', request_tutor_student_status, name='request_student_status'),
     path('submit-review/', submit_review, name='submit_review'),
     path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),

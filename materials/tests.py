@@ -390,6 +390,20 @@ class CabinetNextStepTests(BaseTestCase):
         self.assertNotIn('next_step', self.client.get('/cabinet/').context)
 
 
+class PricesPageTests(BaseTestCase):
+    def test_prices_page_lists_all_options(self):
+        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)
+        StudyMaterial.objects.create(title='Дешевша, але прихована', price=5)
+        page = self.client.get('/prices/')
+        self.assertContains(page, 'від 35 ₴')
+        self.assertContains(page, 'Міні-групи — 240 ₴')
+        self.assertContains(page, '/booking/')
+        self.assertContains(page, '/for-tutors/')
+        self.assertContains(self.client.get('/'), 'href="/prices/"')
+        self.assertContains(self.client.get('/booking/'), '490 грн')
+        self.assertIn('/prices/', self.client.get('/sitemap.xml').content.decode())
+
+
 class ParentMaterialTests(BaseTestCase):
     def setUp(self):
         self.kid = self.make_user('kid@example.com')
@@ -3770,7 +3784,7 @@ class ClassSubscriptionTests(BaseTestCase):
 
     def test_storefront_shows_only_classes_on_sale(self):
         self.assertNotContains(self.client.get('/subscribe/'), '7 клас</h3>')
-        self.assertNotContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        self.assertNotContains(self.client.get('/prices/'), 'Підписка на клас')
         self.assertEqual(self.client.post(f'/subscribe/buy/{self.plan7.id}/month/',
                                           {'agree': 'on', 'method': 'balance'}).status_code, 404)
         self.plan7.is_active = True
@@ -3781,7 +3795,7 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertContains(page, 'Уже готово уроків: 2 з 2')
         self.assertContains(page, 'На місяць — з балансу')        # 119 ₴ ≤ 400 ₴
         self.assertNotContains(page, 'На навчальний рік — з балансу')   # 549 ₴ > 400 ₴
-        self.assertContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        self.assertContains(self.client.get('/prices/'), '7 клас — від 119 ₴/міс')
         grade = self.algebra7.curriculum_topic.chapter.grade
         self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), 'Увесь 7 клас')
         self.assertContains(self.client.get(f'/material/{self.algebra7.id}/'), 'Або весь 7 клас за підпискою')

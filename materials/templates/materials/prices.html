@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Ціни — уроки, підписка, заняття | ДО КВАДРАТУ{% endblock %}
+{% block meta_description %}Скільки коштує навчання в ДО КВАДРАТУ: окремі уроки з практикою, підписка на весь клас, заняття з викладачем і тарифи для репетиторів.{% endblock %}
+{% block content %}
+<style>
+    .pr { max-width: 1100px; margin: 30px auto 60px; }
+    .pr-intro { color: var(--text-dark); font-weight: 600; margin: 0 0 30px; line-height: 1.5; }
+    .pr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 24px; }
+    .pr-card {
+        background: #ffffff; border: 3px solid var(--brand-blue); border-radius: 14px; padding: 22px;
+        box-shadow: 6px 6px 0 var(--brand-yellow); display: flex; flex-direction: column; gap: 10px; min-width: 0;
+    }
+    .pr-card h2 { margin: 0; font-size: 1.25rem; }
+    .pr-for { margin: 0; color: #6c757d; font-weight: 700; font-size: 0.9rem; }
+    .pr-price { font-size: 1.7rem; font-weight: 900; color: var(--brand-blue); }
+    .pr-price small { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .pr-card ul { margin: 0; padding-left: 20px; line-height: 1.5; flex: 1; }
+    .pr-card li + li { margin-top: 4px; }
+    .pr-btn {
+        display: block; text-align: center; text-decoration: none; font-weight: 900; padding: 12px;
+        border-radius: 8px; border: 2px solid var(--brand-blue); background: var(--brand-yellow); color: var(--brand-blue);
+    }
+    .pr-btn:hover { background: var(--brand-blue); color: #ffffff; }
+    .pr-choose { margin-top: 40px; background: #ffffff; border: 2px dashed var(--brand-blue); border-radius: 14px; padding: 22px; }
+    .pr-choose h2 { margin-top: 0; font-size: 1.25rem; }
+    .pr-choose p { margin: 8px 0; line-height: 1.5; }
+</style>
+
+<div class="pr">
+    <h1>Ціни</h1>
+    <p class="pr-intro">Усі способи навчатися з ДО КВАДРАТУ на одній сторінці. Діагностика безкоштовна — з неї зручно почати.</p>
+
+    <div class="pr-grid">
+        <div class="pr-card">
+            <h2>📖 Окремі уроки</h2>
+            <p class="pr-for">Коли треба підтягнути кілька тем</p>
+            {% if lesson_min %}<div class="pr-price">від {{ lesson_min }} ₴ <small>за тему</small></div>{% endif %}
+            <ul>
+                <li>Інтерактивна презентація й практика сходинками до теми</li>
+                {% if first_topic_free %}<li>Перша тема кожного розділу шкільного курсу — безкоштовно</li>{% endif %}
+                <li>Початок уроку можна безкоштовно переглянути до покупки</li>
+                <li>Пакети тем для НМТ — зі знижкою</li>
+            </ul>
+            <a href="{% url 'materials_list' %}" class="pr-btn">На вітрину →</a>
+        </div>
+
+        {% if class_plans %}
+        <div class="pr-card">
+            <h2>🎒 Підписка на клас</h2>
+            <p class="pr-for">Коли вчитеся весь рік</p>
+            <ul>
+                {% for plan in class_plans %}
+                <li><b>{{ plan.number }} клас — {% if plan.price_month %}від {{ plan.price_month }} ₴/міс{% else %}{{ plan.price_year }} ₴/рік{% endif %}</b>{% if plan.price_month and plan.price_year %} або {{ plan.price_year }} ₴ за навчальний рік{% endif %}</li>
+                {% endfor %}
+                <li>Усі уроки й практика класу, нові теми — одразу після виходу</li>
+            </ul>
+            <a href="{% url 'class_subscribe' %}" class="pr-btn">Оформити підписку →</a>
+        </div>
+        {% endif %}
+
+        <div class="pr-card">
+            <h2>👨‍🏫 Заняття з викладачем</h2>
+            <p class="pr-for">Коли потрібен живий супровід</p>
+            <ul>
+                {% for format in lesson_formats %}
+                <li><b>{{ format.name }} — {{ format.price }} ₴</b> за урок</li>
+                {% endfor %}
+                <li>Учні викладача отримують уроки й практику свого класу без окремої оплати</li>
+                <li>Батьки бачать результати й звіти після уроків</li>
+            </ul>
+            <a href="{% url 'booking' %}" class="pr-btn">Записатися →</a>
+        </div>
+
+        <div class="pr-card">
+            <h2>🧑‍🏫 Для репетиторів і вчителів</h2>
+            <p class="pr-for">Коли ви самі ведете учнів</p>
+            {% if tutor_min %}<div class="pr-price">від {{ tutor_min }} ₴ <small>/ міс</small></div>{% endif %}
+            <ul>
+                <li>{{ trial_days }} днів безкоштовно</li>
+                <li>Презентації для занять, практика, домашні завдання й звіти для батьків</li>
+                <li>Ваші учні навчаються на платформі без окремої оплати</li>
+            </ul>
+            <a href="{% url 'for_tutors' %}" class="pr-btn">Тарифи й деталі →</a>
+        </div>
+    </div>
+
+    <div class="pr-choose">
+        <h2>Що обрати?</h2>
+        <p><b>Не знаєте, з чого почати?</b> Пройдіть <a href="{% url 'diagnostic_test' %}">безкоштовну діагностику</a> — вона покаже слабкі теми.</p>
+        <p><b>Треба закрити кілька тем?</b> Купуйте окремі уроки.</p>
+        {% if class_plans %}<p><b>Вчитеся за програмою весь рік?</b> Підписка на клас відкриває всі уроки й практику класу.</p>{% endif %}
+        <p><b>Хочете, щоб пояснював викладач?</b> Запишіться на заняття — уроки й практика класу вже входять.</p>
+    </div>
+</div>
+{% endblock %}
