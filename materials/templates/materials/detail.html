@@ -195,6 +195,12 @@
             </div>
         {% endif %}
 
+        {% if has_preview %}
+            <a href="{% url 'material_preview' material.id %}" class="btn-buy" style="margin-bottom: 15px; background-color: #ffffff; color: var(--brand-blue); border: 3px solid var(--brand-blue);">
+                👀 ПЕРЕГЛЯНУТИ ПОЧАТОК УРОКУ
+            </a>
+        {% endif %}
+
         <!-- РОЗУМНА ЛОГІКА КНОПКИ КУПИТИ -->
         {% if user.is_authenticated %}
             <!-- Якщо користувач вже купив цей конспект -->

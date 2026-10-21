@@ -769,6 +769,51 @@ class DiagnosticResultsTests(BaseTestCase):
         self.assertContains(response, 'не збережено')
 
 
+class LessonPreviewTests(BaseTestCase):
+    @staticmethod
+    def slides_html(count):
+        slides = ''.join(f'<section class="slide-card" data-slide="{n}"><p>Слайд-{n}</p>'
+                         f'<section class="inner">вкладена</section></section>' for n in range(1, count + 1))
+        return f'<html><head><title>Урок</title></head><body>{slides}<script>go()</script></body></html>'
+
+    def setUp(self):
+        self.lesson = StudyMaterial.objects.create(title='1.1 Числа', price=100, is_published=True,
+                                                   html_content=self.slides_html(8))
+
+    def test_preview_shows_only_first_slides(self):
+        page = self.client.get(f'/material/{self.lesson.id}/preview/')
+        self.assertEqual(page.status_code, 200)
+        html = page.context['preview_html']
+        for n in (1, 2, 3):
+            self.assertIn(f'Слайд-{n}<', html)
+        for n in (4, 8):
+            self.assertNotIn(f'Слайд-{n}<', html)
+        self.assertIn('ще 5 слайдів', html)
+        self.assertIn('<script>go()</script>', html)
+        self.assertNotIn('Слайд-8', page.content.decode())
+        self.assertContains(page, 'Придбати повний урок')
+
+    def test_detail_page_links_to_preview(self):
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), f'/material/{self.lesson.id}/preview/')
+
+    def test_no_preview_for_owner_free_or_short_lessons(self):
+        user = self.make_user('owner@example.com')
+        user.purchased_materials.add(self.lesson)
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(f'/material/{self.lesson.id}/'), '/preview/')
+        self.assertRedirects(self.client.get(f'/material/{self.lesson.id}/preview/'),
+                             f'/download/{self.lesson.id}/', fetch_redirect_response=False)
+        self.client.logout()
+        short = StudyMaterial.objects.create(title='Короткий', price=100, is_published=True,
+                                             html_content=self.slides_html(2))
+        hidden = StudyMaterial.objects.create(title='Чернетка', price=100, html_content=self.slides_html(8))
+        for material in (short, hidden):
+            self.assertEqual(self.client.get(f'/material/{material.id}/preview/').status_code, 404)
+        free = StudyMaterial.objects.create(title='Безкоштовний', is_free=True, is_published=True,
+                                            html_content=self.slides_html(8))
+        self.assertNotContains(self.client.get(f'/material/{free.id}/'), '/preview/')
+
+
 class SeoTests(BaseTestCase):
     def test_sitemap_lists_published_materials_on_main_domain(self):
         published = StudyMaterial.objects.create(title='Тема', is_published=True)

@@ -29,7 +29,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, subscriptions, teachers
+from . import homework, practice, preview, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -1476,6 +1476,8 @@ class MaterialDetailView(DetailView):
             context['class_plan'] = subscriptions.plan_for_material(material)
         context['default_description'] = DEFAULT_MATERIAL_DESCRIPTION
         context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
+        context['has_preview'] = (material.is_published and not context['is_owned'] and not material.is_free
+                                  and not material.is_bundle and bool(preview.preview_slides(material.html_content)))
 
         if material.is_bundle:
             total_original_price = sum(item.price for item in material.included_materials.all())
@@ -1664,6 +1666,20 @@ def download_material_view(request, material_id):
         raise Http404("У вас немає доступу до цього матеріалу.")
 
     return render(request, 'materials/reader.html', {'material': material})
+
+
+def material_preview_view(request, material_id):
+    """Безкоштовний перегляд перших слайдів уроку до покупки (без входу)"""
+    material = get_object_or_404(StudyMaterial, id=material_id, is_published=True, is_bundle=False)
+    if user_owns_material(request.user, material):
+        return redirect('download_material', material_id=material.id)
+    html = preview.build_preview(material.html_content or '')
+    if not html:
+        raise Http404("Для цього уроку немає безкоштовного перегляду.")
+    return render(request, 'materials/reader.html', {
+        'material': material, 'is_preview': True, 'preview_html': html,
+        'back_url': reverse('material_detail', args=[material.id]),
+    })
 
 
 @api_view(['GET'])
