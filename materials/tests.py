@@ -6,6 +6,9 @@ import re
 from unittest import mock
 
 import ecdsa
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialApp
+from django.contrib.sites.models import Site
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -390,12 +393,47 @@ class CabinetNextStepTests(BaseTestCase):
         self.assertNotIn('next_step', self.client.get('/cabinet/').context)
 
 
+class GuestCartTests(BaseTestCase):
+    def setUp(self):
+        self.lesson = StudyMaterial.objects.create(title='1. Числа', price=100, is_published=True)
+        self.free = StudyMaterial.objects.create(title='Формули', is_free=True, is_published=True)
+        self.user = self.make_user('guest@example.com')
+        EmailAddress.objects.create(user=self.user, email=self.user.email, verified=True, primary=True)
+        app = SocialApp.objects.create(provider='google', name='Google', client_id='id', secret='secret')
+        app.sites.add(Site.objects.get_current())
+
+    def test_guest_choice_waits_in_cart_after_login(self):
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), 'можна через Google')
+        response = self.client.post(f'/cart/add/{self.lesson.id}/')
+        self.assertRedirects(response, '/login/?next=/cart/', fetch_redirect_response=False)
+        self.client.post(f'/cart/add/{self.free.id}/')
+        login = self.client.post('/login/?next=/cart/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
+        self.assertRedirects(login, '/cart/', fetch_redirect_response=False)
+        self.assertTrue(CartItem.objects.filter(cart__user=self.user, material=self.lesson).exists())
+        self.assertTrue(self.user.purchased_materials.filter(id=self.free.id).exists())
+        self.assertNotIn('pending_cart', self.client.session)
+
+    def test_owned_material_is_not_added_again(self):
+        self.user.purchased_materials.add(self.lesson)
+        self.client.post(f'/cart/add/{self.lesson.id}/')
+        self.client.post('/login/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
+        self.assertFalse(CartItem.objects.filter(material=self.lesson).exists())
+
+    def test_login_page_keeps_next_for_signup(self):
+        self.assertContains(self.client.get('/login/?next=/cart/'), '/register/?next=/cart/')
+
+
 class PricesPageTests(BaseTestCase):
     def test_prices_page_lists_all_options(self):
-        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)
+        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)   # без теми в дереві — НМТ
         StudyMaterial.objects.create(title='Дешевша, але прихована', price=5)
+        lesson = StudyMaterial.objects.create(title='Урок', price=60, is_published=True)
+        bundle = StudyMaterial.objects.create(title='Пакет', price=80, is_bundle=True, is_published=True)
+        bundle.included_materials.add(lesson, StudyMaterial.objects.get(title='Тема'))
         page = self.client.get('/prices/')
+        self.assertContains(page, 'Підготовка до НМТ')
         self.assertContains(page, 'від 35 ₴')
+        self.assertContains(page, 'Пакети тем — від 80 ₴, економія до 15 ₴')
         self.assertContains(page, 'Міні-групи — 240 ₴')
         self.assertContains(page, '/booking/')
         self.assertContains(page, '/for-tutors/')

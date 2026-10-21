@@ -5,7 +5,7 @@
 <style>
     .pr { max-width: 1100px; margin: 30px auto 60px; }
     .pr-intro { color: var(--text-dark); font-weight: 600; margin: 0 0 30px; line-height: 1.5; }
-    .pr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 24px; }
+    .pr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 24px; }
     .pr-card {
         background: #ffffff; border: 3px solid var(--brand-blue); border-radius: 14px; padding: 22px;
         box-shadow: 6px 6px 0 var(--brand-yellow); display: flex; flex-direction: column; gap: 10px; min-width: 0;
@@ -21,6 +21,7 @@
         border-radius: 8px; border: 2px solid var(--brand-blue); background: var(--brand-yellow); color: var(--brand-blue);
     }
     .pr-btn:hover { background: var(--brand-blue); color: #ffffff; }
+    .pr-btn-light { background: #ffffff; }
     .pr-choose { margin-top: 40px; background: #ffffff; border: 2px dashed var(--brand-blue); border-radius: 14px; padding: 22px; }
     .pr-choose h2 { margin-top: 0; font-size: 1.25rem; }
     .pr-choose p { margin: 8px 0; line-height: 1.5; }
@@ -32,14 +33,27 @@
 
     <div class="pr-grid">
         <div class="pr-card">
-            <h2>📖 Окремі уроки</h2>
-            <p class="pr-for">Коли треба підтягнути кілька тем</p>
-            {% if lesson_min %}<div class="pr-price">від {{ lesson_min }} ₴ <small>за тему</small></div>{% endif %}
+            <h2>🎯 Підготовка до НМТ</h2>
+            <p class="pr-for">{% if nmt_countdown %}До НМТ {% if not nmt_countdown.exact %}орієнтовно {% endif %}{{ nmt_countdown.days }} {{ nmt_countdown.days_word }}{% else %}Алгебра й геометрія за темами НМТ{% endif %}</p>
+            {% if nmt_min %}<div class="pr-price">від {{ nmt_min }} ₴ <small>за тему</small></div>{% endif %}
+            <ul>
+                <li>Безкоштовна діагностика покаже слабкі теми</li>
+                <li>Конспекти й презентації за темами НМТ з практикою</li>
+                {% if bundle_min %}<li>Пакети тем — від {{ bundle_min }} ₴{% if bundle_saving > 0 %}, економія до {{ bundle_saving }} ₴{% endif %}</li>{% endif %}
+                {% if nmt_free %}<li><a href="{% url 'materials_list' %}?type=free">Безкоштовні матеріали</a> — щоб спробувати</li>{% endif %}
+            </ul>
+            <a href="{% url 'diagnostic_test' %}" class="pr-btn">Пройти діагностику →</a>
+            <a href="{{ nmt_url }}" class="pr-btn pr-btn-light">Матеріали НМТ →</a>
+        </div>
+
+        <div class="pr-card">
+            <h2>📖 Уроки 5–11 класів</h2>
+            <p class="pr-for">Коли треба підтягнути кілька шкільних тем</p>
+            {% if school_min %}<div class="pr-price">від {{ school_min }} ₴ <small>за тему</small></div>{% endif %}
             <ul>
                 <li>Інтерактивна презентація й практика сходинками до теми</li>
-                {% if first_topic_free %}<li>Перша тема кожного розділу шкільного курсу — безкоштовно</li>{% endif %}
+                {% if first_topic_free %}<li>Перша тема кожного розділу — безкоштовно</li>{% endif %}
                 <li>Початок уроку можна безкоштовно переглянути до покупки</li>
-                <li>Пакети тем для НМТ — зі знижкою</li>
             </ul>
             <a href="{% url 'materials_list' %}" class="pr-btn">На вітрину →</a>
         </div>
@@ -87,7 +101,8 @@
     <div class="pr-choose">
         <h2>Що обрати?</h2>
         <p><b>Не знаєте, з чого почати?</b> Пройдіть <a href="{% url 'diagnostic_test' %}">безкоштовну діагностику</a> — вона покаже слабкі теми.</p>
-        <p><b>Треба закрити кілька тем?</b> Купуйте окремі уроки.</p>
+        <p><b>Готуєтеся до НМТ?</b> Після діагностики сайт запропонує уроки саме зі слабких тем.</p>
+        <p><b>Треба закрити кілька шкільних тем?</b> Купуйте окремі уроки.</p>
         {% if class_plans %}<p><b>Вчитеся за програмою весь рік?</b> Підписка на клас відкриває всі уроки й практику класу.</p>{% endif %}
         <p><b>Хочете, щоб пояснював викладач?</b> Запишіться на заняття — уроки й практика класу вже входять.</p>
     </div>

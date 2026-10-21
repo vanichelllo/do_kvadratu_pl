@@ -226,9 +226,15 @@
             {% endif %}
         {% else %}
             <!-- Якщо гість (не зареєстрований) -->
-            <a href="{% url 'login' %}?next={{ request.path }}" class="btn-buy" style="background-color: var(--brand-yellow); color: var(--brand-blue);">
-                УВІЙТИ ДЛЯ ПОКУПКИ
-            </a>
+            <form method="POST" action="{% url 'add_to_cart' material.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-buy" style="border: none; cursor: pointer; font-family: inherit;">
+                    {% if material.is_free or material.price == 0 %}ОТРИМАТИ БЕЗКОШТОВНО{% else %}🛒 ДОДАТИ В КОШИК{% endif %}
+                </button>
+            </form>
+            <p style="text-align: center; margin: 10px 0 0; color: #6c757d; font-size: 0.9rem; font-weight: 600;">
+                Далі — вхід або реєстрація за хвилину (можна через Google)
+            </p>
         {% endif %}
 
         {% if class_plan %}
