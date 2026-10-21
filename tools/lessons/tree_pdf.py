@@ -91,12 +91,12 @@ li.sum {{ color: #7f8c8d; font-style: italic; }}
 .note {{ color: #7f8c8d; font-size: 8.4pt; margin: 4px 2px 12px; }}
 </style></head><body>
 <div class="cover"><div class="logo"><b>²</b>ДО КВАДРАТУ</div><h1>Дерево тем шкільних курсів</h1>
-<p>Класифікатор уроків сайту dokvadratu.com.ua · 5–11 класи · станом на 19.10.2026</p>
-<div class="tiles"><div class="tile"><b>{tot["t"]}</b>тем</div><div class="tile"><b>{tot["p"]}</b>презентацій</div>
-<div class="tile"><b>{tot["b"]}</b>банків завдань</div><div class="tile"><b>{tot["n"]}</b>тем додано з планів</div></div></div>
+<p>Класифікатор уроків сайту dokvadratu.com.ua · 5–11 класи · станом на {__import__("datetime").date.today():%d.%m.%Y}</p>
+<div class="tiles"><div class="tile"><b>{tot["t"]}</b>тем</div><div class="tile"><b>{tot["p"]}</b>презентацій · {tot["b"]} банків</div>
+<div class="tile"><b>{tot["t"] - tot["p"]}</b>тем ще без уроку</div><div class="tile"><b>{tot["n"]}</b>тем додано з планів</div></div></div>
 <div class="legend"><span class="bd p">презентація</span> є презентація <span class="bd b">банк</span> є банк завдань
 <span class="bd n">нова</span> тема додана з планів учнів</div>
-<p class="note">Стан — за гілкою PR #39 (ще не злитою в main). У кожному розділі є також урок «Узагальнення», у кожному класі — «Діагностика».</p>
+<p class="note">Стан — за гілкою main (усе, що вже на сайті). У кожному розділі є також урок «Узагальнення», у кожному класі — «Діагностика».</p>
 {"".join(body)}</body></html>'''
 open(sys.argv[1], 'w', encoding='utf-8').write(page)
 print(tot)
