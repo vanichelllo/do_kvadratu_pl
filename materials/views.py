@@ -1547,8 +1547,8 @@ def cabinet_next_step(user, context, library):
                 'url': reverse('practice_session', args=[run.material_id]), 'button': 'Продовжити'}
 
     def open_url(material):
-        # Тема без презентації — одразу практика
-        return reverse('download_material' if material.html_content else 'practice_session', args=[material.id])
+        # Як «Читати онлайн» у бібліотеці; html_content не читаємо — кабінет не вантажить презентації
+        return reverse('download_material', args=[material.id])
 
     lessons = [m for m in library if not m.is_bundle]
     available = {m.id for m in lessons}
