@@ -1,0 +1,386 @@
+@@TITLE Системи рівнянь другого степеня
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 28px; font-style: italic; font-size: 1.15rem; }
+        .slider-control span { font-weight: 800; min-width: 50px; text-align: right; }
+        .readout { font-weight: 700; min-height: 1.5em; font-size: 1.1rem; }
+        .readout .ok { color: var(--brand-green); }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; overflow-x: auto; overflow-y: hidden; }
+        .curve.line { stroke: var(--brand-yellow); }
+        .meet { fill: var(--warning-red); stroke: var(--card-bg); stroke-width: 2; }
+        .pt-label { fill: var(--warning-red); font-size: 13px; font-weight: 800; text-anchor: middle; }
+        .plot-name { fill: currentColor; font-size: 14px; font-weight: 800; font-style: italic; }
+        /* Ділянка */
+        svg.fig { width: 100%; max-height: 250px; color: var(--text-dark); }
+        .plot-rect { fill: var(--brand-green); fill-opacity: 0.2; stroke: currentColor; stroke-width: 3; }
+        .side { fill: currentColor; font-size: 18px; font-weight: 800; text-anchor: middle; font-style: italic; }
+        .side.ok { fill: var(--brand-green); font-style: normal; }
+        .cap { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        /* Таблиця */
+        .val-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; text-align: center; }
+        .val-table th, .val-table td { border: 1px solid var(--border-color); padding: 6px 4px; }
+        .val-table th { color: var(--brand-blue); background: var(--card-bg); }
+        .val-table td { background: var(--widget-bg); font-weight: 700; }
+        .val-table td.cell { cursor: pointer; }
+        .val-table .hidden-answer.shown { display: inline-block; }
+        .hidden-answer.shown + .q { display: none; }
+        .q { color: var(--text-muted); font-weight: 800; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Ділянка з двома умовами 🌱</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Прямокутну ділянку обгородили парканом завдовжки $34$ м. Її площа — $60$ м².</p>
+                    <p class="big-question">Які розміри ділянки?</p>
+                    <p>Сторони $x$ і $y$ мають задовольняти <b>обидві</b> умови одночасно — це система, у якій одне з рівнянь не лінійне.</p>
+                    <p class="center"><button class="btn-primary" onclick="revealPlot()">Скласти й розв'язати</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$12$ м і $5$ м</div>
+                        <p class="big-formula">$\begin{cases} x + y = 17, \\ xy = 60 \end{cases}$</p>
+                        <p>$y = 17 - x$, тоді $x(17 - x) = 60$, $x^2 - 17x + 60 = 0$, $x = 12$ або $x = 5$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <svg class="fig" viewBox="0 0 420 250" id="plot-scene" role="img" aria-label="Прямокутна ділянка зі сторонами x і y, периметр 34 м, площа 60 м²"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке система рівнянь другого степеня</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Степінь рівняння з двома змінними</div>
+                        <p>Якщо ліва частина — многочлен стандартного вигляду, а права — нуль, то <b>степінь рівняння</b> — це степінь многочлена: $x^2 + y^2 - 25 = 0$ і $xy - 6 = 0$ — другого степеня, $2x - y + 1 = 0$ — першого.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Система другого степеня</div>
+                        <p>Система, у якій найбільший степінь рівнянь — другий. <b>Розв'язок системи</b> — пара $(x; y)$, що перетворює <b>кожне</b> рівняння на правильну рівність. Розв'язати систему — знайти всі такі пари.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>Учні визначають степінь, клік по «?» — перевіряємо.</p>
+                    <table class="val-table">
+                        <tr><th>Рівняння</th><th>Степінь</th></tr>
+                        <tr><th>$x^2 + y^2 = 25$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">$2$</span><span class="q">?</span></td></tr>
+                        <tr><th>$xy = 6$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">$2$</span><span class="q">?</span></td></tr>
+                        <tr><th>$3x - 2y = 7$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">$1$</span><span class="q">?</span></td></tr>
+                        <tr><th>$x^2y + y = 4$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">$3$</span><span class="q">?</span></td></tr>
+                        <tr><th>$(x + y)^2 - x^2 = y^2$</th><td class="cell" onclick="showCell(this)"><span class="hidden-answer">$2$: це $2xy = 0$</span><span class="q">?</span></td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Способи розв'язування</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Спосіб підстановки</div>
+                        <p>З лінійного рівняння виражаємо одну змінну через іншу й підставляємо в друге рівняння. Отримуємо рівняння з однією змінною — найчастіше квадратне.</p>
+                        <p>Тому система «лінійне + другого степеня» має не більше <b>двох</b> розв'язків (або жодного).</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Спосіб додавання</div>
+                        <p>Додаємо (віднімаємо) рівняння, щоб зникла змінна чи її квадрат: $\begin{cases} x^2 + y^2 = 25 \\ x^2 - y^2 = 7 \end{cases}$ $\Rightarrow 2x^2 = 32$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Графічний спосіб</div>
+                        <p>Будуємо графіки обох рівнянь в одній системі координат. Координати точок перетину — розв'язки системи. Спосіб наочний, але зазвичай дає <b>наближені</b> значення — їх варто перевірити підстановкою.</p>
+                    </div>
+                    <div class="box remark">
+                        <div class="box-title">Звідки береться квадратне рівняння</div>
+                        <p>$\begin{cases} x + y = 17 \\ xy = 60 \end{cases}$: $y = 17 - x$, $x(17 - x) = 60$. За теоремою, оберненою до теореми Вієта, $x$ і $y$ — корені рівняння $t^2 - 17t + 60 = 0$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Скільки точок перетину? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="big-formula">$\begin{cases} y = x^2, \\ y = x + b \end{cases}$</p>
+                    <p>Рухаємо пряму. Учні передбачають кількість розв'язків, потім перевіряємо через дискримінант.</p>
+                    <div class="slider-control"><label for="w-b">b</label><input type="range" id="w-b" min="-2" max="4" step="0.25" value="2" oninput="renderMeet()"><span id="w-b-val"></span></div>
+                    <p class="readout" id="meet-task"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealMeet()">Показати розв'язки</button></p>
+                    <p class="readout" id="meet-answer"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="meet-scene" role="img" aria-label="Парабола y = x² і пряма y = x + b"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Спосіб підстановки крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) З лінійного рівняння виразити одну змінну.</p>
+                    <p>2) Підставити в <b>інше</b> рівняння, розв'язати рівняння з однією змінною.</p>
+                    <p>3) Для <b>кожного</b> кореня знайти другу змінну.</p>
+                    <p>4) Записати відповідь парами $(x; y)$, за потреби — перевірити.</p>
+                    <p class="big-formula">$\begin{cases} x - y = 1, \\ x^2 + y^2 = 13 \end{cases}$</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Додавання і текстова задача</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Розв'яжіть систему $\begin{cases} x^2 + y^2 = 25, \\ x^2 - y^2 = 7. \end{cases}$</p>
+                    <div class="step">Додаємо рівняння: $2x^2 = 32$, $x^2 = 16$, $x = \pm 4$.</div>
+                    <div class="step">Віднімаємо: $2y^2 = 18$, $y^2 = 9$, $y = \pm 3$.</div>
+                    <div class="step">Будь-яке $x$ з будь-яким $y$: $(4; 3)$, $(4; -3)$, $(-4; 3)$, $(-4; -3)$ — чотири розв'язки.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Сума двох чисел — $10$, а сума їх квадратів — $58$. Знайдіть ці числа.</p>
+                    <div class="step">$\begin{cases} x + y = 10, \\ x^2 + y^2 = 58 \end{cases}$, звідси $y = 10 - x$.</div>
+                    <div class="step">$x^2 + (10 - x)^2 = 58$, $2x^2 - 20x + 42 = 0$, $x^2 - 10x + 21 = 0$.</div>
+                    <div class="step">$x = 3$, $y = 7$ або $x = 7$, $y = 3$. Числа: $3$ і $7$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Відповідь — пари</div>
+                        <p>Знайшли $x = 3$ і $x = -2$ — це ще не відповідь. Для <b>кожного</b> $x$ знайдіть свій $y$: $(3; 2)$, $(-2; -3)$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Загублений корінь</div>
+                        <p>$y^2 = 9$ має два корені: $y = 3$ і $y = -3$. Відкинувши $-3$, втрачаємо розв'язки.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Підставили не туди</div>
+                        <p>Виразили $y = x - 1$ з першого рівняння — підставляти треба в <b>друге</b>. Підстановка в перше дає тотожність $x - (x - 1) = 1$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Порядок у парі</div>
+                        <p>$(3; 2)$ і $(2; 3)$ — різні пари. Перше число — завжди $x$. Пару $(2; 3)$ треба перевіряти окремо.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Яка пара є розв'язком системи $\begin{cases} x + y = 5, \\ xy = 6? \end{cases}$</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $(1; 6)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $(2; 3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(-2; -3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(5; 0)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2 + 3 = 5$ і $2 \cdot 3 = 6$ ✓. А і В задовольняють лише $xy = 6$, Г — лише $x + y = 5$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть систему $\begin{cases} y = x + 1, \\ x^2 + y = 7. \end{cases}$</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $(2; 3)$, $(-3; -2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $(2; 3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(3; 4)$, $(-2; -1)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $2$; $-3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x^2 + x + 1 = 7$, $x^2 + x - 6 = 0$, $x = 2$ або $x = -3$; $y = 3$ або $y = -2$.</p>
+                            <p>Б — загубили другий розв'язок; В — помилка в знаку ($x^2 - x - 6 = 0$); Г — не знайшли $y$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки розв'язків має система $\begin{cases} x^2 + y^2 = 4, \\ y = x^2 - 2? \end{cases}$</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) жодного</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Г) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $4$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x^2 = y + 2$: $y + 2 + y^2 = 4$, $y^2 + y - 2 = 0$, $y = 1$ або $y = -2$.</p>
+                            <p>$y = 1$: $x^2 = 3$, $x = \pm\sqrt{3}$ — два розв'язки. $y = -2$: $x = 0$ — ще один. Разом три. В — порахували корені $y$, а не пари.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему — з нього починається другий урок -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Розв'язок системи — пара $(x; y)$, що задовольняє <b>кожне</b> рівняння.</p>
+                    <p>Способи: підстановка (з лінійного рівняння), додавання, графічний (точки перетину графіків).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм ✍️</div>
+                        <p>Виразити змінну → підставити в інше рівняння → розв'язати → для кожного кореня знайти другу змінну → відповідь парами.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Відповідь — пари, а не окремі числа; $y^2 = 9 \Rightarrow y = \pm 3$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderPlot();
+                if (currentSlide === 4) renderMeet();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const tx = (v) => (Math.round(v * 100) / 100).toString().replace('.', '{,}');
+
+            // --- Слайд 1: ділянка ---
+            let plotShown = false;
+            window.renderPlot = function () {
+                const x0 = 60, y0 = 40, w = 288, h = 120;   // 12 : 5 у масштабі 24 px за метр
+                let s = `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" class="plot-rect"/>`;
+                s += `<text x="${x0 + w / 2}" y="${y0 - 10}" class="side${plotShown ? ' ok' : ''}">${plotShown ? 'x = 12 м' : 'x'}</text>`;
+                s += `<text x="${x0 + w + 12}" y="${y0 + h / 2 + 6}" class="side${plotShown ? ' ok' : ''}" style="text-anchor:start">${plotShown ? '5 м' : 'y'}</text>`;
+                s += `<text x="${x0 + w / 2}" y="${y0 + h / 2 + 6}" class="cap">S = 60 м²</text>`;
+                s += `<text x="${x0 + w / 2}" y="${y0 + h + 34}" class="cap">паркан: 2(x + y) = 34 м</text>`;
+                document.getElementById('plot-scene').innerHTML = s;
+            };
+            window.revealPlot = function () { plotShown = true; renderPlot(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: клік по «?» ---
+            window.showCell = function (td) {
+                const v = td.querySelector('.hidden-answer');
+                if (v) { v.classList.add('shown'); typeset(td); }
+            };
+
+            // --- Слайд 4: y = x² і y = x + b ---
+            const PM = plane(-3.5, 3.5, -2.5, 9);
+            let meetShown = false;
+            function meetRoots(b) {
+                const D = 1 + 4 * b;
+                if (D < -1e-9) return [D, []];
+                if (Math.abs(D) < 1e-9) return [0, [0.5]];
+                return [D, [(1 - Math.sqrt(D)) / 2, (1 + Math.sqrt(D)) / 2]];
+            }
+            function drawMeet() {
+                const b = parseFloat(document.getElementById('w-b').value), [, xs] = meetRoots(b);
+                let svg = axesSvg(PM, 1, 1) + curveSvg(PM, (x) => x * x, -3.5, 3.5) + curveSvg(PM, (x) => x + b, -3.5, 3.5, () => 'line');
+                svg += `<text x="${PM.sx(-1.5)}" y="${PM.sy(7.5)}" class="plot-name">y = x²</text>`;
+                if (meetShown) xs.forEach((x) => { svg += `<circle cx="${PM.sx(x).toFixed(1)}" cy="${PM.sy(x * x).toFixed(1)}" r="6" class="meet"/>`; });
+                document.getElementById('meet-scene').innerHTML = svg;
+            }
+            window.renderMeet = function () {
+                const b = parseFloat(document.getElementById('w-b').value);
+                document.getElementById('w-b-val').textContent = String(b).replace('.', ',').replace('-', '−');
+                meetShown = false;
+                const t = document.getElementById('meet-task');
+                t.innerHTML = `$x^2 = x ${b < 0 ? '-' : '+'} ${tx(Math.abs(b))}$, $\\;x^2 - x ${b > 0 ? '-' : '+'} ${tx(Math.abs(b))} = 0$`;
+                document.getElementById('meet-answer').innerHTML = '';
+                typeset(t);
+                drawMeet();
+            };
+            window.revealMeet = function () {
+                const b = parseFloat(document.getElementById('w-b').value), [D, xs] = meetRoots(b), out = document.getElementById('meet-answer');
+                meetShown = true; drawMeet();
+                const pairs = xs.map((x) => `$(${tx(x)}; ${tx(x * x)})$`).join(', ');
+                const approx = xs.some((x) => Math.abs(x * 100 - Math.round(x * 100)) > 1e-6);
+                out.innerHTML = `$D = 1 + 4b = ${tx(D)}$: ` + (xs.length === 0 ? '<span class="ok">розв\'язків немає</span>'
+                    : xs.length === 1 ? `<span class="ok">один розв'язок</span> ${pairs} — пряма дотикається до параболи`
+                    : `<span class="ok">два розв'язки</span> ${pairs}${approx ? ' (наближено)' : ''}`);
+                typeset(out);
+            };
+
+            // --- Слайд 5: x − y = 1, x² + y² = 13 ---
+            const STEPS = [
+                ['$x = $ [[$y + 1$]]', 'Крок 1: виражаємо $x$ з лінійного рівняння'],
+                ['$(y + 1)^2 + y^2 = 13$', 'Крок 2: підставляємо в друге рівняння'],
+                ['$2y^2 + 2y - 12 = 0$, $\\;y^2 + y - 6 = 0$', 'Розкрили дужки, зібрали все ліворуч, поділили на $2$'],
+                ['[[$y_1 = 2$, $\\;y_2 = -3$]]', 'За теоремою Вієта: $y_1 + y_2 = -1$, $y_1 y_2 = -6$'],
+                ['$x_1 = 2 + 1 = 3$, $\\;x_2 = -3 + 1 = -2$', 'Крок 3: для кожного $y$ знаходимо свій $x$'],
+                ['Відповідь: [[$(3; 2)$, $(-2; -3)$]]', 'Перевірка: $9 + 4 = 13$ ✓, $4 + 9 = 13$ ✓'],
+            ];
+@@INCLUDE steps.js
