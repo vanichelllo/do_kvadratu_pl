@@ -23,20 +23,20 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.db.models import Case, Count, F, Prefetch, Q, When
+from django.db.models import Case, Count, F, Min, Prefetch, Q, When
 from django.conf import settings
 from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, subscriptions, teachers
+from . import homework, practice, preview, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
 # ОНОВЛЕНІ ІМПОРТИ: Видалено Category та DiagnosticTopic, додано CurriculumTopic
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
-    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, TutorStudentRequest, Review, StudentPresentation,
+    Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, SchoolPriceRule, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
     NMT_SUBJECT_NAME, ClassPlan,
 )
@@ -1387,8 +1387,33 @@ def web_manifest(request):
     return response
 
 
+# Формати занять з викладачем (сторінки «Записатися» й «Ціни»)
+LESSON_FORMATS = (
+    {'name': 'Міні-групи', 'note': 'До 4 учнів. Динамічна робота та дружня атмосфера.', 'price': 240},
+    {'name': 'Індивідуально (День)', 'note': 'Будні дні з 16:00 до 19:00. Максимум уваги.', 'price': 490},
+    {'name': 'Індивідуально (Прайм)', 'note': 'Будні з 19:00 до 21:00 та Вихідні з 09:00 до 13:00.', 'price': 590},
+)
+
+
 def booking_view(request):
-    return render(request, 'booking.html')
+    formats = [dict(f, promo_price=f['price'] * 4 // 5) for f in LESSON_FORMATS]   # під час акції −20%
+    return render(request, 'booking.html', {'lesson_formats': formats})
+
+
+def prices_view(request):
+    """Усі способи навчання й ціни на одній сторінці"""
+    rules = list(SchoolPriceRule.objects.all())
+    lesson_min = StudyMaterial.objects.filter(is_published=True, is_free=False, is_bundle=False,
+                                              price__gt=0).aggregate(m=Min('price'))['m']
+    tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
+    return render(request, 'materials/prices.html', {
+        'lesson_min': lesson_min,
+        'first_topic_free': any(r.first_topic_free for r in rules),
+        'class_plans': subscriptions.plans_on_sale(),
+        'lesson_formats': LESSON_FORMATS,
+        'tutor_min': tutor_monthly,
+        'trial_days': teachers.TRIAL_DAYS,
+    })
 
 
 # ==========================================
@@ -1476,6 +1501,8 @@ class MaterialDetailView(DetailView):
             context['class_plan'] = subscriptions.plan_for_material(material)
         context['default_description'] = DEFAULT_MATERIAL_DESCRIPTION
         context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
+        context['has_preview'] = (material.is_published and not context['is_owned'] and not material.is_free
+                                  and not material.is_bundle and bool(preview.preview_slides(material.html_content)))
 
         if material.is_bundle:
             total_original_price = sum(item.price for item in material.included_materials.all())
@@ -1483,6 +1510,52 @@ class MaterialDetailView(DetailView):
             context['savings'] = total_original_price - material.price
 
         return context
+
+
+def cabinet_next_step(user, context, library):
+    """Одна головна підказка для учня: що зробити зараз (ДЗ → незакінчена практика → слабка тема → наступний урок)"""
+    pending = sorted((hw for hw in context.get('my_homeworks', []) if not hw.attempt_id), key=lambda hw: hw.due_date)
+    if pending:
+        hw = pending[0]
+        return {'icon': '🏠', 'title': 'Домашнє завдання', 'text': f'{hw.material.title} — до {hw.due_date:%d.%m}',
+                'url': reverse('practice_session', args=[hw.material_id]),
+                'button': 'Продовжити' if hw.state == 'started' else 'Почати'}
+
+    run = (PracticeRun.objects.filter(user=user, teacher__isnull=True, finished_at__isnull=True)
+           .select_related('material').defer('material__html_content').order_by('-updated_at').first())
+    if run and any(e.get('tries') for e in run.state.get('history', [])):
+        return {'icon': '🎯', 'title': 'Продовж практику', 'text': run.material.title,
+                'url': reverse('practice_session', args=[run.material_id]), 'button': 'Продовжити'}
+
+    def open_url(material):
+        # Тема без презентації — одразу практика
+        return reverse('download_material' if material.html_content else 'practice_session', args=[material.id])
+
+    lessons = [m for m in library if not m.is_bundle]
+    available = {m.id for m in lessons}
+    for material in context.get('diagnostic_recommendations', []):
+        if material.id in available:
+            return {'icon': '💪', 'title': 'Підтягни слабку тему', 'text': material.title,
+                    'url': open_url(material), 'button': 'Відкрити'}
+
+    if lessons:
+        done = set(PracticeAttempt.objects.filter(user=user, material_id__in=available)
+                   .values_list('material_id', flat=True))
+        last = next((a.material_id for a in context.get('my_attempts', []) if a.material_id in available), None)
+        start = next((i + 1 for i, m in enumerate(lessons) if m.id == last), 0)
+        upcoming = [m for m in lessons[start:] + lessons[:start] if m.id not in done]
+        if upcoming:
+            material = upcoming[0]
+            return {'icon': '📖', 'title': 'Наступний урок' if done else 'Почни з уроку', 'text': material.title,
+                    'url': open_url(material), 'button': 'Відкрити'}
+        return None
+
+    if not context.get('diagnostics'):
+        return {'icon': '🔥', 'title': 'Почни з діагностики',
+                'text': 'Безкоштовний тест покаже, які теми підтягнути в першу чергу',
+                'url': reverse('diagnostic_test'), 'button': 'Пройти'}
+    return {'icon': '🛒', 'title': 'Обери уроки', 'text': 'Слабкі теми з діагностики — на вітрині',
+            'url': reverse('materials_list'), 'button': 'На вітрину'}
 
 
 class CabinetView(LoginRequiredMixin, TemplateView):
@@ -1588,6 +1661,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 .defer('material__html_content')[:10])
 
         user = self.request.user
+        if not teachers.is_tutor(user):
+            context['next_step'] = cabinet_next_step(user, context, library_list)
         if teachers.is_tutor(user):
             students = teachers.students_of(user)
             grades = teachers.licensed_grade_ids(user)   # None — власник: усі класи
@@ -1664,6 +1739,20 @@ def download_material_view(request, material_id):
         raise Http404("У вас немає доступу до цього матеріалу.")
 
     return render(request, 'materials/reader.html', {'material': material})
+
+
+def material_preview_view(request, material_id):
+    """Безкоштовний перегляд перших слайдів уроку до покупки (без входу)"""
+    material = get_object_or_404(StudyMaterial, id=material_id, is_published=True, is_bundle=False)
+    if user_owns_material(request.user, material):
+        return redirect('download_material', material_id=material.id)
+    html = preview.build_preview(material.html_content or '')
+    if not html:
+        raise Http404("Для цього уроку немає безкоштовного перегляду.")
+    return render(request, 'materials/reader.html', {
+        'material': material, 'is_preview': True, 'preview_html': html,
+        'back_url': reverse('material_detail', args=[material.id]),
+    })
 
 
 @api_view(['GET'])

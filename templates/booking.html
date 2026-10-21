@@ -35,44 +35,19 @@
     {# Блок з тарифами: під час акції — перекреслені ціни та знижка 20% #}
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 40px;">
 
-        <!-- Тариф 1: Міні-групи -->
+        {% for format in lesson_formats %}
         <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue); position: relative;">
             {% if promo_active %}<div style="position: absolute; top: -12px; right: -12px; background: #e74c3c; color: white; font-weight: 900; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; transform: rotate(10deg); box-shadow: 2px 2px 0px #c0392b;">-20%</div>{% endif %}
-            <h3 style="margin-top: 0; color: var(--brand-blue);">Міні-групи</h3>
-            <p style="font-size: 0.9rem; color: #555;">До 4 учнів. Динамічна робота та дружня атмосфера.</p>
+            <h3 style="margin-top: 0; color: var(--brand-blue);">{{ format.name }}</h3>
+            <p style="font-size: 0.9rem; color: #555;">{{ format.note }}</p>
             {% if promo_active %}
-            <div style="font-size: 1rem; color: #95a5a6; text-decoration: line-through; font-weight: bold; margin-bottom: -5px;">240 грн</div>
-            <div style="font-size: 1.8rem; font-weight: 900; color: #e74c3c; text-shadow: 1px 1px 0px rgba(231, 76, 60, 0.2);">192 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
+            <div style="font-size: 1rem; color: #95a5a6; text-decoration: line-through; font-weight: bold; margin-bottom: -5px;">{{ format.price }} грн</div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: #e74c3c; text-shadow: 1px 1px 0px rgba(231, 76, 60, 0.2);">{{ format.promo_price }} грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
             {% else %}
-            <div style="font-size: 1.8rem; font-weight: 900; color: var(--brand-blue);">240 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600;">/ урок</span></div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: var(--brand-blue);">{{ format.price }} грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600;">/ урок</span></div>
             {% endif %}
         </div>
-
-        <!-- Тариф 2: Індивідуально (День) -->
-        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue); position: relative;">
-            {% if promo_active %}<div style="position: absolute; top: -12px; right: -12px; background: #e74c3c; color: white; font-weight: 900; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; transform: rotate(10deg); box-shadow: 2px 2px 0px #c0392b;">-20%</div>{% endif %}
-            <h3 style="margin-top: 0; color: var(--brand-blue);">Індивідуально (День)</h3>
-            <p style="font-size: 0.9rem; color: #555;">Будні дні з 16:00 до 19:00. Максимум уваги.</p>
-            {% if promo_active %}
-            <div style="font-size: 1rem; color: #95a5a6; text-decoration: line-through; font-weight: bold; margin-bottom: -5px;">490 грн</div>
-            <div style="font-size: 1.8rem; font-weight: 900; color: #e74c3c; text-shadow: 1px 1px 0px rgba(231, 76, 60, 0.2);">392 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
-            {% else %}
-            <div style="font-size: 1.8rem; font-weight: 900; color: var(--brand-blue);">490 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600;">/ урок</span></div>
-            {% endif %}
-        </div>
-
-        <!-- Тариф 3: Індивідуально (Вечір) -->
-        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue); position: relative;">
-            {% if promo_active %}<div style="position: absolute; top: -12px; right: -12px; background: #e74c3c; color: white; font-weight: 900; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; transform: rotate(10deg); box-shadow: 2px 2px 0px #c0392b;">-20%</div>{% endif %}
-            <h3 style="margin-top: 0; color: var(--brand-blue);">Індивідуально (Прайм)</h3>
-            <p style="font-size: 0.9rem; color: #555;">Будні з 19:00 до 21:00 та Вихідні з 09:00 до 13:00.</p>
-            {% if promo_active %}
-            <div style="font-size: 1rem; color: #95a5a6; text-decoration: line-through; font-weight: bold; margin-bottom: -5px;">590 грн</div>
-            <div style="font-size: 1.8rem; font-weight: 900; color: #e74c3c; text-shadow: 1px 1px 0px rgba(231, 76, 60, 0.2);">472 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
-            {% else %}
-            <div style="font-size: 1.8rem; font-weight: 900; color: var(--brand-blue);">590 грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600;">/ урок</span></div>
-            {% endif %}
-        </div>
+        {% endfor %}
 
     </div>
 

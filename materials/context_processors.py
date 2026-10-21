@@ -3,9 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.encoding import escape_uri_path
 
-from django.db.models import Q
-
-from .models import Cart, ClassPlan
+from .models import Cart
 
 
 def promo(request):
@@ -34,8 +32,3 @@ def seo(request):
         'canonical_url': settings.SITE_URL + escape_uri_path(request.path),
     }
 
-
-def class_subscriptions(request):
-    """Пункт меню «Підписка на клас» — лише коли якийсь клас продається (запит — лише якщо шаблон його читає)."""
-    return {'class_subscriptions_on_sale': lambda: ClassPlan.objects.filter(
-        Q(price_month__gt=0) | Q(price_year__gt=0), is_active=True).exists()}

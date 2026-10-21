@@ -315,6 +315,95 @@ class CabinetSectionsTests(BaseTestCase):
         self.assertContains(response, 'data-section="settings" open>')
 
 
+    @staticmethod
+    def panel_of(html, key):
+        """Вкладка, у якій лежить розділ: найближча відкрита перед ним панель data-tab-panel"""
+        pos = html.index(f'data-section="{key}"')
+        return re.findall(r'data-tab-panel="(\w+)"', html[:pos])[-1]
+
+    def test_teacher_cabinet_split_into_tabs(self):
+        boss = self.make_user('boss@example.com', is_staff=True)
+        kid = self.make_user('kid@example.com')
+        TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        self.client.force_login(boss)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('data-default="teach"', html)
+        for tab in ('learn', 'teach', 'account'):
+            self.assertIn(f'role="tab" data-tab="{tab}"', html)
+        expected = {'journal': 'teach', 'students': 'teach', 'library': 'learn',
+                    'topup': 'account', 'review': 'account', 'settings': 'account'}
+        for key, tab in expected.items():
+            self.assertEqual(self.panel_of(html, key), tab, key)
+
+    def test_student_tabs_without_teaching(self):
+        kid = self.make_user('kid@example.com')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        self.client.force_login(kid)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('data-default="learn"', html)
+        self.assertNotIn('data-tab="teach"', html)
+        self.assertEqual(self.panel_of(html, 'attempts'), 'learn')
+        response = self.client.post('/cabinet/', {'role': 'no-such-role', 'first_name': '', 'last_name': '',
+                                                  'phone_number': '', 'target_grade': ''})
+        self.assertContains(response, 'data-default="account"')
+
+
+
+class CabinetNextStepTests(BaseTestCase):
+    def setUp(self):
+        self.kid = self.make_user('kid@example.com')
+        self.lessons = [StudyMaterial.objects.create(title=f'{n}. Тема', price=50, is_published=True,
+                                                     html_content='<p>урок</p>') for n in (1, 2, 3)]
+        self.client.force_login(self.kid)
+
+    def next_step(self):
+        return self.client.get('/cabinet/').context['next_step']
+
+    def test_new_user_is_sent_to_diagnostic(self):
+        step = self.next_step()
+        self.assertEqual(step['url'], '/diagnostic/')
+        self.assertContains(self.client.get('/cabinet/'), 'Що далі')
+
+    def test_next_lesson_after_last_practised(self):
+        self.kid.purchased_materials.add(*self.lessons)
+        self.assertEqual(self.next_step()['url'], f'/download/{self.lessons[0].id}/')
+        PracticeAttempt.objects.create(user=self.kid, material=self.lessons[0], score=5, max_score=10)
+        step = self.next_step()
+        self.assertEqual((step['title'], step['url']), ('Наступний урок', f'/download/{self.lessons[1].id}/'))
+        for lesson in self.lessons[1:]:
+            PracticeAttempt.objects.create(user=self.kid, material=lesson, score=5, max_score=10)
+        self.assertIsNone(self.next_step())
+
+    def test_homework_comes_first(self):
+        self.kid.purchased_materials.add(*self.lessons)
+        request = TutorStudentRequest.objects.create(user=self.kid, real_name='Учень', course='grade_5', status='approved')
+        Homework.objects.create(student=request, material=self.lessons[2],
+                                due_date=timezone.localdate() + datetime.timedelta(days=3))
+        step = self.next_step()
+        self.assertEqual((step['title'], step['url']), ('Домашнє завдання', f'/practice/{self.lessons[2].id}/'))
+
+    def test_teacher_has_no_next_step(self):
+        self.client.force_login(self.make_user('boss@example.com', is_staff=True))
+        self.assertNotIn('next_step', self.client.get('/cabinet/').context)
+
+
+class PricesPageTests(BaseTestCase):
+    def test_prices_page_lists_all_options(self):
+        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)
+        StudyMaterial.objects.create(title='Дешевша, але прихована', price=5)
+        page = self.client.get('/prices/')
+        self.assertContains(page, 'від 35 ₴')
+        self.assertContains(page, 'Міні-групи — 240 ₴')
+        self.assertContains(page, '/booking/')
+        self.assertContains(page, '/for-tutors/')
+        self.assertContains(self.client.get('/'), 'href="/prices/"')
+        self.assertContains(self.client.get('/booking/'), '490 грн')
+        self.assertIn('/prices/', self.client.get('/sitemap.xml').content.decode())
+
+
 class ParentMaterialTests(BaseTestCase):
     def setUp(self):
         self.kid = self.make_user('kid@example.com')
@@ -767,6 +856,51 @@ class DiagnosticResultsTests(BaseTestCase):
         self.assertContains(response, "diagnostic_complete")
         # Гість бачить, що результат не збережено, і пропозицію зареєструватися
         self.assertContains(response, 'не збережено')
+
+
+class LessonPreviewTests(BaseTestCase):
+    @staticmethod
+    def slides_html(count):
+        slides = ''.join(f'<section class="slide-card" data-slide="{n}"><p>Слайд-{n}</p>'
+                         f'<section class="inner">вкладена</section></section>' for n in range(1, count + 1))
+        return f'<html><head><title>Урок</title></head><body>{slides}<script>go()</script></body></html>'
+
+    def setUp(self):
+        self.lesson = StudyMaterial.objects.create(title='1.1 Числа', price=100, is_published=True,
+                                                   html_content=self.slides_html(8))
+
+    def test_preview_shows_only_first_slides(self):
+        page = self.client.get(f'/material/{self.lesson.id}/preview/')
+        self.assertEqual(page.status_code, 200)
+        html = page.context['preview_html']
+        for n in (1, 2, 3):
+            self.assertIn(f'Слайд-{n}<', html)
+        for n in (4, 8):
+            self.assertNotIn(f'Слайд-{n}<', html)
+        self.assertIn('ще 5 слайдів', html)
+        self.assertIn('<script>go()</script>', html)
+        self.assertNotIn('Слайд-8', page.content.decode())
+        self.assertContains(page, 'Придбати повний урок')
+
+    def test_detail_page_links_to_preview(self):
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), f'/material/{self.lesson.id}/preview/')
+
+    def test_no_preview_for_owner_free_or_short_lessons(self):
+        user = self.make_user('owner@example.com')
+        user.purchased_materials.add(self.lesson)
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(f'/material/{self.lesson.id}/'), '/preview/')
+        self.assertRedirects(self.client.get(f'/material/{self.lesson.id}/preview/'),
+                             f'/download/{self.lesson.id}/', fetch_redirect_response=False)
+        self.client.logout()
+        short = StudyMaterial.objects.create(title='Короткий', price=100, is_published=True,
+                                             html_content=self.slides_html(2))
+        hidden = StudyMaterial.objects.create(title='Чернетка', price=100, html_content=self.slides_html(8))
+        for material in (short, hidden):
+            self.assertEqual(self.client.get(f'/material/{material.id}/preview/').status_code, 404)
+        free = StudyMaterial.objects.create(title='Безкоштовний', is_free=True, is_published=True,
+                                            html_content=self.slides_html(8))
+        self.assertNotContains(self.client.get(f'/material/{free.id}/'), '/preview/')
 
 
 class SeoTests(BaseTestCase):
@@ -3650,7 +3784,7 @@ class ClassSubscriptionTests(BaseTestCase):
 
     def test_storefront_shows_only_classes_on_sale(self):
         self.assertNotContains(self.client.get('/subscribe/'), '7 клас</h3>')
-        self.assertNotContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        self.assertNotContains(self.client.get('/prices/'), 'Підписка на клас')
         self.assertEqual(self.client.post(f'/subscribe/buy/{self.plan7.id}/month/',
                                           {'agree': 'on', 'method': 'balance'}).status_code, 404)
         self.plan7.is_active = True
@@ -3661,7 +3795,7 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertContains(page, 'Уже готово уроків: 2 з 2')
         self.assertContains(page, 'На місяць — з балансу')        # 119 ₴ ≤ 400 ₴
         self.assertNotContains(page, 'На навчальний рік — з балансу')   # 549 ₴ > 400 ₴
-        self.assertContains(self.client.get('/'), 'ПІДПИСКА НА КЛАС')
+        self.assertContains(self.client.get('/prices/'), '7 клас — від 119 ₴/міс')
         grade = self.algebra7.curriculum_topic.chapter.grade
         self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), 'Увесь 7 клас')
         self.assertContains(self.client.get(f'/material/{self.algebra7.id}/'), 'Або весь 7 клас за підпискою')

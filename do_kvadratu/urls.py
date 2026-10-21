@@ -38,6 +38,8 @@ from materials.views import (
     diagnostic_offer_view,
     diagnostic_test_view,
     download_material_view,
+    prices_view,
+    material_preview_view,
     math_sprint_game,
     mono_webhook,
     parent_dashboard_view,
@@ -108,6 +110,7 @@ urlpatterns = [
     path('homework/<int:homework_id>/credit/', homework_credit, name='homework_credit'),
     path('api/bot/library/<str:telegram_id>/', api_bot_user_library),
     path('material/<int:pk>/', MaterialDetailView.as_view(), name='material_detail'),
+    path('material/<int:material_id>/preview/', material_preview_view, name='material_preview'),
     path('about/', AboutView.as_view(), name='about'),
 
     path('cart/pay/balance/', pay_from_balance, name='pay_from_balance'),
@@ -137,6 +140,7 @@ urlpatterns = [
 
     # Календар запису
     path('booking/', booking_view, name='booking'),
+    path('prices/', prices_view, name='prices'),
     path('request-student/', request_tutor_student_status, name='request_student_status'),
     path('submit-review/', submit_review, name='submit_review'),
     path('lesson/<int:presentation_id>/', view_student_presentation, name='view_student_presentation'),

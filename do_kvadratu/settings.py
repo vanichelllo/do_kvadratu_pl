@@ -125,7 +125,6 @@ TEMPLATES = [
                 'materials.context_processors.promo',
                 'materials.context_processors.seasonal',
                 'materials.context_processors.seo',
-                'materials.context_processors.class_subscriptions',
             ],
         },
     },

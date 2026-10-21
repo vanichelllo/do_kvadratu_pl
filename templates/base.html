@@ -394,7 +394,7 @@
             <a href="{% url 'diagnostic_test' %}">ДІАГНОСТИКА НМТ</a>
             <a href="{% url 'game_hub' %}">🎮 ІГРИ</a>
             <a href="{% url 'materials_list' %}">ВІТРИНА</a>
-            {% if class_subscriptions_on_sale %}<a href="{% url 'class_subscribe' %}">ПІДПИСКА НА КЛАС</a>{% endif %}
+            <a href="{% url 'prices' %}">ЦІНИ</a>
             <a href="{% url 'about' %}">ПРО ВИКЛАДАЧА</a>
 
             <!-- РОЗДІЛЯЄМО ЛОГІКУ ДЛЯ АВТОРИЗОВАНИХ І ГОСТЕЙ -->
@@ -444,6 +444,8 @@
         </div>
 
         <div class="footer-links">
+            <a href="{% url 'prices' %}">Ціни</a>
+            <span>|</span>
             <a href="{% url 'for_tutors' %}">Для репетиторів</a>
             <span>|</span>
             <a href="{% url 'offer' %}">Договір публічної оферти</a>

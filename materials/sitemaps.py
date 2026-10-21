@@ -22,13 +22,13 @@ class StaticPagesSitemap(MainDomainSitemap):
     changefreq = 'weekly'
 
     def items(self):
-        return ['home', 'materials_list', 'booking', 'diagnostic_test', 'about', 'offer', 'privacy']
+        return ['home', 'materials_list', 'prices', 'booking', 'diagnostic_test', 'about', 'offer', 'privacy']
 
     def location(self, item):
         return reverse(item)
 
     def priority(self, item):
-        return {'home': 1.0, 'materials_list': 0.9, 'booking': 0.8, 'diagnostic_test': 0.8}.get(item, 0.3)
+        return {'home': 1.0, 'materials_list': 0.9, 'prices': 0.8, 'booking': 0.8, 'diagnostic_test': 0.8}.get(item, 0.3)
 
 
 class MaterialSitemap(MainDomainSitemap):
