@@ -118,7 +118,7 @@
             </form>
 
             <p style="text-align: center; margin-top: 25px; font-weight: 600; font-size: 0.9rem;">
-                Ще немає акаунту? <a href="{% url 'register' %}" style="color: var(--brand-blue); text-decoration: underline;">Створити</a>
+                Ще немає акаунту? <a href="{% url 'register' %}{% if redirect_field_value %}?next={{ redirect_field_value|urlencode }}{% endif %}" style="color: var(--brand-blue); text-decoration: underline;">Створити</a>
             </p>
         </div>
     </div>

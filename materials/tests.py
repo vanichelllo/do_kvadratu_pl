@@ -6,6 +6,9 @@ import re
 from unittest import mock
 
 import ecdsa
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialApp
+from django.contrib.sites.models import Site
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -388,6 +391,36 @@ class CabinetNextStepTests(BaseTestCase):
     def test_teacher_has_no_next_step(self):
         self.client.force_login(self.make_user('boss@example.com', is_staff=True))
         self.assertNotIn('next_step', self.client.get('/cabinet/').context)
+
+
+class GuestCartTests(BaseTestCase):
+    def setUp(self):
+        self.lesson = StudyMaterial.objects.create(title='1. Числа', price=100, is_published=True)
+        self.free = StudyMaterial.objects.create(title='Формули', is_free=True, is_published=True)
+        self.user = self.make_user('guest@example.com')
+        EmailAddress.objects.create(user=self.user, email=self.user.email, verified=True, primary=True)
+        app = SocialApp.objects.create(provider='google', name='Google', client_id='id', secret='secret')
+        app.sites.add(Site.objects.get_current())
+
+    def test_guest_choice_waits_in_cart_after_login(self):
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), 'можна через Google')
+        response = self.client.post(f'/cart/add/{self.lesson.id}/')
+        self.assertRedirects(response, '/login/?next=/cart/', fetch_redirect_response=False)
+        self.client.post(f'/cart/add/{self.free.id}/')
+        login = self.client.post('/login/?next=/cart/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
+        self.assertRedirects(login, '/cart/', fetch_redirect_response=False)
+        self.assertTrue(CartItem.objects.filter(cart__user=self.user, material=self.lesson).exists())
+        self.assertTrue(self.user.purchased_materials.filter(id=self.free.id).exists())
+        self.assertNotIn('pending_cart', self.client.session)
+
+    def test_owned_material_is_not_added_again(self):
+        self.user.purchased_materials.add(self.lesson)
+        self.client.post(f'/cart/add/{self.lesson.id}/')
+        self.client.post('/login/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
+        self.assertFalse(CartItem.objects.filter(material=self.lesson).exists())
+
+    def test_login_page_keeps_next_for_signup(self):
+        self.assertContains(self.client.get('/login/?next=/cart/'), '/register/?next=/cart/')
 
 
 class PricesPageTests(BaseTestCase):

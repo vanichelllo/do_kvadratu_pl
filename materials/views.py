@@ -65,6 +65,9 @@ def to_int(value):
     return number if -MAX_DB_INT <= number <= MAX_DB_INT else None
 
 
+PENDING_CART_KEY = 'pending_cart'   # id матеріалів, які гість додав у кошик до входу
+
+
 def post_required(redirect_to):
     def decorator(view):
         @wraps(view)
@@ -1300,10 +1303,18 @@ def cart_detail(request):
     return render(request, 'materials/cart.html', {'cart': cart, 'cart_items': cart.cached_items()})
 
 
-@login_required
 @post_required(material_page)
 def add_to_cart(request, material_id):
     material = get_object_or_404(StudyMaterial, id=material_id, is_published=True)
+
+    if not request.user.is_authenticated:
+        # Гість: запам'ятовуємо вибір, після входу чи реєстрації він уже буде в кошику (materials/signals.py)
+        pending = [i for i in request.session.get(PENDING_CART_KEY, []) if i != material.id][-19:]
+        request.session[PENDING_CART_KEY] = pending + [material.id]
+        free = material.is_free or material.price == 0
+        messages.info(request, f"Увійдіть або зареєструйтеся — «{material.title}» "
+                               f"{'одразу з’явиться у вашому кабінеті' if free else 'чекатиме у кошику'}.")
+        return redirect(f"{reverse('login')}?next={reverse('cabinet' if free else 'cart_detail')}")
 
     if user_owns_material(request.user, material):
         messages.warning(request, "Ви вже придбали цей матеріал!")
