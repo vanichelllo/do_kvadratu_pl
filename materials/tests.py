@@ -392,10 +392,15 @@ class CabinetNextStepTests(BaseTestCase):
 
 class PricesPageTests(BaseTestCase):
     def test_prices_page_lists_all_options(self):
-        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)
+        StudyMaterial.objects.create(title='Тема', price=35, is_published=True)   # без теми в дереві — НМТ
         StudyMaterial.objects.create(title='Дешевша, але прихована', price=5)
+        lesson = StudyMaterial.objects.create(title='Урок', price=60, is_published=True)
+        bundle = StudyMaterial.objects.create(title='Пакет', price=80, is_bundle=True, is_published=True)
+        bundle.included_materials.add(lesson, StudyMaterial.objects.get(title='Тема'))
         page = self.client.get('/prices/')
+        self.assertContains(page, 'Підготовка до НМТ')
         self.assertContains(page, 'від 35 ₴')
+        self.assertContains(page, 'Пакети тем — від 80 ₴, економія до 15 ₴')
         self.assertContains(page, 'Міні-групи — 240 ₴')
         self.assertContains(page, '/booking/')
         self.assertContains(page, '/for-tutors/')

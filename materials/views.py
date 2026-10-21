@@ -1403,11 +1403,19 @@ def booking_view(request):
 def prices_view(request):
     """Усі способи навчання й ціни на одній сторінці"""
     rules = list(SchoolPriceRule.objects.all())
-    lesson_min = StudyMaterial.objects.filter(is_published=True, is_free=False, is_bundle=False,
-                                              price__gt=0).aggregate(m=Min('price'))['m']
+    on_sale = StudyMaterial.objects.filter(is_published=True, is_free=False, price__gt=0)
+    nmt = Q(curriculum_topic__isnull=True) | Q(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
+    bundles = list(on_sale.filter(is_bundle=True).prefetch_related('included_materials').defer('html_content'))
+    nmt_subject = CurriculumSubject.objects.filter(name=NMT_SUBJECT_NAME).first()
     tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
     return render(request, 'materials/prices.html', {
-        'lesson_min': lesson_min,
+        'school_min': on_sale.filter(is_bundle=False).exclude(nmt).aggregate(m=Min('price'))['m'],
+        'nmt_min': on_sale.filter(nmt, is_bundle=False).aggregate(m=Min('price'))['m'],
+        'bundle_min': min((b.price for b in bundles), default=None),
+        'bundle_saving': max((sum(m.price for m in b.included_materials.all()) - b.price for b in bundles), default=0),
+        'nmt_url': reverse('materials_list') + (f'?subject={nmt_subject.id}' if nmt_subject else ''),
+        'nmt_countdown': nmt_countdown(0),
+        'nmt_free': StudyMaterial.objects.filter(nmt, is_published=True, is_free=True).exists(),
         'first_topic_free': any(r.first_topic_free for r in rules),
         'class_plans': subscriptions.plans_on_sale(),
         'lesson_formats': LESSON_FORMATS,
