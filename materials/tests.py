@@ -315,6 +315,42 @@ class CabinetSectionsTests(BaseTestCase):
         self.assertContains(response, 'data-section="settings" open>')
 
 
+    @staticmethod
+    def panel_of(html, key):
+        """Вкладка, у якій лежить розділ: найближча відкрита перед ним панель data-tab-panel"""
+        pos = html.index(f'data-section="{key}"')
+        return re.findall(r'data-tab-panel="(\w+)"', html[:pos])[-1]
+
+    def test_teacher_cabinet_split_into_tabs(self):
+        boss = self.make_user('boss@example.com', is_staff=True)
+        kid = self.make_user('kid@example.com')
+        TutorStudentRequest.objects.create(user=kid, real_name='Учень', course='nmt', status='approved')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        self.client.force_login(boss)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('data-default="teach"', html)
+        for tab in ('learn', 'teach', 'account'):
+            self.assertIn(f'role="tab" data-tab="{tab}"', html)
+        expected = {'journal': 'teach', 'students': 'teach', 'library': 'learn',
+                    'topup': 'account', 'review': 'account', 'settings': 'account'}
+        for key, tab in expected.items():
+            self.assertEqual(self.panel_of(html, key), tab, key)
+
+    def test_student_tabs_without_teaching(self):
+        kid = self.make_user('kid@example.com')
+        PracticeAttempt.objects.create(user=kid, material=StudyMaterial.objects.create(title='1. Тема'),
+                                       score=5, max_score=10)
+        self.client.force_login(kid)
+        html = self.client.get('/cabinet/').content.decode()
+        self.assertIn('data-default="learn"', html)
+        self.assertNotIn('data-tab="teach"', html)
+        self.assertEqual(self.panel_of(html, 'attempts'), 'learn')
+        response = self.client.post('/cabinet/', {'role': 'no-such-role', 'first_name': '', 'last_name': '',
+                                                  'phone_number': '', 'target_grade': ''})
+        self.assertContains(response, 'data-default="account"')
+
+
 class ParentMaterialTests(BaseTestCase):
     def setUp(self):
         self.kid = self.make_user('kid@example.com')

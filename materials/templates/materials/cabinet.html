@@ -47,6 +47,23 @@
         margin-bottom: 60px;
     }
 
+    /* Вкладки кабінету */
+    .cab-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: -10px 0 30px; }
+    .cab-tabs[hidden] { display: none; }
+    .cab-tabs button {
+        font-family: inherit; font-weight: 800; font-size: 1rem; cursor: pointer;
+        padding: 10px 18px; border-radius: 8px; border: 2px solid var(--brand-blue);
+        background: #ffffff; color: var(--brand-blue); box-shadow: 3px 3px 0 var(--brand-blue);
+    }
+    .cab-tabs button[aria-selected="true"] { background: var(--brand-yellow); }
+    @media (max-width: 600px) {
+        .cab-tabs { gap: 6px; flex-wrap: nowrap; }
+        .cab-tabs button { flex: 1 1 0; min-width: 0; font-size: 0.82rem; padding: 8px 4px; box-shadow: 2px 2px 0 var(--brand-blue); }
+    }
+    .cabinet-grid.tabbed { grid-template-columns: 1fr; }
+    .cabinet-grid.tabbed > [data-tab-panel="account"] { max-width: 640px; }
+    a.balance-badge { text-decoration: none; }
+
     /* Без цього довга таблиця результатів розтягувала колонку, і на телефоні кабінет гортався вбік */
     .cabinet-grid > * { min-width: 0; }
 
@@ -299,14 +316,23 @@
         <h1 class="cabinet-title">Привіт, {{ user.first_name|default:user.username }}! 👋</h1>
         <p style="margin-top: 10px; margin-bottom: 0; font-size: 1.1rem; opacity: 0.9;">Це твій навчальний простір ДО КВАДРАТУ</p>
     </div>
-    <div class="balance-badge">
+    <a href="#account" class="balance-badge" data-tab-link="account">
         Баланс: {{ user.balance|default:"0.00" }} ₴
-    </div>
+    </a>
 </div>
 
-<div class="cabinet-grid">
+<!-- ВКЛАДКИ: без JavaScript їх не видно, і кабінет показується цілком -->
+<nav class="cab-tabs" id="cab-tabs" role="tablist" aria-label="Розділи кабінету" hidden
+     data-default="{% if form.errors %}account{% elif is_tutor %}teach{% else %}learn{% endif %}">
+    <button type="button" role="tab" data-tab="learn">📚 Навчання</button>
+    {% if is_tutor or tutor_offer %}<button type="button" role="tab" data-tab="teach">🧑‍🏫 Викладання</button>{% endif %}
+    <button type="button" role="tab" data-tab="account">⚙️ Акаунт</button>
+</nav>
+
+<div class="cabinet-grid" id="cabinet-grid">
     <!-- ЛІВА КОЛОНКА -->
-    <div>
+    <div class="cab-main">
+        <div data-tab-panel="teach">
         <!-- КАБІНЕТ ВИКЛАДАЧА: ПІДПИСКИ Й ЗАПРОШЕННЯ (РЕПЕТИТОР) -->
         {% if invite_url %}
         <details class="cab-section" data-section="tutor" data-default-open open>
@@ -530,7 +556,9 @@
             </div>
         </details>
         {% endif %}
+        </div>
 
+        <div data-tab-panel="learn">
         <!-- ДОМАШНІ ЗАВДАННЯ УЧНЯ -->
         {% if my_homeworks %}
         <details class="cab-section" data-section="my-homework" data-default-open open>
@@ -760,10 +788,11 @@
             {% endif %}
             </div>
         </details>
+        </div>
     </div>
 
     <!-- ПРАВА КОЛОНКА: ДІЇ ТА НАЛАШТУВАННЯ -->
-    <div>
+    <div data-tab-panel="account">
 
         <!-- БЛОК: ПОПОВНЕННЯ БАЛАНСУ -->
         <details class="topup-section cab-card" data-section="topup">
@@ -1007,6 +1036,53 @@
         });
         document.getElementById('lib-empty').hidden = shown > 0;
     }
+    // Вкладки кабінету: остання відкрита запам'ятовується на цьому пристрої, адреса #learn/#teach/#account
+    (function () {
+        const nav = document.getElementById('cab-tabs');
+        if (!nav) return;
+        const grid = document.getElementById('cabinet-grid');
+        const main = grid.querySelector('.cab-main');
+        const panels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+        const tabs = Array.from(nav.querySelectorAll('[data-tab]'));
+        const names = tabs.map(function (t) { return t.dataset.tab; });
+        const KEY = 'dk_cabinet_tab';
+
+        function show(name, remember) {
+            if (names.indexOf(name) === -1) name = nav.dataset.default;
+            tabs.forEach(function (t) {
+                const on = t.dataset.tab === name;
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+                t.tabIndex = on ? 0 : -1;
+            });
+            panels.forEach(function (p) { p.hidden = p.dataset.tabPanel !== name; });
+            main.hidden = name === 'account';
+            if (remember) {
+                try { localStorage.setItem(KEY, name); } catch (e) {}
+                history.replaceState(null, '', '#' + name);
+            }
+        }
+
+        nav.hidden = false;
+        grid.classList.add('tabbed');
+        tabs.forEach(function (t) {
+            t.addEventListener('click', function () { show(t.dataset.tab, true); });
+        });
+        document.querySelectorAll('[data-tab-link]').forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
+                show(a.dataset.tabLink, true);
+            });
+        });
+
+        let start = location.hash.slice(1);
+        if (names.indexOf(start) === -1) {
+            try { start = localStorage.getItem(KEY); } catch (e) { start = null; }
+        }
+        // Помилка в налаштуваннях — одразу показуємо форму
+        if (nav.dataset.default === 'account') start = 'account';
+        show(start, false);
+    })();
+
     // Розділи кабінету: браузер запам'ятовує, які з них ви відкрили (лише на цьому пристрої)
     (function () {
         const KEY = 'dk_cabinet_open';
