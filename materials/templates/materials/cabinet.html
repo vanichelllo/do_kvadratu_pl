@@ -64,6 +64,25 @@
     .cabinet-grid.tabbed > [data-tab-panel="account"] { max-width: 640px; }
     a.balance-badge { text-decoration: none; }
 
+    /* Картка «Що далі» */
+    .next-step {
+        display: flex; align-items: center; gap: 16px; margin-bottom: 30px; padding: 18px 20px;
+        background: #ffffff; border: 3px solid var(--brand-blue); border-radius: 12px;
+        box-shadow: 6px 6px 0 var(--brand-yellow);
+    }
+    .next-step-icon { font-size: 2.2rem; }
+    .next-step-info { flex: 1; min-width: 0; }
+    .next-step-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #6c757d; }
+    .next-step-text { font-size: 1.15rem; font-weight: 800; color: var(--brand-blue); overflow-wrap: break-word; }
+    .next-step-btn {
+        background: var(--brand-yellow); color: var(--brand-blue); font-weight: 900; text-decoration: none;
+        padding: 12px 18px; border-radius: 8px; border: 2px solid var(--brand-blue); white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+        .next-step { flex-wrap: wrap; }
+        .next-step-btn { flex: 1 1 100%; text-align: center; }
+    }
+
     /* Без цього довга таблиця результатів розтягувала колонку, і на телефоні кабінет гортався вбік */
     .cabinet-grid > * { min-width: 0; }
 
@@ -559,6 +578,18 @@
         </div>
 
         <div data-tab-panel="learn">
+        <!-- ЩО ДАЛІ: одна головна дія для учня -->
+        {% if next_step %}
+        <div class="next-step">
+            <div class="next-step-icon" aria-hidden="true">{{ next_step.icon }}</div>
+            <div class="next-step-info">
+                <div class="next-step-label">Що далі · {{ next_step.title }}</div>
+                <div class="next-step-text">{{ next_step.text }}</div>
+            </div>
+            <a href="{{ next_step.url }}" class="next-step-btn">{{ next_step.button }} →</a>
+        </div>
+        {% endif %}
+
         <!-- ДОМАШНІ ЗАВДАННЯ УЧНЯ -->
         {% if my_homeworks %}
         <details class="cab-section" data-section="my-homework" data-default-open open>

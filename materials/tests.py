@@ -351,6 +351,45 @@ class CabinetSectionsTests(BaseTestCase):
         self.assertContains(response, 'data-default="account"')
 
 
+
+class CabinetNextStepTests(BaseTestCase):
+    def setUp(self):
+        self.kid = self.make_user('kid@example.com')
+        self.lessons = [StudyMaterial.objects.create(title=f'{n}. Тема', price=50, is_published=True,
+                                                     html_content='<p>урок</p>') for n in (1, 2, 3)]
+        self.client.force_login(self.kid)
+
+    def next_step(self):
+        return self.client.get('/cabinet/').context['next_step']
+
+    def test_new_user_is_sent_to_diagnostic(self):
+        step = self.next_step()
+        self.assertEqual(step['url'], '/diagnostic/')
+        self.assertContains(self.client.get('/cabinet/'), 'Що далі')
+
+    def test_next_lesson_after_last_practised(self):
+        self.kid.purchased_materials.add(*self.lessons)
+        self.assertEqual(self.next_step()['url'], f'/download/{self.lessons[0].id}/')
+        PracticeAttempt.objects.create(user=self.kid, material=self.lessons[0], score=5, max_score=10)
+        step = self.next_step()
+        self.assertEqual((step['title'], step['url']), ('Наступний урок', f'/download/{self.lessons[1].id}/'))
+        for lesson in self.lessons[1:]:
+            PracticeAttempt.objects.create(user=self.kid, material=lesson, score=5, max_score=10)
+        self.assertIsNone(self.next_step())
+
+    def test_homework_comes_first(self):
+        self.kid.purchased_materials.add(*self.lessons)
+        request = TutorStudentRequest.objects.create(user=self.kid, real_name='Учень', course='grade_5', status='approved')
+        Homework.objects.create(student=request, material=self.lessons[2],
+                                due_date=timezone.localdate() + datetime.timedelta(days=3))
+        step = self.next_step()
+        self.assertEqual((step['title'], step['url']), ('Домашнє завдання', f'/practice/{self.lessons[2].id}/'))
+
+    def test_teacher_has_no_next_step(self):
+        self.client.force_login(self.make_user('boss@example.com', is_staff=True))
+        self.assertNotIn('next_step', self.client.get('/cabinet/').context)
+
+
 class ParentMaterialTests(BaseTestCase):
     def setUp(self):
         self.kid = self.make_user('kid@example.com')

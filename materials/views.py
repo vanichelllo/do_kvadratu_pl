@@ -1487,6 +1487,52 @@ class MaterialDetailView(DetailView):
         return context
 
 
+def cabinet_next_step(user, context, library):
+    """Одна головна підказка для учня: що зробити зараз (ДЗ → незакінчена практика → слабка тема → наступний урок)"""
+    pending = sorted((hw for hw in context.get('my_homeworks', []) if not hw.attempt_id), key=lambda hw: hw.due_date)
+    if pending:
+        hw = pending[0]
+        return {'icon': '🏠', 'title': 'Домашнє завдання', 'text': f'{hw.material.title} — до {hw.due_date:%d.%m}',
+                'url': reverse('practice_session', args=[hw.material_id]),
+                'button': 'Продовжити' if hw.state == 'started' else 'Почати'}
+
+    run = (PracticeRun.objects.filter(user=user, teacher__isnull=True, finished_at__isnull=True)
+           .select_related('material').defer('material__html_content').order_by('-updated_at').first())
+    if run and any(e.get('tries') for e in run.state.get('history', [])):
+        return {'icon': '🎯', 'title': 'Продовж практику', 'text': run.material.title,
+                'url': reverse('practice_session', args=[run.material_id]), 'button': 'Продовжити'}
+
+    def open_url(material):
+        # Тема без презентації — одразу практика
+        return reverse('download_material' if material.html_content else 'practice_session', args=[material.id])
+
+    lessons = [m for m in library if not m.is_bundle]
+    available = {m.id for m in lessons}
+    for material in context.get('diagnostic_recommendations', []):
+        if material.id in available:
+            return {'icon': '💪', 'title': 'Підтягни слабку тему', 'text': material.title,
+                    'url': open_url(material), 'button': 'Відкрити'}
+
+    if lessons:
+        done = set(PracticeAttempt.objects.filter(user=user, material_id__in=available)
+                   .values_list('material_id', flat=True))
+        last = next((a.material_id for a in context.get('my_attempts', []) if a.material_id in available), None)
+        start = next((i + 1 for i, m in enumerate(lessons) if m.id == last), 0)
+        upcoming = [m for m in lessons[start:] + lessons[:start] if m.id not in done]
+        if upcoming:
+            material = upcoming[0]
+            return {'icon': '📖', 'title': 'Наступний урок' if done else 'Почни з уроку', 'text': material.title,
+                    'url': open_url(material), 'button': 'Відкрити'}
+        return None
+
+    if not context.get('diagnostics'):
+        return {'icon': '🔥', 'title': 'Почни з діагностики',
+                'text': 'Безкоштовний тест покаже, які теми підтягнути в першу чергу',
+                'url': reverse('diagnostic_test'), 'button': 'Пройти'}
+    return {'icon': '🛒', 'title': 'Обери уроки', 'text': 'Слабкі теми з діагностики — на вітрині',
+            'url': reverse('materials_list'), 'button': 'На вітрину'}
+
+
 class CabinetView(LoginRequiredMixin, TemplateView):
     template_name = 'materials/cabinet.html'
 
@@ -1590,6 +1636,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
                 .defer('material__html_content')[:10])
 
         user = self.request.user
+        if not teachers.is_tutor(user):
+            context['next_step'] = cabinet_next_step(user, context, library_list)
         if teachers.is_tutor(user):
             students = teachers.students_of(user)
             grades = teachers.licensed_grade_ids(user)   # None — власник: усі класи
