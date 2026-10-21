@@ -731,8 +731,9 @@
         if (kind) {
             kind.render();
             // Підказка «Спершу дай відповідь…» стосується попередньої спроби — прибираємо її, щойно відповідь змінюють
-            const clearMsg = () => { document.getElementById('form-msg').textContent = ''; };
-            ['click', 'input'].forEach(ev => widget.addEventListener(ev, clearMsg));
+            // #widget є лише в нових типів, тож слухаємо всю картку (крім самої кнопки «Перевірити»)
+            const clearMsg = (e) => { if (!e.target.closest('#btn-check')) document.getElementById('form-msg').textContent = ''; };
+            ['click', 'input'].forEach(ev => card.addEventListener(ev, clearMsg));
             document.getElementById('btn-check').addEventListener('click', checkAnswer);
             typeset(card);
         }
