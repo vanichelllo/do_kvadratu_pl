@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
+from django.utils.html import escapejs
 
 from django.db import models
 
@@ -2654,7 +2655,7 @@ class LessonPracticeTests(BaseTestCase):
         page = self.client.get(self.url(query))
         self.assertContains(page, 'class="lesson"')
         self.assertContains(page, 'Петренко Оля')
-        self.assertContains(page, f'/practice/{self.lesson.id}/check/{query}')
+        self.assertContains(page, escapejs(f'/practice/{self.lesson.id}/check/{query}'))   # адреса в JS-рядку
         self.answer(query, correct=False)
         self.answer(query, correct=False)   # тренажер: друга спроба
         response = self.client.post(self.url(query))
