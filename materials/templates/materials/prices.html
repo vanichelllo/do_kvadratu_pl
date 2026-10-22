@@ -25,6 +25,12 @@
     .pr-choose { margin-top: 40px; background: #ffffff; border: 2px dashed var(--brand-blue); border-radius: 14px; padding: 22px; }
     .pr-choose h2 { margin-top: 0; font-size: 1.25rem; }
     .pr-choose p { margin: 8px 0; line-height: 1.5; }
+    .pr-faq { margin-top: 40px; }
+    .pr-faq h2 { font-size: 1.25rem; }
+    .pr-faq details { background: #ffffff; border: 2px solid var(--brand-blue); border-radius: 12px; padding: 14px 18px; }
+    .pr-faq details + details { margin-top: 10px; }
+    .pr-faq summary { font-weight: 800; color: var(--brand-blue); cursor: pointer; }
+    .pr-faq details p { margin: 10px 0 0; line-height: 1.55; }
 </style>
 
 <div class="pr">
@@ -109,5 +115,45 @@
         {% if support_price %}<p><b>Потрібен контроль, але індивідуальні заняття задорогі?</b> Підписка з супроводом: викладач задає й перевіряє ДЗ.</p>{% endif %}
         <p><b>Хочете, щоб пояснював викладач?</b> Запишіться на заняття — уроки й практика класу вже входять.</p>
     </div>
+
+    <!-- ЧАСТІ ЗАПИТАННЯ (відповіді — коротко з оферти) -->
+    <section class="pr-faq" id="faq">
+        <h2>Часті запитання</h2>
+        <details>
+            <summary>Коли відкриється урок після оплати?</summary>
+            <p>Одразу після підтвердження оплати — у «Моєму кабінеті», вкладка «Навчання». Окремо нічого чекати не треба.</p>
+        </details>
+        <details>
+            <summary>На який термін купується урок?</summary>
+            <p>Куплені уроки й пакети лишаються у вас назавжди: доступ не обмежений у часі.{% if class_plans %}
+                Підписка на клас відкриває всі уроки й практику класу, поки вона діє. Після кінця підписки
+                результати практики зберігаються, а окремо куплені уроки лишаються доступними.{% endif %}</p>
+        </details>
+        {% if class_plans %}
+        <details>
+            <summary>Підписка продовжиться й спишеться сама?</summary>
+            <p>Ні. Підписка не продовжується й не списується автоматично. За тиждень до кінця кабінет нагадає,
+                а якщо підключити Telegram-бота — він теж напише.</p>
+        </details>
+        {% endif %}
+        <details>
+            <summary>Чи можна повернути гроші?</summary>
+            <p>Якщо урок не відкривається, має суттєві недоліки або гроші списано двічі — виправимо або повернемо гроші.
+                Повернути гроші за урок, що вже відкрився, лише тому, що передумали, не вийде (пункти 14.2–14.3
+                <a href="{% url 'offer' %}">оферти</a>). За {% if class_plans %}невикористані повні місяці річної підписки й {% endif %}залишок
+                балансу гроші повертаємо на вимогу.</p>
+        </details>
+        <details>
+            <summary>Чи можна вчитися з телефону?</summary>
+            <p>Так. Уроки, практика й кабінет працюють у браузері телефона, планшета чи комп'ютера — нічого
+                встановлювати не треба.</p>
+        </details>
+        <details>
+            <summary>Як зв'язатися, якщо щось не так?</summary>
+            <p>Напишіть у Telegram <a href="https://t.me/do_kvadratu_bot" target="_blank" rel="noopener">@do_kvadratu_bot</a>,
+                на <a href="mailto:dokvadratu@gmail.com">dokvadratu@gmail.com</a> або зателефонуйте:
+                <a href="tel:+380974022042" style="white-space: nowrap;">+380 97 402 20 42</a>.</p>
+        </details>
+    </section>
 </div>
 {% endblock %}

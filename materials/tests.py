@@ -2681,6 +2681,56 @@ class TelegramRemindersTests(BaseTestCase):
                 maybe_send_daily()
             self.assertEqual(thread.call_count, 1)
 
+class CabinetProgressAndRenewalTests(BaseTestCase):
+    """Прогрес за курсом, плашка «Підписка закінчується», ціни: FAQ, кнопка балансу в кошику."""
+
+    def setUp(self):
+        from .models import ClassPlan
+        self.pupil = self.make_user('progress@example.com')
+        self.client.force_login(self.pupil)
+        self.lessons = [StudyMaterial.objects.create(
+            title=f'1.{n}. Тема', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic(f'1.{n}. Тема', 5, 100 + n)) for n in range(1, 5)]
+        self.plan = ClassPlan.objects.get(number=5)
+
+    def subscribe(self, days):
+        return ClassSubscription.objects.create(user=self.pupil, number=5, plan=self.plan,
+                                                valid_until=timezone.localdate() + datetime.timedelta(days=days))
+
+    def test_course_progress_counts_practiced_topics(self):
+        self.subscribe(30)
+        for material in (self.lessons[0], self.lessons[0], self.lessons[2]):
+            PracticeAttempt.objects.create(user=self.pupil, material=material, score=5)
+        self.assertContains(self.client.get('/cabinet/'), 'Пройдено <b>2 з 4</b> тем')
+
+    def test_subscription_ending_banner_only_last_week(self):
+        self.subscribe(20)
+        self.assertNotContains(self.client.get('/cabinet/'), 'class="sub-ending"')
+        ClassSubscription.objects.all().delete()
+        self.subscribe(3)
+        page = self.client.get('/cabinet/')
+        self.assertContains(page, 'закінчується <b>через 3 дні</b>')
+        self.assertContains(page, '/subscribe/?class=5#class-5')
+        self.subscribe(40)   # продовжено — плашки немає
+        self.assertNotContains(self.client.get('/cabinet/'), 'class="sub-ending"')
+
+    def test_prices_faq(self):
+        page = self.client.get('/prices/')
+        self.assertContains(page, 'Часті запитання')
+        self.assertContains(page, 'доступ не обмежений у часі')
+        self.assertContains(page, 'tel:+380974022042')
+
+    def test_balance_button_only_when_enough(self):
+        CartItem.objects.create(cart=Cart.objects.create(user=self.pupil), material=self.lessons[1])
+        User.objects.filter(pk=self.pupil.pk).update(balance=10)
+        page = self.client.get('/cart/')
+        self.assertNotContains(page, 'Списати з балансу')
+        self.assertContains(page, 'для оплати з балансу не вистачає')
+        User.objects.filter(pk=self.pupil.pk).update(balance=100)
+        page = self.client.get('/cart/')
+        self.assertContains(page, 'Списати з балансу')
+        self.assertNotContains(page, 'не вистачає')
+
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
         self.user = self.make_user('pupil@example.com')
@@ -4265,9 +4315,9 @@ class ClassSupportTests(BaseTestCase):
         self.buy()
         self.assertFalse(self.pupil.class_subscriptions.exists())
         request.delete()
-        with mock.patch('materials.subscriptions.SUPPORT_SEATS', 0):
-            self.buy()
-            self.assertContains(self.client.get('/subscribe/'), 'Вільних місць зараз немає')
+        type(self.plan).objects.filter(pk=self.plan.pk).update(support_seats=0)   # місця — в адмінці
+        self.buy()
+        self.assertContains(self.client.get('/subscribe/'), 'Вільних місць зараз немає')
         self.assertFalse(self.pupil.class_subscriptions.exists())
         self.buy(real_name='')
         self.assertFalse(self.pupil.class_subscriptions.exists())

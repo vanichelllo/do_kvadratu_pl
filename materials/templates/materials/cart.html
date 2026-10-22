@@ -127,6 +127,9 @@
         align-items: center;
         gap: 10px;
     }
+    .payment-options.single { grid-template-columns: 1fr; }
+    .balance-short { text-align: center; color: #555; font-size: 0.9rem; margin: 12px 0 0; }
+
     .agree-box {
         margin-top: 20px; padding: 15px 18px; background-color: #f8f9fa;
         border: 2px dashed var(--brand-blue); border-radius: 12px;
@@ -253,7 +256,7 @@
                 </p>
             </div>
 
-            <div class="payment-options">
+            <div class="payment-options{% if user.balance < cart.get_total_price %} single{% endif %}">
                 <form method="POST" action="{% url 'pay_with_mono' %}" onsubmit="return checkAgreement(event) && trackCheckout();">
                     {% csrf_token %}
                     <input type="hidden" name="agree" value="">
@@ -262,6 +265,7 @@
                         <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">Monobank, Apple Pay, Google Pay</span>
                     </button>
                 </form>
+                {% if user.balance >= cart.get_total_price %}
                 <form method="POST" action="{% url 'pay_from_balance' %}" onsubmit="return checkAgreement(event);">
                     {% csrf_token %}
                     <input type="hidden" name="agree" value="">
@@ -270,7 +274,11 @@
                         <span style="font-size: 0.8rem; font-weight: 600; text-transform: none; opacity: 0.9;">На вашому рахунку: {{ user.balance|default:"0" }} ₴</span>
                     </button>
                 </form>
+                {% endif %}
             </div>
+            {% if user.balance and user.balance < cart.get_total_price %}
+            <p class="balance-short">На балансі {{ user.balance }} ₴ — для оплати з балансу не вистачає. Оплатіть карткою.</p>
+            {% endif %}
 
             <!-- ПІДТРИМКА -->
             <p class="cart-support">

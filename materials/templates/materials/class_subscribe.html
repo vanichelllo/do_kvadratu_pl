@@ -82,7 +82,7 @@
                 {% endif %}
                 {% if support_blocker %}
                     <div class="cs-note">{{ support_blocker }}</div>
-                {% elif not support_seats_left and not support_until %}
+                {% elif not plan.seats_left and not support_until %}
                     <div class="cs-note"><strong>Вільних місць зараз немає.</strong> Напишіть нам — запишемо в чергу.</div>
                 {% elif user.is_authenticated %}
                 <form method="post" action="{% url 'class_buy' plan.id 'support' %}">{% csrf_token %}
@@ -91,7 +91,7 @@
                     <button type="submit" name="method" value="card" class="btn-month">Місяць із супроводом — карткою, {{ plan.support_price_month }} ₴</button>
                     {% if balance >= plan.support_price_month %}<button type="submit" name="method" value="balance" class="btn-balance">Місяць із супроводом — з балансу</button>{% endif %}
                 </form>
-                {% if not support_until %}<div class="cs-note">Вільних місць: {{ support_seats_left }}</div>{% endif %}
+                {% if not support_until %}<div class="cs-note">Вільних місць: {{ plan.seats_left }}</div>{% endif %}
                 {% endif %}
             </div>
             {% endif %}

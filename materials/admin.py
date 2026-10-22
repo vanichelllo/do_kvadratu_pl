@@ -885,8 +885,8 @@ class TeacherPlanAdmin(admin.ModelAdmin):
 class ClassPlanAdmin(admin.ModelAdmin):
     """Ціни підписки учня на клас (сторінка «Підписка на клас»). Клас продається, коли він увімкнений і має ціну:
     вмикайте, коли в класі вже достатньо опублікованих уроків. Позначка видна на вітрині (напр. «Ранній доступ»)."""
-    list_display = ('number', 'price_month', 'price_year', 'is_active', 'note')
-    list_editable = ('price_month', 'price_year', 'is_active', 'note')
+    list_display = ('number', 'price_month', 'price_year', 'support_price_month', 'support_seats', 'is_active', 'note')
+    list_editable = ('price_month', 'price_year', 'support_price_month', 'support_seats', 'is_active', 'note')
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

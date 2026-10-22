@@ -30,16 +30,14 @@ def grant_class(user, plan, period, note=''):
 
 
 # Супровід: місяць підписки на клас, а учень на цей час — учень власника сайту (ДЗ з перевіркою, звіти батькам,
-# сторінка для батьків). Місць обмежено: час викладача не масштабується
-SUPPORT_SEATS = 15
-
-
+# сторінка для батьків). Місць обмежено (ClassPlan.support_seats в адмінці): час викладача не масштабується
 def support_students():
     return TutorStudentRequest.objects.filter(status='approved', support_until__gte=timezone.localdate())
 
 
-def support_seats_left():
-    return max(SUPPORT_SEATS - support_students().count(), 0)
+def support_seats_left(plan):
+    taken = support_students().filter(course=f'grade_{plan.number}').count()
+    return max(plan.support_seats - taken, 0)
 
 
 def support_blocker(user):

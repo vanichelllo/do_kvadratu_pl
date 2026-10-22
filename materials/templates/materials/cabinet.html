@@ -326,6 +326,16 @@
     .hw-form select[name="material_id"] { flex: 1; min-width: 200px; }
     .hw-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
     .hw-link { background: none; border: none; color: #344e86; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.85rem; }
+    .course-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: -4px 0 14px;
+        font-size: 0.9rem; color: #555; }
+    .course-progress-bar { flex: 1; min-width: 120px; max-width: 320px; height: 10px; background: #e6ebf2;
+        border-radius: 999px; overflow: hidden; }
+    .course-progress-bar > span { display: block; height: 100%; background: #27c93f; border-radius: 999px; }
+    .sub-ending { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+        background: #fff4e5; border: 2px solid #e67e22; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+        font-weight: 600; color: var(--text-dark); }
+    .sub-ending-btn { background: #e67e22; color: #fff; font-weight: 800; padding: 10px 16px; border-radius: 8px;
+        text-decoration: none; white-space: nowrap; }
     .telegram-card { background: white; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 25px;
         margin-bottom: 25px; box-shadow: 4px 4px 0px var(--brand-yellow); }
     .telegram-card .cab-card-title { margin-bottom: 10px; }
@@ -588,6 +598,16 @@
         </div>
 
         <div data-tab-panel="learn">
+        <!-- ПІДПИСКА ЗАКІНЧУЄТЬСЯ (за 7 днів до кінця) -->
+        {% for sub in ending_subscriptions %}
+        <div class="sub-ending">
+            <span>⏳ {% if sub.with_support %}Підписка з супроводом{% else %}Підписка{% endif %} на {{ sub.number }} клас
+                закінчується <b>{{ sub.ends_in }}</b> ({{ sub.valid_until|date:"d.m" }}). Продовжте, щоб не втратити
+                доступ до уроків і практики.</span>
+            <a href="{% url 'class_subscribe' %}?class={{ sub.number }}#class-{{ sub.number }}" class="sub-ending-btn">Продовжити →</a>
+        </div>
+        {% endfor %}
+
         <!-- ЩО ДАЛІ: одна головна дія для учня -->
         {% if next_step %}
         <div class="next-step">
@@ -759,6 +779,12 @@
                 {% for group in library_groups %}
                     <div class="library-group" data-group="{{ group.label }}">
                     <h3 class="library-group-title">{{ group.label }}</h3>
+                    {% if group.total %}
+                    <div class="course-progress" title="Тема пройдена, коли ви хоч раз виконали її практику">
+                        <span>Пройдено <b>{{ group.done }} з {{ group.total }}</b> {{ group.total_word }}</span>
+                        <span class="course-progress-bar" role="progressbar" aria-valuenow="{{ group.percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ group.percent }}%"></span></span>
+                    </div>
+                    {% endif %}
                     <div class="library-grid">
                         {% for item in group.materials %}
                         <div class="mac-card" data-title="{{ item.title|lower }}">
