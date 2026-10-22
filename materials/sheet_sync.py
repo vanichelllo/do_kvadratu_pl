@@ -124,16 +124,35 @@ def read_rows(text, today):
     return rows, errors
 
 
+def words(name):
+    return sorted(normalize(name).split(' '))
+
+
 def auto_match(name, students):
-    """Учень сайту для імені з таблиці: точний збіг (ім'я з таблиці чи справжнє), інакше — єдиний учень, чиє ім'я
-    починається з цього («Олексій» → «Олексій Шевцов»); None, якщо не знайдено або неоднозначно."""
+    """Учень сайту для імені з таблиці: ім'я з таблиці, яке сайт уже запам'ятав, або те саме ім'я й прізвище
+    в будь-якому порядку («Олексій Шевцов» = «Шевцов Олексій»), інакше — єдиний учень з таким ім'ям чи
+    прізвищем («Поліна» → «Покора Поліна»); None, якщо не знайдено або неоднозначно."""
     key = normalize(name)
-    exact = [s for s in students if key in (normalize(s.sheet_name), normalize(s.real_name))]
+    exact = [s for s in students if key == normalize(s.sheet_name)] or [
+        s for s in students if words(name) == words(s.real_name)]
     if len(exact) == 1:
         return exact[0]
-    prefix = [s for s in students if normalize(s.real_name).startswith(key + ' ')
-              or normalize(s.real_name).split(' ')[-1:] == [key]]
-    return prefix[0] if len(prefix) == 1 else None
+    if exact or ' ' in key:
+        return None
+    part = [s for s in students if key in normalize(s.real_name).split(' ')]
+    return part[0] if len(part) == 1 else None
+
+
+def auto_mapping(names, students):
+    """Спершу повні збіги, потім короткі імена — серед учнів, яким пари ще не знайшлося (у таблиці «Олексій
+    Шевцов» і «Олексій», на сайті «Шевцов Олексій» і «Яценко Олексій» → «Олексій» = Яценко)."""
+    mapping, taken = {}, set()
+    for name in sorted(names, key=lambda n: ' ' not in normalize(n)):
+        match = auto_match(name, [s for s in students if s.id not in taken])
+        mapping[name] = match
+        if match:
+            taken.add(match.id)
+    return mapping
 
 
 def plan_import(rows):
@@ -223,10 +242,11 @@ def schedule_import(request):
     plan = plan_import(rows)
     by_id = {str(s.id): s for s in students}
     names = sorted(plan)
-    mapping = {}
+    mapping = auto_mapping(names, students)
     for index, name in enumerate(names):
         chosen = request.POST.get(f'map_{index}')
-        mapping[name] = by_id.get(chosen) if chosen is not None else auto_match(name, students)
+        if chosen is not None:
+            mapping[name] = by_id.get(chosen)
 
     if request.POST.get('confirm') == '1' and rows:
         with transaction.atomic():

@@ -5109,6 +5109,23 @@ class SheetSyncTests(BaseTestCase):
         forged = feed_token('t', self.teacher.id).replace(f't{self.teacher.id}-', f't{self.vlad.user_id}-')
         self.assertEqual(self.client.get(f'/calendar/{forged}.json').status_code, 404)
 
+    def test_auto_mapping_names_from_owner_sheet(self):
+        from .sheet_sync import auto_mapping
+        make = lambda name: TutorStudentRequest.objects.create(
+            user=self.make_user(f'{len(name)}{name[:3]}@example.com'), real_name=name, course='grade_9',
+            status='approved')
+        daniil, yatsenko, polina = make('Даніїл Желтіков'), make('Яценко Олексій'), make('Покора Поліна')
+        self.oleksii.real_name = 'Шевцов Олексій'
+        self.oleksii.save()
+        students = list(TutorStudentRequest.objects.all())
+        names = ['Данило Пастушок', 'Олексій', 'Поліна', 'Олексій Шевцов', 'Влад Пастушок']
+        mapping = auto_mapping(names, students)
+        self.assertEqual(mapping, {'Данило Пастушок': None, 'Олексій': yatsenko, 'Поліна': polina,
+                                   'Олексій Шевцов': self.oleksii, 'Влад Пастушок': self.vlad})
+        daniil.sheet_name = 'Данило Пастушок'   # обрали вручну один раз — далі сайт пам'ятає
+        daniil.save()
+        self.assertEqual(auto_mapping(names, list(TutorStudentRequest.objects.all()))['Данило Пастушок'], daniil)
+
     def test_sheet_script_download(self):
         response = self.client.get('/cabinet/schedule/sheet-script/')
         self.assertEqual(response['Content-Type'], 'text/plain; charset=utf-8')
