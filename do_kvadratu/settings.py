@@ -273,6 +273,8 @@ if sys.argv[1:2] == ['test']:
     TELEGRAM_BOT_TOKEN = TELEGRAM_ADMIN_ID = ''
 # Секрет, переданий у setWebhook(secret_token=...); вебхук без нього відхиляється
 TELEGRAM_WEBHOOK_SECRET = os.getenv('TELEGRAM_WEBHOOK_SECRET', '')
+# Щоденна розсилка нагадувань у Telegram з першого вечірнього запиту (materials/reminders.py); у тестах вимкнена
+REMINDERS_DAILY = True
 # Токен для /api/bot/library/ (заголовок X-Bot-Token); не задано — API закрите
 BOT_API_TOKEN = os.getenv('BOT_API_TOKEN', '')
 

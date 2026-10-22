@@ -5,8 +5,8 @@
 {% block content %}
 {% if no_answers %}
 <div style="max-width: 640px; margin: 40px auto; padding: 30px 20px; text-align: center; background: #fff; border: 2px solid var(--brand-blue); border-radius: 15px;">
-    <h1 style="color: var(--brand-blue); font-size: 1.8rem;">Ти не відповів на жодне завдання</h1>
-    <p style="color: #555; line-height: 1.6;">Без відповідей ми не можемо визначити рівень, тож цю спробу не збережено. Пройди діагностику ще раз — достатньо відповісти на завдання, які знаєш.</p>
+    <h1 style="color: var(--brand-blue); font-size: 1.8rem;">Ви не відповіли на жодне завдання</h1>
+    <p style="color: #555; line-height: 1.6;">Без відповідей ми не можемо визначити рівень, тож цю спробу не збережено. Пройдіть діагностику ще раз — достатньо відповісти на завдання, які знаєте.</p>
     <a href="{% url 'diagnostic_test' %}" class="btn-brand" style="display: inline-block; text-decoration: none; padding: 14px 28px; margin-top: 10px;">🔄 Пройти діагностику</a>
 </div>
 {% else %}
@@ -36,9 +36,9 @@
 
         <!-- Мотиваційний текст -->
         {% if percent_total >= 80 %}
-            <p style="font-size: 1.1rem; color: #28a745; font-weight: bold;">Чудовий результат! Ти добре володієш базою.</p>
+            <p style="font-size: 1.1rem; color: #28a745; font-weight: bold;">Чудовий результат! Ви добре володієте базою.</p>
         {% elif percent_total >= 50 %}
-            <p style="font-size: 1.1rem; color: #f39c12; font-weight: bold;">Непогано, але є над чим працювати. Зверни увагу на свої помилки!</p>
+            <p style="font-size: 1.1rem; color: #f39c12; font-weight: bold;">Непогано, але є над чим працювати. Зверніть увагу на свої помилки!</p>
         {% else %}
             <p style="font-size: 1.1rem; color: #dc3545; font-weight: bold;">Треба добряче попрацювати, щоб скласти НМТ на високий бал. Але час ще є!</p>
         {% endif %}
@@ -50,7 +50,7 @@
     <!-- СЛАБКІ ТЕМИ -->
     {% if weak_topics %}
     <div style="background: rgba(220, 53, 69, 0.05); border-left: 6px solid #dc3545; padding: 25px; margin-bottom: 30px; border-radius: 10px;">
-        <h3 style="color: #dc3545; font-size: 1.3rem; margin-bottom: 15px;">⚠️ Твої слабкі місця (успішність нижче 50%):</h3>
+        <h3 style="color: #dc3545; font-size: 1.3rem; margin-bottom: 15px;">⚠️ Ваші слабкі місця (успішність нижче 50%):</h3>
         <ul style="margin-left: 20px; font-size: 1.1rem; color: #333;">
             {% for topic in weak_topics %}
                 <li style="margin-bottom: 8px;"><strong>{{ topic.name }}</strong></li>
@@ -65,9 +65,9 @@
     <!-- ПЕРСОНАЛЬНІ РЕКОМЕНДАЦІЇ (Новий блок) -->
     {% if recommendations %}
     <div style="background: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px;">
-        <h3 style="color: var(--brand-blue); font-size: 1.4rem; margin-bottom: 10px; text-align: center;">💡 Рекомендовані конспекти для тебе:</h3>
+        <h3 style="color: var(--brand-blue); font-size: 1.4rem; margin-bottom: 10px; text-align: center;">💡 Рекомендовані уроки для вас:</h3>
         <p style="text-align: center; color: #666; margin-bottom: 25px; font-size: 0.95rem;">
-            Система проаналізувала твої помилки і підібрала матеріали, які допоможуть закрити ці прогалини:
+            Система проаналізувала ваші помилки і підібрала матеріали, які допоможуть закрити ці прогалини:
         </p>
 
         <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
@@ -83,7 +83,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <a href="{% url 'material_detail' mat.id %}" class="btn-brand" style="text-decoration: none; padding: 12px; text-align: center; border-radius: 8px; font-size: 1rem; font-weight: 600; display: block; width: 100%; box-sizing: border-box;">
+                    <a href="{{ mat.get_absolute_url }}" class="btn-brand" style="text-decoration: none; padding: 12px; text-align: center; border-radius: 8px; font-size: 1rem; font-weight: 600; display: block; width: 100%; box-sizing: border-box;">
                         Переглянути
                     </a>
                 </div>
@@ -117,7 +117,7 @@
 
     <!-- НАСТУПНИЙ КРОК: РОЗІБРАТИ ПОМИЛКИ З ВИКЛАДАЧЕМ -->
     <div class="dark-section" style="background: var(--brand-blue); color: #ffffff; padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 8px 8px 0px var(--brand-yellow);">
-        <h3 style="color: #ffffff; font-size: 1.4rem; margin: 0 0 10px;">Розберемо твої помилки разом?</h3>
+        <h3 style="color: #ffffff; font-size: 1.4rem; margin: 0 0 10px;">Розберемо ваші помилки разом?</h3>
         <p style="margin: 0 0 20px; font-weight: 600; line-height: 1.5;">
             На пробному занятті покажу, як закрити слабкі теми і що повторити до НМТ в першу чергу.
         </p>
@@ -126,8 +126,8 @@
         </a>
         {% if not user.is_authenticated %}
             <p style="margin: 20px 0 0; font-size: 0.95rem; line-height: 1.5;">
-                Цей результат не збережено, бо ти не увійшов в акаунт.
-                <a href="{% url 'register' %}" style="color: var(--brand-yellow); font-weight: 800;">Зареєструйся</a>,
+                Цей результат не збережено, бо ви не увійшли в акаунт.
+                <a href="{% url 'register' %}" style="color: var(--brand-yellow); font-weight: 800;">Зареєструйтеся</a>,
                 і наступні спроби збережуться в кабінеті — так буде видно прогрес.
             </p>
         {% endif %}

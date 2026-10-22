@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from pypdf import PdfWriter
 import uuid
+from django.urls import reverse
 from django.utils import timezone
 
 # ОНОВЛЕНО: Імпорт сховища Cloudinary
@@ -214,6 +215,14 @@ class StudyMaterial(models.Model):
         if self.bundle_chapter_id:
             return self.bundle_chapter.grade
         return self.curriculum_topic.chapter.grade if self.curriculum_topic_id else None
+
+    @property
+    def slug(self):
+        from .slugs import slugify_title
+        return slugify_title(self.title)
+
+    def get_absolute_url(self):
+        return reverse('material_detail', kwargs={'pk': self.pk, 'slug': self.slug})
 
     @property
     def display_description(self):

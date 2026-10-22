@@ -17,6 +17,9 @@
         margin-bottom: 25px;
     }
 
+    .hide-owned { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;
+        color: var(--text-dark); }
+    .hide-owned input { width: 18px; height: 18px; accent-color: var(--brand-blue); }
     .search-input, .search-select {
         padding: 12px 20px;
         border: 2px solid var(--brand-blue);
@@ -140,8 +143,8 @@
 </style>
 
 <div style="text-align: center; margin-bottom: 40px; margin-top: 20px;">
-    <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ВІТРИНА КОНСПЕКТІВ</h2>
-    <p style="color: var(--text-dark); font-weight: 600; font-size: 1.1rem;">Обери свій ідеальний матеріал для підготовки</p>
+    <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ВІТРИНА УРОКІВ І КОНСПЕКТІВ</h2>
+    <p style="color: var(--text-dark); font-weight: 600; font-size: 1.1rem;">Оберіть урок, тему чи пакет для навчання й підготовки до НМТ</p>
 </div>
 
 <!-- Пошук -->
@@ -149,7 +152,7 @@
 <!-- Відлік до НМТ: чесна терміновість і шлях до діагностики -->
 <a href="{% url 'diagnostic_test' %}" style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; text-align: center; background: var(--brand-blue); color: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; text-decoration: none; font-weight: 700;">
     <span>⏳ До НМТ {% if not nmt_countdown.exact %}орієнтовно {% endif %}<strong style="font-size: 1.2rem; color: var(--brand-yellow);">{{ nmt_countdown.days }} {{ nmt_countdown.days_word }}</strong></span>
-    <span style="text-decoration: underline;">Пройди безкоштовну діагностику — дізнаєшся, які теми підтягнути →</span>
+    <span style="text-decoration: underline;">Пройдіть безкоштовну діагностику — дізнаєтеся, які теми підтягнути →</span>
 </a>
 {% endif %}
 
@@ -183,11 +186,23 @@
 
         </select>
 
+        <select name="sort" class="search-select" style="flex: 1; min-width: 170px; cursor: pointer;" aria-label="Сортування">
+            {% for value, label in sorts.items %}
+            <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
         {% if request.GET.type %}
             <input type="hidden" name="type" value="{{ request.GET.type }}">
         {% endif %}
 
         <button type="submit" class="btn-brand" style="flex: 1; min-width: 120px; padding: 14px 20px;">ШУКАТИ</button>
+        {% if user.is_authenticated %}
+        <label class="hide-owned">
+            <input type="checkbox" name="hide_owned" value="1" {% if request.GET.hide_owned %}checked{% endif %} onchange="this.form.submit()">
+            Сховати те, що вже маю
+        </label>
+        {% endif %}
     </form>
 </div>
 
@@ -276,7 +291,7 @@
                         {% endif %}
                     </div>
 
-                    <a href="{% url 'material_detail' material.id %}" class="btn-detail" style="padding: 10px 18px; font-size: 0.85rem; flex-shrink: 0;">
+                    <a href="{{ material.get_absolute_url }}" class="btn-detail" style="padding: 10px 18px; font-size: 0.85rem; flex-shrink: 0;">
                         Деталі ➔
                     </a>
                 </div>

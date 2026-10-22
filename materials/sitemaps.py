@@ -39,4 +39,4 @@ class MaterialSitemap(MainDomainSitemap):
         return StudyMaterial.objects.filter(is_published=True).only('id').order_by('id')
 
     def location(self, material):
-        return reverse('material_detail', args=[material.pk])
+        return material.get_absolute_url()

@@ -83,7 +83,8 @@ def post_required(redirect_to):
 
 
 def material_page(material_id, **kwargs):
-    return reverse('material_detail', args=[material_id])
+    material = StudyMaterial.objects.only('title').filter(pk=material_id).first()
+    return material.get_absolute_url() if material else reverse('materials_list')
 
 
 def parse_id_list(ids_str):
@@ -482,7 +483,7 @@ def practice_session_view(request, material_id):
         raise Http404("Матеріал не знайдено.")
     if not (material.is_free or has_access):
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
-        return redirect('material_detail', pk=material.id)
+        return redirect(material.get_absolute_url())
 
     profile = practice.practice_profile(material)
     if profile:
@@ -1474,6 +1475,7 @@ class MaterialListView(ListView):
     model = StudyMaterial
     template_name = 'materials/list.html'
     context_object_name = 'materials'
+    SORTS = {'topic': 'За темами', 'price': 'Спершу дешевші', '-price': 'Спершу дорожчі', 'new': 'Спершу нові'}
 
     def get_queryset(self):
         queryset = StudyMaterial.objects.filter(is_published=True) \
@@ -1500,7 +1502,23 @@ class MaterialListView(ListView):
             queryset = queryset.filter(Q(curriculum_topic__chapter__grade__subject_id=subject_id) |
                                        Q(bundle_chapter__grade__subject_id=subject_id))
 
+        # «Сховати те, що вже маю»: куплене, пакети з усіма купленими темами, теми класів з підпискою чи свого класу
+        user = self.request.user
+        if self.request.GET.get('hide_owned') and user.is_authenticated:
+            owned = set(user.purchased_materials.values_list('id', flat=True))
+            open_grades = teachers.taught_class_grade_ids(user) | teachers.subscribed_grade_ids(user)
+            queryset = queryset.exclude(id__in=owned).exclude(
+                is_bundle=False, curriculum_topic__chapter__grade_id__in=open_grades)
+            full_bundles = [b.id for b in queryset.filter(is_bundle=True).prefetch_related('included_materials')
+                            if b.included_materials.all() and {m.id for m in b.included_materials.all()} <= owned]
+            queryset = queryset.exclude(id__in=full_bundles)
+
         materials_list = list(queryset)
+        sort = self.request.GET.get('sort')
+        if sort in self.SORTS and sort != 'topic':
+            key, descending = {'price': (lambda m: m.price, False), '-price': (lambda m: m.price, True),
+                               'new': (lambda m: m.id, True)}[sort]
+            return sorted(materials_list, key=key, reverse=descending)
 
         def get_sort_key(material):
             if material.bundle_chapter_id:   # пакет розділу — перед першою темою розділу
@@ -1528,12 +1546,27 @@ class MaterialListView(ListView):
         context['current_subject'] = self.request.GET.get('subject', '')
         context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
+        context['sorts'] = self.SORTS
+        context['current_sort'] = self.request.GET.get('sort', 'topic')
         context['nmt_countdown'] = nmt_countdown(0)
         grade = CurriculumGrade.objects.filter(id=to_int(self.request.GET.get('grade'))).first()
         if grade and grade.number and grade.subject.name != NMT_SUBJECT_NAME:
             context['class_plan'] = next((p for p in ClassPlan.objects.filter(number=grade.number, is_active=True)
                                           if p.buy_options), None)
         return context
+
+
+def can_view_material(user, material):
+    return (material.is_published or is_teacher(user) or teachers.can_teach(user, material)
+            or user_owns_material(user, material))
+
+
+def material_short_url(request, pk):
+    """Старі адреси /material/123/ — назавжди на зручну адресу з назвою (неопубліковане — лише тим, кому видно)."""
+    material = get_object_or_404(StudyMaterial, pk=pk)
+    if not can_view_material(request.user, material):
+        raise Http404("Матеріал не знайдено.")
+    return redirect(material.get_absolute_url(), permanent=True)
 
 
 class MaterialDetailView(DetailView):
@@ -1543,11 +1576,15 @@ class MaterialDetailView(DetailView):
 
     def get_object(self, queryset=None):
         material = super().get_object(queryset)
-        user = self.request.user
-        if not (material.is_published or is_teacher(user) or teachers.can_teach(user, material)
-                or user_owns_material(user, material)):
+        if not can_view_material(self.request.user, material):
             raise Http404("Матеріал не знайдено.")
         return material
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if kwargs.get('slug') != self.object.slug:   # назву змінили — адреса з новою назвою
+            return redirect(self.object.get_absolute_url(), permanent=True)
+        return self.render_to_response(self.get_context_data(object=self.object))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1851,7 +1888,7 @@ def material_preview_view(request, material_id):
         raise Http404("Для цього уроку немає безкоштовного перегляду.")
     return render(request, 'materials/reader.html', {
         'material': material, 'is_preview': True, 'preview_html': html,
-        'back_url': reverse('material_detail', args=[material.id]),
+        'back_url': material.get_absolute_url(),
     })
 
 
@@ -2761,7 +2798,7 @@ def math_sprint_game(request):
           'text': q.text,
           'options': opts,
           'lesson_title': lesson.title if lesson else '',
-          'lesson_url': reverse('material_detail', args=[lesson.id]) if lesson else '',
+          'lesson_url': lesson.get_absolute_url() if lesson else '',
       })
 
   return render(

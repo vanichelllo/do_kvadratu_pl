@@ -2,7 +2,7 @@
 
 {% block title %}Діагностика НМТ — ДО КВАДРАТУ{% endblock %}
 
-{% block meta_description %}Безкоштовний діагностичний тест НМТ з математики: обери теми або всі теми НМТ, отримай результат одразу й список тем, які варто підтягнути.{% endblock %}
+{% block meta_description %}Безкоштовний діагностичний тест НМТ з математики: оберіть теми або всі теми НМТ, отримайте результат одразу й список тем, які варто підтягнути.{% endblock %}
 
 {% block content %}
 <style>
@@ -25,13 +25,13 @@
     <div style="text-align: center; margin-bottom: 24px;">
         <h1 style="color: var(--brand-blue); font-size: 2.2rem; margin-bottom: 10px;">🔥 ДІАГНОСТИКА НМТ</h1>
         <p style="color: #666; font-size: 1.05rem; font-weight: 600; max-width: 640px; margin: 0 auto;">
-            Обери, що перевірити: усі теми НМТ, як на екзамені, або лише кілька тем, які зараз вчиш.
+            Оберіть, що перевірити: усі теми НМТ, як на екзамені, або лише кілька тем, які зараз вивчаєте.
             Завдання у форматі НМТ: з вибором відповіді, на відповідність і з короткою відповіддю.
         </p>
     </div>
 
     <a class="diag-all" href="?topics=all">🎯 Усі теми НМТ — 22 завдання, як на екзамені</a>
-    <p style="text-align:center; color:#666; margin: 0 0 24px;">або обери теми нижче</p>
+    <p style="text-align:center; color:#666; margin: 0 0 24px;">або оберіть теми нижче</p>
 
     <form method="get" action="" id="topics-form">
         {% for group in chapters %}

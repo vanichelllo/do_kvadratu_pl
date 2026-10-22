@@ -40,6 +40,7 @@ from materials.views import (
     download_material_view,
     prices_view,
     material_preview_view,
+    material_short_url,
     math_sprint_game,
     mono_webhook,
     parent_dashboard_view,
@@ -111,7 +112,8 @@ urlpatterns = [
     path('attempt/<int:attempt_id>/manage/', attempt_manage, name='attempt_manage'),
     path('homework/<int:homework_id>/credit/', homework_credit, name='homework_credit'),
     path('api/bot/library/<str:telegram_id>/', api_bot_user_library),
-    path('material/<int:pk>/', MaterialDetailView.as_view(), name='material_detail'),
+    path('material/<int:pk>-<slug:slug>/', MaterialDetailView.as_view(), name='material_detail'),
+    path('material/<int:pk>/', material_short_url, name='material_short_url'),   # старі посилання → 301
     path('material/<int:material_id>/preview/', material_preview_view, name='material_preview'),
     path('about/', AboutView.as_view(), name='about'),
 
