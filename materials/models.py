@@ -3,6 +3,7 @@ import os
 import io
 import logging
 import re
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -170,6 +171,11 @@ class StudyMaterial(models.Model):
     is_bundle = models.BooleanField(default=False, verbose_name="Це Пакет (Bundle)")
     included_materials = models.ManyToManyField('self', blank=True, symmetrical=False,
                                                 verbose_name="Матеріали, що входять у пакет")
+    # Пакет розділу шкільного курсу: склад і ціну веде pricing.sync_chapter_bundles (нові уроки розділу
+    # додаються в пакет і відкриваються тим, хто його вже купив)
+    bundle_chapter = models.ForeignKey('CurriculumChapter', on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='bundles', verbose_name="Пакет розділу",
+                                       help_text="Склад і ціна оновлюються самі після кожного деплою.")
 
     def save(self, *args, **kwargs):
         is_new_file = False
@@ -205,6 +211,8 @@ class StudyMaterial(models.Model):
 
     @property
     def curriculum_grade(self):
+        if self.bundle_chapter_id:
+            return self.bundle_chapter.grade
         return self.curriculum_topic.chapter.grade if self.curriculum_topic_id else None
 
     @property
@@ -219,20 +227,66 @@ class StudyMaterial(models.Model):
         return f"{self.title} - {self.price} UAH"
 
 
+class PromoCode(models.Model):
+    """Промокод на матеріали в Кошику (оферта, розділ 8). Знижка — не більше MAX_PERCENT і не сумується зі знижкою
+    за діагностикою: діє вигідніша з двох."""
+    MAX_PERCENT = 30
+
+    code = models.CharField(max_length=20, unique=True, verbose_name="Промокод",
+                            help_text="Великими літерами; учні можуть вводити як завгодно.")
+    discount_percent = models.PositiveSmallIntegerField(
+        verbose_name="Знижка, %", validators=[MinValueValidator(1), MaxValueValidator(MAX_PERCENT)],
+        help_text=f"Від 1 до {MAX_PERCENT}%.")
+    starts_on = models.DateField(default=timezone.localdate, verbose_name="Діє з (включно)")
+    ends_on = models.DateField(null=True, blank=True, verbose_name="Діє до (включно)",
+                               help_text="Порожньо — без кінцевої дати.")
+    is_active = models.BooleanField(default=True, verbose_name="Увімкнено",
+                                    help_text="Вимкніть, щоб зупинити промокод достроково.")
+    once_per_user = models.BooleanField(default=True, verbose_name="Один раз на покупця",
+                                        help_text="Після оплаченого замовлення з цим промокодом покупцю він уже не діє.")
+    note = models.CharField(max_length=200, blank=True, verbose_name="Нотатка (для себе)",
+                            help_text="Напр. «Акція до Дня вчителя, оголошено в Instagram».")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-starts_on']
+        verbose_name = "Промокод"
+        verbose_name_plural = "Промокоди"
+
+    def __str__(self):
+        return f"{self.code} (−{self.discount_percent}%)"
+
+    def save(self, *args, **kwargs):
+        self.code = self.normalize(self.code)
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def normalize(code):
+        return (code or '').strip().upper()
+
+    @property
+    def percent(self):
+        return min(self.discount_percent, self.MAX_PERCENT)
+
+    def problem_for(self, user, today=None):
+        """Чому промокод зараз не діє для цього покупця, або '' — діє."""
+        today = today or timezone.localdate()
+        if not self.is_active or (self.ends_on and today > self.ends_on):
+            return "Термін дії цього промокоду минув."
+        if today < self.starts_on:
+            return f"Цей промокод почне діяти з {self.starts_on:%d.%m}."
+        if self.once_per_user and user is not None and Order.objects.filter(
+                user=user, promo_code=self.code, status='paid').exists():
+            return "Ви вже скористалися цим промокодом."
+        return ''
+
+
 class Cart(models.Model):
     class Meta:
         verbose_name = "Кошик"
         verbose_name_plural = "Кошики"
 
-    PROMO_CODE = 'ВЧИТЕЛЬ'
-    PROMO_START = datetime.date(2026, 10, 2)
-    PROMO_END = datetime.date(2026, 10, 11)
-
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cart')
-
-    @classmethod
-    def promo_is_active(cls):
-        return cls.PROMO_START <= timezone.localdate() <= cls.PROMO_END
 
     promo_code = models.CharField(max_length=20, blank=True, null=True, verbose_name="Промокод")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -248,8 +302,17 @@ class Cart(models.Model):
         """Рахує суму без знижки"""
         return sum(item.material.price for item in self.cached_items())
 
-    def promo_applies(self):
-        return bool(self.promo_code) and self.promo_code.upper() == self.PROMO_CODE and self.promo_is_active()
+    def promo(self):
+        """Введений промокод, якщо він зараз діє для власника кошика, або None."""
+        if not hasattr(self, '_promo_cache'):
+            promo = PromoCode.objects.filter(code=PromoCode.normalize(self.promo_code)).first() \
+                if self.promo_code else None
+            self._promo_cache = promo if promo and not promo.problem_for(self.user) else None
+        return self._promo_cache
+
+    def get_promo_discount(self):
+        promo = self.promo()
+        return int(round(self.get_original_price() * promo.percent / 100)) if promo else 0
 
     def diagnostic_offer(self):
         """Чинна пропозиція після діагностики (знижка на уроки слабких тем), або None."""
@@ -267,16 +330,28 @@ class Cart(models.Model):
         offer_sum = sum(item.material.price for item in self.cached_items() if item.material_id in offer_ids)
         return int(round(offer_sum * offer.discount_percent / 100))
 
-    def get_total_price(self):
-        """Фінальна сума: промокод ВЧИТЕЛЬ (−40% на все) або знижка за діагностикою — не разом, а краща з них"""
-        base_price = self.get_original_price()
-        if self.promo_applies():
-            return int(base_price * 0.6) # Знижка 40% (множимо на 0.6)
-        return base_price - self.get_offer_discount()
+    def discount_source(self):
+        """Яка знижка діє: 'promo', 'offer' або '' — знижки не сумуються, береться вигідніша."""
+        promo, offer = self.get_promo_discount(), self.get_offer_discount()
+        if not promo and not offer:
+            return ''
+        return 'promo' if promo >= offer else 'offer'
+
+    def promo_applies(self):
+        """Промокод діє й саме він дає знижку в сумі «До сплати»."""
+        return self.discount_source() == 'promo'
 
     def get_discount_amount(self):
         """Повертає, скільки гривень зекономив учень"""
-        return self.get_original_price() - self.get_total_price()
+        return max(self.get_promo_discount(), self.get_offer_discount())
+
+    def get_total_price(self):
+        """Фінальна сума: краща зі знижок (промокод або діагностика), а не обидві разом."""
+        return self.get_original_price() - self.get_discount_amount()
+
+    def applied_promo_code(self):
+        """Код для запису в замовлення, коли знижку дав промокод."""
+        return self.promo().code if self.promo_applies() else ''
 
     def __str__(self):
         return f"Кошик користувача {self.user.email}"
@@ -371,6 +446,8 @@ class Order(models.Model):
     # одразу після оплати (оферта, п. 14.1–14.2). Порожньо — у старих замовленнях і поповненнях балансу
     instant_access_agreed_at = models.DateTimeField(blank=True, null=True,
                                                     verbose_name="Галочка в Кошику (п. 14.1 оферти)")
+    promo_code = models.CharField(max_length=20, blank=True, default='', verbose_name="Промокод",
+                                  help_text="Промокод, що дав знижку в цьому замовленні.")
     # Оплата підписки репетитора (замість матеріалів у кошику)
     teacher_plan = models.ForeignKey('TeacherPlan', on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name='orders', verbose_name="Тариф репетитора")
@@ -958,3 +1035,18 @@ class StudentReport(models.Model):
         if self.homework_status != 'not_assigned':
             items.append(f'ДЗ: {self.get_homework_status_display()}')
         return items
+
+class ReminderLog(models.Model):
+    """Надіслане нагадування в Telegram (materials/reminders.py): ключ на кшталт «hw:12» — щоб не надсилати двічі."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reminders',
+                             verbose_name="Кому")
+    key = models.CharField(max_length=50, unique=True, verbose_name="Що (ключ)")
+    sent_at = models.DateTimeField(auto_now_add=True, verbose_name="Надіслано")
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "Нагадування в Telegram"
+        verbose_name_plural = "Нагадування в Telegram"
+
+    def __str__(self):
+        return f"{self.key} → {self.user}"

@@ -7,7 +7,7 @@ import aiohttp
 from pypdf import PdfReader, PdfWriter
 
 from aiogram import Router, F, types
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardButton, BufferedInputFile, WebAppInfo
 from aiogram.fsm.context import FSMContext
@@ -177,11 +177,51 @@ def get_nmt_menu_keyboard():
 
 
 # ─── ГОЛОВНЕ МЕНЮ ТА ІНФО ────────────────────────────────────
+@sync_to_async
+def link_account(payload, chat_id):
+    """Прив'язує чат до акаунта сайту за параметром з кабінету; повертає email або None."""
+    from materials.reminders import link_chat, user_from_payload
+    close_old_connections()
+    user = user_from_payload(payload)
+    if user is None:
+        return None
+    link_chat(user, chat_id)
+    return user.email
+
+
+@sync_to_async
+def unlink_account(chat_id):
+    from materials.reminders import unlink_chat
+    close_old_connections()
+    return unlink_chat(chat_id)
+
+
 @router.message(Command("start"))
-async def cmd_start(message: types.Message, state: FSMContext):
+async def cmd_start(message: types.Message, state: FSMContext, command: CommandObject = None):
     await state.clear()
+    # Кнопка «Підключити Telegram» у кабінеті: t.me/<бот>?start=link…
+    if command and command.args and command.args.startswith('link'):
+        email = await link_account(command.args, message.chat.id)
+        if email:
+            await message.answer(
+                f"✅ Нагадування підключено до акаунта <b>{html.escape(email)}</b>.\n\n"
+                "Я напишу, коли наближається дедлайн ДЗ чи кінець підписки або коли практику кинуто на півдорозі. "
+                "Вимкнути — команда /stop.", parse_mode="HTML")
+        else:
+            await message.answer("Посилання не спрацювало. Відкрийте кабінет на сайті й натисніть "
+                                 "«Підключити Telegram» ще раз.")
+        return
     welcome_text = f"Вітаю! Це бот проєкту <b>{BOT_NAME}</b>\n\nТвій головний помічник у вивченні математики та підготовці до іспитів.\nОбери потрібний розділ нижче:"
     await message.answer(welcome_text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
+
+
+@router.message(Command("stop"))
+async def cmd_stop(message: types.Message, state: FSMContext):
+    await state.clear()
+    if await unlink_account(message.chat.id):
+        await message.answer("🔕 Нагадування вимкнено. Увімкнути знову — у кабінеті на сайті, вкладка «Акаунт».")
+    else:
+        await message.answer("Нагадування й так не підключено. Підключити — у кабінеті на сайті, вкладка «Акаунт».")
 
 
 @router.callback_query(F.data == "back_main")

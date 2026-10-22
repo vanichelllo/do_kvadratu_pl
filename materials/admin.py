@@ -2,11 +2,12 @@ import uuid
 import datetime
 from django.contrib import admin
 from django.contrib import messages
-from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Q, Subquery, Value, When
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
 # Імпорти для вивантаження бази в Excel
@@ -19,14 +20,14 @@ from users.models import PurchaseHistory
 from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
                           validate_school_spec)
 from .content_check import check_bank, check_presentation
-from .pricing import apply_price_rules, school_materials
+from .pricing import apply_price_rules, school_materials, sync_chapter_bundles
 from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
-    ClassPlan, ClassSubscription
+    ClassPlan, ClassSubscription, PromoCode, ReminderLog
 )
 
 User = get_user_model()
@@ -553,7 +554,9 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         ('Контент', {'fields': ('file', 'html_file', 'reader_link')}),
         ('HTML-код вручну', {'classes': ('collapse',), 'fields': ('html_content',),
                              'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
-        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
+        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'bundle_chapter', 'included_materials'),
+                   'description': 'Пакети розділів шкільних курсів створюються й наповнюються самі: ціна — 70% '
+                                  'суми платних тем, не більше 1,5 місячної підписки на клас.'}),
     )
 
     actions = ['publish', 'unpublish', 'price_by_rules']
@@ -565,6 +568,8 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
         if 'price_is_manual' in form.changed_data and not obj.price_is_manual:
             apply_price_rules(school_materials().filter(pk=obj.pk))
+            if obj.bundle_chapter_id:
+                sync_chapter_bundles()
         # Вставлену презентацію шкільної теми одразу перевіряємо за вимогами docs/html_prompt.md
         if obj.html_content and not obj.is_nmt and (
                 'html_content' in form.changed_data or form.cleaned_data.get('html_file')):
@@ -648,6 +653,34 @@ class CartAdmin(admin.ModelAdmin):
     inlines = [CartItemInline]
 
 
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    """Промокоди на матеріали в Кошику: знижка до −30%, не сумується зі знижкою за діагностикою."""
+    list_display = ['code', 'discount_percent', 'starts_on', 'ends_on', 'state', 'once_per_user', 'paid_orders', 'note']
+    list_filter = ['is_active', 'once_per_user']
+    search_fields = ['code', 'note']
+    fields = ['code', 'discount_percent', 'starts_on', 'ends_on', 'is_active', 'once_per_user', 'note']
+
+    def get_queryset(self, request):
+        paid = Order.objects.filter(promo_code=OuterRef('code'), status='paid').order_by()
+        return super().get_queryset(request).annotate(
+            paid_count=Subquery(paid.values('promo_code').annotate(n=Count('id')).values('n')))
+
+    @admin.display(description="Оплачених замовлень", ordering='paid_count')
+    def paid_orders(self, obj):
+        if not obj.paid_count:
+            return 0
+        url = reverse('admin:materials_order_changelist') + f'?status__exact=paid&q={obj.code}'
+        return format_html('<a href="{}">{}</a>', url, obj.paid_count)
+
+    @admin.display(description="Зараз")
+    def state(self, obj):
+        today = timezone.localdate()
+        if not obj.is_active or (obj.ends_on and today > obj.ends_on):
+            return '⛔ не діє'
+        return '⏳ ще не почався' if today < obj.starts_on else '✅ діє'
+
+
 @admin.register(DiagnosticOffer)
 class DiagnosticOfferAdmin(admin.ModelAdmin):
     """Хто отримав знижку на пакет слабких тем після діагностики і до коли вона діє."""
@@ -672,9 +705,10 @@ class OrderResource(resources.ModelResource):
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = OrderResource
 
-    list_display = ['id', 'user', 'customer_email', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
+    list_display = ['id', 'user', 'customer_email', 'total_amount', 'promo_code', 'status', 'source', 'created_at',
+                    'paid_at']
     list_filter = ['status', 'source', 'created_at']
-    search_fields = ['user__email', 'customer_email', 'mono_invoice_id']
+    search_fields = ['user__email', 'customer_email', 'mono_invoice_id', 'promo_code']
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
     readonly_fields = ['instant_access_agreed_at']
@@ -854,6 +888,10 @@ class ClassPlanAdmin(admin.ModelAdmin):
     list_display = ('number', 'price_month', 'price_year', 'is_active', 'note')
     list_editable = ('price_month', 'price_year', 'is_active', 'note')
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        sync_chapter_bundles()   # стеля ціни пакетів розділів залежить від місячної ціни класу
+
 
 @admin.register(ClassSubscription)
 class ClassSubscriptionAdmin(admin.ModelAdmin):
@@ -874,7 +912,9 @@ class SchoolPriceRuleAdmin(admin.ModelAdmin):
 
     def reprice(self, request):
         changed = apply_price_rules(school_materials())
-        self.message_user(request, f'Ціни шкільних уроків перераховано; змінено: {changed}.', messages.SUCCESS)
+        sync_chapter_bundles()
+        self.message_user(request, f'Ціни шкільних уроків і пакетів розділів перераховано; змінено уроків: {changed}.',
+                          messages.SUCCESS)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -905,3 +945,17 @@ class TeacherInviteAdmin(admin.ModelAdmin):
     search_fields = ('teacher__email', 'code')
     raw_id_fields = ('teacher',)
 
+
+
+@admin.register(ReminderLog)
+class ReminderLogAdmin(admin.ModelAdmin):
+    """Які нагадування в Telegram уже надіслано (hw — ДЗ, sub — підписка, run — покинута практика)."""
+    list_display = ('key', 'user', 'sent_at')
+    list_select_related = ('user',)
+    search_fields = ('key', 'user__email')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

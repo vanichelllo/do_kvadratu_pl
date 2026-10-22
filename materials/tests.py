@@ -20,7 +20,7 @@ from django.db import models
 
 from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, DiagnosticOffer, CurriculumGrade, CurriculumSubject,
                      CurriculumTopic, GameMistake, Homework, MatchItem, TeacherLicense, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
-                     StudyMaterial, TutorStudentRequest)
+                     StudyMaterial, TutorStudentRequest, ClassSubscription)
 
 User = get_user_model()
 
@@ -418,6 +418,15 @@ class GuestCartTests(BaseTestCase):
         self.client.post(f'/cart/add/{self.lesson.id}/')
         self.client.post('/login/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
         self.assertFalse(CartItem.objects.filter(material=self.lesson).exists())
+
+    def test_cart_shows_consent_and_support_contact(self):
+        CartItem.objects.create(cart=Cart.objects.create(user=self.user), material=self.lesson)
+        self.client.force_login(self.user)
+        page = self.client.get('/cart/')
+        self.assertContains(page, 'id="agree-checkbox"')
+        self.assertContains(page, 'прошу відкрити матеріали одразу після оплати')
+        self.assertContains(page, '(пункт 14.2)')
+        self.assertContains(page, 'https://t.me/do_kvadratu_bot')
 
     def test_login_page_keeps_next_for_signup(self):
         self.assertContains(self.client.get('/login/?next=/cart/'), '/register/?next=/cart/')
@@ -1104,30 +1113,95 @@ class PromoBannerTests(BaseTestCase):
         with mock.patch('materials.models.timezone.localdate', return_value=day):
             return self.client.get(url).content.decode()
 
-    def test_banners_shown_during_promo(self):
+    def test_teacher_day_banners_removed(self):
+        # Акція до Дня вчителя скінчилась: банерів і знижки на заняття немає навіть у її дати
         day = datetime.date(2026, 10, 11)
-        self.assertIn('Акція до Дня Вчителя', self.render('/', day))
-        booking = self.render('/booking/', day)
-        self.assertIn('Акція до Дня Вчителя', booking)
-        self.assertIn('192 грн', booking)
-
-    def test_banners_hidden_after_promo(self):
-        day = datetime.date(2026, 10, 12)
         self.assertNotIn('Акція до Дня Вчителя', self.render('/', day))
         booking = self.render('/booking/', day)
         self.assertNotIn('Акція до Дня Вчителя', booking)
         self.assertNotIn('192 грн', booking)
-        self.assertNotIn('-20%', booking)
         self.assertIn('240 грн', booking)
 
-    def test_cart_discount_follows_same_dates(self):
-        user = self.make_user('promo@example.com')
-        cart = Cart.objects.create(user=user, promo_code='ВЧИТЕЛЬ')
-        CartItem.objects.create(cart=cart, material=StudyMaterial.objects.create(title='1. Тема', price=100))
-        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 11)):
-            self.assertEqual(cart.get_total_price(), 60)
-        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 12)):
-            self.assertEqual(cart.get_total_price(), 100)
+    def test_booking_explains_first_lesson(self):
+        booking = self.client.get('/booking/').content.decode()
+        for text in ('Онлайн у Zoom', '60 хвилин', 'Перше заняття безкоштовне', 'визначимо рівень знань',
+                     'href="#calendar"', 'id="calendar"', '490 грн'):
+            self.assertIn(text, booking)
+
+
+
+class PromoCodeTests(BaseTestCase):
+    """Промокоди з адмінки: строк дії, стеля −30%, один раз на покупця, не сумуються зі знижкою за діагностикою."""
+
+    def setUp(self):
+        from .models import PromoCode
+        self.PromoCode = PromoCode
+        self.user = self.make_user('promo@example.com', balance=1000)
+        self.lesson = StudyMaterial.objects.create(title='1. Тема', price=100, is_published=True)
+        self.cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=self.cart, material=self.lesson)
+        self.client.force_login(self.user)
+
+    def apply(self, code):
+        return self.client.post('/cart/', {'action': 'apply_promo', 'promo_code': code}, follow=True)
+
+    def total(self):
+        return Cart.objects.get(pk=self.cart.pk).get_total_price()
+
+    def test_code_from_admin_applies_case_insensitive_within_dates(self):
+        today = timezone.localdate()
+        self.PromoCode.objects.create(code='осінь', discount_percent=20, starts_on=today,
+                                      ends_on=today + datetime.timedelta(days=3))
+        self.assertContains(self.apply(' Осінь '), 'Промокод ОСІНЬ застосовано: −20%')
+        self.assertEqual(self.total(), 80)
+        self.assertContains(self.client.get('/cart/'), 'АКТИВОВАНО: ОСІНЬ (−20%)')
+
+    def test_wrong_expired_future_and_disabled_codes(self):
+        today = timezone.localdate()
+        self.assertContains(self.apply('НЕМАЄ'), 'Такого промокоду немає')
+        self.PromoCode.objects.create(code='МИНУВ', discount_percent=10, starts_on=today - datetime.timedelta(days=9),
+                                      ends_on=today - datetime.timedelta(days=1))
+        self.assertContains(self.apply('минув'), 'Термін дії цього промокоду минув')
+        self.PromoCode.objects.create(code='СКОРО', discount_percent=10, starts_on=today + datetime.timedelta(days=2))
+        self.assertContains(self.apply('скоро'), 'почне діяти з')
+        promo = self.PromoCode.objects.create(code='ДІЄ', discount_percent=10)
+        self.apply('діє')
+        self.assertEqual(self.total(), 90)
+        promo.is_active = False   # вимкнено в адмінці — знижка зникає й з кошика
+        promo.save()
+        self.assertEqual(self.total(), 100)
+
+    def test_discount_is_capped_at_30_percent(self):
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            self.PromoCode(code='БАГАТО', discount_percent=40).full_clean()
+        self.PromoCode.objects.create(code='БАГАТО', discount_percent=40)   # в обхід форми — однаково не більше 30%
+        self.apply('багато')
+        self.assertEqual(self.total(), 70)
+
+    def test_once_per_user_and_recorded_in_order(self):
+        self.PromoCode.objects.create(code='РАЗ', discount_percent=10)
+        self.apply('раз')
+        with mock.patch('materials.views.send_telegram_notification'):
+            self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        order = Order.objects.get(user=self.user)
+        self.assertEqual((order.promo_code, int(order.total_amount)), ('РАЗ', 90))
+        CartItem.objects.create(cart=self.cart, material=StudyMaterial.objects.create(title='2. Тема', price=100))
+        self.assertEqual(self.total(), 100)
+        self.assertContains(self.apply('раз'), 'Ви вже скористалися цим промокодом')
+
+    def test_promo_and_diagnostic_discounts_do_not_add_up(self):
+        self.PromoCode.objects.create(code='МАЛО', discount_percent=5)
+        offer = DiagnosticOffer.objects.create(user=self.user, discount_percent=15,
+                                               expires_at=timezone.now() + datetime.timedelta(hours=1))
+        offer.materials.add(self.lesson)
+        self.assertContains(self.apply('мало'), 'знижка за діагностикою вигідніша')
+        self.assertEqual(self.total(), 85)
+        page = self.client.get('/cart/')
+        self.assertContains(page, 'Знижка за діагностикою')
+        self.assertContains(page, 'Знижки не сумуються')
+        self.PromoCode.objects.filter(code='МАЛО').update(discount_percent=25)
+        self.assertEqual(self.total(), 75)
 
 
 class CabinetStudentNameTests(BaseTestCase):
@@ -2431,6 +2505,181 @@ def make_school_topic(name, grade_number, order, chapter_order=10, subject='Ма
                                                          order=chapter_order)
     return CurriculumTopic.objects.create(chapter=chapter, name=name, order=order)
 
+
+class ChapterBundleTests(BaseTestCase):
+    """Пакет розділу: 70% суми платних тем, не дорожче за 1,5 місячної підписки; нові уроки — покупцям пакета."""
+
+    def setUp(self):
+        from .models import ClassPlan
+        ClassPlan.objects.filter(number=5).update(price_month=99)
+        self.lessons = [self.lesson(i) for i in range(1, 6)]   # 1.1 безкоштовна, 4 платні по 29 ₴
+
+    def lesson(self, n, price=29):
+        return StudyMaterial.objects.create(
+            title=f'1.{n}. Тема', price=0 if n == 1 else price, is_free=n == 1, is_published=True,
+            curriculum_topic=make_school_topic(f'1.{n}. Тема', 5, 100 + n))
+
+    def sync(self):
+        from .pricing import sync_chapter_bundles
+        return sync_chapter_bundles()
+
+    def bundle(self):
+        return StudyMaterial.objects.get(bundle_chapter__isnull=False)
+
+    def test_bundle_created_with_all_lessons_and_shown_in_grade(self):
+        self.assertEqual(self.sync(), (1, 0))
+        bundle = self.bundle()
+        self.assertEqual(bundle.price, 81)   # 0,7 × 116
+        self.assertTrue(bundle.is_bundle and bundle.is_published)
+        self.assertEqual(set(bundle.included_materials.all()), set(self.lessons))
+        self.assertEqual(bundle.title, 'Пакет: Розділ 10 · Математика · 5 клас')
+        self.assertFalse(bundle.is_nmt)
+        grade = bundle.bundle_chapter.grade
+        self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), bundle.title)
+        self.assertContains(self.client.get('/prices/'), 'Пакет розділу')
+        self.assertEqual(self.sync(), (0, 0))   # повторний запуск нічого не змінює
+
+    def test_price_is_capped_by_one_and_a_half_month_subscriptions(self):
+        for n in range(6, 12):
+            self.lesson(n)
+        self.sync()
+        self.assertEqual(self.bundle().price, 149)   # 0,7 × 290 = 203 > 1,5 × 99
+
+    def test_too_few_paid_lessons_no_bundle(self):
+        StudyMaterial.objects.filter(pk__in=[m.pk for m in self.lessons[2:]]).delete()
+        self.assertEqual(self.sync(), (0, 0))
+
+    def test_new_lesson_opens_for_buyers_only(self):
+        self.sync()
+        buyer, other = self.make_user('buyer@example.com', balance=500), self.make_user('other@example.com')
+        CartItem.objects.create(cart=Cart.objects.create(user=buyer), material=self.bundle())
+        self.client.force_login(buyer)
+        with mock.patch('materials.views.send_telegram_notification'):
+            self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        self.assertEqual(buyer.purchased_materials.count(), 5)
+        new = self.lesson(6)
+        self.assertEqual(self.sync(), (0, 1))   # ціна 0,7 × 145 = 102
+        self.assertEqual(self.bundle().price, 102)
+        self.assertTrue(buyer.purchased_materials.filter(pk=new.pk).exists())
+        self.assertFalse(other.purchased_materials.exists())
+
+    def test_manual_price_and_unpublishing_are_kept(self):
+        self.sync()
+        StudyMaterial.objects.filter(bundle_chapter__isnull=False).update(price=60, price_is_manual=True,
+                                                                           is_published=False)
+        self.lesson(6)
+        self.sync()
+        bundle = self.bundle()
+        self.assertEqual((bundle.price, bundle.is_published), (60, False))
+        self.assertEqual(bundle.included_materials.count(), 6)
+
+class TelegramRemindersTests(BaseTestCase):
+    """Нагадування в Telegram: прив'язка з кабінету, що нагадувати, кожне — один раз."""
+
+    def setUp(self):
+        from .models import ClassPlan, PracticeRun
+        self.PracticeRun = PracticeRun
+        self.pupil = self.make_user('remind@example.com')
+        self.pupil.telegram_id = '555'
+        self.pupil.save()
+        self.lesson = StudyMaterial.objects.create(title='1.2. Цифри', price=29, is_published=True,
+                                                   curriculum_topic=make_school_topic('1.2. Цифри', 5, 102))
+        self.plan = ClassPlan.objects.get(number=5)
+
+    def keys(self):
+        from .reminders import due_reminders
+        return sorted(key for _, key, _, _ in due_reminders())
+
+    def test_link_payload_is_signed(self):
+        from .reminders import link_chat, link_payload, user_from_payload
+        payload = link_payload(self.pupil)
+        self.assertRegex(payload, r'^[A-Za-z0-9_-]{1,64}$')
+        self.assertEqual(user_from_payload(payload), self.pupil)
+        self.assertIsNone(user_from_payload(payload[:-1] + ('0' if payload[-1] != '0' else '1')))
+        self.assertIsNone(user_from_payload(f'link{self.pupil.id}'))
+        other = self.make_user('other@example.com')
+        link_chat(other, 555)   # той самий чат — тепер інший акаунт
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+
+    def test_cabinet_card_connects_and_disconnects(self):
+        self.client.force_login(self.pupil)
+        self.assertContains(self.client.get('/cabinet/'), 'Вимкнути нагадування')
+        self.client.post('/telegram/unlink/')
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+        self.assertContains(self.client.get('/cabinet/'), 'https://t.me/do_kvadratu_bot?start=link')
+
+    def test_homework_due_tomorrow_until_done(self):
+        from .models import Homework
+        student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_5',
+                                                     status='approved')
+        today = timezone.localdate()
+        hw = Homework.objects.create(student=student, material=self.lesson, due_date=today + datetime.timedelta(days=1))
+        Homework.objects.create(student=student, material=self.lesson, due_date=today + datetime.timedelta(days=5))
+        self.assertEqual(self.keys(), [f'hw:{hw.id}'])
+        hw.attempt = PracticeAttempt.objects.create(user=self.pupil, material=self.lesson, score=5)
+        hw.save()
+        self.assertEqual(self.keys(), [])
+
+    def test_subscription_ending_unless_renewed(self):
+        today = timezone.localdate()
+        sub = ClassSubscription.objects.create(user=self.pupil, number=5, plan=self.plan,
+                                               valid_until=today + datetime.timedelta(days=2))
+        ClassSubscription.objects.create(user=self.pupil, number=6, valid_until=today + datetime.timedelta(days=20))
+        self.assertEqual(self.keys(), [f'sub:{sub.id}'])
+        ClassSubscription.objects.create(user=self.pupil, number=5, valid_until=today + datetime.timedelta(days=40))
+        self.assertEqual(self.keys(), [])
+
+    def test_abandoned_practice_only_own_and_recent(self):
+        run = self.PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='A')
+        self.assertEqual(self.keys(), [])   # щойно почата — ще не кинута
+        two_days, ten_days = (timezone.now() - datetime.timedelta(days=d) for d in (2, 10))
+        self.PracticeRun.objects.filter(pk=run.pk).update(updated_at=two_days)
+        old = self.PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='B')
+        self.PracticeRun.objects.filter(pk=old.pk).update(updated_at=ten_days)
+        self.assertEqual(self.keys(), [f'run:{run.id}'])
+        self.PracticeRun.objects.filter(pk=run.pk).update(finished_at=timezone.now())
+        self.assertEqual(self.keys(), [])
+
+    def test_each_reminder_sent_once_retry_on_failure_unlink_when_blocked(self):
+        from .models import ReminderLog
+        from .reminders import send_due_reminders
+        today = timezone.localdate()
+        ClassSubscription.objects.create(user=self.pupil, number=5, valid_until=today + datetime.timedelta(days=1))
+        with mock.patch('materials.reminders.send_message', return_value=False):
+            self.assertEqual(send_due_reminders(), 0)
+        self.assertFalse(ReminderLog.objects.exists())   # не дійшло — спробуємо ще
+        with mock.patch('materials.reminders.send_message', return_value=True) as send:
+            self.assertEqual(send_due_reminders(), 1)
+            self.assertEqual(send_due_reminders(), 0)
+        chat, text, button = send.call_args[0]
+        self.assertEqual(chat, '555')
+        self.assertIn('Підписка на 5 клас закінчується', text)
+        self.assertIn('/subscribe/?class=5', button[1])
+        PracticeRun = self.PracticeRun
+        run = PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='A')
+        PracticeRun.objects.filter(pk=run.pk).update(updated_at=timezone.now() - datetime.timedelta(days=2))
+        with mock.patch('materials.reminders.send_message', return_value=None):   # бота заблоковано
+            send_due_reminders()
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+
+    @override_settings(TELEGRAM_BOT_TOKEN='42:TEST')
+    def test_daily_run_starts_once_in_evening_hours(self):
+        from django.core.cache import cache
+        from .reminders import maybe_send_daily
+        cache.clear()
+        evening = timezone.make_aware(datetime.datetime(2026, 10, 22, 17, 0))
+        morning = timezone.make_aware(datetime.datetime(2026, 10, 23, 9, 0))
+        with mock.patch('materials.reminders.threading.Thread') as thread:
+            with mock.patch('materials.reminders.timezone.localtime', return_value=morning):
+                maybe_send_daily()
+            self.assertFalse(thread.called)
+            with mock.patch('materials.reminders.timezone.localtime', return_value=evening):
+                maybe_send_daily()
+                maybe_send_daily()
+            self.assertEqual(thread.call_count, 1)
 
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):

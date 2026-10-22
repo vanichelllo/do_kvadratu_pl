@@ -29,7 +29,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, preview, subscriptions, teachers
+from . import homework, practice, preview, reminders, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -38,7 +38,7 @@ from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
     Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, SchoolPriceRule, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
-    NMT_SUBJECT_NAME, ClassPlan,
+    NMT_SUBJECT_NAME, ClassPlan, PromoCode,
 )
 
 from rest_framework.decorators import api_view
@@ -1302,21 +1302,19 @@ def cart_detail(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'apply_promo':
-            promo = request.POST.get('promo_code', '').strip().upper()
-            if promo == Cart.PROMO_CODE:
-                now = timezone.localdate()
-                start_date, end_date = Cart.PROMO_START, Cart.PROMO_END
-
-                if start_date <= now <= end_date:
-                    cart.promo_code = promo
-                    cart.save()
-                    messages.success(request, "🎉 Промокод ВЧИТЕЛЬ успішно застосовано! Ваша знижка 40%.")
-                elif now < start_date:
-                    messages.error(request, f"⏳ Цей промокод почне діяти з {start_date:%d.%m}!")
-                else:
-                    messages.error(request, "❌ Термін дії цього промокоду минув.")
+            code = PromoCode.normalize(request.POST.get('promo_code', ''))
+            promo = PromoCode.objects.filter(code=code).first() if code else None
+            problem = promo.problem_for(request.user) if promo else "❌ Такого промокоду немає. Перевірте написання."
+            if problem:
+                messages.error(request, problem)
             else:
-                messages.error(request, "❌ Невірний промокод.")
+                cart.promo_code = promo.code
+                cart.save(update_fields=['promo_code'])
+                if cart.promo_applies():
+                    messages.success(request, f"🎉 Промокод {promo.code} застосовано: −{promo.percent}%.")
+                else:
+                    messages.info(request, f"Промокод {promo.code} прийнято, але знижка за діагностикою вигідніша — "
+                                           f"діє вона (знижки не сумуються).")
 
         elif action == 'remove_promo':
             cart.promo_code = None
@@ -1437,8 +1435,7 @@ LESSON_FORMATS = (
 
 
 def booking_view(request):
-    formats = [dict(f, promo_price=f['price'] * 4 // 5) for f in LESSON_FORMATS]   # під час акції −20%
-    return render(request, 'booking.html', {'lesson_formats': formats})
+    return render(request, 'booking.html', {'lesson_formats': LESSON_FORMATS})
 
 
 def prices_view(request):
@@ -1446,7 +1443,8 @@ def prices_view(request):
     rules = list(SchoolPriceRule.objects.all())
     on_sale = StudyMaterial.objects.filter(is_published=True, is_free=False, price__gt=0)
     nmt = Q(curriculum_topic__isnull=True) | Q(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
-    bundles = list(on_sale.filter(is_bundle=True).prefetch_related('included_materials').defer('html_content'))
+    bundles = list(on_sale.filter(is_bundle=True, bundle_chapter__isnull=True)   # пакети НМТ
+                   .prefetch_related('included_materials').defer('html_content'))
     nmt_subject = CurriculumSubject.objects.filter(name=NMT_SUBJECT_NAME).first()
     class_plans = subscriptions.plans_on_sale()
     tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
@@ -1459,6 +1457,7 @@ def prices_view(request):
         'nmt_countdown': nmt_countdown(0),
         'nmt_free': StudyMaterial.objects.filter(nmt, is_published=True, is_free=True).exists(),
         'first_topic_free': any(r.first_topic_free for r in rules),
+        'chapter_bundles': on_sale.filter(is_bundle=True, bundle_chapter__isnull=False).exists(),
         'class_plans': class_plans,
         'support_price': min((p.support_price_month for p in class_plans if p.support_price_month), default=None),
         'lesson_formats': LESSON_FORMATS,
@@ -1477,7 +1476,7 @@ class MaterialListView(ListView):
 
     def get_queryset(self):
         queryset = StudyMaterial.objects.filter(is_published=True) \
-            .select_related('curriculum_topic__chapter__grade__subject') \
+            .select_related('curriculum_topic__chapter__grade__subject', 'bundle_chapter__grade__subject') \
             .prefetch_related('tags')
 
         filter_type = self.request.GET.get('type')
@@ -1494,13 +1493,18 @@ class MaterialListView(ListView):
         grade_id = self.request.GET.get('grade')
 
         if grade_id:
-            queryset = queryset.filter(curriculum_topic__chapter__grade_id=grade_id)
+            queryset = queryset.filter(Q(curriculum_topic__chapter__grade_id=grade_id) |
+                                       Q(bundle_chapter__grade_id=grade_id))
         elif subject_id:
-            queryset = queryset.filter(curriculum_topic__chapter__grade__subject_id=subject_id)
+            queryset = queryset.filter(Q(curriculum_topic__chapter__grade__subject_id=subject_id) |
+                                       Q(bundle_chapter__grade__subject_id=subject_id))
 
         materials_list = list(queryset)
 
         def get_sort_key(material):
+            if material.bundle_chapter_id:   # пакет розділу — перед першою темою розділу
+                chapter = material.bundle_chapter
+                return (chapter.grade.subject.order, chapter.grade.order, chapter.order, -1)
             if material.curriculum_topic:
                 ct = material.curriculum_topic
                 return (
@@ -1607,6 +1611,15 @@ def cabinet_next_step(user, context, library):
                 'url': reverse('diagnostic_test'), 'button': 'Пройти'}
     return {'icon': '🛒', 'title': 'Обери уроки', 'text': 'Слабкі теми з діагностики — на вітрині',
             'url': reverse('materials_list'), 'button': 'На вітрину'}
+
+
+@login_required
+@post_required('cabinet')
+def telegram_unlink(request):
+    request.user.telegram_id = None
+    request.user.save(update_fields=['telegram_id'])
+    messages.info(request, "🔕 Нагадування в Telegram вимкнено.")
+    return redirect(reverse('cabinet') + '#account')
 
 
 class CabinetView(LoginRequiredMixin, TemplateView):
@@ -1768,6 +1781,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['tutor_offer'] = True
             context['trial_available'] = teachers.trial_available(user)
 
+        context['telegram_linked'] = bool(self.request.user.telegram_id)
+        context['telegram_link_url'] = reminders.link_url(self.request.user)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1887,6 +1902,7 @@ def pay_from_balance(request):
             paid_at=timezone.now(),
             mono_invoice_id='balance_payment',
             instant_access_agreed_at=timezone.now(),
+            promo_code=cart.applied_promo_code(),
         )
 
         for item in cart_items:
@@ -1980,6 +1996,7 @@ def pay_with_mono(request):
             total_amount=total_price,
             status='pending',
             instant_access_agreed_at=timezone.now(),
+            promo_code=cart.applied_promo_code(),
         )
         for item in cart.items.all():
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)

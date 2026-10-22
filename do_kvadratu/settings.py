@@ -107,6 +107,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'users.middleware.TermsAcceptanceMiddleware',  # хто ще не погодився з офертою — спершу на /accept-terms/
+    'materials.reminders.DailyRemindersMiddleware',  # раз на день — нагадування в Telegram (у фоні)
 ]
 
 ROOT_URLCONF = 'do_kvadratu.urls'
@@ -122,7 +123,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'materials.context_processors.promo',
                 'materials.context_processors.seasonal',
                 'materials.context_processors.seo',
             ],

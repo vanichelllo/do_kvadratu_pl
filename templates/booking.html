@@ -2,62 +2,76 @@
 
 {% block title %}Запис на заняття | ДО КВАДРАТУ{% endblock %}
 
-{% block meta_description %}Запис на індивідуальні заняття з математики онлайн: підготовка до НМТ та шкільна програма 5–11 класів. Оберіть зручний час у календарі.{% endblock %}
+{% block meta_description %}Заняття з математики онлайн у Zoom, 60 хвилин: підготовка до НМТ та шкільна програма 5–11 класів. Перше заняття безкоштовне — знайомство й визначення рівня.{% endblock %}
 
 {% block content %}
-<div class="container" style="padding: 40px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
+<style>
+    .bk { max-width: 1000px; margin: 0 auto; padding: 20px 0; text-align: center; color: var(--text-dark); }
+    .bk-lead { font-weight: 600; font-size: 1.1rem; line-height: 1.5; max-width: 680px; margin: 0 auto 26px; }
+    .bk-facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0 0 34px; padding: 0; list-style: none; }
+    .bk-facts li { background: #fff; border: 2px solid var(--brand-blue); border-radius: 999px; padding: 6px 14px; font-weight: 700; color: var(--brand-blue); }
+    .bk-first { background: var(--brand-yellow); border: 3px solid var(--brand-blue); border-radius: 16px; box-shadow: 8px 8px 0 var(--brand-blue); padding: 26px 24px; text-align: left; margin-bottom: 50px; }
+    .bk-first h2 { margin: 0 0 6px; font-size: 1.6rem; }
+    .bk-first > p { margin: 0 0 18px; font-weight: 600; }
+    .bk-steps { counter-reset: step; list-style: none; padding: 0; margin: 0 0 22px; display: grid; gap: 12px; grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 899px) { .bk-steps { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .bk-steps { grid-template-columns: 1fr; } }
+    .bk-steps li { counter-increment: step; background: #fff; border: 2px solid var(--brand-blue); border-radius: 12px; padding: 14px 14px 14px 52px; position: relative; line-height: 1.45; }
+    .bk-steps li::before { content: counter(step); position: absolute; left: 14px; top: 13px; width: 26px; height: 26px; border-radius: 50%; background: var(--brand-blue); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    .bk-cta { display: inline-block; background: var(--brand-blue); color: #fff; font-weight: 900; padding: 14px 26px; border-radius: 10px; text-decoration: none; box-shadow: 4px 4px 0 #fff; }
+    .bk-cta:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #fff; }
+    .bk-formats { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 14px; }
+    .bk-format { flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0 var(--brand-blue); }
+    .bk-format h3 { margin-top: 0; }
+    .bk-format p { font-size: 0.9rem; color: #555; }
+    .bk-price { font-size: 1.8rem; font-weight: 900; color: var(--brand-blue); }
+    .bk-price span { font-size: 1rem; color: var(--text-dark); font-weight: 600; }
+    .bk-note { color: #555; font-size: 0.95rem; margin: 0 0 40px; }
+    .bk-legal { color: #6c757d; margin: 0 auto 25px; font-size: 0.9rem; line-height: 1.5; max-width: 760px; }
+</style>
 
-    <!-- СВЯТКОВИЙ БАНЕР ДО ДНЯ ВЧИТЕЛЯ (лише в дати акції) -->
-    {% if promo_active %}
-    <div style="background: linear-gradient(135deg, var(--brand-blue), #2b4170); padding: 30px 20px; border-radius: 16px; margin-bottom: 40px; color: white; box-shadow: 8px 8px 0px var(--brand-yellow); border: 2px solid var(--brand-blue); position: relative; overflow: hidden;">
-        <div style="position: absolute; top: -10px; right: -10px; font-size: 5rem; opacity: 0.1; transform: rotate(15deg);">🍁</div>
-        <div style="position: absolute; bottom: -20px; left: 10px; font-size: 4rem; opacity: 0.1; transform: rotate(-15deg);">📚</div>
-
-        <h2 style="margin: 0 0 15px 0; font-size: 2.2rem; text-transform: uppercase; color: var(--brand-yellow); text-shadow: 2px 2px 0px rgba(0,0,0,0.3);">
-            🎉 Акція до Дня Вчителя!
-        </h2>
-        <p style="margin: 0 0 15px 0; font-size: 1.1rem; line-height: 1.6;">
-            З <strong>{{ promo_start|date:"d.m" }} по {{ promo_end|date:"d.m" }}</strong> використайте промокод <span style="background: var(--brand-yellow); color: var(--brand-blue); padding: 4px 10px; border-radius: 6px; font-weight: 900; letter-spacing: 1px; font-size: 1.2rem;">ВЧИТЕЛЬ</span> та отримайте:<br>
-            🎁 <strong>-40%</strong> на всі конспекти та матеріали на вітрині<br>
-            🎁 <strong>-20%</strong> на заняття до кінця навчального року!
-        </p>
-        <p style="margin: 0; font-size: 0.9rem; color: rgba(255,255,255,0.7);">
-            *Щоб закріпити знижку на уроки, просто вкажіть промокод у коментарі під час бронювання часу нижче.
-        </p>
-    </div>
-    {% endif %}
-
-    <h1 style="color: var(--brand-blue); margin-bottom: 10px;">Формати та вартість занять</h1>
-    <p style="color: var(--text-dark); margin-bottom: 30px; font-weight: 600;">
-        Оберіть комфортний формат підготовки. Розклад закріплюється після нашого першого знайомства.
+<div class="bk">
+    <h1 style="margin-bottom: 10px;">Заняття з математики онлайн</h1>
+    <p class="bk-lead">
+        Підготовка до НМТ і шкільна програма 5–11 класів з викладачем — автором уроків цього сайту.
+        Учні отримують презентації й практику на платформі, а батьки — звіти після занять.
     </p>
+    <ul class="bk-facts">
+        <li>💻 Онлайн у Zoom</li>
+        <li>⏱ 60 хвилин</li>
+        <li>🎁 Перше заняття — безкоштовно</li>
+    </ul>
 
-    {# Блок з тарифами: під час акції — перекреслені ціни та знижка 20% #}
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 40px;">
+    <!-- ПЕРШЕ ЗАНЯТТЯ: що буде і як записатися -->
+    <section class="bk-first">
+        <h2>Перше заняття безкоштовне</h2>
+        <p>Це знайомство: без оплати й без зобов'язань продовжувати.</p>
+        <ol class="bk-steps">
+            <li><b>Оберіть час</b> у календарі нижче й залиште контакти.</li>
+            <li><b>Отримайте посилання на Zoom</b> — воно одразу прийде в листі-підтвердженні.</li>
+            <li><b>60 хвилин знайомства:</b> визначимо рівень знань, цілі й прогалини.</li>
+            <li><b>Підберемо формат і графік</b> — індивідуально чи в міні-групі.</li>
+        </ol>
+        <a href="#calendar" class="bk-cta">Обрати час ↓</a>
+    </section>
 
+    <h2 style="margin-bottom: 10px;">Формати та вартість</h2>
+    <p style="font-weight: 600; margin: 0 0 26px;">Після першого заняття — за цими цінами. Розклад закріплюємо після знайомства.</p>
+    <div class="bk-formats">
         {% for format in lesson_formats %}
-        <div style="flex: 1; min-width: 250px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 10px; padding: 20px; box-shadow: 4px 4px 0px var(--brand-blue); position: relative;">
-            {% if promo_active %}<div style="position: absolute; top: -12px; right: -12px; background: #e74c3c; color: white; font-weight: 900; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; transform: rotate(10deg); box-shadow: 2px 2px 0px #c0392b;">-20%</div>{% endif %}
-            <h3 style="margin-top: 0; color: var(--brand-blue);">{{ format.name }}</h3>
-            <p style="font-size: 0.9rem; color: #555;">{{ format.note }}</p>
-            {% if promo_active %}
-            <div style="font-size: 1rem; color: #95a5a6; text-decoration: line-through; font-weight: bold; margin-bottom: -5px;">{{ format.price }} грн</div>
-            <div style="font-size: 1.8rem; font-weight: 900; color: #e74c3c; text-shadow: 1px 1px 0px rgba(231, 76, 60, 0.2);">{{ format.promo_price }} грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600; text-shadow: none;">/ урок</span></div>
-            {% else %}
-            <div style="font-size: 1.8rem; font-weight: 900; color: var(--brand-blue);">{{ format.price }} грн <span style="font-size: 1rem; color: var(--text-dark); font-weight: 600;">/ урок</span></div>
-            {% endif %}
+        <div class="bk-format">
+            <h3>{{ format.name }}</h3>
+            <p>{{ format.note }}</p>
+            <div class="bk-price">{{ format.price }} грн <span>/ урок</span></div>
         </div>
         {% endfor %}
-
     </div>
+    <p class="bk-note">Усі формати — онлайн у Zoom, урок триває 60 хвилин.</p>
 
-    <hr style="border: none; border-top: 2px dashed var(--brand-blue); margin: 40px 0;">
+    <hr style="border: none; border-top: 2px dashed var(--brand-blue); margin: 0 0 40px;">
 
-    <h2 style="color: var(--brand-blue); margin-bottom: 10px;">Запис на перше діагностичне заняття</h2>
-    <p style="color: var(--text-dark); margin-bottom: 30px; font-weight: 600;">
-        Перший урок безкоштовний, триває 60 хвилин і проходить індивідуально. На ньому ми визначимо ваш рівень і підберемо постійний графік (або місце в міні-групі).
-    </p>
-    <p style="color: #6c757d; margin: -15px 0 25px; font-size: 0.9rem; line-height: 1.5;">
+    <h2 id="calendar" style="margin-bottom: 10px; scroll-margin-top: 20px;">Оберіть час першого заняття</h2>
+    <p class="bk-legal">
         Записуючись на заняття, ви приймаєте умови <a href="{% url 'offer' %}" target="_blank" style="color: var(--brand-blue);">Договору публічної оферти</a>
         (зокрема правила перенесення і скасування, розділи 12–13) і погоджуєтеся з
         <a href="{% url 'privacy' %}" target="_blank" style="color: var(--brand-blue);">Політикою конфіденційності</a>.
