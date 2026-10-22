@@ -1020,11 +1020,11 @@ class ClassSubscriptionView(TemplateView):
                             for period, _, label in plan.buy_options if period != 'support']
             plan.year_price = subscriptions.price_for(user, plan, 'year')
             plan.credit = plan.price_year - plan.year_price if plan.price_year else 0
+            plan.seats_left = subscriptions.support_seats_left(plan) if plan.support_price_month else 0
         context['plans'] = plans
         context['selected'] = to_int(self.request.GET.get('class'))
         context['balance'] = getattr(self.request.user, 'balance', 0) or 0
         context['support_on_sale'] = any(p.support_price_month for p in plans)
-        context['support_seats_left'] = subscriptions.support_seats_left()
         context['support_blocker'] = subscriptions.support_blocker(user)
         mine = subscriptions.support_students().filter(user_id=user.id).first() if user.is_authenticated else None
         context['support_until'] = mine.support_until if mine else None
@@ -1052,7 +1052,7 @@ def class_buy(request, plan_id, period):
     if period == 'support':
         blocker = subscriptions.support_blocker(request.user)
         renewing = subscriptions.support_students().filter(user=request.user).exists()
-        if not blocker and not renewing and not subscriptions.support_seats_left():
+        if not blocker and not renewing and not subscriptions.support_seats_left(plan):
             blocker = "Вільних місць на супровід зараз немає. Напишіть нам — запишемо в чергу."
         if blocker:
             messages.error(request, blocker)
@@ -1622,6 +1622,9 @@ def telegram_unlink(request):
     return redirect(reverse('cabinet') + '#account')
 
 
+SUBSCRIPTION_WARN_DAYS = 7
+
+
 class CabinetView(LoginRequiredMixin, TemplateView):
     template_name = 'materials/cabinet.html'
 
@@ -1651,6 +1654,15 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             if sub.number not in latest or sub.valid_until > latest[sub.number].valid_until:
                 latest[sub.number] = sub
         context['class_subscriptions'] = sorted(latest.values(), key=lambda sub: sub.number)
+        # За SUBSCRIPTION_WARN_DAYS до кінця — плашка «Підписка закінчується» з кнопкою продовження
+        today = timezone.localdate()
+        context['ending_subscriptions'] = ending = [
+            sub for sub in context['class_subscriptions']
+            if (sub.valid_until - today).days <= SUBSCRIPTION_WARN_DAYS]
+        for sub in ending:
+            days = (sub.valid_until - today).days
+            sub.ends_in = 'сьогодні' if days == 0 else ('завтра' if days == 1 else
+                                                        f"через {days} {uk_plural(days, 'день', 'дні', 'днів')}")
 
         # Учень бачить у бібліотеці теми свого класу й класів з підпискою (уроки з презентацією чи практикою)
         library_list = purchased_list
@@ -1674,8 +1686,24 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             grade = material.curriculum_grade
             label = grade.short_label if grade else 'Інші матеріали'
             if not library_groups or library_groups[-1]['label'] != label:
-                library_groups.append({'label': label, 'materials': []})
+                library_groups.append({'label': label, 'grade_id': grade.id if grade else None, 'materials': []})
             library_groups[-1]['materials'].append(material)
+        # Прогрес за курсом: скільки тем-уроків класу учень уже практикував (хоч раз) з усіх тем класу за деревом
+        grade_ids = [g['grade_id'] for g in library_groups if g['grade_id']]
+        if grade_ids:
+            totals = dict(CurriculumTopic.objects.filter(chapter__grade_id__in=grade_ids, kind='lesson')
+                          .values('chapter__grade_id').annotate(n=Count('id')).values_list('chapter__grade_id', 'n'))
+            grade_field = 'material__curriculum_topic__chapter__grade_id'
+            done = dict(PracticeAttempt.objects.filter(
+                user=self.request.user, material__curriculum_topic__kind='lesson', **{f'{grade_field}__in': grade_ids})
+                .values(grade_field).annotate(n=Count('material__curriculum_topic', distinct=True))
+                .values_list(grade_field, 'n'))
+            for group in library_groups:
+                total = totals.get(group['grade_id'], 0)
+                if total:
+                    group['done'], group['total'] = done.get(group['grade_id'], 0), total
+                    group['percent'] = round(100 * group['done'] / total)
+                    group['total_word'] = uk_plural(total, 'теми', 'тем', 'тем')
         context['library_groups'] = library_groups
 
         # Пакет сам не має контенту — показуємо його теми; посилання лише на ті, до яких є доступ
