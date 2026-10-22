@@ -2,10 +2,12 @@
 доступ — через teachers.subscribed_grade_ids (усі опубліковані уроки й практика класу, поки підписка чинна)."""
 import datetime
 
+from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from .models import NMT_SUBJECT_NAME, ClassPlan, ClassSubscription, CurriculumTopic, Order, StudyMaterial
+from .models import (NMT_SUBJECT_NAME, ClassPlan, ClassSubscription, CurriculumTopic, Order, StudyMaterial,
+                     TutorStudentRequest)
 from .teachers import period_end
 
 
@@ -17,12 +19,66 @@ def active_subscriptions(user):
 
 def grant_class(user, plan, period, note=''):
     """Оплачено підписку на клас. Продовження того самого класу починається після кінця чинної підписки."""
+    if period == 'support':
+        return grant_support(user, plan, note=note)
     today = timezone.localdate()
     current = (active_subscriptions(user).filter(number=plan.number).order_by('-valid_until')
                .values_list('valid_until', flat=True).first())
     start = current + datetime.timedelta(days=1) if current else today
     return ClassSubscription.objects.create(user=user, number=plan.number, plan=plan,
                                             valid_until=period_end(start, period), note=note)
+
+
+# Супровід: місяць підписки на клас, а учень на цей час — учень власника сайту (ДЗ з перевіркою, звіти батькам,
+# сторінка для батьків). Місць обмежено: час викладача не масштабується
+SUPPORT_SEATS = 15
+
+
+def support_students():
+    return TutorStudentRequest.objects.filter(status='approved', support_until__gte=timezone.localdate())
+
+
+def support_seats_left():
+    return max(SUPPORT_SEATS - support_students().count(), 0)
+
+
+def support_blocker(user):
+    """Чому цьому користувачу не можна купити супровід, або '' (учень іншого репетитора — у нього свій викладач)"""
+    request = getattr(user, 'tutor_request', None) if user.is_authenticated else None
+    if request and request.status == 'approved' and request.teacher_id:
+        return "Ви вже навчаєтеся з репетитором на платформі — супровід веде він."
+    return ''
+
+
+def grant_support(user, plan, note='', real_name=''):
+    """Місяць супроводу: продовження — після кінця чинного супроводу (не річної підписки), і користувач стає
+    учнем власника до цієї дати. Постійного учня (без дати супроводу) не чіпаємо — він і так учень."""
+    today = timezone.localdate()
+    current = (active_subscriptions(user).filter(number=plan.number, with_support=True).order_by('-valid_until')
+               .values_list('valid_until', flat=True).first())
+    start = current + datetime.timedelta(days=1) if current else today
+    subscription = ClassSubscription.objects.create(user=user, number=plan.number, plan=plan, with_support=True,
+                                                    valid_until=period_end(start, 'month'), note=note)
+    request = TutorStudentRequest.objects.filter(user=user).first()
+    if request is None:
+        TutorStudentRequest.objects.create(
+            user=user, real_name=real_name or user.get_full_name() or user.email, course=f'grade_{plan.number}',
+            status='approved', support_until=subscription.valid_until)
+    elif not (request.status == 'approved' and request.support_until is None):
+        request.status, request.teacher = 'approved', None
+        request.course = f'grade_{plan.number}'
+        request.support_until = max(request.support_until or today, subscription.valid_until)
+        if real_name:
+            request.real_name = real_name
+        request.save()
+    return subscription
+
+
+def end_expired_support():
+    """Учні, у яких скінчився супровід, перестають бути учнями (історія лишається). Раз на день на процес"""
+    today = timezone.localdate()
+    if cache.add(f'support-expiry-{today}', True, 60 * 60 * 25):
+        TutorStudentRequest.objects.filter(status='approved', support_until__lt=today).update(status='ended')
 
 
 # Акція (оферта, п. 8.1; оголошена на сторінці «Підписка на клас»): сплачене за місячну підписку на клас протягом
@@ -47,6 +103,8 @@ def price_for(user, plan, period):
     """Ціна для цього користувача: річна — мінус зараховані місячні оплати, але не менше за ціну місяця."""
     if period == 'month':
         return plan.price_month
+    if period == 'support':
+        return plan.support_price_month
     if not plan.price_year:
         return 0
     return max(plan.price_year - month_credit(user, plan), plan.price_month or 1)

@@ -377,8 +377,10 @@ class Order(models.Model):
     class_plan = models.ForeignKey('ClassPlan', on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name='orders', verbose_name="Підписка на клас")
     plan_period = models.CharField(max_length=10, blank=True, default='',
-                                   choices=(('month', 'Місяць'), ('year', 'Навчальний рік')),
+                                   choices=(('month', 'Місяць'), ('year', 'Навчальний рік'),
+                                            ('support', 'Місяць із супроводом')),
                                    verbose_name="Період підписки")
+    student_name = models.CharField(max_length=100, blank=True, default='', verbose_name="Учень (для супроводу)")
 
     def save(self, *args, **kwargs):
         if not self.customer_email and self.user_id:
@@ -547,6 +549,7 @@ class TutorStudentRequest(models.Model):
         ('pending', 'Очікує підтвердження'),
         ('approved', 'Підтверджено'),
         ('rejected', 'Відхилено'),
+        ('ended', 'Супровід завершено'),
     )
     COURSE_CHOICES = (
         ('nmt', 'Підготовка до НМТ'),
@@ -567,6 +570,9 @@ class TutorStudentRequest(models.Model):
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    # Учень за платним супроводом: після цієї дати статус стає «Супровід завершено» (subscriptions.end_expired_support).
+    # Порожньо — постійний учень
+    support_until = models.DateField(null=True, blank=True, verbose_name="Супровід до (включно)")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заявки")
 
     # ==========================================
@@ -744,6 +750,10 @@ class ClassPlan(models.Model):
     is_active = models.BooleanField(default=False, verbose_name="Продається")
     note = models.CharField(max_length=120, blank=True, verbose_name="Позначка на вітрині",
                             help_text="Напр. «Ранній доступ: нові уроки щотижня». Порожньо — без позначки.")
+    support_price_month = models.PositiveIntegerField(
+        default=0, verbose_name="Супровід: ціна за місяць, грн",
+        help_text="Місяць підписки, а учень на цей час — ваш учень: ДЗ з перевіркою, звіти батькам. "
+                  "0 — супровід для цього класу не продається.")
 
     class Meta:
         ordering = ['number']
@@ -757,7 +767,8 @@ class ClassPlan(models.Model):
     def buy_options(self):
         """[(період, ціна, підпис)] — лише періоди з ціною."""
         return [(period, price, label) for period, price, label in (
-            ('month', self.price_month, 'На місяць'), ('year', self.price_year, 'На навчальний рік')) if price]
+            ('month', self.price_month, 'На місяць'), ('year', self.price_year, 'На навчальний рік'),
+            ('support', self.support_price_month, 'Місяць із супроводом')) if price]
 
 
 class ClassSubscription(models.Model):
@@ -769,6 +780,7 @@ class ClassSubscription(models.Model):
     valid_until = models.DateField(verbose_name="Діє до (включно)")
     created_at = models.DateTimeField(auto_now_add=True)
     note = models.CharField(max_length=200, blank=True, verbose_name="Примітка (оплата, подарунок…)")
+    with_support = models.BooleanField(default=False, verbose_name="З супроводом")
 
     class Meta:
         ordering = ['-valid_until']

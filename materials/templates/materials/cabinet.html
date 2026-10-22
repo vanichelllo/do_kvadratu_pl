@@ -547,6 +547,7 @@
                             <td>
                                 <strong style="color: var(--brand-blue); font-size: 1rem;">{{ st.real_name }}</strong><br>
                                 <span style="font-size: 0.8rem; color: #666; font-weight: bold;">{{ st.get_course_display }}</span>
+                                {% if st.support_until %}<br><span style="font-size: 0.75rem; font-weight: 800; color: #27ae60;">🤝 Супровід до {{ st.support_until|date:"d.m" }}</span>{% endif %}
                             </td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
@@ -877,6 +878,13 @@
             {% elif tutor_request.status == 'approved' %}
                 <h3 style="margin-top: 0; color: #2ecc71;">✅ Статус учня підтверджено</h3>
                 <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Твій напрямок: <b>{{ tutor_request.get_course_display }}</b>.{% if tutor_request.teacher %} Твій викладач: <b>{{ tutor_request.teacher.get_full_name|default:tutor_request.teacher.email }}</b>.{% endif %} Твої матеріали доступні в бібліотеці.</p>
+                {% if tutor_request.support_until %}
+                <p style="color: #666; font-size: 14px; margin-bottom: 0;">🤝 Супровід діє до <b>{{ tutor_request.support_until|date:"d.m.Y" }}</b>. <a href="{% url 'class_subscribe' %}#support">Продовжити</a></p>
+                {% endif %}
+            {% elif tutor_request.status == 'ended' %}
+                <h3 style="margin-top: 0;">🤝 Супровід завершився</h3>
+                <p style="color: #666; font-size: 14px;">Результати й звіти лишаються в кабінеті. Продовжити супровід можна будь-коли.</p>
+                <a href="{% url 'class_subscribe' %}#support" class="btn-primary" style="display: block; background-color: var(--brand-blue); padding: 12px; border-radius: 6px; color: white; font-weight: bold; text-decoration: none;">Продовжити супровід</a>
             {% endif %}
         </div>
         {% endif %}

@@ -1685,7 +1685,8 @@ class OrderAfterAccountDeletionTests(BaseTestCase):
 class LegalPagesTests(BaseTestCase):
     def test_offer_and_privacy_show_approved_texts(self):
         offer = self.client.get('/offer/')
-        self.assertContains(offer, 'Редакція від 19.10.2026')
+        self.assertContains(offer, 'Редакція від 22.10.2026')
+        self.assertContains(offer, '10.16. <strong>Підписка з супроводом.</strong>')
         self.assertContains(offer, 'Перше (діагностичне) заняття — безкоштовне')
         self.assertContains(offer, 'квитанція, яку Monobank автоматично надає')
         self.assertContains(offer, 'href="/privacy/"')
@@ -3813,7 +3814,7 @@ class ClassSubscriptionTests(BaseTestCase):
             title='1.1. Вісім', price=29, is_published=True, html_content='<p>урок</p>',
             curriculum_topic=make_school_topic('1.1. Вісім', 8, 1, subject='Алгебра (7-9 класи)'))
         ClassPlan.objects.update(is_active=False)   # міграція вмикає 5 клас — тут перевіряємо з нуля
-        self.plan7 = ClassPlan.objects.get(number=7)   # стартові ціни з міграції: 119 / 549
+        self.plan7 = ClassPlan.objects.get(number=7)   # ціни з міграцій: 119 / 790
         self.pupil = self.make_user('pupil7@example.com', balance=400)
         self.client.force_login(self.pupil)
 
@@ -3832,7 +3833,7 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertContains(page, 'Алгебра і геометрія')
         self.assertContains(page, 'Уже готово уроків: 2 з 2')
         self.assertContains(page, 'На місяць — з балансу')        # 119 ₴ ≤ 400 ₴
-        self.assertNotContains(page, 'На навчальний рік — з балансу')   # 549 ₴ > 400 ₴
+        self.assertNotContains(page, 'На навчальний рік — з балансу')   # 790 ₴ > 400 ₴
         self.assertContains(self.client.get('/prices/'), '7 клас — від 119 ₴/міс')
         grade = self.algebra7.curriculum_topic.chapter.grade
         self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), 'Увесь 7 клас')
@@ -3879,11 +3880,11 @@ class ClassSubscriptionTests(BaseTestCase):
                                               {'agree': 'on', 'method': 'balance'})
         with mock.patch('materials.views.send_telegram_notification'):
             buy('month')
-            self.assertContains(self.client.get('/subscribe/'), 'рік для вас — <strong>430 ₴</strong>')
+            self.assertContains(self.client.get('/subscribe/'), 'рік для вас — <strong>671 ₴</strong>')
             buy('year')
         self.pupil.refresh_from_db()
-        self.assertEqual(self.pupil.balance, 1000 - 119 - 430)
-        self.assertEqual(int(Order.objects.get(class_plan=self.plan7, plan_period='year').total_amount), 430)
+        self.assertEqual(self.pupil.balance, 1000 - 119 - 671)
+        self.assertEqual(int(Order.objects.get(class_plan=self.plan7, plan_period='year').total_amount), 671)
         # Ту саму місячну оплату вдруге не зараховуємо
         self.assertNotContains(self.client.get('/subscribe/'), 'рік для вас')
 
@@ -3897,7 +3898,7 @@ class ClassSubscriptionTests(BaseTestCase):
             response = self.client.post(f'/subscribe/buy/{self.plan7.id}/year/', {'agree': 'on', 'method': 'card'})
         self.assertRedirects(response, 'https://pay.example/1', fetch_redirect_response=False)
         order = Order.objects.get(class_plan=self.plan7)
-        self.assertEqual((order.status, int(order.total_amount)), ('pending', 549))
+        self.assertEqual((order.status, int(order.total_amount)), ('pending', 790))
         self.assertEqual(self.download(self.algebra7), 404)
         order.mono_invoice_id = 'inv-class'
         order.save()
@@ -3906,6 +3907,108 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertIn('Нова підписка на клас', notify.call_args[0][0])
         self.assertEqual(self.download(self.algebra7), 200)
         self.assertContains(self.client.get(f'/payment/result/{order.id}/'), 'Підписку на 7 клас оформлено')
+
+
+class ClassSupportTests(BaseTestCase):
+    """Підписка з супроводом: місяць підписки на клас, і на цей час учень — учень власника сайту."""
+
+    def setUp(self):
+        from .models import ClassPlan
+        self.lesson = StudyMaterial.objects.create(
+            title='1.1. Алгебра', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic('1.1. Алгебра', 7, 1, subject='Алгебра (7-9 класи)'))
+        self.plan = ClassPlan.objects.get(number=7)
+        self.plan.is_active, self.plan.support_price_month = True, 449
+        self.plan.save()
+        self.pupil = self.make_user('support@example.com', balance=1000)
+        self.client.force_login(self.pupil)
+
+    def buy(self, **extra):
+        data = {'agree': 'on', 'method': 'balance', 'real_name': 'Коваль Оля', **extra}
+        return self.client.post(f'/subscribe/buy/{self.plan.id}/support/', data)
+
+    def test_balance_purchase_makes_pupil_owners_student_for_a_month(self):
+        page = self.client.get('/subscribe/')
+        self.assertContains(page, 'З супроводом — 449 ₴')
+        self.assertContains(page, 'Вільних місць: 15')
+        with mock.patch('materials.views.send_telegram_notification') as notify:
+            self.assertRedirects(self.buy(), '/cabinet/', fetch_redirect_response=False)
+        self.assertIn('Новий учень на супроводі', notify.call_args[0][0])
+        request = TutorStudentRequest.objects.get(user=self.pupil)
+        self.assertEqual((request.status, request.teacher, request.course, request.real_name),
+                         ('approved', None, 'grade_7', 'Коваль Оля'))
+        subscription = self.pupil.class_subscriptions.get()
+        self.assertTrue(subscription.with_support)
+        self.assertEqual(request.support_until, subscription.valid_until)
+        self.assertLess((subscription.valid_until - timezone.localdate()).days, 32)
+        self.pupil.refresh_from_db()
+        self.assertEqual(self.pupil.balance, 551)
+        self.assertEqual(self.client.get(f'/download/{self.lesson.id}/').status_code, 200)
+        self.assertContains(self.client.get('/cabinet/'), 'Супровід діє до')
+        boss = self.make_user('boss@example.com', is_staff=True)
+        self.client.force_login(boss)
+        self.assertContains(self.client.get('/cabinet/'), '🤝 Супровід до')
+        self.assertContains(self.client.get('/prices/'), 'З супроводом — 449 ₴/міс')
+
+    def test_renewal_extends_support_not_after_year_subscription(self):
+        from .subscriptions import grant_class
+        year = grant_class(self.pupil, self.plan, 'year')
+        self.buy()
+        self.buy()
+        request = TutorStudentRequest.objects.get(user=self.pupil)
+        self.assertLess(request.support_until, year.valid_until)
+        self.assertGreater((request.support_until - timezone.localdate()).days, 50)
+
+    def test_support_ends_after_paid_month(self):
+        from .subscriptions import end_expired_support
+        self.buy()
+        request = TutorStudentRequest.objects.get(user=self.pupil)
+        request.support_until = timezone.localdate() - datetime.timedelta(days=1)
+        request.save()
+        self.pupil.class_subscriptions.update(valid_until=request.support_until)
+        self.assertEqual(self.client.get(f'/download/{self.lesson.id}/').status_code, 404)
+        end_expired_support()
+        request.refresh_from_db()
+        self.assertEqual(request.status, 'ended')
+        self.assertContains(self.client.get('/cabinet/'), 'Супровід завершився')
+
+    def test_permanent_student_keeps_status(self):
+        TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_7', status='approved')
+        self.buy()
+        self.assertIsNone(TutorStudentRequest.objects.get(user=self.pupil).support_until)
+
+    def test_tutors_student_and_full_seats_are_refused(self):
+        tutor = self.make_user('tutor@example.com')
+        request = TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_7',
+                                                     status='approved', teacher=tutor)
+        self.buy()
+        self.assertFalse(self.pupil.class_subscriptions.exists())
+        request.delete()
+        with mock.patch('materials.subscriptions.SUPPORT_SEATS', 0):
+            self.buy()
+            self.assertContains(self.client.get('/subscribe/'), 'Вільних місць зараз немає')
+        self.assertFalse(self.pupil.class_subscriptions.exists())
+        self.buy(real_name='')
+        self.assertFalse(self.pupil.class_subscriptions.exists())
+
+    def test_card_payment_uses_name_from_order(self):
+        from .views import apply_mono_status
+        with mock.patch('materials.views.create_mono_invoice', return_value='https://pay.example/2'):
+            self.buy(method='card')
+        order = Order.objects.get(class_plan=self.plan)
+        self.assertEqual((order.plan_period, order.student_name, int(order.total_amount)), ('support', 'Коваль Оля', 449))
+        order.mono_invoice_id = 'inv-support'
+        order.save()
+        with mock.patch('materials.views.send_telegram_notification') as notify:
+            apply_mono_status('inv-support', 'success')
+        self.assertIn('Новий учень на супроводі', notify.call_args[0][0])
+        self.assertEqual(TutorStudentRequest.objects.get(user=self.pupil).real_name, 'Коваль Оля')
+
+    def test_migration_prices(self):
+        from .models import ClassPlan
+        prices = dict(ClassPlan.objects.values_list('number', 'price_year'))
+        self.assertEqual((prices[5], prices[6], prices[8], prices[11]), (690, 690, 790, 890))
+        self.assertEqual(ClassPlan.objects.get(number=5).support_price_month, 449)
 
 
 class LaunchPricesMigrationTests(BaseTestCase):

@@ -887,7 +887,8 @@ def join_teacher(request, code):
             messages.error(request, "Вкажіть прізвище й ім'я та клас.")
         else:
             TutorStudentRequest.objects.update_or_create(user=request.user, defaults={
-                'real_name': real_name, 'course': course, 'teacher': invite.teacher, 'status': 'approved'})
+                'real_name': real_name, 'course': course, 'teacher': invite.teacher, 'status': 'approved',
+                'support_until': None})
             messages.success(request, f"✅ Тепер ви учень викладача {teacher_name(invite.teacher)}.")
             return redirect('cabinet')
     return render(request, 'materials/join_teacher.html', {
@@ -1016,12 +1017,18 @@ class ClassSubscriptionView(TemplateView):
             plan.grades = grades.get(plan.number, [])
             plan.active_until = active.get(plan.number)
             plan.options = [(period, subscriptions.price_for(user, plan, period), label)
-                            for period, _, label in plan.buy_options]
+                            for period, _, label in plan.buy_options if period != 'support']
             plan.year_price = subscriptions.price_for(user, plan, 'year')
             plan.credit = plan.price_year - plan.year_price if plan.price_year else 0
         context['plans'] = plans
         context['selected'] = to_int(self.request.GET.get('class'))
         context['balance'] = getattr(self.request.user, 'balance', 0) or 0
+        context['support_on_sale'] = any(p.support_price_month for p in plans)
+        context['support_seats_left'] = subscriptions.support_seats_left()
+        context['support_blocker'] = subscriptions.support_blocker(user)
+        mine = subscriptions.support_students().filter(user_id=user.id).first() if user.is_authenticated else None
+        context['support_until'] = mine.support_until if mine else None
+        context['support_needs_name'] = user.is_authenticated and not hasattr(user, 'tutor_request')
         return context
 
 
@@ -1031,16 +1038,28 @@ class ClassSubscriptionView(TemplateView):
 def class_buy(request, plan_id, period):
     """Оплата підписки на клас з балансу (діє одразу) або через Monobank (видає apply_mono_status після оплати)."""
     plan = get_object_or_404(ClassPlan, id=plan_id, is_active=True)
-    if period not in ('month', 'year'):
+    if period not in ('month', 'year', 'support'):
         raise Http404
-    base = plan.price_month if period == 'month' else plan.price_year
-    price = subscriptions.price_for(request.user, plan, period) if base else 0
+    price = subscriptions.price_for(request.user, plan, period) if dict(
+        (p, base) for p, base, _ in plan.buy_options).get(period) else 0
     if not price:
         messages.error(request, "Ця підписка поки не продається.")
         return redirect('class_subscribe')
     if request.POST.get('agree') != 'on':
         messages.error(request, "Щоб перейти до оплати, поставте галочку про згоду з умовами.")
         return redirect('class_subscribe')
+    real_name = request.POST.get('real_name', '').strip()[:100]
+    if period == 'support':
+        blocker = subscriptions.support_blocker(request.user)
+        renewing = subscriptions.support_students().filter(user=request.user).exists()
+        if not blocker and not renewing and not subscriptions.support_seats_left():
+            blocker = "Вільних місць на супровід зараз немає. Напишіть нам — запишемо в чергу."
+        if blocker:
+            messages.error(request, blocker)
+            return redirect('class_subscribe')
+        if not real_name and not hasattr(request.user, 'tutor_request'):
+            messages.error(request, "Для супроводу вкажіть прізвище й ім'я учня.")
+            return redirect('class_subscribe')
     if request.POST.get('method') == 'balance':
         with transaction.atomic():
             user = User.objects.select_for_update().get(pk=request.user.pk)
@@ -1052,16 +1071,22 @@ def class_buy(request, plan_id, period):
             user.save(update_fields=['balance'])
             order = Order.objects.create(user=user, total_amount=price, status='paid', paid_at=timezone.now(),
                                          mono_invoice_id='balance_payment', class_plan=plan, plan_period=period,
-                                         instant_access_agreed_at=timezone.now())
-            subscription = subscriptions.grant_class(user, plan, period, note=f'Замовлення #{order.id} (з балансу)')
+                                         student_name=real_name, instant_access_agreed_at=timezone.now())
+            if period == 'support':
+                subscription = subscriptions.grant_support(user, plan, note=f'Замовлення #{order.id} (з балансу)',
+                                                           real_name=real_name)
+            else:
+                subscription = subscriptions.grant_class(user, plan, period,
+                                                         note=f'Замовлення #{order.id} (з балансу)')
         send_telegram_notification(
-            f"🎒 Нова підписка на клас (з балансу)!\n{html.escape(user.email)}: {plan}, "
+            f"{'🤝 Новий учень на супроводі' if period == 'support' else '🎒 Нова підписка на клас'} (з балансу)!\n"
+            f"{html.escape(user.email)}{f' ({html.escape(real_name)})' if real_name else ''}: {plan}, "
             f"{order.get_plan_period_display().lower()}, до {subscription.valid_until:%d.%m.%Y}\nСписано: {price} ₴")
         messages.success(request, f"✅ Підписку на {plan} оформлено до {subscription.valid_until:%d.%m.%Y}: "
                                   f"усі уроки класу вже в кабінеті. З балансу списано {price} ₴.")
         return redirect('cabinet')
     order = Order.objects.create(user=request.user, total_amount=price, status='pending', class_plan=plan,
-                                 plan_period=period, instant_access_agreed_at=timezone.now())
+                                 plan_period=period, student_name=real_name, instant_access_agreed_at=timezone.now())
     page_url = create_mono_invoice(order, price * 100)
     if page_url:
         return redirect(page_url)
@@ -1418,6 +1443,7 @@ def prices_view(request):
     nmt = Q(curriculum_topic__isnull=True) | Q(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
     bundles = list(on_sale.filter(is_bundle=True).prefetch_related('included_materials').defer('html_content'))
     nmt_subject = CurriculumSubject.objects.filter(name=NMT_SUBJECT_NAME).first()
+    class_plans = subscriptions.plans_on_sale()
     tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
     return render(request, 'materials/prices.html', {
         'school_min': on_sale.filter(is_bundle=False).exclude(nmt).aggregate(m=Min('price'))['m'],
@@ -1428,7 +1454,8 @@ def prices_view(request):
         'nmt_countdown': nmt_countdown(0),
         'nmt_free': StudyMaterial.objects.filter(nmt, is_published=True, is_free=True).exists(),
         'first_topic_free': any(r.first_topic_free for r in rules),
-        'class_plans': subscriptions.plans_on_sale(),
+        'class_plans': class_plans,
+        'support_price': min((p.support_price_month for p in class_plans if p.support_price_month), default=None),
         'lesson_formats': LESSON_FORMATS,
         'tutor_min': tutor_monthly,
         'trial_days': teachers.TRIAL_DAYS,
@@ -1582,6 +1609,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        subscriptions.end_expired_support()
 
         with_tree = 'curriculum_topic__chapter__grade__subject'
         purchased_list = list(self.request.user.purchased_materials.select_related(with_tree).prefetch_related(
@@ -2015,6 +2043,11 @@ def apply_mono_status(invoice_id, status):
                 msg = (f"🧑‍🏫 Нова підписка репетитора!\n{email}: {html.escape(str(order.teacher_plan))}, "
                        f"{order.get_plan_period_display().lower()}, до {license_.valid_until:%d.%m.%Y}\n"
                        f"Оплачено: {order.total_amount} ₴")
+            elif order.class_plan_id and order.plan_period == 'support':
+                subscription = subscriptions.grant_support(order.user, order.class_plan, note=f'Замовлення #{order.id}',
+                                                           real_name=order.student_name)
+                msg = (f"🤝 Новий учень на супроводі!\n{email}: {html.escape(order.student_name or '—')}, "
+                       f"{order.class_plan}, до {subscription.valid_until:%d.%m.%Y}\nОплачено: {order.total_amount} ₴")
             elif order.class_plan_id:
                 subscription = subscriptions.grant_class(order.user, order.class_plan, order.plan_period,
                                                          note=f'Замовлення #{order.id}')

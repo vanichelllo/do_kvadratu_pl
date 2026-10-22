@@ -63,6 +63,11 @@ def can_teach(user, material):
     return grade is not None and grade.id in grades
 
 
+def active_student():
+    """Підтверджений учень; учень за супроводом — лише до кінця оплаченого супроводу"""
+    return Q(status='approved') & (Q(support_until__isnull=True) | Q(support_until__gte=timezone.localdate()))
+
+
 def students_of(user):
     """Підтверджені учні викладача."""
     if not user.is_authenticated:
@@ -70,7 +75,7 @@ def students_of(user):
     mine = Q(teacher=user)
     if is_owner(user):
         mine |= Q(teacher__isnull=True)
-    return TutorStudentRequest.objects.filter(mine, status='approved')
+    return TutorStudentRequest.objects.filter(mine).filter(active_student())
 
 
 def teaches(user, pupil_user):
@@ -96,7 +101,7 @@ def taught_class_grade_ids(user):
         return set()
     if not hasattr(user, '_taught_class_grade_ids'):
         grades = set()
-        request = TutorStudentRequest.objects.filter(user=user, status='approved', course__startswith='grade_') \
+        request = TutorStudentRequest.objects.filter(active_student(), user=user, course__startswith='grade_') \
             .select_related('teacher').first()
         if request:
             number = int(request.course.split('_')[1])
