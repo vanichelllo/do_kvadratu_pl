@@ -19,7 +19,7 @@ from users.views import accept_terms_view
 admin.site.login = rate_limited_admin_login(admin.site.login)
 
 # ІМПОРТ З MATERIALS
-from materials import games, schedule
+from materials import games, plans, schedule
 from materials.views import (
     AboutView,
     CabinetView,
@@ -182,6 +182,11 @@ urlpatterns = [
     path('cabinet/schedule/<int:lesson_id>/restore/', schedule.schedule_restore, name='schedule_restore'),
     path('cabinet/schedule/<int:lesson_id>/done/', schedule.schedule_done, name='schedule_done'),
     path('cabinet/schedule/<int:lesson_id>/report/', schedule.schedule_report, name='schedule_report'),
+    path('cabinet/students/<int:student_id>/plan/', plans.plan_page, name='study_plan'),
+    path('cabinet/students/<int:student_id>/plan/build/', plans.plan_build, name='study_plan_build'),
+    path('cabinet/students/<int:student_id>/plan/add/', plans.plan_add, name='study_plan_add'),
+    path('cabinet/students/<int:student_id>/plan/clear/', plans.plan_clear, name='study_plan_clear'),
+    path('cabinet/plan-item/<int:item_id>/', plans.plan_item_update, name='study_plan_item'),
     path('calendar/<str:token>.ics', schedule.calendar_feed, name='calendar_feed'),
     path('parents/<uuid:parent_token>/calendar.ics', schedule.parent_calendar_feed, name='parent_calendar_feed'),
     path('game/', games.game_hub, name='game_hub'),

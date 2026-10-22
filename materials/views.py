@@ -30,7 +30,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, preview, reminders, schedule, subscriptions, teachers
+from . import homework, plans, practice, preview, reminders, schedule, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -1789,6 +1789,12 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['my_homeworks'] = homework.annotate(
                 Homework.objects.filter(student=tutor_request).select_related('student', 'material', 'attempt')
                 .defer('material__html_content')[:10])
+            context['my_plan'] = plans.student_view(tutor_request)
+            if context['my_plan']:
+                # Тему плану, відкриту учневі (є в бібліотеці), можна одразу відкрити
+                by_topic = {m.curriculum_topic_id: m for m in library_list if m.curriculum_topic_id and not m.is_bundle}
+                for item in context['my_plan']['items']:
+                    item.material = by_topic.get(item.topic_id)
             context['my_lessons'] = schedule.upcoming_for_student(tutor_request)
             if context['my_lessons']:
                 context['my_lessons_feed'] = schedule.student_feed_links(self.request.user)
@@ -2572,6 +2578,7 @@ def parent_dashboard_view(request, parent_token):
     }
 
     if isinstance(student_request, TutorStudentRequest):
+        context['plan'] = plans.student_view(student_request)
         context['lessons'] = schedule.upcoming_for_student(student_request)
         if context['lessons']:
             context['lessons_feed'] = schedule.feed_links(reverse('parent_calendar_feed', args=[parent_token]))
@@ -2686,6 +2693,7 @@ def add_quick_report(request):
         report.student = student
         report.save()
         schedule.link_report(request.user, report)   # заняття цього дня в розкладі більше не чекає звіту
+        plans.mark_reported(student, report.curriculum_topic)
         messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
     else:
         errors = '; '.join(err for field_errors in form.errors.values() for err in field_errors)

@@ -75,6 +75,27 @@
             </div>
         </div>
     {% endif %}
+<!-- БЛОК: НАВЧАЛЬНИЙ ПЛАН (без приміток викладача) -->
+    {% if plan %}
+        <div class="card report-card mb-4" style="border-left: 4px solid #f39c12;">
+            <div class="report-card-body p-3">
+                <div class="text-muted small fw-bold mb-2">Навчальний план · пройдено {{ plan.done }} з {{ plan.total }} тем</div>
+                <div class="progress"><div class="progress-bar" style="width: {{ plan.percent }}%; background-color: #f39c12;"></div></div>
+                {% if plan.next %}
+                <div class="small fw-bold mt-2 mb-1">Далі за планом:</div>
+                <ul class="mb-0 ps-3">{% for item in plan.next %}<li>{{ item.name }}</li>{% endfor %}</ul>
+                {% endif %}
+                <details class="nush-details mt-2">
+                    <summary>Увесь план ({{ plan.items|length }})</summary>
+                    <ol class="mt-2 mb-0 ps-3 small">
+                        {% for item in plan.items %}
+                        <li class="{% if item.status == 'done' %}text-success{% elif item.status == 'skipped' %}text-muted text-decoration-line-through{% endif %}">{% if item.status == 'done' %}✓ {% endif %}{{ item.name }}{% if item.level %} <span class="text-muted">· практика: {{ item.level }}</span>{% endif %}</li>
+                        {% endfor %}
+                    </ol>
+                </details>
+            </div>
+        </div>
+    {% endif %}
 <!-- БЛОК: ОСТАННЄ ЗАНЯТТЯ — коротко, у два слова -->
     {% if last_report %}
         <div class="card report-card mb-4" style="border-left: 4px solid #7c3aed;">

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Навчальний план: {{ student.real_name }} | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .plan { margin: 30px 0 60px; }
+    .plan-back { display: inline-block; margin-bottom: 12px; color: var(--brand-blue); font-weight: 700; }
+    .plan-head { background: var(--brand-blue); color: #fff; padding: 20px 24px; border-radius: 16px;
+        box-shadow: 6px 6px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .plan-head h1 { color: #fff; margin: 0; font-size: 1.5rem; font-weight: 900; text-transform: uppercase; overflow-wrap: anywhere; }
+    .plan-head p { margin: 6px 0 0; opacity: 0.92; }
+    .plan-bar { height: 10px; background: rgba(255,255,255,0.25); border-radius: 999px; overflow: hidden; margin-top: 12px; max-width: 420px; }
+    .plan-bar > span { display: block; height: 100%; background: var(--brand-yellow); border-radius: 999px; }
+
+    .plan-card { background: #fff; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 18px 20px;
+        box-shadow: 4px 4px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .plan-card h2 { color: var(--brand-blue); font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin: 0 0 12px; }
+    .plan-card > summary { list-style: none; cursor: pointer; }
+    .plan-card > summary::-webkit-details-marker { display: none; }
+    .plan-card > summary h2 { margin: 0; display: flex; justify-content: space-between; gap: 10px; }
+    .plan-card[open] > summary h2 { margin-bottom: 12px; }
+    .plan-card[open] > summary .toggle-icon { transform: rotate(180deg); }
+    .toggle-icon { transition: transform 0.3s; }
+    .plan-note { color: #6c757d; font-size: 0.88rem; margin: 0 0 12px; }
+
+    .plan-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .plan-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 800; color: var(--brand-blue); }
+    .plan-form select, .plan-form input[type="text"], .plan-form input[type="number"] { padding: 8px; border: 2px solid #dce3ec;
+        border-radius: 8px; font-family: inherit; font-size: 0.95rem; background: #fff; color: var(--text-dark);
+        max-width: 100%; box-sizing: border-box; min-width: 0; }
+    .plan-form .grow { flex: 1 1 260px; min-width: 0; }
+    .plan-grades { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 12px; }
+    .plan-grades label { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.92rem; color: var(--text-dark); }
+    .plan-radio { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.88rem; }
+    .plan-radio label { flex-direction: row; align-items: center; gap: 5px; font-weight: 600; color: var(--text-dark); font-size: 0.88rem; }
+    .plan-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 800;
+        cursor: pointer; font-family: inherit; font-size: 0.95rem; white-space: nowrap; }
+    .plan-btn.blue { background: var(--brand-blue); color: var(--brand-yellow); }
+    .plan-btn.ghost { background: #fff; color: #c0392b; border: 2px solid #c0392b; padding: 8px 12px; }
+    .plan-btn.small { padding: 6px 10px; font-size: 0.82rem; }
+    .plan-link { background: none; border: none; padding: 0; color: #344e86; font-weight: 700; text-decoration: underline;
+        cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+
+    .plan-list { list-style: none; margin: 0; padding: 0; }
+    .plan-item { display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: start;
+        padding: 12px 0; border-bottom: 1px solid #eef1f5; }
+    .plan-item:last-child { border-bottom: none; }
+    .plan-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 0.85rem; background: #e6ebf2; color: var(--brand-blue); }
+    .plan-item.done .plan-num { background: #27ae60; color: #fff; }
+    .plan-item.skipped { opacity: 0.55; }
+    .plan-item.skipped .plan-name { text-decoration: line-through; }
+    .plan-item.is-next .plan-num { background: var(--brand-yellow); }
+    .plan-name { font-weight: 800; color: var(--text-dark); overflow-wrap: anywhere; }
+    .plan-place { color: #6c757d; font-size: 0.8rem; overflow-wrap: anywhere; }
+    .plan-badge { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 1px 7px; border-radius: 4px;
+        background: #e6ebf2; color: var(--brand-blue); margin: 4px 4px 0 0; }
+    .plan-badge.ok { background: #d4f5df; color: #1e7e44; }
+    .plan-badge.next { background: #fff3c4; color: #8a6d00; }
+    .plan-teacher-note { font-size: 0.82rem; color: #6c4a00; background: #fff8e1; border-radius: 6px; padding: 4px 8px;
+        margin-top: 6px; display: inline-block; overflow-wrap: anywhere; }
+    .plan-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
+    .plan-actions form { margin: 0; }
+    .plan-icon { background: #fff; border: 2px solid #dce3ec; border-radius: 8px; width: 34px; height: 34px; cursor: pointer;
+        font-size: 0.95rem; line-height: 1; color: var(--brand-blue); font-family: inherit; padding: 0; }
+    .plan-icon:hover { border-color: var(--brand-blue); }
+    .plan-icon.done { border-color: #27ae60; color: #27ae60; font-weight: 900; }
+    .plan-more { grid-column: 2 / -1; }
+    .plan-more > summary { cursor: pointer; color: #344e86; font-weight: 700; font-size: 0.82rem; text-decoration: underline; width: max-content; }
+    .plan-more .plan-form { margin-top: 8px; gap: 8px; }
+    .plan-more input[type="number"] { width: 80px; }
+
+    @media (max-width: 600px) {
+        .plan-head { padding: 16px; }
+        .plan-head h1 { font-size: 1.2rem; }
+        .plan-card { padding: 14px; }
+        .plan-item { grid-template-columns: 30px 1fr; }
+        .plan-actions { grid-column: 2; justify-content: flex-start; }
+        .plan-form > label, .plan-form > .plan-btn { flex: 1 1 100%; }
+    }
+</style>
+
+<div class="plan">
+    <a href="{% url 'cabinet' %}#teach" class="plan-back">← До кабінету</a>
+
+    <div class="plan-head">
+        <h1>🧭 Навчальний план</h1>
+        <p><b>{{ student.real_name }}</b> · {{ student.get_course_display }}</p>
+        {% if items %}
+        <p>Пройдено {{ summary.done }} з {{ summary.total }} тем{% if summary.next %} · далі: «{{ summary.next.0.name }}»{% endif %}</p>
+        <div class="plan-bar" aria-hidden="true"><span style="width: {{ summary.percent }}%;"></span></div>
+        {% endif %}
+    </div>
+
+    {% if not items %}
+    <div class="plan-card">
+        <h2>Скласти план з дерева тем</h2>
+        <p class="plan-note">Теми обраних класів потраплять у план у порядку дерева. Далі план можна змінювати під учня: прибрати чи пропустити теми, змінити порядок, додати повторення з інших класів або власні теми. Теми, за якими вже є звіти заняття, одразу позначаться пройденими.</p>
+        <form method="post" action="{% url 'study_plan_build' student.id %}">
+            {% csrf_token %}
+            <div class="plan-grades">
+                {% for grade in grades %}
+                <label><input type="checkbox" name="grade" value="{{ grade.id }}"{% if grade.is_own %} checked{% endif %}> {{ grade.short_label }}</label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="plan-btn">Скласти план</button>
+        </form>
+    </div>
+    {% else %}
+
+    <div class="plan-card">
+        <h2>Теми плану</h2>
+        <p class="plan-note">Пройдені теми відмічаються самі, коли ви зберігаєте звіт заняття з цією темою. Наступна тема плану підставляється в розклад і звіт. Учень і батьки бачать план без ваших приміток.</p>
+        <ol class="plan-list">
+            {% for item in items %}
+            <li class="plan-item {{ item.status }}{% if item == summary.next.0 %} is-next{% endif %}" id="item-{{ item.id }}">
+                <span class="plan-num">{% if item.status == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
+                <div>
+                    <div class="plan-name">{{ item.name }}</div>
+                    <div class="plan-place">{{ item.place }}</div>
+                    {% if item == summary.next.0 %}<span class="plan-badge next">далі</span>{% endif %}
+                    {% if item.status == 'done' %}<span class="plan-badge ok">пройдено{% if item.done_on %} {{ item.done_on|date:"d.m" }}{% endif %}</span>{% elif item.status == 'skipped' %}<span class="plan-badge">пропущено</span>{% endif %}
+                    {% if item.level %}<span class="plan-badge">практика: {{ item.level }}</span>{% endif %}
+                    {% if item.note %}<div class="plan-teacher-note">🔒 {{ item.note }}</div>{% endif %}
+                </div>
+                <div class="plan-actions">
+                    <form method="post" action="{% url 'study_plan_item' item.id %}">{% csrf_token %}<input type="hidden" name="action" value="status">
+                        {% if item.status == 'done' %}<input type="hidden" name="status" value="todo"><button type="submit" class="plan-icon done" title="Повернути в план" aria-label="Повернути в план">✓</button>
+                        {% else %}<input type="hidden" name="status" value="done"><button type="submit" class="plan-icon" title="Позначити пройденою" aria-label="Позначити пройденою">✓</button>{% endif %}
+                    </form>
+                    <form method="post" action="{% url 'study_plan_item' item.id %}">{% csrf_token %}<input type="hidden" name="action" value="up"><button type="submit" class="plan-icon" title="Вище" aria-label="Вище"{% if forloop.first %} disabled{% endif %}>↑</button></form>
+                    <form method="post" action="{% url 'study_plan_item' item.id %}">{% csrf_token %}<input type="hidden" name="action" value="down"><button type="submit" class="plan-icon" title="Нижче" aria-label="Нижче"{% if forloop.last %} disabled{% endif %}>↓</button></form>
+                </div>
+                <details class="plan-more">
+                    <summary>Ще</summary>
+                    <div class="plan-form">
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="move">
+                            <label>На позицію <input type="number" name="position" min="1" max="{{ items|length }}" value="{{ forloop.counter }}"></label>
+                            <button type="submit" class="plan-btn small blue">Перемістити</button>
+                        </form>
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="status">
+                            {% if item.status == 'skipped' %}<input type="hidden" name="status" value="todo"><button type="submit" class="plan-btn small blue">Повернути в план</button>
+                            {% else %}<input type="hidden" name="status" value="skipped"><button type="submit" class="plan-btn small blue">Пропустити</button>{% endif %}
+                        </form>
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="delete">
+                            <button type="submit" class="plan-btn small ghost" onclick="return confirm('Прибрати тему з плану?');">Прибрати</button>
+                        </form>
+                    </div>
+                    <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="note">
+                        <label class="grow">Примітка (бачите лише ви) <input type="text" name="note" maxlength="300" value="{{ item.note }}" placeholder="Напр.: плутає знаки, дати більше прикладів"></label>
+                        <button type="submit" class="plan-btn small">Зберегти</button>
+                    </form>
+                </details>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="plan-card" id="add">
+        <h2>➕ Додати тему</h2>
+        <form method="post" action="{% url 'study_plan_add' student.id %}" class="plan-form">
+            {% csrf_token %}
+            <label class="grow">Тема з дерева (будь-який клас)
+                <select name="topic_id">
+                    <option value="">— власна тема (напишіть нижче) —</option>
+                    {% for grade, topics in topic_groups %}
+                    <optgroup label="{{ grade.short_label }}">
+                        {% for t in topics %}<option value="{{ t.id }}">{{ t.chapter.name|truncatechars:28 }} → {{ t.name }}</option>{% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="grow">Або власна тема <input type="text" name="title" maxlength="255" placeholder="Напр.: Підготовка до контрольної"></label>
+            <div class="plan-radio" style="flex-basis: 100%;">
+                <label><input type="radio" name="where" value="next" checked> наступною</label>
+                <label><input type="radio" name="where" value="end"> у кінець плану</label>
+            </div>
+            <button type="submit" class="plan-btn">Додати</button>
+        </form>
+    </div>
+
+    <details class="plan-card">
+        <summary><h2><span>📚 Додати теми цілого класу</span><span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+        <p class="plan-note">Теми обраних класів додадуться в кінець плану (ті, що вже є, — пропускаються). «Скласти заново» видаляє поточний план разом з примітками й складає його з нуля.</p>
+        <form method="post" action="{% url 'study_plan_build' student.id %}">
+            {% csrf_token %}
+            <div class="plan-grades">
+                {% for grade in grades %}
+                <label><input type="checkbox" name="grade" value="{{ grade.id }}"> {{ grade.short_label }}</label>
+                {% endfor %}
+            </div>
+            <div class="plan-form">
+                <button type="submit" class="plan-btn">Додати в кінець</button>
+                <button type="submit" name="replace" value="1" class="plan-btn ghost" onclick="return confirm('Видалити поточний план і скласти заново з обраних класів?');">Скласти заново</button>
+            </div>
+        </form>
+    </details>
+
+    <form method="post" action="{% url 'study_plan_clear' student.id %}" onsubmit="return confirm('Очистити весь план учня?');">
+        {% csrf_token %}<button type="submit" class="plan-link" style="color: #c0392b;">Очистити план</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

@@ -4836,3 +4836,114 @@ class ScheduleReportConsistencyTests(BaseTestCase):
         self.lesson.delete()
         self.client.post('/cabinet/add-report/', self.report_data())
         self.assertEqual(StudentReport.objects.count(), 1)
+
+
+class StudyPlanTests(BaseTestCase):
+    """Навчальний план учня: склад з дерева, зміни під учня, прогрес зі звітів, розклад, учень і батьки."""
+
+    def setUp(self):
+        from .models import Lesson, StudyPlanItem
+        self.Lesson, self.Item = Lesson, StudyPlanItem
+        self.teacher = self.make_user('plan-owner@example.com', is_staff=True)
+        self.pupil = self.make_user('plan-pupil@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Ірина План',
+                                                          course='grade_5', status='approved')
+        self.t1 = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.t2 = make_school_topic('1.2. Цифри', 5, 102)
+        self.t3 = make_school_topic('1.3. Порівняння', 5, 103)
+        self.other = make_school_topic('1.1. Дроби шостого класу', 6, 101, subject='Математика (5-6 класи)')
+        self.grade5 = self.t1.chapter.grade
+        self.client.force_login(self.teacher)
+
+    def build(self):
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/', {'grade': [self.grade5.id]})
+        return list(self.Item.objects.filter(student=self.student).order_by('position'))
+
+    def names(self):
+        return [item.name for item in self.Item.objects.filter(student=self.student).order_by('position')]
+
+    def test_build_from_tree_marks_reported_topics_done(self):
+        StudentReport.objects.create(student=self.student, curriculum_topic=self.t1)
+        page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
+        self.assertContains(page, 'Скласти план з дерева')
+        self.assertContains(page, f'value="{self.grade5.id}" checked')   # клас учня — одразу обраний
+        items = self.build()
+        self.assertEqual([item.topic for item in items], [self.t1, self.t2, self.t3])
+        self.assertEqual([item.status for item in items], ['done', 'todo', 'todo'])
+        # Повторне додавання того самого класу не дублює теми
+        self.build()
+        self.assertEqual(self.Item.objects.count(), 3)
+
+    def test_customize_order_skip_add_other_grade_and_own_topic(self):
+        items = self.build()
+        url = lambda item: f'/cabinet/plan-item/{item.id}/'
+        self.client.post(url(items[2]), {'action': 'up'})
+        self.assertEqual(self.names(), ['1.1. Натуральні числа', '1.3. Порівняння', '1.2. Цифри'])
+        self.client.post(url(items[0]), {'action': 'move', 'position': '3'})
+        self.assertEqual(self.names(), ['1.3. Порівняння', '1.2. Цифри', '1.1. Натуральні числа'])
+        self.client.post(url(items[1]), {'action': 'status', 'status': 'skipped'})
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/add/', {'topic_id': self.other.id, 'where': 'next'})
+        self.assertEqual(self.names()[0], '1.1. Дроби шостого класу')
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/add/', {'title': 'Підготовка до контрольної',
+                                                                           'where': 'end'})
+        self.assertEqual(self.names()[-1], 'Підготовка до контрольної')
+        self.client.post(url(items[0]), {'action': 'note', 'note': 'плутає розряди'})
+        self.client.post(url(items[2]), {'action': 'delete'})
+        self.assertNotIn('1.3. Порівняння', self.names())
+        self.assertEqual(sorted(self.Item.objects.values_list('position', flat=True)), [1, 2, 3, 4])
+
+    def test_report_marks_topic_done_and_next_topic_in_schedule_and_report(self):
+        self.build()
+        self.client.post('/cabinet/add-report/', {'student_id': self.student.id, 'curriculum_topic': self.t1.id,
+                                                  'nush_modeling': 8, 'nush_solving': 8, 'nush_analysis': 8,
+                                                  'homework_status': 'completed'})
+        self.assertEqual(self.Item.objects.get(topic=self.t1).status, 'done')
+        tomorrow = timezone.localdate() + datetime.timedelta(days=1)
+        start = timezone.make_aware(datetime.datetime.combine(tomorrow, datetime.time(15)))
+        self.Lesson.objects.create(teacher=self.teacher, student=self.student, start=start)
+        self.Lesson.objects.create(teacher=self.teacher, student=self.student, start=start + datetime.timedelta(hours=3))
+        week = self.client.get(f'/cabinet/schedule/?week={tomorrow:%Y-%m-%d}')
+        self.assertContains(week, '🧭 1.2. Цифри')
+        self.assertContains(week, '🧭 1.3. Порівняння')
+        past = self.Lesson.objects.create(teacher=self.teacher, student=self.student,   # учора — звіту за той день немає
+                                          start=timezone.now() - datetime.timedelta(days=1))
+        report = self.client.get(f'/cabinet/schedule/{past.id}/report/')
+        self.assertContains(report, f'<option value="{self.t2.id}" selected>')
+
+    def test_pupil_and_parents_see_plan_without_teacher_notes(self):
+        items = self.build()
+        self.client.post(f'/cabinet/plan-item/{items[1].id}/', {'action': 'note', 'note': 'СЕКРЕТНА ПРИМІТКА'})
+        self.client.post(f'/cabinet/plan-item/{items[0].id}/', {'action': 'status', 'status': 'done'})
+        self.assertContains(self.client.get(f'/cabinet/students/{self.student.id}/plan/'), 'СЕКРЕТНА ПРИМІТКА')
+        parents = self.client.get(f'/parents/{self.student.parent_token}/')
+        self.assertContains(parents, 'Навчальний план · пройдено 1 з 3 тем')
+        self.assertNotContains(parents, 'СЕКРЕТНА ПРИМІТКА')
+        self.client.force_login(self.pupil)
+        cabinet = self.client.get('/cabinet/')
+        self.assertContains(cabinet, 'Мій навчальний план')
+        self.assertContains(cabinet, '1.2. Цифри')
+        self.assertNotContains(cabinet, 'СЕКРЕТНА ПРИМІТКА')
+
+    def test_only_own_students_and_licensed_topics(self):
+        from .models import TeacherLicense
+        items = self.build()
+        tutor = self.make_user('plan-tutor@example.com')
+        TeacherLicense.objects.create(teacher=tutor, scope='grade', grade=self.grade5,
+                                      valid_until=timezone.localdate() + datetime.timedelta(days=30))
+        self.client.force_login(tutor)
+        self.assertEqual(self.client.get(f'/cabinet/students/{self.student.id}/plan/').status_code, 404)
+        self.assertEqual(self.client.post(f'/cabinet/plan-item/{items[0].id}/', {'action': 'delete'}).status_code, 404)
+        self.assertEqual(self.Item.objects.count(), 3)
+        own = TutorStudentRequest.objects.create(user=self.make_user('own@example.com'), real_name='Свій',
+                                                 course='grade_5', status='approved', teacher=tutor)
+        self.client.post(f'/cabinet/students/{own.id}/plan/add/', {'topic_id': self.other.id})   # 6 клас — не в підписці
+        self.assertFalse(self.Item.objects.filter(student=own).exists())
+        self.client.post(f'/cabinet/students/{own.id}/plan/add/', {'topic_id': self.t2.id})
+        self.assertEqual([i.topic for i in self.Item.objects.filter(student=own)], [self.t2])
+
+    def test_nmt_student_plan_from_nmt_tree(self):
+        nmt = make_nmt_topic('Числові множини')
+        self.student.course = 'nmt'
+        self.student.save()
+        page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
+        self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')

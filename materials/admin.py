@@ -27,7 +27,7 @@ from .models import (
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
-    ClassPlan, ClassSubscription, PromoCode, ReminderLog, Lesson, LessonSeries
+    ClassPlan, ClassSubscription, PromoCode, ReminderLog, Lesson, LessonSeries, StudyPlanItem
 )
 
 User = get_user_model()
@@ -979,3 +979,13 @@ class LessonAdmin(admin.ModelAdmin):
     search_fields = ('student__real_name', 'teacher__email')
     date_hierarchy = 'start'
     raw_id_fields = ('teacher', 'student', 'series', 'report', 'curriculum_topic')
+
+
+@admin.register(StudyPlanItem)
+class StudyPlanItemAdmin(admin.ModelAdmin):
+    """Навчальні плани учнів; викладач веде план у кабінеті («Мої учні» → «Навчальний план»)."""
+    list_display = ('student', 'position', 'name', 'status', 'done_on')
+    list_filter = ('status',)
+    list_select_related = ('student', 'topic')
+    search_fields = ('student__real_name', 'topic__name', 'title')
+    raw_id_fields = ('student', 'topic')
