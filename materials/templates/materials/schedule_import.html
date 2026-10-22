@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Розклад і Google-таблиця | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .imp { max-width: 860px; margin: 30px auto 60px; }
+    .imp-back { display: inline-block; margin-bottom: 12px; color: var(--brand-blue); font-weight: 700; }
+    .imp-card { background: #fff; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 20px 22px;
+        box-shadow: 4px 4px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .imp-card h1, .imp-card h2 { color: var(--brand-blue); font-weight: 900; text-transform: uppercase; margin: 0 0 12px; }
+    .imp-card h1 { font-size: 1.35rem; }
+    .imp-card h2 { font-size: 1.1rem; }
+    .imp-card ol { margin: 0 0 14px; padding-left: 22px; line-height: 1.6; }
+    .imp-note { color: #6c757d; font-size: 0.9rem; margin: 0 0 12px; }
+    .imp-errors { background: #fff4e5; border: 2px solid #e67e22; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.9rem; }
+    .imp-errors ul { margin: 4px 0 0; padding-left: 20px; }
+    .imp-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 800;
+        cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+    .imp-btn.blue { background: var(--brand-blue); color: var(--brand-yellow); }
+    .imp-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 6px 16px; padding: 12px 0;
+        border-bottom: 1px solid #eef1f5; align-items: start; }
+    .imp-row:last-of-type { border-bottom: none; }
+    .imp-name { font-weight: 800; overflow-wrap: anywhere; }
+    .imp-row select { width: 100%; padding: 8px; border: 2px solid #dce3ec; border-radius: 8px; font-family: inherit;
+        font-size: 0.95rem; background: #fff; box-sizing: border-box; }
+    .imp-row select.missing { border-color: #e67e22; }
+    .imp-plan { grid-column: 1 / -1; font-size: 0.85rem; color: #555; }
+    .imp-plan span { display: inline-block; background: #e6ebf2; color: var(--brand-blue); border-radius: 4px; padding: 1px 7px;
+        margin: 2px 4px 0 0; font-weight: 700; }
+    .imp-feed { display: flex; gap: 8px; flex-wrap: wrap; }
+    .imp-feed input { flex: 1 1 260px; min-width: 0; padding: 8px; border: 2px solid #dce3ec; border-radius: 8px; font-size: 0.8rem; }
+    .imp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    input[type="file"] { max-width: 100%; }
+    @media (max-width: 600px) { .imp-row { grid-template-columns: 1fr; } .imp-card { padding: 16px; } }
+</style>
+
+<div class="imp">
+    <a href="{% url 'schedule' %}" class="imp-back">← До розкладу</a>
+
+    {% if not preview %}
+    <div class="imp-card">
+        <h1>📥 Перенести розклад з Google-таблиці</h1>
+        <p class="imp-note">Один раз — щоб не вводити розклад заново. Переносяться лише майбутні уроки (статус «Ще рано»): регулярні уроки учня стають постійним заняттям, інші — разовими. Оплати, ціни й минулі уроки лишаються в таблиці.</p>
+        <ol>
+            <li>У таблиці відкрийте вкладку <b>«Розклад уроків»</b>.</li>
+            <li><b>Файл → Завантажити → Значення, розділені комами (.csv)</b> — завантажиться лише ця вкладка.</li>
+            <li>Оберіть файл нижче — спершу сайт покаже, що саме перенесе.</li>
+        </ol>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="file" accept=".csv,text/csv" required>
+            <div class="imp-actions"><button type="submit" class="imp-btn blue">Переглянути</button></div>
+        </form>
+    </div>
+    {% else %}
+    <div class="imp-card">
+        <h1>📥 Що буде перенесено</h1>
+        {% if errors %}<div class="imp-errors"><b>Увага:</b><ul>{% for e in errors|slice:":10" %}<li>{{ e }}</li>{% endfor %}</ul>{% if errors|length > 10 %}<div>…і ще {{ errors|length|add:"-10" }}</div>{% endif %}</div>{% endif %}
+        {% if not rows_count %}
+        <p>Майбутніх уроків (статус «Ще рано», від сьогодні) у файлі не знайдено.</p>
+        <p><a href="{% url 'schedule_import' %}">Обрати інший файл</a></p>
+        {% else %}
+        <p class="imp-note">Майбутніх уроків у таблиці: <b>{{ rows_count }}</b>. Перевірте, кому з учнів сайту відповідає кожне ім'я з таблиці. «Не переносити» — уроки цього учня лишаться лише в таблиці. Те, що вже є в розкладі на сайті, вдруге не додасться.</p>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="csv" hidden>{{ csv }}</textarea>
+            {% for item in names %}
+            <div class="imp-row">
+                <div class="imp-name">{{ item.name }} <span style="font-weight: 600; color: #6c757d;">· уроків: {{ item.count }}</span></div>
+                <select name="map_{{ item.index }}" aria-label="Учень сайту для «{{ item.name }}»"{% if not item.student %} class="missing"{% endif %}>
+                    <option value="">— не переносити —</option>
+                    {% for s in students %}<option value="{{ s.id }}"{% if item.student and item.student.id == s.id %} selected{% endif %}>{{ s.real_name }} ({{ s.get_course_display }})</option>{% endfor %}
+                </select>
+                <div class="imp-plan">
+                    {% for label in item.labels %}<span>{{ label }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            <div class="imp-actions">
+                <button type="submit" name="confirm" value="0" class="imp-btn blue">Оновити перегляд</button>
+                <button type="submit" name="confirm" value="1" class="imp-btn" onclick="return confirm('Перенести уроки в розклад на сайті?');">Перенести в розклад</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="imp-card">
+        <h2>🔄 Таблиця оновлюється з сайту</h2>
+        <p class="imp-note">Після переносу розклад ведете на сайті, а таблиця раз на годину сама підтягує зміни: нові заняття (рядок «Ще рано» з цінами з останнього уроку учня), перенесення, скасування з причиною й тему зі звіту. Ціни, податки, оплату й формули сайт не чіпає, рядки не видаляє.</p>
+        <ol>
+            <li>Спершу спробуйте на копії таблиці: <b>Файл → Створити копію</b>.</li>
+            <li>У таблиці: <b>Розширення → Apps Script</b>. Замініть вміст <code>Code.gs</code> на <a href="{% url 'schedule_sheet_script' %}" target="_blank">цей скрипт</a> (відкрийте, виділіть усе, скопіюйте) і збережіть.</li>
+            <li>⚙️ <b>Налаштування проєкту → Властивості скрипта → Додати</b>: назва <code>SITE_FEED_URL</code>, значення — посилання нижче.</li>
+            <li>Угорі оберіть функцію <b>setup</b> → <b>Виконати</b> → дозвольте доступ. Далі таблиця оновлюється щогодини сама, а вручну — меню <b>ДО КВАДРАТУ → Оновити розклад із сайту</b>.</li>
+        </ol>
+        <p class="imp-note">Перший запуск зробіть одразу після переносу — так рядки таблиці зв'яжуться із заняттями на сайті (з'явиться стовпець «ID на сайті»). Посилання особисте, не публікуйте його:</p>
+        <div class="imp-feed">
+            <input type="text" id="export-url" value="{{ export_url }}" readonly aria-label="Посилання для Google-таблиці">
+            <button type="button" class="imp-btn" onclick="navigator.clipboard.writeText(document.getElementById('export-url').value); this.textContent='Скопійовано ✓';">Копіювати</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

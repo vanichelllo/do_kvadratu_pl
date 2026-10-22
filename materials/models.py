@@ -668,6 +668,8 @@ class TutorStudentRequest(models.Model):
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name='students', verbose_name="Викладач")
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
+    # Як учня записано в Google-таблиці розкладу власника (стовпець «Student»); імпорт ставить сам
+    sheet_name = models.CharField(max_length=100, blank=True, verbose_name="Ім'я в таблиці розкладу")
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     # Учень за платним супроводом: після цієї дати статус стає «Супровід завершено» (subscriptions.end_expired_support).
@@ -1132,9 +1134,11 @@ class Lesson(models.Model):
     curriculum_topic = models.ForeignKey('CurriculumTopic', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name="Тема")
     note = models.CharField(max_length=200, blank=True, verbose_name="Примітка")
+    cancel_reason = models.CharField(max_length=200, blank=True, verbose_name="Причина скасування")
     report = models.OneToOneField(StudentReport, on_delete=models.SET_NULL, null=True, blank=True,
                                   related_name='lesson', verbose_name="Звіт")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['start']
@@ -1144,6 +1148,12 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{timezone.localtime(self.start):%d.%m.%Y %H:%M} — {self.student.real_name}"
+
+    def save(self, *args, **kwargs):
+        # Будь-яка зміна заняття — нова мітка часу (за нею Google-таблиця бачить, що оновити)
+        if kwargs.get('update_fields') is not None:
+            kwargs['update_fields'] = {*kwargs['update_fields'], 'updated_at'}
+        super().save(*args, **kwargs)
 
     @property
     def end(self):

@@ -4832,6 +4832,24 @@ class ScheduleReportConsistencyTests(BaseTestCase):
         self.assertEqual(self.lesson.status, 'done')
         self.assertNotContains(self.client.get('/cabinet/'), 'Чекають звіту')
 
+    def test_report_after_midnight_closes_late_evening_lesson(self):
+        late = timezone.make_aware(datetime.datetime(2026, 10, 21, 23, 14))
+        self.lesson.start = late
+        self.lesson.save()
+        PracticeAttempt.objects.create(user=self.pupil, material=self.material, score=5, conducted_by=self.teacher,
+                                       nush_modeling=6, nush_solving=11, nush_analysis=4)
+        PracticeAttempt.objects.filter(user=self.pupil).update(created_at=late + datetime.timedelta(minutes=55))
+        after_midnight = timezone.make_aware(datetime.datetime(2026, 10, 22, 0, 20))
+        date_field = StudentReport._meta.get_field('date')
+        with mock.patch('django.utils.timezone.now', return_value=after_midnight), \
+                mock.patch.object(date_field, 'default', lambda: after_midnight):
+            page = self.client.get(f'/cabinet/schedule/{self.lesson.id}/report/')
+            self.assertContains(page, 'name="nush_solving" min="1" max="12" value="11"')
+            self.client.post('/cabinet/add-report/', self.report_data())
+        self.lesson.refresh_from_db()
+        self.assertEqual(self.lesson.status, 'done')
+        self.assertEqual(self.lesson.report.date, datetime.date(2026, 10, 22))
+
     def test_report_without_lesson_still_works(self):
         self.lesson.delete()
         self.client.post('/cabinet/add-report/', self.report_data())
@@ -4998,3 +5016,116 @@ class StudyPlanTests(BaseTestCase):
         # Додати тему з дерева, що вже є в плані, — теж повторення
         self.client.post(f'/cabinet/students/{self.student.id}/plan/add/', {'topic_id': self.t3.id, 'where': 'end'})
         self.assertEqual(self.names().count('1.3. Порівняння'), 2)
+
+
+class SheetSyncTests(BaseTestCase):
+    """Google-таблиця розкладу: вивантаження для скрипта таблиці, імпорт майбутніх уроків з CSV."""
+
+    HEADER = ('Lesson type,Student,Start date,Weekday,Subject,Start time,End Date,End time,Price (Mindful of taxes),'
+              'Зняття з ФОП,Price (Mindful of summer costs & taxes),Taxes,,summer costs,Price,Month,Year,Status1,Тема,'
+              'Причина скасування уроку,Інформація про перенесення уроку,Lesson index\n')
+
+    def setUp(self):
+        from .models import Lesson, LessonSeries
+        self.Lesson, self.LessonSeries = Lesson, LessonSeries
+        self.teacher = self.make_user('sheet-owner@example.com', is_staff=True)
+        self.vlad = TutorStudentRequest.objects.create(user=self.make_user('vlad@example.com'),
+                                                       real_name='Влад Пастушок', course='grade_5', status='approved')
+        self.oleksii = TutorStudentRequest.objects.create(user=self.make_user('oleksii@example.com'),
+                                                          real_name='Олексій Шевцов', course='grade_8', status='approved')
+        self.client.force_login(self.teacher)
+        self.today = timezone.localdate()
+        # Наступний понеділок і ще 4 понеділки; на третій — «канікули» (рядка немає)
+        monday = self.today + datetime.timedelta(days=7 - self.today.weekday())
+        self.mondays = [monday + datetime.timedelta(weeks=n) for n in range(5)]
+
+    def csv(self):
+        lines = [self.HEADER]
+        for n, day in enumerate(self.mondays):
+            if n != 2:
+                lines.append(f'Індивідуальний,Влад Пастушок,{day:%d.%m.%Y},1,Влад (5 клас),16:00:00,{day:%d.%m.%Y},'
+                             f'16:50:00,376,+,320,24,+,56,400,{day.month},{day.year},Ще рано,,,,1\n')
+        once = self.mondays[1] + datetime.timedelta(days=3)
+        lines.append(f'Група (8 клас),Олексій,{once:%d.%m.%Y},4,Олексій,17:10:00,{once:%d.%m.%Y},18:00:00,'
+                     f'235,+,200,15,+,35,250,{once.month},{once.year},Ще рано,,,,1\n')
+        past = self.today - datetime.timedelta(days=3)
+        lines.append(f'Індивідуальний,Влад Пастушок,{past:%d.%m.%Y},1,Влад,16:00:00,{past:%d.%m.%Y},16:50:00,'
+                     f'376,+,320,24,+,56,400,{past.month},{past.year},Оплачено,Цифри,,,1\n')
+        lines.append(f'Індивідуальний,Хтось Невідомий,{self.mondays[0]:%d.%m.%Y},1,Х,12:00:00,'
+                     f'{self.mondays[0]:%d.%m.%Y},13:00:00,1,,,,,,1,1,2026,Ще рано,,,,1\n')
+        return ''.join(lines)
+
+    def upload(self, **extra):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post('/cabinet/schedule/import/', {
+            'file': SimpleUploadedFile('rozklad.csv', self.csv().encode(), content_type='text/csv'), **extra})
+
+    def test_preview_matches_names_and_shows_plan(self):
+        page = self.upload()
+        self.assertContains(page, 'Майбутніх уроків у таблиці: <b>6</b>')
+        self.assertContains(page, '🔁 щопонеділка о 16:00, 50 хв — уроків: 4')
+        self.assertContains(page, f'value="{self.oleksii.id}" selected')   # «Олексій» → Олексій Шевцов
+        self.assertContains(page, 'class="missing"')                        # «Хтось Невідомий» — без пари
+        self.assertFalse(self.Lesson.objects.exists())
+
+    def test_import_creates_series_with_gaps_and_single_lessons_once(self):
+        page = self.upload()
+        csv_text = page.context['csv']
+        data = {'csv': csv_text, 'confirm': '1'}
+        for item in page.context['names']:
+            data[f"map_{item['index']}"] = item['student'].id if item['student'] else ''
+        self.client.post('/cabinet/schedule/import/', data)
+        series = self.LessonSeries.objects.get(student=self.vlad)
+        self.assertEqual((series.weekday, series.time, series.duration), (0, datetime.time(16), 50))
+        self.assertEqual((series.starts_on, series.ends_on), (self.mondays[0], self.mondays[-1]))
+        lessons = list(self.Lesson.objects.filter(series=series).order_by('start'))
+        self.assertEqual([l.status for l in lessons], ['planned', 'planned', 'cancelled', 'planned', 'planned'])
+        self.assertEqual(lessons[2].cancel_reason, 'Немає в таблиці (канікули?)')
+        single = self.Lesson.objects.get(student=self.oleksii)
+        self.assertEqual(timezone.localtime(single.start).time(), datetime.time(17, 10))
+        self.assertEqual(single.duration, 50)
+        self.vlad.refresh_from_db(); self.oleksii.refresh_from_db()
+        self.assertEqual((self.vlad.sheet_name, self.oleksii.sheet_name), ('Влад Пастушок', 'Олексій'))
+        # Повторний імпорт нічого не дублює
+        self.client.post('/cabinet/schedule/import/', data)
+        self.assertEqual(self.LessonSeries.objects.count(), 1)
+        self.assertEqual(self.Lesson.objects.count(), 6)
+
+    def test_export_for_sheet_is_signed_and_uses_sheet_name(self):
+        from .schedule import feed_token
+        self.oleksii.sheet_name = 'Олексій'
+        self.oleksii.save()
+        start = timezone.make_aware(datetime.datetime.combine(self.mondays[0], datetime.time(17, 10)))
+        lesson = self.Lesson.objects.create(teacher=self.teacher, student=self.oleksii, start=start, duration=50)
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            self.client.post(f'/cabinet/schedule/{lesson.id}/cancel/', {'scope': 'one', 'reason': 'хворіє'})
+        data = self.client.get(f'/calendar/{feed_token("t", self.teacher.id)}.json').json()
+        row = next(item for item in data['lessons'] if item['id'] == lesson.id)
+        self.assertEqual(row['name'], 'Олексій')
+        self.assertEqual((row['date'], row['start'], row['end']),
+                         (f'{self.mondays[0]:%d.%m.%Y}', '17:10:00', '18:00:00'))
+        self.assertEqual((row['status'], row['reason'], row['weekday']), ('cancelled', 'хворіє', 1))
+        self.assertEqual(self.client.get(f'/calendar/{feed_token("s", self.teacher.id)}.json').status_code, 404)
+        forged = feed_token('t', self.teacher.id).replace(f't{self.teacher.id}-', f't{self.vlad.user_id}-')
+        self.assertEqual(self.client.get(f'/calendar/{forged}.json').status_code, 404)
+
+    def test_sheet_script_download(self):
+        response = self.client.get('/cabinet/schedule/sheet-script/')
+        self.assertEqual(response['Content-Type'], 'text/plain; charset=utf-8')
+        self.assertIn('function syncSchedule()', response.content.decode())
+        self.client.force_login(self.vlad.user)
+        self.assertEqual(self.client.get('/cabinet/schedule/sheet-script/').status_code, 404)
+
+    def test_import_page_only_for_teachers(self):
+        self.client.force_login(self.vlad.user)
+        self.assertRedirects(self.client.get('/cabinet/schedule/import/'), '/cabinet/', fetch_redirect_response=False)
+
+    def test_sheet_script_logic(self):
+        """Логіка скрипта таблиці (tools/schedule_sheet_sync.gs) — якщо в оточенні є node."""
+        import shutil
+        import subprocess
+        if not shutil.which('node'):
+            self.skipTest('немає node')
+        result = subprocess.run(['node', str(settings.BASE_DIR / 'tools' / 'schedule_sheet_sync.test.js')],
+                                capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
