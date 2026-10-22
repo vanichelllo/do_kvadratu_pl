@@ -87,7 +87,7 @@
                 {% elif user.is_authenticated %}
                 <form method="post" action="{% url 'class_buy' plan.id 'support' %}">{% csrf_token %}
                     {% if support_needs_name %}<input type="text" name="real_name" required maxlength="100" placeholder="Прізвище та ім'я учня" class="cs-name" aria-label="Прізвище та ім'я учня">{% endif %}
-                    <label class="agree"><input type="checkbox" name="agree" required> <span>Погоджуюся з <a href="{% url 'offer' %}#class-subscription" target="_blank">умовами оферти</a> і прошу, щоб супровід почав діяти одразу після оплати</span></label>
+                    <label class="agree"><input type="checkbox" name="agree" required> <span>Погоджуюся з <a href="{% url 'offer' %}#class-support" target="_blank">умовами оферти</a> і прошу, щоб супровід почав діяти одразу після оплати</span></label>
                     <button type="submit" name="method" value="card" class="btn-month">Місяць із супроводом — карткою, {{ plan.support_price_month }} ₴</button>
                     {% if balance >= plan.support_price_month %}<button type="submit" name="method" value="balance" class="btn-balance">Місяць із супроводом — з балансу</button>{% endif %}
                 </form>
