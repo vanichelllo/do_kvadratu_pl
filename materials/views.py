@@ -29,7 +29,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, preview, subscriptions, teachers
+from . import homework, practice, preview, reminders, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -1613,6 +1613,15 @@ def cabinet_next_step(user, context, library):
             'url': reverse('materials_list'), 'button': 'На вітрину'}
 
 
+@login_required
+@post_required('cabinet')
+def telegram_unlink(request):
+    request.user.telegram_id = None
+    request.user.save(update_fields=['telegram_id'])
+    messages.info(request, "🔕 Нагадування в Telegram вимкнено.")
+    return redirect(reverse('cabinet') + '#account')
+
+
 class CabinetView(LoginRequiredMixin, TemplateView):
     template_name = 'materials/cabinet.html'
 
@@ -1772,6 +1781,8 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['tutor_offer'] = True
             context['trial_available'] = teachers.trial_available(user)
 
+        context['telegram_linked'] = bool(self.request.user.telegram_id)
+        context['telegram_link_url'] = reminders.link_url(self.request.user)
         return context
 
     def post(self, request, *args, **kwargs):

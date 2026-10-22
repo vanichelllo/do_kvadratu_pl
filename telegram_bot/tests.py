@@ -66,6 +66,22 @@ class BotHandlerTests(TransactionTestCase):
     def feed(self, update):
         return self.run_async(dp.feed_update(self.bot, update))
 
+    def test_start_link_connects_account_and_stop_disconnects(self):
+        from django.contrib.auth import get_user_model
+        from materials.reminders import link_payload
+        user = get_user_model().objects.create_user(email='tg@example.com', username='tg', password='Pass12345!')
+        self.feed(self.message_update(text='/start link1_forged', entities=[
+            {'type': 'bot_command', 'offset': 0, 'length': 6}]))
+        self.assertTrue(any('не спрацювало' in getattr(m, 'text', '') for m in self.sent))
+        self.feed(self.message_update(text=f'/start {link_payload(user)}', entities=[
+            {'type': 'bot_command', 'offset': 0, 'length': 6}]))
+        user.refresh_from_db()
+        self.assertEqual(user.telegram_id, '100')
+        self.assertTrue(any('tg@example.com' in getattr(m, 'text', '') for m in self.sent))
+        self.feed(self.message_update(text='/stop', entities=[{'type': 'bot_command', 'offset': 0, 'length': 5}]))
+        user.refresh_from_db()
+        self.assertIsNone(user.telegram_id)
+
     def test_sticker_during_short_answer_does_not_crash(self):
         short_index = next(i for i, q in enumerate(DIAGNOSTIC_QUESTIONS) if q['type'] != 'choice')
         self.run_async(self.state().set_state(QuizFSM.answering_short))

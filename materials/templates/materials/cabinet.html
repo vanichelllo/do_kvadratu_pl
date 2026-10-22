@@ -326,6 +326,15 @@
     .hw-form select[name="material_id"] { flex: 1; min-width: 200px; }
     .hw-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
     .hw-link { background: none; border: none; color: #344e86; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.85rem; }
+    .telegram-card { background: white; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 25px;
+        margin-bottom: 25px; box-shadow: 4px 4px 0px var(--brand-yellow); }
+    .telegram-card .cab-card-title { margin-bottom: 10px; }
+    .telegram-note { color: #444; margin: 0 0 14px; line-height: 1.5; }
+    .telegram-hint { color: #6c757d; font-size: 0.85rem; margin: 10px 0 0; }
+    .telegram-on { display: inline-block; background: #229ED9; color: #fff; font-weight: 800; padding: 12px 20px;
+        border-radius: 8px; text-decoration: none; }
+    .telegram-off { background: none; border: 2px solid #c0392b; color: #c0392b; font-weight: 700; padding: 8px 14px;
+        border-radius: 8px; cursor: pointer; font-family: inherit; }
     .hw-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f5; }
 </style>
 
@@ -846,6 +855,24 @@
             </p>
             </div>
         </details>
+
+        <!-- БЛОК: НАГАДУВАННЯ В TELEGRAM -->
+        <div class="cab-card telegram-card" id="telegram">
+            <h2 class="cab-card-title"><span>🔔 Нагадування в Telegram</span></h2>
+            {% if telegram_linked %}
+            <p class="telegram-note">✅ Підключено. Бот напише, коли наближається дедлайн ДЗ чи кінець підписки або коли
+                практику кинуто на півдорозі.</p>
+            <form method="POST" action="{% url 'telegram_unlink' %}">
+                {% csrf_token %}
+                <button type="submit" class="telegram-off">Вимкнути нагадування</button>
+            </form>
+            {% else %}
+            <p class="telegram-note">Бот нагадає про дедлайн ДЗ, кінець підписки й незакінчену практику — без спаму,
+                кожне нагадування один раз.</p>
+            <a href="{{ telegram_link_url }}" target="_blank" rel="noopener" class="telegram-on">Підключити Telegram</a>
+            <p class="telegram-hint">Відкриється бот @do_kvadratu_bot — натисніть у ньому «Start».</p>
+            {% endif %}
+        </div>
 
         <!-- БЛОК: ЗАЯВКА НА СТАТУС УЧНЯ -->
         {% if not is_tutor %}

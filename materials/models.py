@@ -1035,3 +1035,18 @@ class StudentReport(models.Model):
         if self.homework_status != 'not_assigned':
             items.append(f'ДЗ: {self.get_homework_status_display()}')
         return items
+
+class ReminderLog(models.Model):
+    """Надіслане нагадування в Telegram (materials/reminders.py): ключ на кшталт «hw:12» — щоб не надсилати двічі."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reminders',
+                             verbose_name="Кому")
+    key = models.CharField(max_length=50, unique=True, verbose_name="Що (ключ)")
+    sent_at = models.DateTimeField(auto_now_add=True, verbose_name="Надіслано")
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "Нагадування в Telegram"
+        verbose_name_plural = "Нагадування в Telegram"
+
+    def __str__(self):
+        return f"{self.key} → {self.user}"

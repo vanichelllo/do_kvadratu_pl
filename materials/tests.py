@@ -20,7 +20,7 @@ from django.db import models
 
 from .models import (AnswerOption, Cart, CartItem, CurriculumChapter, DiagnosticOffer, CurriculumGrade, CurriculumSubject,
                      CurriculumTopic, GameMistake, Homework, MatchItem, TeacherLicense, Order, OrderItem, PracticeAttempt, PracticeRun, Question, Review, StudentReport,
-                     StudyMaterial, TutorStudentRequest)
+                     StudyMaterial, TutorStudentRequest, ClassSubscription)
 
 User = get_user_model()
 
@@ -2572,6 +2572,114 @@ class ChapterBundleTests(BaseTestCase):
         bundle = self.bundle()
         self.assertEqual((bundle.price, bundle.is_published), (60, False))
         self.assertEqual(bundle.included_materials.count(), 6)
+
+class TelegramRemindersTests(BaseTestCase):
+    """Нагадування в Telegram: прив'язка з кабінету, що нагадувати, кожне — один раз."""
+
+    def setUp(self):
+        from .models import ClassPlan, PracticeRun
+        self.PracticeRun = PracticeRun
+        self.pupil = self.make_user('remind@example.com')
+        self.pupil.telegram_id = '555'
+        self.pupil.save()
+        self.lesson = StudyMaterial.objects.create(title='1.2. Цифри', price=29, is_published=True,
+                                                   curriculum_topic=make_school_topic('1.2. Цифри', 5, 102))
+        self.plan = ClassPlan.objects.get(number=5)
+
+    def keys(self):
+        from .reminders import due_reminders
+        return sorted(key for _, key, _, _ in due_reminders())
+
+    def test_link_payload_is_signed(self):
+        from .reminders import link_chat, link_payload, user_from_payload
+        payload = link_payload(self.pupil)
+        self.assertRegex(payload, r'^[A-Za-z0-9_-]{1,64}$')
+        self.assertEqual(user_from_payload(payload), self.pupil)
+        self.assertIsNone(user_from_payload(payload[:-1] + ('0' if payload[-1] != '0' else '1')))
+        self.assertIsNone(user_from_payload(f'link{self.pupil.id}'))
+        other = self.make_user('other@example.com')
+        link_chat(other, 555)   # той самий чат — тепер інший акаунт
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+
+    def test_cabinet_card_connects_and_disconnects(self):
+        self.client.force_login(self.pupil)
+        self.assertContains(self.client.get('/cabinet/'), 'Вимкнути нагадування')
+        self.client.post('/telegram/unlink/')
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+        self.assertContains(self.client.get('/cabinet/'), 'https://t.me/do_kvadratu_bot?start=link')
+
+    def test_homework_due_tomorrow_until_done(self):
+        from .models import Homework
+        student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_5',
+                                                     status='approved')
+        today = timezone.localdate()
+        hw = Homework.objects.create(student=student, material=self.lesson, due_date=today + datetime.timedelta(days=1))
+        Homework.objects.create(student=student, material=self.lesson, due_date=today + datetime.timedelta(days=5))
+        self.assertEqual(self.keys(), [f'hw:{hw.id}'])
+        hw.attempt = PracticeAttempt.objects.create(user=self.pupil, material=self.lesson, score=5)
+        hw.save()
+        self.assertEqual(self.keys(), [])
+
+    def test_subscription_ending_unless_renewed(self):
+        today = timezone.localdate()
+        sub = ClassSubscription.objects.create(user=self.pupil, number=5, plan=self.plan,
+                                               valid_until=today + datetime.timedelta(days=2))
+        ClassSubscription.objects.create(user=self.pupil, number=6, valid_until=today + datetime.timedelta(days=20))
+        self.assertEqual(self.keys(), [f'sub:{sub.id}'])
+        ClassSubscription.objects.create(user=self.pupil, number=5, valid_until=today + datetime.timedelta(days=40))
+        self.assertEqual(self.keys(), [])
+
+    def test_abandoned_practice_only_own_and_recent(self):
+        run = self.PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='A')
+        self.assertEqual(self.keys(), [])   # щойно почата — ще не кинута
+        two_days, ten_days = (timezone.now() - datetime.timedelta(days=d) for d in (2, 10))
+        self.PracticeRun.objects.filter(pk=run.pk).update(updated_at=two_days)
+        old = self.PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='B')
+        self.PracticeRun.objects.filter(pk=old.pk).update(updated_at=ten_days)
+        self.assertEqual(self.keys(), [f'run:{run.id}'])
+        self.PracticeRun.objects.filter(pk=run.pk).update(finished_at=timezone.now())
+        self.assertEqual(self.keys(), [])
+
+    def test_each_reminder_sent_once_retry_on_failure_unlink_when_blocked(self):
+        from .models import ReminderLog
+        from .reminders import send_due_reminders
+        today = timezone.localdate()
+        ClassSubscription.objects.create(user=self.pupil, number=5, valid_until=today + datetime.timedelta(days=1))
+        with mock.patch('materials.reminders.send_message', return_value=False):
+            self.assertEqual(send_due_reminders(), 0)
+        self.assertFalse(ReminderLog.objects.exists())   # не дійшло — спробуємо ще
+        with mock.patch('materials.reminders.send_message', return_value=True) as send:
+            self.assertEqual(send_due_reminders(), 1)
+            self.assertEqual(send_due_reminders(), 0)
+        chat, text, button = send.call_args[0]
+        self.assertEqual(chat, '555')
+        self.assertIn('Підписка на 5 клас закінчується', text)
+        self.assertIn('/subscribe/?class=5', button[1])
+        PracticeRun = self.PracticeRun
+        run = PracticeRun.objects.create(user=self.pupil, material=self.lesson, profile='A')
+        PracticeRun.objects.filter(pk=run.pk).update(updated_at=timezone.now() - datetime.timedelta(days=2))
+        with mock.patch('materials.reminders.send_message', return_value=None):   # бота заблоковано
+            send_due_reminders()
+        self.pupil.refresh_from_db()
+        self.assertIsNone(self.pupil.telegram_id)
+
+    @override_settings(TELEGRAM_BOT_TOKEN='42:TEST')
+    def test_daily_run_starts_once_in_evening_hours(self):
+        from django.core.cache import cache
+        from .reminders import maybe_send_daily
+        cache.clear()
+        evening = timezone.make_aware(datetime.datetime(2026, 10, 22, 17, 0))
+        morning = timezone.make_aware(datetime.datetime(2026, 10, 23, 9, 0))
+        with mock.patch('materials.reminders.threading.Thread') as thread:
+            with mock.patch('materials.reminders.timezone.localtime', return_value=morning):
+                maybe_send_daily()
+            self.assertFalse(thread.called)
+            with mock.patch('materials.reminders.timezone.localtime', return_value=evening):
+                maybe_send_daily()
+                maybe_send_daily()
+            self.assertEqual(thread.call_count, 1)
 
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):

@@ -107,6 +107,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'users.middleware.TermsAcceptanceMiddleware',  # хто ще не погодився з офертою — спершу на /accept-terms/
+    'materials.reminders.DailyRemindersMiddleware',  # раз на день — нагадування в Telegram (у фоні)
 ]
 
 ROOT_URLCONF = 'do_kvadratu.urls'

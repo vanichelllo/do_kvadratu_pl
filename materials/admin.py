@@ -27,7 +27,7 @@ from .models import (
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
-    ClassPlan, ClassSubscription, PromoCode
+    ClassPlan, ClassSubscription, PromoCode, ReminderLog
 )
 
 User = get_user_model()
@@ -945,3 +945,17 @@ class TeacherInviteAdmin(admin.ModelAdmin):
     search_fields = ('teacher__email', 'code')
     raw_id_fields = ('teacher',)
 
+
+
+@admin.register(ReminderLog)
+class ReminderLogAdmin(admin.ModelAdmin):
+    """Які нагадування в Telegram уже надіслано (hw — ДЗ, sub — підписка, run — покинута практика)."""
+    list_display = ('key', 'user', 'sent_at')
+    list_select_related = ('user',)
+    search_fields = ('key', 'user__email')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
