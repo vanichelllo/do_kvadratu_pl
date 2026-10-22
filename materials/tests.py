@@ -1104,21 +1104,20 @@ class PromoBannerTests(BaseTestCase):
         with mock.patch('materials.models.timezone.localdate', return_value=day):
             return self.client.get(url).content.decode()
 
-    def test_banners_shown_during_promo(self):
+    def test_teacher_day_banners_removed(self):
+        # Акція до Дня вчителя скінчилась: банерів і знижки на заняття немає навіть у її дати
         day = datetime.date(2026, 10, 11)
-        self.assertIn('Акція до Дня Вчителя', self.render('/', day))
-        booking = self.render('/booking/', day)
-        self.assertIn('Акція до Дня Вчителя', booking)
-        self.assertIn('192 грн', booking)
-
-    def test_banners_hidden_after_promo(self):
-        day = datetime.date(2026, 10, 12)
         self.assertNotIn('Акція до Дня Вчителя', self.render('/', day))
         booking = self.render('/booking/', day)
         self.assertNotIn('Акція до Дня Вчителя', booking)
         self.assertNotIn('192 грн', booking)
-        self.assertNotIn('-20%', booking)
         self.assertIn('240 грн', booking)
+
+    def test_booking_explains_first_lesson(self):
+        booking = self.client.get('/booking/').content.decode()
+        for text in ('Онлайн у Zoom', '60 хвилин', 'Перше заняття безкоштовне', 'визначимо рівень знань',
+                     'href="#calendar"', 'id="calendar"', '490 грн'):
+            self.assertIn(text, booking)
 
     def test_cart_discount_follows_same_dates(self):
         user = self.make_user('promo@example.com')

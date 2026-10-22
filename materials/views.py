@@ -1437,8 +1437,7 @@ LESSON_FORMATS = (
 
 
 def booking_view(request):
-    formats = [dict(f, promo_price=f['price'] * 4 // 5) for f in LESSON_FORMATS]   # під час акції −20%
-    return render(request, 'booking.html', {'lesson_formats': formats})
+    return render(request, 'booking.html', {'lesson_formats': LESSON_FORMATS})
 
 
 def prices_view(request):

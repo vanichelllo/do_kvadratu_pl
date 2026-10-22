@@ -134,11 +134,6 @@
         border: 3px solid var(--brand-blue);
     }
 
-    .promo-nmt {
-        background-color: #fff3f3;
-        box-shadow: 8px 8px 0px #ff4757;
-    }
-
     .promo-bot {
         background-color: #f0f9ff;
         border-color: #0088cc;
@@ -549,22 +544,8 @@
 </div>
 
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ (лише в дати акцій) -->
-{% if promo_active or halloween_active %}
+{% if halloween_active %}
 <div class="banners-grid">
-    {% if promo_active %}
-    <div class="promo-banner promo-nmt" style="background: linear-gradient(135deg, #fff3f3, #ffebeb); border-color: #ff4757;">
-        <div class="promo-tag" style="background: #ff4757;">З {{ promo_start|date:"d.m" }} по {{ promo_end|date:"d.m" }}</div>
-        <h3 style="color: #c0392b; font-weight: 900; font-size: 1.8rem; margin: 0 0 10px 0;">🎉 Акція до Дня Вчителя!</h3>
-        <p style="color: var(--text-dark); font-size: 1.05rem; line-height: 1.5; margin-bottom: 20px; font-weight: 600;">
-            Використай промокод <span style="background: var(--brand-yellow); color: var(--brand-blue); padding: 2px 8px; border-radius: 4px; font-weight: 900;">ВЧИТЕЛЬ</span> та отримай <strong>-40%</strong> на всі конспекти на вітрині, або <strong>-20%</strong> на заняття до кінця року!
-        </p>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="{% url 'booking' %}" class="promo-btn promo-btn-nmt" style="padding: 10px 15px; font-size: 0.9rem;">Записатись на урок</a>
-            <a href="{% url 'materials_list' %}" class="promo-btn" style="background: var(--brand-blue); color: white; border: 2px solid var(--brand-blue); padding: 10px 15px; font-size: 0.9rem; box-shadow: 4px 4px 0px var(--brand-blue);">На вітрину ➔</a>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- ХЕЛЛОВІН (17.10–01.11) -->
     {% if halloween_active %}{% include 'materials/_halloween_card.html' %}{% endif %}
 </div>
@@ -736,7 +717,7 @@
     <div class="feature-card">
         <div class="feature-icon">👨‍🏫</div>
         <h3 style="color: var(--brand-blue); font-weight: 900; font-size: 1.3rem; margin-top: 0;">Заняття з автором</h3>
-        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 18px; flex-grow: 1;">Індивідуальні уроки онлайн на цій самій платформі: звіти батькам після кожного заняття й практика вдома.</p>
+        <p style="color: var(--text-dark); line-height: 1.6; margin-bottom: 18px; flex-grow: 1;">Онлайн у Zoom по 60 хвилин, перше заняття — безкоштовно. Презентації й практика — на цій платформі, батькам — звіти після кожного заняття.</p>
         <a href="{% url 'booking' %}" class="promo-btn" style="background: var(--brand-yellow); color: var(--brand-blue); border: 2px solid var(--brand-blue); box-shadow: 4px 4px 0px var(--brand-blue); font-size: 0.9rem; padding: 10px 16px;">Записатися ➔</a>
     </div>
 </div>
