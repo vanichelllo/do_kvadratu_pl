@@ -339,6 +339,14 @@
     .student-status-ask { padding: 14px 18px !important; text-align: left !important; }
     .student-status-ask > summary { cursor: pointer; font-weight: 700; color: var(--text-dark); }
     .student-status-ask > summary span { color: var(--brand-blue); text-decoration: underline; white-space: nowrap; }
+    .parent-link-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .parent-link-row input { flex: 1; min-width: 0; padding: 10px; border: 2px solid #dce3ec; border-radius: 8px;
+        font-family: inherit; font-size: 0.9rem; }
+    .parent-link-row .telegram-on { border: none; cursor: pointer; font-family: inherit; }
+    .parent-link-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 12px; }
+    .parent-link-actions form { margin: 0; }
+    .parent-link-actions a, .link-btn { color: var(--brand-blue); font-weight: 700; text-decoration: underline;
+        background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
     .telegram-card { background: white; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 25px;
         margin-bottom: 25px; box-shadow: 4px 4px 0px var(--brand-yellow); }
     .telegram-card .cab-card-title { margin-bottom: 10px; }
@@ -885,6 +893,37 @@
             </div>
         </details>
 
+        <!-- БЛОК: СТОРІНКА ДЛЯ БАТЬКІВ (для тих, хто вчиться сам; учням викладача посилання дає викладач) -->
+        {% if own_parent_page and not is_tutor %}
+        <div class="cab-card telegram-card" id="parents">
+            <h2 class="cab-card-title"><span>👪 Сторінка для батьків</span></h2>
+            {% if parent_page_url %}
+            <p class="telegram-note">Батьки бачать за цим посиланням, які теми ви пройшли, результати практики й діагностики —
+                без входу в акаунт. Надішліть його лише батькам.</p>
+            <div class="parent-link-row">
+                <input type="text" id="parent-link" value="{{ parent_page_url }}" readonly aria-label="Посилання для батьків">
+                <button type="button" class="telegram-on" onclick="copyParentLink(this)">Скопіювати</button>
+            </div>
+            <div class="parent-link-actions">
+                <a href="{{ parent_page_url }}" target="_blank" rel="noopener">Відкрити сторінку</a>
+                <form method="POST" action="{% url 'parent_link' %}">{% csrf_token %}
+                    <button type="submit" name="action" value="reset" class="link-btn">Змінити посилання</button></form>
+                <form method="POST" action="{% url 'parent_link' %}">{% csrf_token %}
+                    <button type="submit" name="action" value="off" class="link-btn">Вимкнути</button></form>
+            </div>
+            <p class="telegram-hint">Змінене чи вимкнене посилання одразу перестає відкриватися.</p>
+            {% else %}
+            <p class="telegram-note">Створіть секретне посилання, за яким батьки без входу в акаунт побачать, які теми
+                ви пройшли, результати практики й діагностики.</p>
+            <form method="POST" action="{% url 'parent_link' %}" class="parent-link-row">{% csrf_token %}
+                <input type="text" name="name" maxlength="100" required placeholder="Ім'я учня для батьків, напр. Тарас"
+                       value="{{ user.parent_page_name|default:user.get_full_name }}" aria-label="Ім'я учня">
+                <button type="submit" name="action" value="create" class="telegram-on">Створити посилання</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- БЛОК: НАГАДУВАННЯ В TELEGRAM -->
         <div class="cab-card telegram-card" id="telegram">
             <h2 class="cab-card-title"><span>🔔 Нагадування в Telegram</span></h2>
@@ -1252,6 +1291,15 @@
 
     function closeNmtForm() {
         document.getElementById('nmtModal').style.display = 'none';
+    }
+</script>
+<script>
+    function copyParentLink(button) {
+        const input = document.getElementById('parent-link');
+        input.select();
+        (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject()).catch(function () {
+            document.execCommand('copy');
+        }).finally(function () { button.textContent = 'Скопійовано ✓'; });
     }
 </script>
 {% endblock %}

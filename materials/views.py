@@ -9,6 +9,7 @@ import json
 import logging
 import datetime
 import random
+import uuid
 from functools import wraps
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
@@ -1808,6 +1809,11 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['tutor_offer'] = True
             context['trial_available'] = teachers.trial_available(user)
 
+        # Сторінка для батьків: учню викладача посилання дає викладач, решта створює його тут
+        context['own_parent_page'] = not (tutor_request and tutor_request.status == 'approved')
+        if self.request.user.parent_token:
+            context['parent_page_url'] = settings.SITE_URL + reverse('parent_dashboard',
+                                                                     args=[self.request.user.parent_token])
         context['telegram_linked'] = bool(self.request.user.telegram_id)
         context['telegram_link_url'] = reminders.link_url(self.request.user)
         return context
@@ -2464,14 +2470,64 @@ def report_question_error(request):
     return JsonResponse({'status': 'invalid method'}, status=405)
 
 
+class SelfLearner:
+    """Учень, що вчиться сам (без викладача): сторінка для батьків за посиланням з його кабінету
+    (CustomUser.parent_token). Має ті самі поля, що й TutorStudentRequest, які потрібні сторінці для батьків."""
+
+    def __init__(self, user):
+        self.user, self.parent_token = user, user.parent_token
+        self.pk = f'user-{user.pk}'
+        self.real_name = user.parent_page_name or user.get_full_name() or 'Учень'
+        school = (subscriptions.active_subscriptions(user).exists()
+                  or user.purchased_materials.filter(curriculum_topic__isnull=False)
+                  .exclude(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME).exists())
+        self.course = 'school' if school else 'nmt'
+
+    def get_course_display(self):
+        return 'Самостійне навчання · ' + ('шкільна програма' if self.course == 'school' else 'підготовка до НМТ')
+
+
+def parent_student(parent_token):
+    """Чия сторінка для батьків: учень викладача (заявка підтверджена) або учень, що вчиться сам; інакше 404."""
+    student = (TutorStudentRequest.objects.filter(parent_token=parent_token, status='approved')
+               .select_related('user').first())
+    if student:
+        return student
+    user = User.objects.filter(parent_token=parent_token).first()
+    if user:
+        return SelfLearner(user)
+    raise Http404("Сторінку не знайдено.")
+
+
+@login_required
+@post_required('cabinet')
+def parent_link_view(request):
+    """Учень, що вчиться сам, створює, змінює або вимикає посилання на сторінку для батьків."""
+    user, action = request.user, request.POST.get('action')
+    if action == 'off':
+        user.parent_token = None
+        user.save(update_fields=['parent_token'])
+        messages.info(request, "Посилання для батьків вимкнено — за ним сторінка більше не відкривається.")
+    else:
+        name = request.POST.get('name', '').strip()[:100]
+        if name:
+            user.parent_page_name = name
+        user.parent_token = uuid.uuid4()
+        user.save(update_fields=['parent_token', 'parent_page_name'])
+        messages.success(request, "Нове посилання для батьків готове — скопіюйте й надішліть його батькам."
+                         if action == 'reset' else "Посилання для батьків готове — скопіюйте й надішліть його батькам.")
+    return redirect(reverse('cabinet') + '#account')
+
+
 def parent_dashboard_view(request, parent_token):
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+    student_request = parent_student(parent_token)
 
     presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
 
     context = {
         'student': student_request,
         'presentations': presentations,
+        'self_learner': isinstance(student_request, SelfLearner),
     }
 
     # Презентації тем, які учень уже практикував, — батьки можуть їх відкрити
@@ -2500,7 +2556,8 @@ def parent_dashboard_view(request, parent_token):
                                    'діагностика' if attempt.answers_json.get('kind') == 'diagnostic' else '')
         context['school_attempts'] = school_attempts
         reports = list(StudentReport.objects.filter(student=student_request)
-                       .select_related('curriculum_topic__chapter__grade').order_by('-date', '-id'))
+                       .select_related('curriculum_topic__chapter__grade').order_by('-date', '-id')
+                       ) if isinstance(student_request, TutorStudentRequest) else []
         context['reports'] = reports
         context['last_report'] = reports[0] if reports else None
         context['is_nmt'] = False
@@ -2536,7 +2593,7 @@ def parent_attempts(student_request):
 
 
 def parent_view_attempt(request, parent_token, attempt_id):
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+    student_request = parent_student(parent_token)
     attempt = get_object_or_404(parent_attempts(student_request), id=attempt_id)
     response = attempt_details_page(request, attempt, parent_back=reverse('parent_dashboard', args=[parent_token]))
     response['Referrer-Policy'] = 'no-referrer'
@@ -2544,7 +2601,7 @@ def parent_view_attempt(request, parent_token, attempt_id):
 
 
 def parent_view_material(request, parent_token, material_id):
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+    student_request = parent_student(parent_token)
     material = get_object_or_404(parent_viewable_materials(student_request), id=material_id)
 
     response = render(request, 'materials/reader.html', {
@@ -2557,7 +2614,7 @@ def parent_view_material(request, parent_token, material_id):
 
 
 def parent_view_presentation(request, parent_token, presentation_id):
-    student_request = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+    student_request = parent_student(parent_token)
     presentation = get_object_or_404(StudentPresentation, id=presentation_id, student=student_request.user)
 
     context = {
@@ -2617,7 +2674,7 @@ def add_nmt_score(request):
 
 def submit_parent_review(request, parent_token):
     if request.method == 'POST':
-        student_req = get_object_or_404(TutorStudentRequest, parent_token=parent_token, status='approved')
+        student_req = parent_student(parent_token)
 
         rating = parse_rating(request.POST.get('rating', 5))
         text = request.POST.get('text', '').strip()

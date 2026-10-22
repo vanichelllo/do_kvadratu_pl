@@ -30,6 +30,11 @@ class CustomUser(AbstractUser):
 
     balance = models.PositiveIntegerField(default=0)
     telegram_id = models.CharField(max_length=100, blank=True, null=True)
+    # Сторінка для батьків учня, що вчиться сам (без викладача): посилання з кабінету, учень може його скинути
+    parent_token = models.UUIDField(null=True, blank=True, unique=True, editable=False,
+                                    verbose_name="Посилання для батьків (самостійне навчання)")
+    parent_page_name = models.CharField(max_length=100, blank=True, default='', db_default='',
+                                        verbose_name="Ім'я учня на сторінці для батьків")
     purchased_materials = models.ManyToManyField('materials.StudyMaterial', blank=True)
 
     # Згода з офертою та політикою конфіденційності: коли і з якою редакцією (settings.TERMS_VERSION)

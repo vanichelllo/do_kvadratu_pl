@@ -1782,7 +1782,7 @@ class LegalPagesTests(BaseTestCase):
         self.assertContains(offer, 'на умовах розділу 17;')
         self.assertNotContains(offer, '{%')
         privacy = self.client.get('/privacy/')
-        self.assertContains(privacy, 'Редакція від 18.10.2026')
+        self.assertContains(privacy, 'Редакція від 22.10.2026')
         self.assertContains(privacy, 'Google Analytics')
         self.assertContains(privacy, 'href="/offer/"')
 
@@ -2774,6 +2774,48 @@ class SchoolDescriptionsAndReviewFormTests(BaseTestCase):
         page = self.client.get('/cabinet/').content.decode()
         self.assertIn('<div class="student-status-card"', page)
         self.assertIn('Заявка на розгляді', page)
+
+class SelfLearnerParentPageTests(BaseTestCase):
+    """Сторінка для батьків учня, що вчиться сам: посилання з кабінету, без звітів викладача, можна змінити й вимкнути."""
+
+    def setUp(self):
+        self.pupil = self.make_user('self@example.com')
+        self.lesson = StudyMaterial.objects.create(
+            title='1.2. Цифри', price=29, is_published=True, html_content='<p>урок</p>',
+            curriculum_topic=make_school_topic('1.2. Цифри', 5, 102))
+        self.pupil.purchased_materials.add(self.lesson)
+        PracticeAttempt.objects.create(user=self.pupil, material=self.lesson, score=5, answers_json={'answers': []})
+        self.client.force_login(self.pupil)
+
+    def link(self):
+        self.pupil.refresh_from_db()
+        return f'/parents/{self.pupil.parent_token}/' if self.pupil.parent_token else None
+
+    def test_create_open_reset_and_disable_link(self):
+        cabinet = self.client.get('/cabinet/')
+        self.assertContains(cabinet, 'Створити посилання')
+        self.client.post('/parents/link/', {'action': 'create', 'name': 'Тарас'})
+        first = self.link()
+        self.assertContains(self.client.get('/cabinet/'), f'https://dokvadratu.com.ua{first}')
+        page = Client().get(first)
+        self.assertContains(page, 'Тарас')
+        self.assertContains(page, 'Самостійне навчання · шкільна програма')
+        self.assertContains(page, '1.2. Цифри')
+        self.assertNotContains(page, 'Звітів про заняття ще немає')
+        self.assertNotContains(page, 'ставить вчитель')
+        self.assertEqual(Client().get(f'{first}topic/{self.lesson.id}/').status_code, 200)
+        self.client.post('/parents/link/', {'action': 'reset'})
+        second = self.link()
+        self.assertNotEqual(first, second)
+        self.assertEqual(Client().get(first).status_code, 404)
+        self.assertEqual(Client().get(second).status_code, 200)
+        self.client.post('/parents/link/', {'action': 'off'})
+        self.assertIsNone(self.link())
+        self.assertEqual(Client().get(second).status_code, 404)
+
+    def test_teachers_student_gets_link_from_teacher(self):
+        TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_5', status='approved')
+        self.assertNotContains(self.client.get('/cabinet/'), 'Створити посилання')
 
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
