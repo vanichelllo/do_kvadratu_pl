@@ -27,6 +27,10 @@
     .agree { font-size: 0.8rem; color: #555; display: flex; gap: 6px; align-items: flex-start; margin-bottom: 8px; }
     .agree input { flex-shrink: 0; margin-top: 2px; }
     .cs-note { color: #666; font-size: 0.9rem; line-height: 1.5; }
+    .cs-support { border-top: 2px dashed var(--brand-blue); margin-top: 6px; padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .cs-support h4 { margin: 0; color: var(--brand-blue); font-size: 1.1rem; }
+    .cs-support h4 small { font-weight: 600; color: #666; }
+    .cs-name { width: 100%; box-sizing: border-box; padding: 10px; border: 2px solid #dce3ec; border-radius: 8px; font-family: inherit; margin-bottom: 8px; }
     .cs h2 { color: var(--brand-blue); margin: 30px 0 12px; }
 </style>
 <div class="cs">
@@ -40,6 +44,7 @@
         <div>🪜 <strong>Практика до кожної теми</strong> — 50+ завдань, від простих до «босів».</div>
         <div>📅 <strong>Місяць або навчальний рік</strong> (до 30 червня). Без автосписань: продовжуєте самі. Взяли місяць і вирішили на рік — протягом 30 днів сплачене за місяць зарахуємо.</div>
         <div>🆓 <strong>Спершу спробуйте</strong> — перша тема кожного розділу безкоштовна.</div>
+        {% if support_on_sale %}<div id="support">🤝 <strong>Можна з супроводом</strong> — викладач задає й перевіряє ДЗ, батьки щомісяця отримують звіт. Місць обмежено.</div>{% endif %}
     </div>
 
     <h2>Оберіть клас</h2>
@@ -67,6 +72,28 @@
             </form>
             {% else %}
                 <a href="{% url 'login' %}?next={% url 'class_subscribe' %}%3Fclass%3D{{ plan.number }}" class="btn-brand">Увійти, щоб оформити</a>
+            {% endif %}
+            {% if plan.support_price_month %}
+            <div class="cs-support">
+                <h4>🤝 З супроводом — {{ plan.support_price_month }} ₴ <small>/ місяць</small></h4>
+                <div class="cs-note">Підписка на клас + викладач: ДЗ щотижня з перевіркою, звіт батькам щомісяця, відповіді на запитання в Telegram.</div>
+                {% if support_until %}
+                    <div class="mine">✅ Ваш супровід діє до {{ support_until|date:"d.m.Y" }}. Оплата зараз продовжить його на місяць.</div>
+                {% endif %}
+                {% if support_blocker %}
+                    <div class="cs-note">{{ support_blocker }}</div>
+                {% elif not support_seats_left and not support_until %}
+                    <div class="cs-note"><strong>Вільних місць зараз немає.</strong> Напишіть нам — запишемо в чергу.</div>
+                {% elif user.is_authenticated %}
+                <form method="post" action="{% url 'class_buy' plan.id 'support' %}">{% csrf_token %}
+                    {% if support_needs_name %}<input type="text" name="real_name" required maxlength="100" placeholder="Прізвище та ім'я учня" class="cs-name" aria-label="Прізвище та ім'я учня">{% endif %}
+                    <label class="agree"><input type="checkbox" name="agree" required> <span>Погоджуюся з <a href="{% url 'offer' %}#class-support" target="_blank">умовами оферти</a> і прошу, щоб супровід почав діяти одразу після оплати</span></label>
+                    <button type="submit" name="method" value="card" class="btn-month">Місяць із супроводом — карткою, {{ plan.support_price_month }} ₴</button>
+                    {% if balance >= plan.support_price_month %}<button type="submit" name="method" value="balance" class="btn-balance">Місяць із супроводом — з балансу</button>{% endif %}
+                </form>
+                {% if not support_until %}<div class="cs-note">Вільних місць: {{ support_seats_left }}</div>{% endif %}
+                {% endif %}
+            </div>
             {% endif %}
             {% for grade in plan.grades %}<a class="cs-note" href="{% url 'materials_list' %}?grade={{ grade.id }}">Теми: {{ grade.short_label }} →</a>{% endfor %}
         </div>
