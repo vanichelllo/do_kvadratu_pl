@@ -1325,7 +1325,12 @@ def cart_detail(request):
 
         return redirect('cart_detail')
 
-    return render(request, 'materials/cart.html', {'cart': cart, 'cart_items': cart.cached_items()})
+    items = cart.cached_items()
+    class_offers = subscriptions.cart_class_offers(request.user, items)
+    for offer in class_offers:
+        offer['count_word'] = uk_plural(offer['count'], 'урок', 'уроки', 'уроків')
+        offer['ready_word'] = uk_plural(offer['ready'], 'урок', 'уроки', 'уроків')
+    return render(request, 'materials/cart.html', {'cart': cart, 'cart_items': items, 'class_offers': class_offers})
 
 
 @post_required(material_page)

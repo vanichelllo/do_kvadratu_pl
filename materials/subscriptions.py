@@ -145,3 +145,37 @@ def plan_for_material(material):
         return None
     plan = ClassPlan.objects.filter(number=grade.number, is_active=True).first()
     return plan if plan and plan.buy_options else None
+
+
+# Кошик: від стількох уроків одного класу підказуємо, що підписка на клас може бути вигіднішою
+CART_HINT_MIN_LESSONS = 2
+
+
+def cart_class_offers(user, items):
+    """Підказки в кошику: [{plan, count, total, ready}] для класів, з яких у кошику щонайменше
+    CART_HINT_MIN_LESSONS платних уроків, якщо клас продається помісячно, а підписки на нього в покупця немає.
+    ready — скільки уроків класу вже відкриває підписка (без читання презентацій)."""
+    by_number = {}
+    for item in items:
+        material = item.material
+        if material.is_bundle or material.is_free or not material.price or material.is_nmt:
+            continue
+        number = material.curriculum_grade.number
+        if number is not None:
+            by_number.setdefault(number, []).append(material.price)
+    by_number = {n: prices for n, prices in by_number.items() if len(prices) >= CART_HINT_MIN_LESSONS}
+    if not by_number:
+        return []
+    subscribed = set(active_subscriptions(user).values_list('number', flat=True))
+    plans = [p for p in ClassPlan.objects.filter(number__in=by_number, is_active=True, price_month__gt=0)
+             if p.number not in subscribed]
+    if not plans:
+        return []
+    ready = dict(StudyMaterial.objects.filter(
+        is_published=True, is_bundle=False, html_content__gt='', curriculum_topic__kind='lesson',
+        curriculum_topic__chapter__grade__number__in=[p.number for p in plans])
+        .exclude(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
+        .values('curriculum_topic__chapter__grade__number').annotate(n=Count('id'))
+        .values_list('curriculum_topic__chapter__grade__number', 'n'))
+    return [{'plan': plan, 'count': len(by_number[plan.number]), 'total': sum(by_number[plan.number]),
+             'ready': ready.get(plan.number, 0)} for plan in plans]

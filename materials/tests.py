@@ -3909,6 +3909,25 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertContains(self.client.get(f'/payment/result/{order.id}/'), 'Підписку на 7 клас оформлено')
 
 
+    def test_cart_suggests_class_subscription_for_several_lessons(self):
+        from .subscriptions import grant_class
+        cart = Cart.objects.create(user=self.pupil)
+        CartItem.objects.create(cart=cart, material=self.algebra7)
+        CartItem.objects.create(cart=cart, material=self.algebra8)
+        hint = 'а весь 7 клас'
+        self.assertNotContains(self.client.get('/cart/'), hint)   # клас не продається
+        self.plan7.is_active = True
+        self.plan7.save()
+        self.assertNotContains(self.client.get('/cart/'), hint)   # один урок 7 класу — підказка ще зайва
+        CartItem.objects.create(cart=cart, material=self.geometry7)
+        page = self.client.get('/cart/')
+        self.assertContains(page, '2 уроки 7 класу = <strong>58 ₴</strong>')
+        self.assertContains(page, 'а весь 7 клас — <strong>119 ₴/міс</strong>')
+        self.assertContains(page, 'усі 2 уроки класу й практика')
+        self.assertContains(page, '/subscribe/?class=7#class-7')
+        grant_class(self.pupil, self.plan7, 'month')
+        self.assertNotContains(self.client.get('/cart/'), hint)   # уже передплачено
+
 class ClassSupportTests(BaseTestCase):
     """Підписка з супроводом: місяць підписки на клас, і на цей час учень — учень власника сайту."""
 
