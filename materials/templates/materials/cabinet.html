@@ -710,7 +710,7 @@
                 {% endif %}
                 <details style="margin-top: 12px;">
                     <summary class="hw-link" style="display: inline;">Увесь план ({{ my_plan.items|length }})</summary>
-                    <ol style="margin: 10px 0 0; padding-left: 22px; line-height: 1.7;">
+                    <ol style="margin: 10px 0 0; padding-left: 34px; line-height: 1.7;">
                         {% for item in my_plan.items %}
                         <li style="{% if item.status == 'skipped' %}color: #adb5bd; text-decoration: line-through;{% elif item.status == 'done' %}color: #27ae60;{% endif %}">{% if item.status == 'done' %}✓ {% endif %}{% if item.material %}<a href="{% url 'download_material' item.material.id %}" style="color: inherit;">{{ item.name }}</a>{% else %}{{ item.name }}{% endif %}</li>
                         {% endfor %}
