@@ -27,7 +27,7 @@ from .models import (NMT_SUBJECT_NAME, CurriculumTopic, Lesson, LessonSeries, Pr
 
 FILL_WEEKS = 10                      # на скільки тижнів наперед створювати дати постійних занять
 FILL_BACK = datetime.timedelta(days=14)
-DURATIONS = (30, 45, 60, 90, 120)
+DURATIONS = (30, 45, 50, 60, 90, 120)
 REPORT_DAYS = 30                     # заняття без звіту за останні REPORT_DAYS днів — у «Чекають звіту»
 NOTIFY_DAYS = 14                     # про зміни в розкладі далі ніж на NOTIFY_DAYS наперед учневі не пишемо
 WEEKDAYS_SHORT = ('пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'нд')

@@ -4759,6 +4759,11 @@ class ScheduleTests(BaseTestCase):
         self.assertContains(response, 'У цей час уже є заняття')
         self.assertEqual(self.Lesson.objects.count(), 2)
 
+    def test_fifty_minute_lesson(self):
+        self.assertContains(self.client.get('/cabinet/schedule/'), '<option value="50">50 хв</option>')
+        self.add(self.today + datetime.timedelta(days=1), duration='50')
+        self.assertEqual(self.Lesson.objects.get().duration, 50)
+
     def test_bad_input_does_not_create(self):
         response = self.client.post('/cabinet/schedule/add/', {'student_id': self.student.id, 'date': 'вчора',
                                                                'time': '16:00'}, follow=True)
