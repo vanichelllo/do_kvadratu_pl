@@ -11,7 +11,6 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import GameMistake, Question, StudyMaterial
@@ -63,7 +62,7 @@ def question_payload(question, lesson=None):
     data = {'id': question.id, 'type': question.question_type, 'text': question.text,
             'svg': question.svg_code or '', 'image': question.image.url if question.image else '',
             'lesson_title': lesson.title if lesson else '',
-            'lesson_url': reverse('material_detail', args=[lesson.id]) if lesson else ''}
+            'lesson_url': lesson.get_absolute_url() if lesson else ''}
     if question.question_type == 'CHOICE':
         data['options'] = [{'id': o.id, 'text': o.body} for o in question.options.all()]
     elif question.question_type == 'MATCH':

@@ -83,7 +83,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <a href="{% url 'material_detail' mat.id %}" class="btn-brand" style="text-decoration: none; padding: 12px; text-align: center; border-radius: 8px; font-size: 1rem; font-weight: 600; display: block; width: 100%; box-sizing: border-box;">
+                    <a href="{{ mat.get_absolute_url }}" class="btn-brand" style="text-decoration: none; padding: 12px; text-align: center; border-radius: 8px; font-size: 1rem; font-weight: 600; display: block; width: 100%; box-sizing: border-box;">
                         Переглянути
                     </a>
                 </div>

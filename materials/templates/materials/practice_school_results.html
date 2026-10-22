@@ -131,7 +131,7 @@
             {% for row in topic_rows %}
                 <li class="{{ row.state }}">
                     <span>{% if row.state == 'ok' %}✅{% elif row.state == 'partial' %}🟡{% else %}❌{% endif %}</span>
-                    {% if row.lesson %}<a href="{% url 'material_detail' row.lesson.id %}">{{ row.topic.name }}</a>{% else %}{{ row.topic.name }}{% endif %}
+                    {% if row.lesson %}<a href="{{ row.lesson.get_absolute_url }}">{{ row.topic.name }}</a>{% else %}{{ row.topic.name }}{% endif %}
                     <small>{{ row.right }} з {{ row.total }}{% if row.state == 'repeat' %} — повторити{% elif row.state == 'partial' %} — підтягнути{% endif %}</small>
                 </li>
             {% endfor %}
@@ -144,15 +144,15 @@
             <h2>🧭 Що далі</h2>
             {% if stuck %}
                 <p>Перша сходинка поки не піддалася — це нормально. {% if report_student %}Варто ще раз пояснити тему й розібрати приклади разом.{% else %}Переглянь презентацію уроку ще раз, розбери приклади, а потім спробуй знову.{% endif %}</p>
-                {% if not report_student %}<p><a href="{% url 'material_detail' material.id %}" class="btn btn-secondary">📖 До уроку</a></p>{% endif %}
+                {% if not report_student %}<p><a href="{{ material.get_absolute_url }}" class="btn btn-secondary">📖 До уроку</a></p>{% endif %}
             {% endif %}
             {% if gaps %}
                 <p>У завданнях на повторення були помилки. Варто повторити:</p>
-                <ul>{% for topic, lesson in gaps %}<li>{% if lesson %}<a href="{% url 'material_detail' lesson.id %}">{{ topic.name }}</a>{% else %}{{ topic.name }}{% endif %}</li>{% endfor %}</ul>
+                <ul>{% for topic, lesson in gaps %}<li>{% if lesson %}<a href="{{ lesson.get_absolute_url }}">{{ topic.name }}</a>{% else %}{{ topic.name }}{% endif %}</li>{% endfor %}</ul>
             {% endif %}
             {% if next_material %}
                 <p>Тему опановано — можна рухатися далі:</p>
-                <p><a href="{% if report_student %}{% url 'practice_session' next_material.id %}?student={{ report_student.id }}{% else %}{% url 'material_detail' next_material.id %}{% endif %}" class="btn btn-primary">➡️ {{ next_material.title }}</a></p>
+                <p><a href="{% if report_student %}{% url 'practice_session' next_material.id %}?student={{ report_student.id }}{% else %}{{ next_material.get_absolute_url }}{% endif %}" class="btn btn-primary">➡️ {{ next_material.title }}</a></p>
             {% endif %}
         </div>
         {% endif %}

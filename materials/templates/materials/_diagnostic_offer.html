@@ -22,7 +22,7 @@
     <ul style="list-style: none; padding: 0; margin: 0 0 18px;">
         {% for mat in offer_materials %}
         <li style="display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed #e5d3a8;">
-            <a href="{% url 'material_detail' mat.id %}" style="color: var(--text-dark); font-weight: 700; text-decoration: none;">{{ mat.title }}</a>
+            <a href="{{ mat.get_absolute_url }}" style="color: var(--text-dark); font-weight: 700; text-decoration: none;">{{ mat.title }}</a>
             <span style="white-space: nowrap; color: #777;">{{ mat.price }} ₴</span>
         </li>
         {% endfor %}

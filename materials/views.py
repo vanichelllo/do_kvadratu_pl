@@ -83,7 +83,8 @@ def post_required(redirect_to):
 
 
 def material_page(material_id, **kwargs):
-    return reverse('material_detail', args=[material_id])
+    material = StudyMaterial.objects.only('title').filter(pk=material_id).first()
+    return material.get_absolute_url() if material else reverse('materials_list')
 
 
 def parse_id_list(ids_str):
@@ -482,7 +483,7 @@ def practice_session_view(request, material_id):
         raise Http404("Матеріал не знайдено.")
     if not (material.is_free or has_access):
         messages.error(request, f"Практика доступна після придбання матеріалу «{material.title}».")
-        return redirect('material_detail', pk=material.id)
+        return redirect(material.get_absolute_url())
 
     profile = practice.practice_profile(material)
     if profile:
@@ -1555,6 +1556,19 @@ class MaterialListView(ListView):
         return context
 
 
+def can_view_material(user, material):
+    return (material.is_published or is_teacher(user) or teachers.can_teach(user, material)
+            or user_owns_material(user, material))
+
+
+def material_short_url(request, pk):
+    """Старі адреси /material/123/ — назавжди на зручну адресу з назвою (неопубліковане — лише тим, кому видно)."""
+    material = get_object_or_404(StudyMaterial, pk=pk)
+    if not can_view_material(request.user, material):
+        raise Http404("Матеріал не знайдено.")
+    return redirect(material.get_absolute_url(), permanent=True)
+
+
 class MaterialDetailView(DetailView):
     model = StudyMaterial
     template_name = 'materials/detail.html'
@@ -1562,11 +1576,15 @@ class MaterialDetailView(DetailView):
 
     def get_object(self, queryset=None):
         material = super().get_object(queryset)
-        user = self.request.user
-        if not (material.is_published or is_teacher(user) or teachers.can_teach(user, material)
-                or user_owns_material(user, material)):
+        if not can_view_material(self.request.user, material):
             raise Http404("Матеріал не знайдено.")
         return material
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if kwargs.get('slug') != self.object.slug:   # назву змінили — адреса з новою назвою
+            return redirect(self.object.get_absolute_url(), permanent=True)
+        return self.render_to_response(self.get_context_data(object=self.object))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1870,7 +1888,7 @@ def material_preview_view(request, material_id):
         raise Http404("Для цього уроку немає безкоштовного перегляду.")
     return render(request, 'materials/reader.html', {
         'material': material, 'is_preview': True, 'preview_html': html,
-        'back_url': reverse('material_detail', args=[material.id]),
+        'back_url': material.get_absolute_url(),
     })
 
 
@@ -2780,7 +2798,7 @@ def math_sprint_game(request):
           'text': q.text,
           'options': opts,
           'lesson_title': lesson.title if lesson else '',
-          'lesson_url': reverse('material_detail', args=[lesson.id]) if lesson else '',
+          'lesson_url': lesson.get_absolute_url() if lesson else '',
       })
 
   return render(

@@ -404,7 +404,7 @@ class GuestCartTests(BaseTestCase):
         app.sites.add(Site.objects.get_current())
 
     def test_guest_choice_waits_in_cart_after_login(self):
-        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), 'можна через Google')
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/', follow=True), 'можна через Google')
         response = self.client.post(f'/cart/add/{self.lesson.id}/')
         self.assertRedirects(response, '/login/?next=/cart/', fetch_redirect_response=False)
         self.client.post(f'/cart/add/{self.free.id}/')
@@ -706,7 +706,7 @@ class ReviewTests(BaseTestCase):
 
     @mock.patch('materials.views.send_telegram_notification')
     def test_material_page_review_form_submits(self, notify):
-        page = self.client.get(f'/material/{self.material.id}/')
+        page = self.client.get(f'/material/{self.material.id}/', follow=True)
         self.assertContains(page, 'name="reviewer_name"')
 
         self.client.post('/submit-review/', {'rating': 5, 'text': 'Корисно', 'reviewer_name': 'Оля',
@@ -716,7 +716,7 @@ class ReviewTests(BaseTestCase):
 
         review.is_approved = True
         review.save()
-        page = self.client.get(f'/material/{self.material.id}/')
+        page = self.client.get(f'/material/{self.material.id}/', follow=True)
         self.assertContains(page, 'Оля')
         self.assertNotContains(page, 'Профіль')
 
@@ -761,7 +761,7 @@ class PurchaseAccessTests(BaseTestCase):
 
     def test_owned_bundle_cannot_be_added_again(self):
         self.user.purchased_materials.add(self.lesson1, self.lesson2)
-        page = self.client.get(f'/material/{self.bundle.id}/')
+        page = self.client.get(f'/material/{self.bundle.id}/', follow=True)
         self.assertContains(page, 'ВИ ВЖЕ ПРИДБАЛИ')
         self.client.post(f'/cart/add/{self.bundle.id}/')
         self.assertFalse(CartItem.objects.filter(material=self.bundle).exists())
@@ -777,7 +777,7 @@ class PurchaseAccessTests(BaseTestCase):
     def test_state_changing_endpoints_ignore_get(self):
         cart = Cart.objects.create(user=self.user)
         item = CartItem.objects.create(cart=cart, material=self.lesson1)
-        expected = {f'/cart/add/{self.lesson2.id}/': f'/material/{self.lesson2.id}/',
+        expected = {f'/cart/add/{self.lesson2.id}/': self.lesson2.get_absolute_url(),
                     f'/cart/remove/{item.id}/': '/cart/', '/cart/pay/balance/': '/cart/', '/cart/pay/mono/': '/cart/'}
         for url, target in expected.items():
             self.assertRedirects(self.client.get(url), target, fetch_redirect_response=False, msg_prefix=url)
@@ -793,30 +793,30 @@ class PurchaseAccessTests(BaseTestCase):
 
     def test_unpublished_material_hidden_from_strangers(self):
         hidden = StudyMaterial.objects.create(title='Чернетка', price=100, is_published=False)
-        self.assertEqual(Client().get(f'/material/{hidden.id}/').status_code, 404)
-        self.assertEqual(self.client.get(f'/material/{hidden.id}/').status_code, 404)
+        self.assertEqual(Client().get(f'/material/{hidden.id}/', follow=True).status_code, 404)
+        self.assertEqual(self.client.get(f'/material/{hidden.id}/', follow=True).status_code, 404)
         self.client.post(f'/cart/add/{hidden.id}/')
         self.assertFalse(CartItem.objects.filter(material=hidden).exists())
 
         self.user.purchased_materials.add(hidden)
-        self.assertEqual(self.client.get(f'/material/{hidden.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/material/{hidden.id}/', follow=True).status_code, 200)
 
     def test_owner_of_unpublished_bundle_sees_it(self):
         self.user.purchased_materials.add(self.lesson1, self.lesson2)
         StudyMaterial.objects.filter(id=self.bundle.id).update(is_published=False)
-        self.assertContains(self.client.get(f'/material/{self.bundle.id}/'), 'ВИ ВЖЕ ПРИДБАЛИ')
+        self.assertContains(self.client.get(f'/material/{self.bundle.id}/', follow=True), 'ВИ ВЖЕ ПРИДБАЛИ')
 
     def test_staff_preview_of_unpublished_has_no_buy_button(self):
         hidden = StudyMaterial.objects.create(title='Чернетка', price=100, is_published=False)
         self.user.is_staff = True
         self.user.save()
-        page = self.client.get(f'/material/{hidden.id}/')
+        page = self.client.get(f'/material/{hidden.id}/', follow=True)
         self.assertContains(page, 'не опубліковано')
         self.assertNotContains(page, 'ДОДАТИ В КОШИК')
 
     def test_bundle_granted_directly_counts_as_owned(self):
         self.user.purchased_materials.add(self.bundle)
-        self.assertContains(self.client.get(f'/material/{self.bundle.id}/'), 'ВИ ВЖЕ ПРИДБАЛИ')
+        self.assertContains(self.client.get(f'/material/{self.bundle.id}/', follow=True), 'ВИ ВЖЕ ПРИДБАЛИ')
         self.client.post(f'/cart/add/{self.bundle.id}/')
         self.assertFalse(CartItem.objects.filter(material=self.bundle).exists())
 
@@ -842,7 +842,7 @@ class PurchaseAccessTests(BaseTestCase):
         question.materials.add(self.lesson1)
 
         response = self.client.get(f'/practice/{self.lesson1.id}/')
-        self.assertRedirects(response, f'/material/{self.lesson1.id}/', fetch_redirect_response=False)
+        self.assertRedirects(response, self.lesson1.get_absolute_url(), fetch_redirect_response=False)
         self.client.post(f'/practice/{self.lesson1.id}/', {'question_ids': str(question.id), f'q_{question.id}': '4'})
         self.assertFalse(PracticeAttempt.objects.exists())
 
@@ -944,13 +944,13 @@ class LessonPreviewTests(BaseTestCase):
         self.assertContains(page, 'Придбати повний урок')
 
     def test_detail_page_links_to_preview(self):
-        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), f'/material/{self.lesson.id}/preview/')
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/', follow=True), f'/material/{self.lesson.id}/preview/')
 
     def test_no_preview_for_owner_free_or_short_lessons(self):
         user = self.make_user('owner@example.com')
         user.purchased_materials.add(self.lesson)
         self.client.force_login(user)
-        self.assertNotContains(self.client.get(f'/material/{self.lesson.id}/'), '/preview/')
+        self.assertNotContains(self.client.get(f'/material/{self.lesson.id}/', follow=True), '/preview/')
         self.assertRedirects(self.client.get(f'/material/{self.lesson.id}/preview/'),
                              f'/download/{self.lesson.id}/', fetch_redirect_response=False)
         self.client.logout()
@@ -961,7 +961,7 @@ class LessonPreviewTests(BaseTestCase):
             self.assertEqual(self.client.get(f'/material/{material.id}/preview/').status_code, 404)
         free = StudyMaterial.objects.create(title='Безкоштовний', is_free=True, is_published=True,
                                             html_content=self.slides_html(8))
-        self.assertNotContains(self.client.get(f'/material/{free.id}/'), '/preview/')
+        self.assertNotContains(self.client.get(f'/material/{free.id}/', follow=True), '/preview/')
 
 
 class SeoTests(BaseTestCase):
@@ -969,16 +969,16 @@ class SeoTests(BaseTestCase):
         published = StudyMaterial.objects.create(title='Тема', is_published=True)
         hidden = StudyMaterial.objects.create(title='Прихована', is_published=False)
         body = self.client.get('/sitemap.xml').content.decode()
-        self.assertIn(f'https://dokvadratu.com.ua/material/{published.id}/', body)
-        self.assertNotIn(f'/material/{hidden.id}/', body)
+        self.assertIn(f'https://dokvadratu.com.ua{published.get_absolute_url()}', body)
+        self.assertNotIn(f'/material/{hidden.id}-', body)
         self.assertIn('https://dokvadratu.com.ua/booking/', body)
         self.assertIn('Sitemap: https://dokvadratu.com.ua/sitemap.xml', self.client.get('/robots.txt').content.decode())
 
     def test_material_page_has_canonical_and_own_description(self):
         material = StudyMaterial.objects.create(title='Квадратні рівняння', description='Усе про дискримінант',
                                                 is_published=True)
-        page = self.client.get(f'/material/{material.id}/?utm_source=telegram')
-        self.assertContains(page, f'<link rel="canonical" href="https://dokvadratu.com.ua/material/{material.id}/">',
+        page = self.client.get(f'{material.get_absolute_url()}?utm_source=telegram')
+        self.assertContains(page, f'<link rel="canonical" href="https://dokvadratu.com.ua{material.get_absolute_url()}">',
                             html=False)
         self.assertContains(page, '<meta name="description" content="Усе про дискримінант">', html=False)
         self.assertContains(page, 'content="Квадратні рівняння | ДО КВАДРАТУ"')
@@ -1625,7 +1625,7 @@ class ReviewFollowUpMiscTests(BaseTestCase):
         client = Client(raise_request_exception=False)
         with mock.patch('materials.views.MaterialDetailView.get_context_data', side_effect=KeyError('boom')):
             for material in StudyMaterial.objects.all():
-                self.assertEqual(client.get(f'/material/{material.id}/').status_code, 500)
+                self.assertEqual(client.get(f'/material/{material.id}/', follow=True).status_code, 500)
         self.assertEqual(post.call_count, 1)
 
     def test_malformed_error_report_is_400_without_alert(self):
@@ -2136,7 +2136,7 @@ class MathSprintTests(BaseTestCase):
         response = self.client.get('/game/sprint/')
         self.assertEqual(response.context['available_materials'], [free])
         self.assertEqual(len(response.context['questions_list']), 4)
-        self.assertEqual(response.context['questions_list'][0]['lesson_url'], f'/material/{free.id}/')
+        self.assertEqual(response.context['questions_list'][0]['lesson_url'], free.get_absolute_url())
         # Тему, де завдань замало, не можна обрати навіть через URL
         response = self.client.get(f'/game/sprint/?material_id={thin.id}')
         self.assertIsNone(response.context['selected_material'])
@@ -2281,7 +2281,7 @@ class DiagnosticHistoryTests(BaseTestCase):
         html = self.client.get('/cabinet/').content.decode()
         self.assertIn('data-section="diagnostics"', html)
         self.assertIn('Що повторити за останньою діагностикою', html)
-        self.assertIn(f'/material/{self.lesson.id}/', html)
+        self.assertIn(self.lesson.get_absolute_url(), html)
 
         second = self.take(self.right)
         self.assertEqual((second.context['previous_percent'], second.context['percent_change']), (0, 100))
@@ -2749,24 +2749,24 @@ class SchoolDescriptionsAndReviewFormTests(BaseTestCase):
         self.user = self.make_user('desc@example.com')
 
     def test_school_lesson_described_as_interactive_lesson(self):
-        page = self.client.get(f'/material/{self.lesson.id}/').content.decode()
+        page = self.client.get(f'/material/{self.lesson.id}/', follow=True).content.decode()
         head = page[:page.index('</head>')]
         self.assertIn('Інтерактивний урок за шкільною програмою (Математика · 5 клас)', page)
         self.assertNotIn('Авторський конспект', page)
         self.assertNotIn('НМТ', head.split('og:description')[1][:300])
         self.assertIn('інтерактивний урок з математики (Математика · 5 клас)', head)
         self.assertContains(self.client.get('/materials/'), 'Інтерактивний урок за шкільною')
-        nmt = self.client.get(f'/material/{self.nmt.id}/').content.decode()
+        nmt = self.client.get(f'/material/{self.nmt.id}/', follow=True).content.decode()
         self.assertIn('Авторський конспект', nmt)
         self.assertIn('конспект для підготовки до НМТ', nmt)
 
     def test_own_description_is_kept(self):
         StudyMaterial.objects.filter(pk=self.lesson.pk).update(description='Мій опис уроку.')
-        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), 'Мій опис уроку.')
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/', follow=True), 'Мій опис уроку.')
 
     def test_review_form_has_text_field_and_moderation_note(self):
         self.client.force_login(self.user)
-        page = self.client.get(f'/material/{self.lesson.id}/')
+        page = self.client.get(f'/material/{self.lesson.id}/', follow=True)
         self.assertContains(page, '<label for="review-text"')
         self.assertContains(page, "Відгук з'явиться на сайті після перевірки.")
         self.assertContains(self.client.get('/cabinet/'), "Відгук з'явиться на сайті після перевірки.")
@@ -2855,6 +2855,31 @@ class StorefrontSortAndOwnedTests(BaseTestCase):
         ClassSubscription.objects.create(user=self.user, number=5, valid_until=timezone.localdate())
         self.assertEqual(list(self.client.get('/materials/?hide_owned=1').context['materials']), [])
         self.assertEqual(len(self.client.get('/materials/').context['materials']), 4)
+
+class FriendlyUrlTests(BaseTestCase):
+    def test_translit_slug(self):
+        from .slugs import slugify_title
+        self.assertEqual(slugify_title('1.2. Цифри. Десятковий запис натуральних чисел'),
+                         '1-2-tsyfry-desiatkovyi-zapys-naturalnykh-chysel')
+        self.assertEqual(slugify_title("1.13. Розв'язування задач"), '1-13-rozviazuvannia-zadach')
+        self.assertEqual(slugify_title('Юля Їжак Згода'), 'yulia-yizhak-zghoda')
+        self.assertLessEqual(len(slugify_title('дуже ' * 40)), 60)
+        self.assertEqual(slugify_title('!!!'), 'material')
+
+    def test_old_and_wrong_urls_redirect_permanently(self):
+        lesson = StudyMaterial.objects.create(title='1.2. Цифри', price=29, is_published=True)
+        url = lesson.get_absolute_url()
+        self.assertEqual(url, f'/material/{lesson.id}-1-2-tsyfry/')
+        self.assertContains(self.client.get(url), '1.2. Цифри')
+        self.assertRedirects(self.client.get(f'/material/{lesson.id}/'), url, status_code=301)
+        self.assertRedirects(self.client.get(f'/material/{lesson.id}-stara-nazva/'), url, status_code=301)
+        self.assertContains(self.client.get('/materials/'), f'href="{url}"')
+
+    def test_unpublished_title_is_not_revealed(self):
+        hidden = StudyMaterial.objects.create(title='Секретна тема', price=29)
+        response = self.client.get(f'/material/{hidden.id}/')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.client.get(hidden.get_absolute_url()).status_code, 404)
 
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
@@ -3114,7 +3139,7 @@ class SchoolPracticeTests(BaseTestCase):
         self.lesson.save()
         q = self.make_choice('q', self.topic2)
         response = self.client.get(f'/practice/{self.lesson.id}/')
-        self.assertRedirects(response, f'/material/{self.lesson.id}/', fetch_redirect_response=False)
+        self.assertRedirects(response, self.lesson.get_absolute_url(), fetch_redirect_response=False)
         self.assertEqual(self.check(q, '1').status_code, 404)
 
     def make_typed(self, q_type, spec, topic=None):
@@ -3706,7 +3731,7 @@ class TutorAccountTests(BaseTestCase):
         self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 200)
         self.assertEqual(self.client.get(f'/download/{self.lesson8.id}/').status_code, 404)
         response = self.client.get(f'/practice/{self.lesson8.id}/')
-        self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
+        self.assertRedirects(response, self.lesson8.get_absolute_url(), fetch_redirect_response=False)
 
     def test_tutor_sees_attempts_of_own_pupils_only(self):
         mine = PracticeAttempt.objects.create(user=self.kid, material=self.lesson5, score=1, max_score=2,
@@ -3735,7 +3760,7 @@ class TutorAccountTests(BaseTestCase):
         self.client.force_login(self.kid)
         self.assertEqual(self.client.get(f'/practice/{self.lesson5.id}/').status_code, 200)
         response = self.client.get(f'/practice/{self.lesson8.id}/')
-        self.assertRedirects(response, f'/material/{self.lesson8.id}/', fetch_redirect_response=False)
+        self.assertRedirects(response, self.lesson8.get_absolute_url(), fetch_redirect_response=False)
         # Учень у 5 класі, підписка викладача покриває 5 клас — презентація теж відкрита
         self.assertEqual(self.client.get(f'/download/{self.lesson5.id}/').status_code, 200)
 
@@ -3747,7 +3772,7 @@ class TutorAccountTests(BaseTestCase):
         self.assertNotIn('my_students', context)
         self.client.force_login(self.kid)
         response = self.client.get(f'/practice/{self.lesson5.id}/')
-        self.assertRedirects(response, f'/material/{self.lesson5.id}/', fetch_redirect_response=False)
+        self.assertRedirects(response, self.lesson5.get_absolute_url(), fetch_redirect_response=False)
 
     def test_teacher_role_alone_gives_no_full_game_access(self):
         from .games import game_materials
@@ -4274,7 +4299,7 @@ class ClassSubscriptionTests(BaseTestCase):
         self.assertContains(self.client.get('/prices/'), '7 клас — від 119 ₴/міс')
         grade = self.algebra7.curriculum_topic.chapter.grade
         self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), 'Увесь 7 клас')
-        self.assertContains(self.client.get(f'/material/{self.algebra7.id}/'), 'Або весь 7 клас за підпискою')
+        self.assertContains(self.client.get(f'/material/{self.algebra7.id}/', follow=True), 'Або весь 7 клас за підпискою')
 
     def test_pay_from_balance_opens_whole_class_until_end_of_period(self):
         from .teachers import period_end

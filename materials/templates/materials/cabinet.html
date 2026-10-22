@@ -723,7 +723,7 @@
                 {% if diagnostic_more_weak %}<p style="margin: 0 0 8px; color: #666;">І ще {{ diagnostic_more_weak }} {% if diagnostic_more_weak == 1 %}тема{% elif diagnostic_more_weak < 5 %}теми{% else %}тем{% endif %} нижче 50% — до них повернешся після цих.</p>{% endif %}
                 {% if diagnostic_recommendations %}
                 <ul style="margin: 0 0 12px; padding-left: 20px; line-height: 1.7;">
-                    {% for mat in diagnostic_recommendations %}<li><a href="{% url 'material_detail' mat.id %}" style="color: var(--brand-blue); font-weight: 700;">{{ mat.title }}</a></li>{% endfor %}
+                    {% for mat in diagnostic_recommendations %}<li><a href="{{ mat.get_absolute_url }}" style="color: var(--brand-blue); font-weight: 700;">{{ mat.title }}</a></li>{% endfor %}
                 </ul>
                 {% endif %}
             {% elif diagnostics %}

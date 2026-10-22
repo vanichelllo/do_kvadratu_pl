@@ -47,7 +47,7 @@
     </div>
 
     {% if demo_lesson %}
-        <p class="ft-note">Подивитися, як виглядає урок: <a href="{% url 'material_detail' demo_lesson.id %}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
+        <p class="ft-note">Подивитися, як виглядає урок: <a href="{{ demo_lesson.get_absolute_url }}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
     {% endif %}
 
     {% if owner_view %}
