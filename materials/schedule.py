@@ -151,14 +151,20 @@ def attach_report(lesson, report):
     lesson.save(update_fields=['report', 'status', 'curriculum_topic'])
 
 
+REPORT_LATE = datetime.timedelta(hours=12)   # звіт після півночі — ще до вечірнього заняття попереднього дня
+
+
 def lesson_for_report(teacher, student, day):
-    """Заняття, до якого належить звіт за день day: того дня, ще без звіту, не скасоване; якщо таких кілька —
-    найближче до цієї миті."""
-    lessons = Lesson.objects.filter(teacher=teacher, student=student, report__isnull=True,
-                                    start__gte=aware(day, datetime.time.min),
+    """Заняття, до якого належить звіт за день day: того дня (а для сьогоднішнього звіту — й те, що почалося
+    впродовж REPORT_LATE, хоч би й учора ввечері), ще без звіту, не скасоване; якщо таких кілька — найближче
+    до цієї миті."""
+    now = timezone.now()
+    since = aware(day, datetime.time.min)
+    if day == timezone.localdate():
+        since = min(since, now - REPORT_LATE)
+    lessons = Lesson.objects.filter(teacher=teacher, student=student, report__isnull=True, start__gte=since,
                                     start__lt=aware(day + datetime.timedelta(days=1), datetime.time.min)
                                     ).exclude(status='cancelled')
-    now = timezone.now()
     return min(lessons, key=lambda lesson: abs(lesson.start - now), default=None)
 
 
@@ -182,12 +188,12 @@ def mark_held(teacher, student):
 
 
 def lesson_practice(lesson):
-    """Остання практика учня, яку вчитель провів на цьому занятті (того ж дня), — з неї беремо оцінки й тему."""
-    day = timezone.localtime(lesson.start).date()
+    """Остання практика учня, яку вчитель провів на цьому занятті (від години до початку до трьох годин після
+    кінця — заняття може перейти через північ), — з неї беремо оцінки й тему."""
     return (PracticeAttempt.objects.filter(user_id=lesson.student.user_id, conducted_by=lesson.teacher,
                                            nush_modeling__isnull=False,
-                                           created_at__gte=aware(day, datetime.time.min),
-                                           created_at__lt=aware(day + datetime.timedelta(days=1), datetime.time.min))
+                                           created_at__gte=lesson.start - datetime.timedelta(hours=1),
+                                           created_at__lt=lesson.end + datetime.timedelta(hours=3))
             .select_related('material').defer('material__html_content').order_by('-created_at').first())
 
 
@@ -529,7 +535,8 @@ def schedule_cancel(request, lesson_id):
                                        f'{when_label(lesson.start).split(" о ")[0]}.')
         return back_to_week(request, timezone.localtime(lesson.start).date())
     lesson.status = 'cancelled'
-    lesson.save(update_fields=['status'])
+    lesson.cancel_reason = request.POST.get('reason', '').strip()[:200]
+    lesson.save(update_fields=['status', 'cancel_reason'])
     messages.success(request, f'Заняття {when_label(lesson.start)} скасовано.')
     if soon(lesson.start) and lesson.start > timezone.now():
         notify_student(lesson.student, f'❌ Заняття {when_label(lesson.start)} скасовано.')
@@ -542,7 +549,8 @@ def schedule_restore(request, lesson_id):
     lesson = own_lesson(request, lesson_id)
     if lesson.status == 'cancelled':
         lesson.status = 'planned'
-        lesson.save(update_fields=['status'])
+        lesson.cancel_reason = ''
+        lesson.save(update_fields=['status', 'cancel_reason'])
         messages.success(request, f'Заняття {when_label(lesson.start)} знову в розкладі.')
         if soon(lesson.start) and lesson.start > timezone.now():
             notify_student(lesson.student, f'📅 Заняття {when_label(lesson.start)} відбудеться.')

@@ -146,7 +146,7 @@ class TutorStudentRequestAdmin(admin.ModelAdmin):
     list_select_related = ('user', 'teacher')
     list_filter = ('course', 'status', ('teacher', admin.EmptyFieldListFilter), 'created_at')
     raw_id_fields = ('teacher',)
-    search_fields = ('user__email', 'real_name')
+    search_fields = ('user__email', 'real_name', 'sheet_name')
     readonly_fields = ('parent_token',)
     actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links]
 
