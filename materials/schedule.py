@@ -20,9 +20,10 @@ from django.utils.crypto import constant_time_compare, salted_hmac
 from django.utils.http import urlencode
 from django.views.decorators.http import require_POST
 
-from . import teachers
+from . import homework, teachers
 from .forms import StudentReportForm
-from .models import (NMT_SUBJECT_NAME, CurriculumTopic, Lesson, LessonSeries, StudentReport, TutorStudentRequest)
+from .models import (NMT_SUBJECT_NAME, CurriculumTopic, Lesson, LessonSeries, PracticeAttempt, StudentReport,
+                     TutorStudentRequest)
 
 FILL_WEEKS = 10                      # на скільки тижнів наперед створювати дати постійних занять
 FILL_BACK = datetime.timedelta(days=14)
@@ -104,7 +105,7 @@ def annotate(lessons):
         lesson.local_end = timezone.localtime(lesson.end)
         lesson.when = when_label(lesson.start)
         lesson.is_past = lesson.end <= now
-        lesson.needs_report = lesson.is_past and lesson.status != 'cancelled' and not lesson.report_id
+        lesson.needs_report = lesson.is_past and lesson.status == 'planned'
     return lessons
 
 
@@ -121,9 +122,9 @@ def upcoming_for_student(student, limit=5):
 def awaiting_report(teacher):
     """Минулі заняття без звіту за останні REPORT_DAYS днів."""
     now = timezone.now()
-    lessons = (Lesson.objects.filter(teacher=teacher, report__isnull=True, start__lt=now,
+    lessons = (Lesson.objects.filter(teacher=teacher, status='planned', start__lt=now,
                                      start__gte=now - datetime.timedelta(days=REPORT_DAYS))
-               .exclude(status='cancelled').select_related('student', 'curriculum_topic').order_by('-start'))
+               .select_related('student', 'curriculum_topic').order_by('-start'))
     return [lesson for lesson in annotate(list(lessons)) if lesson.is_past]
 
 
@@ -138,6 +139,56 @@ def teacher_overview(teacher):
     days = [(f'Сьогодні, {today:%d.%m}', [lesson for lesson in lessons if lesson.local_start.date() == today]),
             ('Завтра', [lesson for lesson in lessons if lesson.local_start.date() != today])]
     return {'days': days, 'awaiting_report': awaiting_report(teacher)[:10]}
+
+
+# ─── ЗВІТ ЗАНЯТТЯ ────────────────────────────────────────────
+# Звіт пишуть і зі сторінки результатів практики на уроці чи з кабінету (views.add_quick_report), і з розкладу.
+# Щоб звіт за день не дублювався, він прив'язується до заняття того дня (Lesson.report).
+def attach_report(lesson, report):
+    lesson.report = report
+    lesson.status = 'done'
+    lesson.curriculum_topic = report.curriculum_topic or lesson.curriculum_topic
+    lesson.save(update_fields=['report', 'status', 'curriculum_topic'])
+
+
+def lesson_for_report(teacher, student, day):
+    """Заняття, до якого належить звіт за день day: того дня, ще без звіту, не скасоване; якщо таких кілька —
+    найближче до цієї миті."""
+    lessons = Lesson.objects.filter(teacher=teacher, student=student, report__isnull=True,
+                                    start__gte=aware(day, datetime.time.min),
+                                    start__lt=aware(day + datetime.timedelta(days=1), datetime.time.min)
+                                    ).exclude(status='cancelled')
+    now = timezone.now()
+    return min(lessons, key=lambda lesson: abs(lesson.start - now), default=None)
+
+
+def link_report(teacher, report):
+    """Новий звіт (з практики чи кабінету) закриває заняття того дня в розкладі; повертає заняття або None."""
+    day = report.date
+    if isinstance(day, datetime.datetime):   # типова дата звіту — timezone.now, у пам'яті це ще момент в UTC
+        day = timezone.localtime(day).date()
+    lesson = lesson_for_report(teacher, report.student, day)
+    if lesson:
+        attach_report(lesson, report)
+    return lesson
+
+
+def mark_held(teacher, student):
+    """Результат з уроку без звіту (бал НМТ) — сьогоднішнє заняття учня відбулося."""
+    lesson = lesson_for_report(teacher, student, timezone.localdate())
+    if lesson and lesson.status == 'planned':
+        lesson.status = 'done'
+        lesson.save(update_fields=['status'])
+
+
+def lesson_practice(lesson):
+    """Остання практика учня, яку вчитель провів на цьому занятті (того ж дня), — з неї беремо оцінки й тему."""
+    day = timezone.localtime(lesson.start).date()
+    return (PracticeAttempt.objects.filter(user_id=lesson.student.user_id, conducted_by=lesson.teacher,
+                                           nush_modeling__isnull=False,
+                                           created_at__gte=aware(day, datetime.time.min),
+                                           created_at__lt=aware(day + datetime.timedelta(days=1), datetime.time.min))
+            .select_related('material').defer('material__html_content').order_by('-created_at').first())
 
 
 def own_lesson(request, lesson_id):
@@ -500,6 +551,14 @@ def schedule_report(request, lesson_id):
     if not teachers.students_of(request.user).filter(id=lesson.student_id).exists():
         messages.error(request, 'Цей учень більше не у вашому списку — звіт не додати.')
         return redirect(week_url(local.date()))
+    # Звіт за цей день уже написали (наприклад, після практики на уроці) — не дублюємо, а прив'язуємо
+    written = StudentReport.objects.filter(student=lesson.student, date=local.date(), lesson__isnull=True).first()
+    if written:
+        attach_report(lesson, written)
+        messages.info(request, f'Звіт за {local:%d.%m} для {lesson.student.real_name} уже є (його збережено раніше, '
+                               f'наприклад після практики на уроці) — заняття позначено як проведене.')
+        return redirect(reverse('cabinet') + '#teach' if request.GET.get('next') == 'cabinet'
+                        else week_url(local.date()))
     topics = report_topics(request.user)
     if request.method == 'POST':
         form = StudentReportForm(request.POST)
@@ -510,10 +569,7 @@ def schedule_report(request, lesson_id):
                 report.student = lesson.student
                 report.date = local.date()
                 report.save()
-                lesson.report = report
-                lesson.status = 'done'
-                lesson.curriculum_topic = report.curriculum_topic
-                lesson.save(update_fields=['report', 'status', 'curriculum_topic'])
+                attach_report(lesson, report)
             messages.success(request, f'✅ Звіт для {lesson.student.real_name} збережено — його вже видно батькам.')
             if request.POST.get('next') == 'cabinet':
                 return redirect(reverse('cabinet') + '#teach')
@@ -522,10 +578,21 @@ def schedule_report(request, lesson_id):
         form = None
     previous = (StudentReport.objects.filter(student=lesson.student).select_related('curriculum_topic')
                 .order_by('-date', '-id').first())
-    selected = (form.data.get('curriculum_topic') if form else None) or (
-        lesson.curriculum_topic_id or (previous.curriculum_topic_id if previous else None))
+    # Як у звіті зі сторінки результатів: оцінки й тема — з практики на занятті, статус ДЗ — з останнього ДЗ
+    attempt = lesson_practice(lesson)
+    initial = {'nush_modeling': 10, 'nush_solving': 10, 'nush_analysis': 10, 'teacher_comment': '',
+               'homework_status': homework.report_status(lesson.student) or 'completed',
+               'curriculum_topic': lesson.curriculum_topic_id or (previous.curriculum_topic_id if previous else None)}
+    if attempt:
+        initial.update(nush_modeling=attempt.nush_modeling, nush_solving=attempt.nush_solving,
+                       nush_analysis=attempt.nush_analysis)
+        initial['curriculum_topic'] = attempt.material.curriculum_topic_id or initial['curriculum_topic']
+    if form:
+        initial.update({key: form.data.get(key) for key in initial if form.data.get(key)})
+    initial['curriculum_topic'] = str(initial['curriculum_topic'] or '')
     return render(request, 'materials/schedule_report.html', {
-        'lesson': annotate([lesson])[0], 'form': form, 'topics': topics, 'selected_topic': str(selected or ''),
+        'lesson': annotate([lesson])[0], 'form': form, 'topics': topics, 'initial': initial, 'attempt': attempt,
+        'hw_choices': StudentReport.HW_CHOICES,
         'previous': previous, 'summary_fields': StudentReport.summary_fields(),
         'back_url': week_url(local.date()), 'next': request.GET.get('next') or request.POST.get('next', ''),
     })

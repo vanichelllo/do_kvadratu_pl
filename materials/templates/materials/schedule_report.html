@@ -48,24 +48,22 @@
                 <select name="curriculum_topic" required>
                     <option value="">-- Оберіть тему --</option>
                     {% for topic in topics %}
-                    <option value="{{ topic.id }}"{% if selected_topic == topic.id|stringformat:"d" %} selected{% endif %}>{{ topic.chapter.grade.name }} | {{ topic.chapter.name|truncatechars:30 }} -> {{ topic.name }}</option>
+                    <option value="{{ topic.id }}"{% if initial.curriculum_topic == topic.id|stringformat:"d" %} selected{% endif %}>{{ topic.chapter.grade.name }} | {{ topic.chapter.name|truncatechars:30 }} -> {{ topic.name }}</option>
                     {% endfor %}
                 </select>
             </label>
-            {% if previous %}<p class="rep-hint">Минулий звіт ({{ previous.date|date:"d.m" }}): {{ previous.curriculum_topic.name|default:"без теми" }}</p>{% endif %}
+            {% if attempt %}<p class="rep-hint">Тему й оцінки підставлено з практики на занятті («{{ attempt.material.title }}», {{ attempt.created_at|time:"H:i" }}) — їх можна змінити.</p>
+            {% elif previous %}<p class="rep-hint">Минулий звіт ({{ previous.date|date:"d.m" }}): {{ previous.curriculum_topic.name|default:"без теми" }}</p>{% endif %}
 
             <div class="rep-row">
-                <label>Моделювання <input type="number" name="nush_modeling" min="1" max="12" value="{{ form.data.nush_modeling|default:10 }}" required></label>
-                <label>Розв'язування <input type="number" name="nush_solving" min="1" max="12" value="{{ form.data.nush_solving|default:10 }}" required></label>
-                <label>Аналіз <input type="number" name="nush_analysis" min="1" max="12" value="{{ form.data.nush_analysis|default:10 }}" required></label>
+                <label>Моделювання <input type="number" name="nush_modeling" min="1" max="12" value="{{ initial.nush_modeling }}" required></label>
+                <label>Розв'язування <input type="number" name="nush_solving" min="1" max="12" value="{{ initial.nush_solving }}" required></label>
+                <label>Аналіз <input type="number" name="nush_analysis" min="1" max="12" value="{{ initial.nush_analysis }}" required></label>
             </div>
 
             <label>Статус домашнього завдання
                 <select name="homework_status" required>
-                    <option value="not_assigned">⚪ Не задано</option>
-                    <option value="not_submitted">🔴 Не здано</option>
-                    <option value="partial">🟡 Частково / з помилками</option>
-                    <option value="completed" selected>🟢 Виконано повністю</option>
+                    {% for value, label in hw_choices %}<option value="{{ value }}"{% if value == initial.homework_status %} selected{% endif %}>{{ label }}</option>{% endfor %}
                 </select>
             </label>
 
@@ -74,7 +72,7 @@
             </div>
 
             <label>Коментар (необов'язково)
-                <textarea name="teacher_comment" rows="3" placeholder="Пару слів про успіхи...">{{ form.data.teacher_comment|default:"" }}</textarea>
+                <textarea name="teacher_comment" rows="3" placeholder="Пару слів про успіхи...">{{ initial.teacher_comment }}</textarea>
             </label>
 
             <button type="submit" class="rep-submit">Зберегти звіт</button>

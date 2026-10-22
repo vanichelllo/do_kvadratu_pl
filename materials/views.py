@@ -2685,6 +2685,7 @@ def add_quick_report(request):
         report = form.save(commit=False)
         report.student = student
         report.save()
+        schedule.link_report(request.user, report)   # заняття цього дня в розкладі більше не чекає звіту
         messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
     else:
         errors = '; '.join(err for field_errors in form.errors.values() for err in field_errors)
@@ -2714,6 +2715,7 @@ def add_nmt_score(request):
         max_score=max_score,
         answers_json={'note': 'Спільна робота на уроці (демонстрація екрана)'}
     )
+    schedule.mark_held(request.user, student_req)
     messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
     return redirect('cabinet')
 

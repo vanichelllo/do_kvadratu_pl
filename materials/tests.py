@@ -4768,3 +4768,66 @@ class ScheduleTests(BaseTestCase):
                                                                'duration': '999'}, follow=True)
         self.assertContains(response, 'Тривалість')
         self.assertFalse(self.Lesson.objects.exists())
+
+
+class ScheduleReportConsistencyTests(BaseTestCase):
+    """Звіт з практики на уроці (чи з кабінету) і звіт із розкладу — один звіт на заняття, без дублів."""
+
+    def setUp(self):
+        from .models import Lesson
+        self.Lesson = Lesson
+        self.teacher = self.make_user('owner2@example.com', is_staff=True)
+        self.pupil = self.make_user('pupil2@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Петро Учень',
+                                                          course='grade_5', status='approved')
+        self.topic = make_school_topic('1.3. Числа', 5, 103)
+        self.material = StudyMaterial.objects.create(title='1.3. Числа', price=29, curriculum_topic=self.topic)
+        self.client.force_login(self.teacher)
+        self.lesson = Lesson.objects.create(teacher=self.teacher, student=self.student,
+                                            start=timezone.now() - datetime.timedelta(minutes=50))
+
+    def report_data(self, **extra):
+        return {'student_id': self.student.id, 'curriculum_topic': self.topic.id, 'nush_modeling': 7,
+                'nush_solving': 8, 'nush_analysis': 9, 'homework_status': 'partial', **extra}
+
+    def test_report_from_practice_closes_todays_lesson(self):
+        self.client.post('/cabinet/add-report/', self.report_data())
+        self.lesson.refresh_from_db()
+        self.assertEqual(self.lesson.status, 'done')
+        self.assertEqual(self.lesson.report, StudentReport.objects.get())
+        self.assertEqual(self.lesson.curriculum_topic, self.topic)
+        self.assertNotContains(self.client.get('/cabinet/'), 'Чекають звіту')
+        # Повторний звіт з розкладу не створюється
+        self.assertEqual(self.client.get(f'/cabinet/schedule/{self.lesson.id}/report/').status_code, 302)
+        self.assertEqual(StudentReport.objects.count(), 1)
+
+    def test_existing_report_of_the_day_is_linked_not_duplicated(self):
+        report = StudentReport.objects.create(student=self.student, curriculum_topic=self.topic,
+                                              date=timezone.localtime(self.lesson.start).date())
+        response = self.client.get(f'/cabinet/schedule/{self.lesson.id}/report/', follow=True)
+        self.assertContains(response, 'уже є')
+        self.lesson.refresh_from_db()
+        self.assertEqual(self.lesson.report, report)
+        self.assertEqual(StudentReport.objects.count(), 1)
+
+    def test_schedule_report_prefilled_from_lesson_practice(self):
+        PracticeAttempt.objects.create(user=self.pupil, material=self.material, score=5, conducted_by=self.teacher,
+                                       nush_modeling=6, nush_solving=11, nush_analysis=4)
+        page = self.client.get(f'/cabinet/schedule/{self.lesson.id}/report/')
+        self.assertContains(page, 'підставлено з практики')
+        self.assertContains(page, 'name="nush_solving" min="1" max="12" value="11"')
+        self.assertContains(page, f'<option value="{self.topic.id}" selected>')
+
+    def test_nmt_score_marks_lesson_held(self):
+        self.student.course = 'nmt'
+        self.student.save()
+        self.client.post('/cabinet/add-nmt-score/', {'student_id': self.student.id, 'material_id': self.material.id,
+                                                     'score': 10, 'max_score': 18})
+        self.lesson.refresh_from_db()
+        self.assertEqual(self.lesson.status, 'done')
+        self.assertNotContains(self.client.get('/cabinet/'), 'Чекають звіту')
+
+    def test_report_without_lesson_still_works(self):
+        self.lesson.delete()
+        self.client.post('/cabinet/add-report/', self.report_data())
+        self.assertEqual(StudentReport.objects.count(), 1)
