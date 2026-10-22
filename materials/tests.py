@@ -4545,3 +4545,226 @@ class SalesReportTests(BaseTestCase):
         page = self.client.get('/do-kvadratu-secret-control/materials/order/report/')
         self.assertContains(page, 'Продажі за місяцями')
         self.assertContains(self.client.get('/do-kvadratu-secret-control/'), 'Звіт продажів')
+
+
+class ScheduleTests(BaseTestCase):
+    """Розклад занять: тиждень викладача, постійні заняття, перенесення й скасування, звіт після заняття,
+    найближчі заняття учня й батьків, підписка в календарі, нагадування."""
+
+    def setUp(self):
+        from .models import Lesson, LessonSeries
+        self.Lesson, self.LessonSeries = Lesson, LessonSeries
+        self.teacher = self.make_user('owner@example.com', is_staff=True)
+        self.pupil = self.make_user('pupil@example.com', telegram_id='777')
+        self.student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Олена Учениця',
+                                                          course='grade_5', status='approved')
+        self.topic = make_school_topic('1.2. Цифри', 5, 102)
+        self.client.force_login(self.teacher)
+        self.today = timezone.localdate()
+
+    def at(self, day, hour=16, minute=0):
+        return timezone.make_aware(datetime.datetime.combine(day, datetime.time(hour, minute)))
+
+    def add(self, day, time='16:00', **extra):
+        data = {'student_id': self.student.id, 'date': day.isoformat(), 'time': time, 'duration': '60', **extra}
+        with mock.patch('materials.reminders.send_message', return_value=True) as send:
+            response = self.client.post('/cabinet/schedule/add/', data)
+        self.assertEqual(response.status_code, 302)
+        return send
+
+    def test_week_page_only_for_teachers(self):
+        self.assertEqual(self.client.get('/cabinet/schedule/').status_code, 200)
+        self.client.force_login(self.pupil)
+        self.assertRedirects(self.client.get('/cabinet/schedule/'), '/cabinet/', fetch_redirect_response=False)
+        self.assertEqual(self.client.post('/cabinet/schedule/add/', {'student_id': self.student.id}).status_code, 302)
+        self.assertFalse(self.Lesson.objects.exists())
+
+    def test_one_off_lesson_shows_in_week_and_notifies_pupil(self):
+        day = self.today + datetime.timedelta(days=2)
+        send = self.add(day, note='Zoom')
+        lesson = self.Lesson.objects.get()
+        self.assertEqual(lesson.start, self.at(day))
+        self.assertEqual(lesson.teacher, self.teacher)
+        self.assertIn('Нове заняття', send.call_args[0][1])
+        page = self.client.get(f'/cabinet/schedule/?week={day:%Y-%m-%d}')
+        self.assertContains(page, 'Олена Учениця')
+        self.assertContains(page, 'Zoom')
+
+    def test_cannot_schedule_other_teachers_student(self):
+        tutor = self.make_user('tutor@example.com')
+        from .models import TeacherLicense
+        TeacherLicense.objects.create(teacher=tutor, scope='school', valid_until=self.today + datetime.timedelta(days=30))
+        self.student.teacher = self.teacher
+        self.student.save()
+        self.client.force_login(tutor)
+        response = self.client.post('/cabinet/schedule/add/', {'student_id': self.student.id,
+                                                               'date': self.today.isoformat(), 'time': '10:00'})
+        self.assertEqual(response.status_code, 404)
+        self.client.force_login(self.teacher)
+        self.add(self.today + datetime.timedelta(days=1))
+        lesson = self.Lesson.objects.get()
+        self.client.force_login(tutor)
+        self.assertEqual(self.client.post(f'/cabinet/schedule/{lesson.id}/cancel/').status_code, 404)
+
+    def test_weekly_series_fills_ahead_and_single_date_can_move(self):
+        from .schedule import FILL_WEEKS
+        start = self.today + datetime.timedelta(days=1)
+        self.add(start, repeat='weekly')
+        series = self.LessonSeries.objects.get()
+        self.assertEqual(series.weekday, start.weekday())
+        self.assertGreaterEqual(self.Lesson.objects.count(), FILL_WEEKS)
+        first, second = self.Lesson.objects.order_by('start')[:2]
+        # Тиждень за київським часом (навіть через перехід на зимовий час — та сама година)
+        self.assertEqual(second.series_date - first.series_date, datetime.timedelta(weeks=1))
+        self.assertEqual(timezone.localtime(second.start).time(), datetime.time(16, 0))
+
+        new_day = second.series_date + datetime.timedelta(days=1)
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            self.client.post(f'/cabinet/schedule/{second.id}/move/', {'date': new_day.isoformat(), 'time': '18:30',
+                                                                     'duration': '90', 'scope': 'one'})
+        second.refresh_from_db()
+        self.assertEqual(second.start, self.at(new_day, 18, 30))
+        self.assertEqual(second.duration, 90)
+        self.assertIsNotNone(second.moved_from)
+        # Повторне заповнення не відтворює перенесену дату
+        count = self.Lesson.objects.count()
+        from .schedule import fill_series
+        fill_series()
+        self.assertEqual(self.Lesson.objects.count(), count)
+        self.assertFalse(self.Lesson.objects.filter(start=self.at(second.series_date)).exists())
+
+    def test_move_following_splits_series(self):
+        start = self.today + datetime.timedelta(days=1)
+        self.add(start, repeat='weekly')
+        lessons = list(self.Lesson.objects.order_by('start'))
+        third = lessons[2]
+        new_day = third.series_date + datetime.timedelta(days=2)
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            self.client.post(f'/cabinet/schedule/{third.id}/move/', {'date': new_day.isoformat(), 'time': '10:00',
+                                                                    'duration': '60', 'scope': 'following'})
+        old, new = self.LessonSeries.objects.order_by('id')
+        self.assertEqual(old.ends_on, third.series_date - datetime.timedelta(days=1))
+        self.assertEqual(new.weekday, new_day.weekday())
+        self.assertEqual(new.starts_on, new_day)
+        self.assertEqual(self.Lesson.objects.filter(series=old).count(), 2)
+        self.assertEqual(self.Lesson.objects.filter(series=new).order_by('start').first().start, self.at(new_day, 10))
+
+    def test_cancel_one_and_end_series(self):
+        start = self.today + datetime.timedelta(days=1)
+        self.add(start, repeat='weekly')
+        first, second, third = self.Lesson.objects.order_by('start')[:3]
+        with mock.patch('materials.reminders.send_message', return_value=True) as send:
+            self.client.post(f'/cabinet/schedule/{first.id}/cancel/', {'scope': 'one'})
+        first.refresh_from_db()
+        self.assertEqual(first.status, 'cancelled')
+        self.assertIn('скасовано', send.call_args[0][1])
+        self.client.post(f'/cabinet/schedule/{first.id}/restore/')
+        first.refresh_from_db()
+        self.assertEqual(first.status, 'planned')
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            self.client.post(f'/cabinet/schedule/{third.id}/cancel/', {'scope': 'following'})
+        self.assertEqual(list(self.Lesson.objects.order_by('start')), [first, second])
+        from .schedule import fill_series
+        fill_series()
+        self.assertEqual(self.Lesson.objects.count(), 2)
+
+    def test_report_after_lesson_goes_to_parents(self):
+        lesson = self.Lesson.objects.create(teacher=self.teacher, student=self.student,
+                                            start=timezone.now() - datetime.timedelta(hours=2))
+        cabinet = self.client.get('/cabinet/')
+        self.assertContains(cabinet, 'Чекають звіту')
+        page = self.client.get(f'/cabinet/schedule/{lesson.id}/report/')
+        self.assertContains(page, 'Олена Учениця')
+        self.client.post(f'/cabinet/schedule/{lesson.id}/report/', {
+            'curriculum_topic': self.topic.id, 'nush_modeling': 9, 'nush_solving': 10, 'nush_analysis': 8,
+            'homework_status': 'completed', 'readiness': 'ready', 'teacher_comment': 'Молодець'})
+        lesson.refresh_from_db()
+        self.assertEqual(lesson.status, 'done')
+        self.assertEqual(lesson.report.student, self.student)
+        self.assertEqual(lesson.report.date, timezone.localtime(lesson.start).date())
+        self.assertEqual(lesson.curriculum_topic, self.topic)
+        self.assertNotContains(self.client.get('/cabinet/'), 'Чекають звіту')
+        self.assertContains(self.client.get(f'/parents/{self.student.parent_token}/'), 'Молодець')
+        # Звіт не дублюється
+        self.client.post(f'/cabinet/schedule/{lesson.id}/report/', {'curriculum_topic': self.topic.id})
+        self.assertEqual(StudentReport.objects.count(), 1)
+
+    def test_pupil_and_parents_see_upcoming_lessons(self):
+        self.Lesson.objects.create(teacher=self.teacher, student=self.student,
+                                   start=self.at(self.today + datetime.timedelta(days=1), 15))
+        self.Lesson.objects.create(teacher=self.teacher, student=self.student, status='cancelled',
+                                   start=self.at(self.today + datetime.timedelta(days=2), 15))
+        self.client.force_login(self.pupil)
+        cabinet = self.client.get('/cabinet/')
+        self.assertContains(cabinet, 'Мої заняття')
+        self.assertContains(cabinet, 'Завтра о 15:00')
+        self.assertContains(cabinet, 'calendar.google.com')
+        parents = self.client.get(f'/parents/{self.student.parent_token}/')
+        self.assertContains(parents, 'Найближчі заняття')
+        self.assertContains(parents, f'/parents/{self.student.parent_token}/calendar.ics')
+
+    def test_calendar_feeds_are_signed(self):
+        from .schedule import feed_token
+        lesson = self.Lesson.objects.create(teacher=self.teacher, student=self.student, note='Zoom, дроби',
+                                            start=self.at(self.today + datetime.timedelta(days=1), 15))
+        feed = self.client.get(f'/calendar/{feed_token("t", self.teacher.id)}.ics')
+        self.assertEqual(feed['Content-Type'], 'text/calendar; charset=utf-8')
+        body = feed.content.decode()
+        self.assertIn(f'UID:lesson-{lesson.id}@', body)
+        self.assertIn('SUMMARY:Заняття: Олена Учениця', body)
+        self.assertIn('DESCRIPTION:Zoom\\, дроби', body)
+        self.assertTrue(all(len(line.encode()) <= 75 for line in body.split('\r\n')))
+        pupil_feed = self.client.get(f'/calendar/{feed_token("s", self.pupil.id)}.ics').content.decode()
+        self.assertIn(f'UID:lesson-{lesson.id}@', pupil_feed)
+        parent_feed = self.client.get(f'/parents/{self.student.parent_token}/calendar.ics').content.decode()
+        self.assertIn(f'UID:lesson-{lesson.id}@', parent_feed)
+        forged = feed_token('t', self.teacher.id).replace(f't{self.teacher.id}-', f't{self.pupil.id}-')
+        self.assertEqual(self.client.get(f'/calendar/{forged}.ics').status_code, 404)
+        self.assertEqual(self.client.get('/calendar/x1-abc.ics').status_code, 404)
+
+    def test_ics_fold_keeps_utf8(self):
+        from .schedule import ics_fold
+        line = 'SUMMARY:' + 'Заняття з математики ' * 10
+        folded = ics_fold(line)
+        self.assertEqual(folded.replace('\r\n ', ''), line)
+        self.assertTrue(all(len(part.encode()) <= 75 for part in folded.split('\r\n')))
+
+    def test_reminders_for_tomorrow_and_soon(self):
+        from .reminders import due_reminders, lessons_soon, send_due_reminders
+        self.teacher.telegram_id = '888'
+        self.teacher.save()
+        tomorrow = self.at(self.today + datetime.timedelta(days=1), 15)
+        lesson = self.Lesson.objects.create(teacher=self.teacher, student=self.student, start=tomorrow)
+        self.Lesson.objects.create(teacher=self.teacher, student=self.student, status='cancelled',
+                                   start=tomorrow + datetime.timedelta(hours=2))
+        keys = sorted(key for _, key, _, _ in due_reminders())
+        self.assertEqual(keys, [f'day:{self.teacher.id}:{tomorrow:%y%m%d}',
+                                f'lesson:{lesson.id}:{timezone.localtime(tomorrow):%y%m%d%H%M}'])
+        texts = {key: text for _, key, text, _ in due_reminders()}
+        self.assertIn('Олена Учениця', texts[keys[0]])
+        self.assertIn('Завтра о 15:00', texts[keys[1]])
+        soon = lessons_soon(now=tomorrow - datetime.timedelta(hours=1))
+        self.assertEqual([key for _, key, _, _ in soon], [f'soon:{lesson.id}:{timezone.localtime(tomorrow):%y%m%d%H%M}'])
+        self.assertEqual(lessons_soon(now=tomorrow - datetime.timedelta(hours=3)), [])
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            self.assertEqual(send_due_reminders(soon), 1)
+            self.assertEqual(send_due_reminders(soon), 0)
+
+    def test_overlap_warning(self):
+        day = self.today + datetime.timedelta(days=3)
+        self.add(day, time='16:00')
+        with mock.patch('materials.reminders.send_message', return_value=True):
+            response = self.client.post('/cabinet/schedule/add/', {
+                'student_id': self.student.id, 'date': day.isoformat(), 'time': '16:30', 'duration': '60'}, follow=True)
+        self.assertContains(response, 'У цей час уже є заняття')
+        self.assertEqual(self.Lesson.objects.count(), 2)
+
+    def test_bad_input_does_not_create(self):
+        response = self.client.post('/cabinet/schedule/add/', {'student_id': self.student.id, 'date': 'вчора',
+                                                               'time': '16:00'}, follow=True)
+        self.assertContains(response, 'Вкажіть дату й час')
+        response = self.client.post('/cabinet/schedule/add/', {'student_id': self.student.id,
+                                                               'date': self.today.isoformat(), 'time': '16:00',
+                                                               'duration': '999'}, follow=True)
+        self.assertContains(response, 'Тривалість')
+        self.assertFalse(self.Lesson.objects.exists())

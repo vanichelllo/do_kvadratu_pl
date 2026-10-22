@@ -356,6 +356,9 @@
         border-radius: 8px; text-decoration: none; }
     .telegram-off { background: none; border: 2px solid #c0392b; color: #c0392b; font-weight: 700; padding: 8px 14px;
         border-radius: 8px; cursor: pointer; font-family: inherit; }
+    .lesson-day-title { font-size: 1rem; color: var(--brand-blue); margin: 12px 0 2px; }
+    .lesson-day-title:first-child { margin-top: 0; }
+    .lesson-cancelled { color: #6c757d; }
     .hw-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f5; }
 </style>
 
@@ -399,6 +402,39 @@
                     <input type="text" id="invite-url" value="{{ invite_url }}" readonly style="flex: 1; min-width: 220px;" aria-label="Посилання-запрошення">
                     <button type="button" class="hw-btn" onclick="navigator.clipboard.writeText(document.getElementById('invite-url').value); this.textContent='Скопійовано ✓';">Копіювати</button>
                 </div>
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- РОЗКЛАД ЗАНЯТЬ (ВИКЛАДАЧ): СЬОГОДНІ, ЗАВТРА, ЩО ЧЕКАЄ ЗВІТУ -->
+        {% if is_tutor %}
+        <details class="cab-section" data-section="schedule" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>🗓 Розклад занять</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+                {% for title, items in schedule.days %}
+                <h3 class="lesson-day-title">{{ title }}</h3>
+                {% for l in items %}
+                <div class="hw-row{% if l.status == 'cancelled' %} lesson-cancelled{% endif %}">
+                    <div><b>{{ l.local_start|time:"H:i" }}</b> · {{ l.student.real_name }}{% if l.status == 'cancelled' %} — скасовано{% endif %}
+                        {% if l.note %}<div style="font-size: 0.85rem; color: #666;">{{ l.note }}</div>{% endif %}</div>
+                    {% if l.report_id %}<span style="color: #27ae60; font-weight: 700; font-size: 0.85rem;">✓ звіт</span>
+                    {% elif l.status != 'cancelled' and l.student.course != 'nmt' %}<a href="{% url 'schedule_report' l.id %}?next=cabinet" class="hw-link">Звіт</a>{% endif %}
+                </div>
+                {% empty %}
+                <p style="color: #6c757d; margin: 4px 0 10px;">Занять немає.</p>
+                {% endfor %}
+                {% endfor %}
+                {% if schedule.awaiting_report %}
+                <h3 class="lesson-day-title" style="color: #b35900;">📝 Чекають звіту</h3>
+                {% for l in schedule.awaiting_report %}
+                <div class="hw-row">
+                    <div><b>{{ l.student.real_name }}</b> · {{ l.local_start|date:"d.m" }}, {{ l.local_start|time:"H:i" }}</div>
+                    {% if l.student.course != 'nmt' %}<a href="{% url 'schedule_report' l.id %}?next=cabinet" class="hw-btn">Звіт</a>
+                    {% else %}<form method="post" action="{% url 'schedule_done' l.id %}">{% csrf_token %}<button type="submit" class="hw-link">Відбулося</button></form>{% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+                <p style="margin: 14px 0 0;"><a href="{% url 'schedule' %}" class="hw-btn" style="display: inline-block;">Відкрити тиждень →</a></p>
             </div>
         </details>
         {% endif %}
@@ -629,6 +665,28 @@
             </div>
             <a href="{{ next_step.url }}" class="next-step-btn">{{ next_step.button }} →</a>
         </div>
+        {% endif %}
+
+        <!-- НАЙБЛИЖЧІ ЗАНЯТТЯ УЧНЯ -->
+        {% if my_lessons %}
+        <details class="cab-section" data-section="my-schedule" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>🗓 Мої заняття</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+            {% for l in my_lessons %}
+                <div class="hw-row">
+                    <div>
+                        <b>{{ l.when|capfirst }}</b>
+                        <div style="font-size: 0.85rem; color: #666;">{{ l.duration }} хв{% if l.moved_from %} · перенесено{% endif %}{% if l.note %} · {{ l.note }}{% endif %}</div>
+                    </div>
+                </div>
+            {% endfor %}
+            <p style="font-size: 0.85rem; color: #666; margin: 12px 0 6px;">Додайте розклад у календар телефона — зміни з'являтимуться там самі{% if not telegram_linked %}, а бот у Telegram нагадає про заняття (вкладка «Акаунт»){% endif %}.</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{{ my_lessons_feed.google }}" target="_blank" rel="noopener" class="hw-btn">Google Календар</a>
+                <a href="{{ my_lessons_feed.webcal }}" class="hw-btn">Apple / Outlook</a>
+            </div>
+            </div>
+        </details>
         {% endif %}
 
         <!-- ДОМАШНІ ЗАВДАННЯ УЧНЯ -->

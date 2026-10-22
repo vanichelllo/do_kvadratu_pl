@@ -57,6 +57,24 @@
         <h2 class="fw-bold mb-2">{{ student.real_name }}</h2>
         <span class="badge bg-light text-primary px-3 py-2 rounded-pill">{{ student.get_course_display }}</span>
     </div>
+<!-- БЛОК: НАЙБЛИЖЧІ ЗАНЯТТЯ (РОЗКЛАД ВИКЛАДАЧА) -->
+    {% if lessons %}
+        <div class="card report-card mb-4" style="border-left: 4px solid #0d6efd;">
+            <div class="report-card-body p-3">
+                <div class="text-muted small fw-bold mb-2">Найближчі заняття</div>
+                {% for l in lessons %}
+                <div class="d-flex justify-content-between gap-2 py-1{% if not forloop.last %} border-bottom{% endif %}">
+                    <span class="fw-bold">{{ l.when|capfirst }}</span>
+                    <span class="text-muted small text-nowrap">{{ l.duration }} хв{% if l.moved_from %} · перенесено{% endif %}</span>
+                </div>
+                {% endfor %}
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a href="{{ lessons_feed.google }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary rounded-pill px-3">+ Google Календар</a>
+                    <a href="{{ lessons_feed.webcal }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">+ Apple / Outlook</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 <!-- БЛОК: ОСТАННЄ ЗАНЯТТЯ — коротко, у два слова -->
     {% if last_report %}
         <div class="card report-card mb-4" style="border-left: 4px solid #7c3aed;">

@@ -27,7 +27,7 @@ from .models import (
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
-    ClassPlan, ClassSubscription, PromoCode, ReminderLog
+    ClassPlan, ClassSubscription, PromoCode, ReminderLog, Lesson, LessonSeries
 )
 
 User = get_user_model()
@@ -959,3 +959,23 @@ class ReminderLogAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(LessonSeries)
+class LessonSeriesAdmin(admin.ModelAdmin):
+    """Постійні заняття (щотижня). Окремі дати — у «Розкладі занять»; викладач веде їх у кабінеті."""
+    list_display = ('student', 'weekday', 'time', 'duration', 'starts_on', 'ends_on', 'teacher')
+    list_filter = ('weekday',)
+    list_select_related = ('student', 'teacher')
+    search_fields = ('student__real_name', 'teacher__email')
+    raw_id_fields = ('teacher', 'student')
+
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ('start', 'student', 'duration', 'status', 'teacher')
+    list_filter = ('status', ('series', admin.EmptyFieldListFilter))
+    list_select_related = ('student', 'teacher')
+    search_fields = ('student__real_name', 'teacher__email')
+    date_hierarchy = 'start'
+    raw_id_fields = ('teacher', 'student', 'series', 'report', 'curriculum_topic')
