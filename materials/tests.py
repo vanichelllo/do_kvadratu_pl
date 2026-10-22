@@ -442,6 +442,19 @@ class PricesPageTests(BaseTestCase):
         self.assertIn('/prices/', self.client.get('/sitemap.xml').content.decode())
 
 
+class NavigationTests(BaseTestCase):
+    def test_short_menu_and_single_main_button(self):
+        page = self.client.get('/').content.decode()
+        menu = page[page.index('id="navLinks"'):page.index('</nav>')]
+        footer = page[page.index('<footer'):page.index('</footer>')]
+        for url in ('/materials/', '/diagnostic/', '/prices/', '/booking/'):
+            self.assertIn(f'href="{url}', menu)
+        for url in ('/about/', '/game/'):
+            self.assertNotIn(f'href="{url}', menu)
+            self.assertIn(f'href="{url}', footer)
+        self.assertNotIn('ВІТРИНА', menu)   # без капслоку
+        self.assertEqual(page.count('class="hero-btn"'), 1)
+
 class ParentMaterialTests(BaseTestCase):
     def setUp(self):
         self.kid = self.make_user('kid@example.com')
