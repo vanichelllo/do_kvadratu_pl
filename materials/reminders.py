@@ -153,7 +153,7 @@ def send_due_reminders():
 
 def maybe_send_daily():
     """Раз на день у SEND_HOURS запускає розсилку у фоні (без бота — нічого не робить)."""
-    if not getattr(settings, 'TELEGRAM_BOT_TOKEN', ''):
+    if not (getattr(settings, 'REMINDERS_DAILY', True) and getattr(settings, 'TELEGRAM_BOT_TOKEN', '')):
         return
     now = timezone.localtime()
     if now.hour not in SEND_HOURS or not cache.add(f'reminders-{now.date()}', True, 60 * 60 * 25):

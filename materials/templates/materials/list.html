@@ -140,8 +140,8 @@
 </style>
 
 <div style="text-align: center; margin-bottom: 40px; margin-top: 20px;">
-    <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ВІТРИНА КОНСПЕКТІВ</h2>
-    <p style="color: var(--text-dark); font-weight: 600; font-size: 1.1rem;">Обери свій ідеальний матеріал для підготовки</p>
+    <h2 style="font-size: 2.5rem; margin-bottom: 10px;">ВІТРИНА УРОКІВ І КОНСПЕКТІВ</h2>
+    <p style="color: var(--text-dark); font-weight: 600; font-size: 1.1rem;">Оберіть урок, тему чи пакет для навчання й підготовки до НМТ</p>
 </div>
 
 <!-- Пошук -->
@@ -149,7 +149,7 @@
 <!-- Відлік до НМТ: чесна терміновість і шлях до діагностики -->
 <a href="{% url 'diagnostic_test' %}" style="display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: center; text-align: center; background: var(--brand-blue); color: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; text-decoration: none; font-weight: 700;">
     <span>⏳ До НМТ {% if not nmt_countdown.exact %}орієнтовно {% endif %}<strong style="font-size: 1.2rem; color: var(--brand-yellow);">{{ nmt_countdown.days }} {{ nmt_countdown.days_word }}</strong></span>
-    <span style="text-decoration: underline;">Пройди безкоштовну діагностику — дізнаєшся, які теми підтягнути →</span>
+    <span style="text-decoration: underline;">Пройдіть безкоштовну діагностику — дізнаєтеся, які теми підтягнути →</span>
 </a>
 {% endif %}
 

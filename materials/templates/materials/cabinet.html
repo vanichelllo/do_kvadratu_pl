@@ -363,7 +363,7 @@
 <div class="cabinet-header">
     <div>
         <h1 class="cabinet-title">Привіт, {{ user.first_name|default:user.username }}! 👋</h1>
-        <p style="margin-top: 10px; margin-bottom: 0; font-size: 1.1rem; opacity: 0.9;">Це твій навчальний простір ДО КВАДРАТУ</p>
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 1.1rem; opacity: 0.9;">Це ваш навчальний простір ДО КВАДРАТУ</p>
     </div>
     <a href="#account" class="balance-badge" data-tab-link="account">
         Баланс: {{ user.balance|default:"0.00" }} ₴
@@ -716,7 +716,7 @@
             </div>
             {% if diagnostic_weak_topics %}
                 <h3 style="color: var(--brand-blue); margin: 20px 0 8px;">Що повторити за останньою діагностикою</h3>
-                <p style="margin: 0 0 8px;">Почни з найслабших тем:</p>
+                <p style="margin: 0 0 8px;">Почніть з найслабших тем:</p>
                 <ol style="margin: 0 0 8px; padding-left: 20px; line-height: 1.6;">
                     {% for stat in diagnostic_weak_topics %}<li>{{ stat.topic.name }} — {{ stat.correct }} з {{ stat.total }}</li>{% endfor %}
                 </ol>
@@ -973,7 +973,7 @@
 
             {% elif tutor_request.status == 'approved' %}
                 <h3 style="margin-top: 0; color: #2ecc71;">✅ Статус учня підтверджено</h3>
-                <p style="color: #666; font-size: 14px;">Привіт, <b>{{ tutor_request.real_name }}</b>! Твій напрямок: <b>{{ tutor_request.get_course_display }}</b>.{% if tutor_request.teacher %} Твій викладач: <b>{{ tutor_request.teacher.get_full_name|default:tutor_request.teacher.email }}</b>.{% endif %} Твої матеріали доступні в бібліотеці.</p>
+                <p style="color: #666; font-size: 14px;">Вітаємо, <b>{{ tutor_request.real_name }}</b>! Ваш напрямок: <b>{{ tutor_request.get_course_display }}</b>.{% if tutor_request.teacher %} Ваш викладач: <b>{{ tutor_request.teacher.get_full_name|default:tutor_request.teacher.email }}</b>.{% endif %} Ваші матеріали доступні в бібліотеці.</p>
                 {% if tutor_request.support_until %}
                 <p style="color: #666; font-size: 14px; margin-bottom: 0;">🤝 Супровід діє до <b>{{ tutor_request.support_until|date:"d.m.Y" }}</b>. <a href="{% url 'class_subscribe' %}#support">Продовжити</a></p>
                 {% endif %}

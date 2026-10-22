@@ -40,7 +40,8 @@ TEST_STORAGES = {
 }
 
 
-@override_settings(STORAGES=TEST_STORAGES, TELEGRAM_BOT_TOKEN='', TELEGRAM_ADMIN_ID='')
+# REMINDERS_DAILY=False: інакше ввечері (16–21 за Києвом) кожен запит у тесті запускав би фонову розсилку нагадувань
+@override_settings(STORAGES=TEST_STORAGES, TELEGRAM_BOT_TOKEN='', TELEGRAM_ADMIN_ID='', REMINDERS_DAILY=False)
 class BaseTestCase(TestCase):
     def run(self, result=None):
         # Лічильники лімітів живуть у кеші процесу — не переносимо їх між тестами
@@ -2293,7 +2294,7 @@ class DiagnosticHistoryTests(BaseTestCase):
 
     def test_empty_diagnostic_is_not_saved(self):
         response = self.client.post('/diagnostic/', {'question_ids': str(self.q.id)})
-        self.assertContains(response, 'Ти не відповів на жодне завдання')
+        self.assertContains(response, 'Ви не відповіли на жодне завдання')
         self.assertFalse(PracticeAttempt.objects.filter(user=self.kid).exists())
 
     def test_cabinet_focuses_on_five_weakest_topics(self):
@@ -2488,7 +2489,7 @@ class DiagnosticOfferTests(BaseTestCase):
         self.assertContains(page, '5 клас · Математика (5-6 класи)<')
         self.assertNotContains(page, f'?grade={empty.chapter.grade_id}')
         self.assertNotContains(page, 'stats-strip')
-        self.assertContains(page, 'Тренуйся граючи')
+        self.assertContains(page, 'Тренуйтеся граючи')
 
     def test_countdown_words_and_storefront_banner(self):
         from .views import uk_plural
@@ -2665,7 +2666,7 @@ class TelegramRemindersTests(BaseTestCase):
         self.pupil.refresh_from_db()
         self.assertIsNone(self.pupil.telegram_id)
 
-    @override_settings(TELEGRAM_BOT_TOKEN='42:TEST')
+    @override_settings(TELEGRAM_BOT_TOKEN='42:TEST', REMINDERS_DAILY=True)
     def test_daily_run_starts_once_in_evening_hours(self):
         from django.core.cache import cache
         from .reminders import maybe_send_daily
@@ -2678,6 +2679,11 @@ class TelegramRemindersTests(BaseTestCase):
             self.assertFalse(thread.called)
             with mock.patch('materials.reminders.timezone.localtime', return_value=evening):
                 maybe_send_daily()
+                maybe_send_daily()
+            self.assertEqual(thread.call_count, 1)
+            cache.clear()
+            with self.settings(REMINDERS_DAILY=False), \
+                    mock.patch('materials.reminders.timezone.localtime', return_value=evening):
                 maybe_send_daily()
             self.assertEqual(thread.call_count, 1)
 
