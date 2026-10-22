@@ -419,6 +419,15 @@ class GuestCartTests(BaseTestCase):
         self.client.post('/login/', {'login': 'guest@example.com', 'password': 'Pass12345!'})
         self.assertFalse(CartItem.objects.filter(material=self.lesson).exists())
 
+    def test_cart_shows_consent_and_support_contact(self):
+        CartItem.objects.create(cart=Cart.objects.create(user=self.user), material=self.lesson)
+        self.client.force_login(self.user)
+        page = self.client.get('/cart/')
+        self.assertContains(page, 'id="agree-checkbox"')
+        self.assertContains(page, 'прошу відкрити матеріали одразу після оплати')
+        self.assertContains(page, '(пункт 14.2)')
+        self.assertContains(page, 'https://t.me/do_kvadratu_bot')
+
     def test_login_page_keeps_next_for_signup(self):
         self.assertContains(self.client.get('/login/?next=/cart/'), '/register/?next=/cart/')
 

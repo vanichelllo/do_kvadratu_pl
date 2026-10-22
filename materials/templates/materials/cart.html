@@ -85,6 +85,8 @@
     @media (max-width: 600px) {
         .payment-options { grid-template-columns: 1fr; }
         .cart-item { flex-direction: column; text-align: center; gap: 15px; }
+        .cart-body { padding: 24px 16px; }
+        .agree-hint { margin-left: 0; }
     }
 
     .btn-pay-mono {
@@ -125,6 +127,16 @@
         align-items: center;
         gap: 10px;
     }
+    .agree-box {
+        margin-top: 20px; padding: 15px 18px; background-color: #f8f9fa;
+        border: 2px dashed var(--brand-blue); border-radius: 12px;
+    }
+    .agree-box label { cursor: pointer; display: flex; align-items: flex-start; gap: 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .agree-box input { width: 22px; height: 22px; flex-shrink: 0; margin: 0; cursor: pointer; accent-color: var(--brand-blue); }
+    .agree-box a, .cart-support a { color: var(--brand-blue); text-decoration: underline; }
+    .agree-hint { margin: 10px 0 0 32px; font-size: 0.85rem; color: #555; line-height: 1.45; }
+    .cart-support { margin: 24px 0 0; text-align: center; font-weight: 600; color: var(--text-dark); }
+
     .class-offer {
         display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between;
         background: var(--brand-yellow); color: var(--brand-blue); border: 2px solid var(--brand-blue);
@@ -219,17 +231,20 @@
 
             <h3 style="text-align: center; margin-top: 40px; color: var(--text-dark);">💳 Оберіть спосіб оплати:</h3>
 
-            <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 2px dashed var(--brand-blue); border-radius: 12px; text-align: center;">
-                <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 600; color: var(--text-dark);">
-                    <input type="checkbox" id="agree-checkbox" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--brand-blue);">
-                    <span style="text-align: left;">
-                        Я погоджуюсь з умовами
-                        <a href="{% url 'offer' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Договору публічної оферти</a> та
-                        <a href="{% url 'privacy' %}" style="color: var(--brand-blue); text-decoration: underline;" target="_blank">Політики конфіденційності</a>
-                        і прошу відкрити матеріали одразу після оплати. Я розумію, що після цього відмовитися від покупки
-                        без пояснення причин не можна (пункт 14.2 Договору).
+            <div class="agree-box">
+                <label>
+                    <input type="checkbox" id="agree-checkbox">
+                    <span>
+                        Погоджуюсь з <a href="{% url 'offer' %}" target="_blank">договором оферти</a> та
+                        <a href="{% url 'privacy' %}" target="_blank">Політикою конфіденційності</a>
+                        і прошу відкрити матеріали одразу після оплати.
                     </span>
                 </label>
+                <p class="agree-hint">
+                    Матеріали відкриваються в кабінеті одразу, тому повернути гроші лише через те, що ви передумали,
+                    не вийде (пункт 14.2). Якщо ж матеріал не відкривається, має суттєві недоліки або гроші списано
+                    двічі — виправимо або повернемо гроші (пункт 14.3).
+                </p>
             </div>
 
             <div class="payment-options">
@@ -250,6 +265,12 @@
                     </button>
                 </form>
             </div>
+
+            <!-- ПІДТРИМКА -->
+            <p class="cart-support">
+                Питання щодо оплати? Напишіть у <a href="https://t.me/do_kvadratu_bot" target="_blank" rel="noopener">Telegram @do_kvadratu_bot</a>
+                або на <a href="mailto:dokvadratu@gmail.com">dokvadratu@gmail.com</a> — допоможемо.
+            </p>
 
         {% else %}
             <!-- Якщо кошик порожній -->
@@ -273,7 +294,7 @@
         const checkbox = document.getElementById('agree-checkbox');
         if (!checkbox.checked) {
             event.preventDefault();
-            alert("Щоб перейти до оплати, будь ласка, поставте галочку про згоду з умовами Оферти та Політики конфіденційності і з відкриттям матеріалів одразу після оплати.");
+            alert("Поставте, будь ласка, галочку згоди над кнопками оплати — без неї оплата не почнеться.");
             return false;
         }
         // Галочка стоїть поза формами оплати, тому передаємо її серверу окремим полем — він її записує в замовлення
