@@ -30,7 +30,7 @@ from django.core.cache import cache
 
 from users.forms import UserProfileForm
 from users.views import terms_required
-from . import homework, practice, preview, reminders, subscriptions, teachers
+from . import homework, practice, preview, reminders, schedule, subscriptions, teachers
 from .forms import StudentReportForm
 from .games import record_game_answer, short_answer_matches
 
@@ -1789,6 +1789,9 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             context['my_homeworks'] = homework.annotate(
                 Homework.objects.filter(student=tutor_request).select_related('student', 'material', 'attempt')
                 .defer('material__html_content')[:10])
+            context['my_lessons'] = schedule.upcoming_for_student(tutor_request)
+            if context['my_lessons']:
+                context['my_lessons_feed'] = schedule.student_feed_links(self.request.user)
 
         user = self.request.user
         if not teachers.is_tutor(user):
@@ -1797,6 +1800,7 @@ class CabinetView(LoginRequiredMixin, TemplateView):
             students = teachers.students_of(user)
             grades = teachers.licensed_grade_ids(user)   # None — власник: усі класи
             context['is_tutor'] = True
+            context['schedule'] = schedule.teacher_overview(user)
             context['attention'] = attention_list(students)
             context['homeworks'] = homework.annotate(
                 Homework.objects.filter(student__in=students).select_related('student', 'material', 'attempt')
@@ -2567,6 +2571,11 @@ def parent_dashboard_view(request, parent_token):
         'self_learner': isinstance(student_request, SelfLearner),
     }
 
+    if isinstance(student_request, TutorStudentRequest):
+        context['lessons'] = schedule.upcoming_for_student(student_request)
+        if context['lessons']:
+            context['lessons_feed'] = schedule.feed_links(reverse('parent_calendar_feed', args=[parent_token]))
+
     # Презентації тем, які учень уже практикував, — батьки можуть їх відкрити
     passed = list(parent_viewable_materials(student_request).select_related(
         'curriculum_topic__chapter__grade__subject').defer('html_content'))
@@ -2676,6 +2685,7 @@ def add_quick_report(request):
         report = form.save(commit=False)
         report.student = student
         report.save()
+        schedule.link_report(request.user, report)   # заняття цього дня в розкладі більше не чекає звіту
         messages.success(request, f"✅ Звіт для {student.real_name} успішно надіслано на дашборд!")
     else:
         errors = '; '.join(err for field_errors in form.errors.values() for err in field_errors)
@@ -2705,6 +2715,7 @@ def add_nmt_score(request):
         max_score=max_score,
         answers_json={'note': 'Спільна робота на уроці (демонстрація екрана)'}
     )
+    schedule.mark_held(request.user, student_req)
     messages.success(request, f"✅ Результат роботи на уроці для {student_req.real_name} успішно додано!")
     return redirect('cabinet')
 

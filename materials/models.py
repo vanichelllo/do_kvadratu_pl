@@ -1076,3 +1076,75 @@ class ReminderLog(models.Model):
 
     def __str__(self):
         return f"{self.key} → {self.user}"
+
+
+# ==========================================
+# РОЗКЛАД ЗАНЯТЬ (materials/schedule.py)
+# ==========================================
+class LessonSeries(models.Model):
+    """Постійне заняття: щотижня в той самий день і час. Окремі дати — рядки Lesson (їх створює schedule.py
+    наперед), тож одне заняття серії можна перенести чи скасувати, не чіпаючи решти."""
+    WEEKDAY_CHOICES = ((0, 'понеділок'), (1, 'вівторок'), (2, 'середа'), (3, 'четвер'), (4, "п'ятниця"),
+                       (5, 'субота'), (6, 'неділя'))
+
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lesson_series',
+                                verbose_name="Викладач")
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='lesson_series',
+                                verbose_name="Учень")
+    weekday = models.PositiveSmallIntegerField(choices=WEEKDAY_CHOICES, verbose_name="День тижня")
+    time = models.TimeField(verbose_name="Час початку")
+    duration = models.PositiveSmallIntegerField(default=60, verbose_name="Тривалість, хв")
+    starts_on = models.DateField(verbose_name="Перше заняття")
+    # Порожньо — без кінця; після цієї дати нові заняття серії не з'являються
+    ends_on = models.DateField(null=True, blank=True, verbose_name="Останнє заняття (включно)")
+    note = models.CharField(max_length=200, blank=True, verbose_name="Примітка")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['weekday', 'time']
+        verbose_name = "Постійне заняття"
+        verbose_name_plural = "Постійні заняття"
+
+    def __str__(self):
+        return f"{self.student.real_name}: {self.get_weekday_display()} {self.time:%H:%M}"
+
+
+class Lesson(models.Model):
+    """Одне заняття в розкладі викладача: разове або дата постійного (series)."""
+    STATUS_CHOICES = (
+        ('planned', 'Заплановано'),
+        ('done', 'Відбулося'),
+        ('cancelled', 'Скасовано'),
+    )
+
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lessons',
+                                verbose_name="Викладач")
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='lessons',
+                                verbose_name="Учень")
+    start = models.DateTimeField(verbose_name="Початок")
+    duration = models.PositiveSmallIntegerField(default=60, verbose_name="Тривалість, хв")
+    series = models.ForeignKey(LessonSeries, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='lessons', verbose_name="Постійне заняття")
+    # Дата за серією (до перенесення) — щоб перенесене чи скасоване заняття серія не створила знову
+    series_date = models.DateField(null=True, blank=True, verbose_name="Дата за розкладом серії")
+    moved_from = models.DateTimeField(null=True, blank=True, verbose_name="Перенесено з")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned', verbose_name="Стан")
+    curriculum_topic = models.ForeignKey('CurriculumTopic', on_delete=models.SET_NULL, null=True, blank=True,
+                                         verbose_name="Тема")
+    note = models.CharField(max_length=200, blank=True, verbose_name="Примітка")
+    report = models.OneToOneField(StudentReport, on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='lesson', verbose_name="Звіт")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['start']
+        verbose_name = "Заняття"
+        verbose_name_plural = "Розклад занять"
+        constraints = [models.UniqueConstraint(fields=['series', 'series_date'], name='unique_series_lesson')]
+
+    def __str__(self):
+        return f"{timezone.localtime(self.start):%d.%m.%Y %H:%M} — {self.student.real_name}"
+
+    @property
+    def end(self):
+        return self.start + datetime.timedelta(minutes=self.duration)

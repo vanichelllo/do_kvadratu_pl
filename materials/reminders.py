@@ -1,8 +1,10 @@
 """Нагадування в Telegram (бот @do_kvadratu_bot): учень підключає бота в кабінеті, і раз на день сайт надсилає
-нагадування про ДЗ на завтра, кінець підписки на клас і покинуту практику. Кожне — лише раз (ReminderLog).
+нагадування про ДЗ на завтра, кінець підписки на клас, покинуту практику й заняття завтра (викладачеві — його
+розклад на завтра). За LESSON_SOON до заняття — ще одне нагадування. Кожне — лише раз (ReminderLog).
 
 Запуск: сам сайт раз на день у SEND_HOURS за Києвом — перший запит у цей час запускає розсилку у фоні
-(maybe_send_daily, викликає middleware); вручну — `python manage.py send_reminders`."""
+(maybe_send_daily, викликає middleware); нагадування «скоро заняття» — щонайчастіше раз на SOON_EVERY хвилин
+(maybe_send_soon); вручну — `python manage.py send_reminders`."""
 import datetime
 import logging
 import threading
@@ -16,7 +18,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
 
-from .models import ClassSubscription, Homework, PracticeRun, ReminderLog
+from .models import ClassSubscription, Homework, Lesson, PracticeRun, ReminderLog
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,8 @@ BOT_USERNAME = 'do_kvadratu_bot'
 SEND_HOURS = range(16, 21)          # після уроків, але не пізно ввечері
 SUBSCRIPTION_DAYS_BEFORE = 3
 PRACTICE_IDLE = (datetime.timedelta(days=1), datetime.timedelta(days=7))   # кинута день-тиждень тому
+LESSON_SOON = datetime.timedelta(hours=2)
+SOON_EVERY = 10                     # хвилин між перевірками «скоро заняття»
 
 
 # ─── ПРИВ'ЯЗКА TELEGRAM ДО АКАУНТА ───────────────────────────
@@ -108,6 +112,61 @@ def due_reminders(today=None, now=None):
                           f"💪 Ви почали практику «{run.material.title}» і зупинилися на півдорозі. "
                           f"Продовжте з того самого місця — це кілька хвилин.",
                           ('Продовжити практику', site_url(reverse('practice_session', args=[run.material_id])))))
+
+    reminders += lessons_tomorrow(today)
+    return reminders
+
+
+def lesson_key(prefix, lesson):
+    # Час у ключі: перенесене заняття нагадаємо ще раз, уже з новим часом
+    return f'{prefix}:{lesson.id}:{timezone.localtime(lesson.start):%y%m%d%H%M}'
+
+
+def planned_lessons(start_from, start_to):
+    from .schedule import fill_series
+    fill_series(until=timezone.localtime(start_to).date())
+    return (Lesson.objects.filter(status='planned', start__gte=start_from, start__lt=start_to,
+                                  student__status='approved')
+            .select_related('student__user', 'teacher').order_by('start'))
+
+
+def lessons_tomorrow(today):
+    """Учневі — про кожне заняття завтра; викладачеві — один лист із розкладом на завтра."""
+    from .schedule import aware, teacher_name
+    tomorrow = today + datetime.timedelta(days=1)
+    lessons = list(planned_lessons(aware(tomorrow, datetime.time.min),
+                                   aware(tomorrow + datetime.timedelta(days=1), datetime.time.min)))
+    reminders, by_teacher = [], {}
+    for lesson in lessons:
+        pupil = lesson.student.user
+        if pupil.telegram_id:
+            reminders.append((pupil, lesson_key('lesson', lesson),
+                              f"📅 Завтра о {timezone.localtime(lesson.start):%H:%M} — заняття з математики "
+                              f"({teacher_name(lesson.teacher)}).",
+                              ('Мій розклад', site_url(reverse('cabinet') + '#learn'))))
+        by_teacher.setdefault(lesson.teacher, []).append(lesson)
+    for teacher, items in by_teacher.items():
+        if not teacher.telegram_id:
+            continue
+        rows = '\n'.join(f"• {timezone.localtime(lesson.start):%H:%M} — {lesson.student.real_name}"
+                         for lesson in items)
+        reminders.append((teacher, f'day:{teacher.id}:{tomorrow:%y%m%d}',
+                          f"🗓 Завтра ({tomorrow:%d.%m}) у вас заняття:\n{rows}",
+                          ('Розклад', site_url(reverse('schedule') + f'?week={tomorrow:%Y-%m-%d}'))))
+    return reminders
+
+
+def lessons_soon(now=None):
+    """Учневі — за LESSON_SOON до кожного заняття."""
+    now = now or timezone.now()
+    reminders = []
+    for lesson in planned_lessons(now, now + LESSON_SOON):
+        pupil = lesson.student.user
+        if pupil.telegram_id:
+            reminders.append((pupil, lesson_key('soon', lesson),
+                              f"⏰ Сьогодні о {timezone.localtime(lesson.start):%H:%M} заняття з математики. "
+                              f"Підготуйте зошит і домашнє завдання!",
+                              ('Мій розклад', site_url(reverse('cabinet') + '#learn'))))
     return reminders
 
 
@@ -132,10 +191,10 @@ def send_message(chat_id, text, button=None):
     return response.ok
 
 
-def send_due_reminders():
-    """Надсилає ще не надіслані нагадування; повертає кількість надісланих."""
+def send_due_reminders(items=None):
+    """Надсилає ще не надіслані нагадування (за замовчуванням — щоденні); повертає кількість надісланих."""
     sent = 0
-    for user, key, text, button in due_reminders():
+    for user, key, text, button in (due_reminders() if items is None else items):
         try:
             with transaction.atomic():
                 log = ReminderLog.objects.create(user=user, key=key)   # унікальний ключ — двічі не надішлемо
@@ -172,6 +231,26 @@ def maybe_send_daily():
     threading.Thread(target=run, daemon=True).start()
 
 
+def maybe_send_soon():
+    """Раз на SOON_EVERY хвилин (з 7 до 22) — нагадування про заняття, що почнуться за LESSON_SOON."""
+    if not (getattr(settings, 'REMINDERS_DAILY', True) and getattr(settings, 'TELEGRAM_BOT_TOKEN', '')):
+        return
+    now = timezone.localtime()
+    slot = now.hour * 60 + now.minute
+    if not 7 <= now.hour < 22 or not cache.add(f'reminders-soon-{now.date()}-{slot // SOON_EVERY}', True, 60 * 60):
+        return
+
+    def run():
+        try:
+            send_due_reminders(lessons_soon())
+        except Exception:
+            logger.exception("Помилка нагадувань про заняття")
+        finally:
+            close_old_connections()
+
+    threading.Thread(target=run, daemon=True).start()
+
+
 class DailyRemindersMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -179,4 +258,5 @@ class DailyRemindersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         maybe_send_daily()
+        maybe_send_soon()
         return response

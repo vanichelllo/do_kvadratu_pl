@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Розклад занять | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .sch { margin: 30px 0 60px; }
+    .sch-back { display: inline-block; margin-bottom: 12px; color: var(--brand-blue); font-weight: 700; }
+    .sch-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px;
+        background: var(--brand-blue); color: #fff; padding: 20px 24px; border-radius: 16px;
+        box-shadow: 6px 6px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .sch-head h1 { color: #fff; margin: 0; font-size: 1.6rem; font-weight: 900; text-transform: uppercase; }
+    .sch-head p { margin: 4px 0 0; opacity: 0.9; }
+    .sch-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .sch-nav a { background: #fff; color: var(--brand-blue); font-weight: 800; text-decoration: none; padding: 8px 14px;
+        border-radius: 8px; border: 2px solid #fff; white-space: nowrap; }
+    .sch-nav a.sch-today { background: var(--brand-yellow); border-color: var(--brand-yellow); }
+
+    .sch-card { background: #fff; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 18px 20px;
+        box-shadow: 4px 4px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .sch-card h2 { color: var(--brand-blue); font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin: 0 0 12px; }
+    .sch-card > summary { list-style: none; cursor: pointer; }
+    .sch-card > summary::-webkit-details-marker { display: none; }
+    .sch-card > summary h2 { margin: 0; display: flex; justify-content: space-between; gap: 10px; }
+    .sch-card[open] > summary h2 { margin-bottom: 12px; }
+    .sch-card[open] > summary .toggle-icon { transform: rotate(180deg); }
+    .toggle-icon { transition: transform 0.3s; }
+
+    .sch-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+    .sch-form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 800;
+        color: var(--brand-blue); }
+    .sch-form select, .sch-form input[type="date"], .sch-form input[type="time"], .sch-form input[type="text"] {
+        padding: 8px; border: 2px solid #dce3ec; border-radius: 8px; font-family: inherit; font-size: 0.95rem;
+        max-width: 100%; box-sizing: border-box; background: #fff; color: var(--text-dark); }
+    .sch-form .grow { flex: 1 1 200px; min-width: 0; }
+    .sch-form .sch-check { flex-direction: row; align-items: center; gap: 6px; font-size: 0.9rem; padding-bottom: 10px; }
+    .sch-btn { background: #27ae60; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 800;
+        cursor: pointer; font-family: inherit; font-size: 0.95rem; text-decoration: none; white-space: nowrap; }
+    .sch-btn.blue { background: var(--brand-blue); color: var(--brand-yellow); }
+    .sch-btn.ghost { background: #fff; color: #c0392b; border: 2px solid #c0392b; padding: 7px 12px; }
+    .sch-btn.small { padding: 6px 10px; font-size: 0.85rem; }
+    .sch-link { background: none; border: none; padding: 0; color: #344e86; font-weight: 700; text-decoration: underline;
+        cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+
+    .sch-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
+    .sch-day { background: #fff; border: 2px solid #dce3ec; border-radius: 12px; padding: 10px; min-height: 140px; }
+    .sch-day.today { border-color: var(--brand-blue); box-shadow: 3px 3px 0 var(--brand-yellow); }
+    .sch-day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 8px;
+        color: var(--brand-blue); font-weight: 900; text-transform: uppercase; font-size: 0.85rem; }
+    .sch-day-head span { color: #6c757d; font-weight: 700; text-transform: none; }
+    .sch-empty { color: #adb5bd; font-size: 0.85rem; }
+    .sch-lesson { border-left: 4px solid var(--brand-blue); background: #f4f7fb; border-radius: 8px; padding: 8px;
+        margin-bottom: 8px; font-size: 0.88rem; }
+    .sch-lesson.done { border-left-color: #27ae60; background: #eefaf2; }
+    .sch-lesson.cancelled { border-left-color: #adb5bd; background: #f8f9fa; color: #6c757d; }
+    .sch-lesson.cancelled .sch-name { text-decoration: line-through; }
+    .sch-lesson.report { border-left-color: #e67e22; background: #fff4e5; }
+    .sch-time { font-weight: 900; color: var(--brand-blue); }
+    .sch-name { font-weight: 800; color: var(--text-dark); overflow-wrap: anywhere; }
+    .sch-meta { color: #6c757d; font-size: 0.78rem; margin-top: 2px; }
+    .sch-badge { display: inline-block; font-size: 0.7rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;
+        background: #e6ebf2; color: var(--brand-blue); margin: 3px 3px 0 0; }
+    .sch-badge.warn { background: #ffe8cc; color: #b35900; }
+    .sch-badge.ok { background: #d4f5df; color: #1e7e44; }
+    .sch-actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+    .sch-actions form { margin: 0; }
+    .sch-edit > summary { cursor: pointer; color: #344e86; font-weight: 700; font-size: 0.82rem; text-decoration: underline; }
+    .sch-edit { min-width: 0; }
+    .sch-edit[open] { flex-basis: 100%; }
+    .sch-edit .sch-form { min-width: 0; }
+    .sch-edit .sch-form { margin-top: 8px; gap: 6px; }
+    .sch-edit .sch-form label { flex: 1 1 100%; min-width: 0; }
+    .sch-edit .sch-form input, .sch-edit .sch-form select { width: 100%; min-width: 0; font-size: 0.85rem; padding: 6px 4px; }
+    .sch-edit .sch-scope { font-size: 0.8rem; color: var(--text-dark); display: flex; flex-direction: column; gap: 2px; flex-basis: 100%; }
+    .sch-edit .sch-scope label { flex-direction: row; align-items: center; font-weight: 600; color: var(--text-dark); font-size: 0.8rem; }
+    .sch-edit .sch-scope input { width: auto; }
+
+    .sch-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 0 24px; }
+    .sch-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0;
+        border-bottom: 1px solid #eef1f5; }
+    .sch-row:last-child { border-bottom: none; }
+    .sch-note { color: #6c757d; font-size: 0.85rem; margin: 0 0 10px; }
+    .sch-feed { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sch-feed input { flex: 1 1 220px; min-width: 0; padding: 8px; border: 2px solid #dce3ec; border-radius: 8px;
+        font-family: inherit; font-size: 0.8rem; }
+
+    @media (max-width: 1000px) {
+        .sch-week { grid-template-columns: 1fr; gap: 8px; }
+        .sch-day { min-height: 0; }
+        .sch-day.no-lessons { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 10px; }
+        .sch-day.no-lessons .sch-day-head { margin: 0; }
+    }
+    @media (max-width: 600px) {
+        .sch-head { padding: 16px; }
+        .sch-head h1 { font-size: 1.25rem; }
+        .sch-nav { width: 100%; }
+        .sch-nav a { flex: 1; text-align: center; padding: 8px 6px; }
+        .sch-form > label, .sch-form > .sch-btn { flex: 1 1 100%; }
+        .sch-form > label.half { flex: 1 1 calc(50% - 5px); }
+    }
+</style>
+
+<div class="sch">
+    <a href="{% url 'cabinet' %}#teach" class="sch-back">← До кабінету</a>
+
+    <div class="sch-head">
+        <div>
+            <h1>🗓 Розклад занять</h1>
+            <p>{{ monday.day }}{% if month_from != month_to %} {{ month_from }}{% endif %} – {{ sunday.day }} {{ month_to }} {{ sunday.year }}
+                · {{ week_count }} занять{% if week_count %} · {{ week_hours }} год{% endif %}</p>
+        </div>
+        <nav class="sch-nav" aria-label="Тижні">
+            <a href="{{ prev_week }}" aria-label="Попередній тиждень">‹ Тиждень</a>
+            {% if not is_this_week %}<a href="{{ this_week }}" class="sch-today">Сьогодні</a>{% endif %}
+            <a href="{{ next_week }}" aria-label="Наступний тиждень">Тиждень ›</a>
+        </nav>
+    </div>
+
+    {% if students %}
+    <details class="sch-card" id="add" {% if not week_count %}open{% endif %}>
+        <summary><h2><span>➕ Додати заняття</span><span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+        <form method="post" action="{% url 'schedule_add' %}" class="sch-form">
+            {% csrf_token %}
+            <input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}">
+            <label class="grow">Учень
+                <select name="student_id" required>
+                    <option value="">Оберіть учня…</option>
+                    {% for s in students %}<option value="{{ s.id }}">{{ s.real_name }}</option>{% endfor %}
+                </select>
+            </label>
+            <label class="half">Дата <input type="date" name="date" value="{{ default_date|date:'Y-m-d' }}" required></label>
+            <label class="half">Час <input type="time" name="time" value="16:00" step="300" required></label>
+            <label class="half">Тривалість
+                <select name="duration">{% for d in durations %}<option value="{{ d }}"{% if d == 60 %} selected{% endif %}>{{ d }} хв</option>{% endfor %}</select>
+            </label>
+            <label class="grow">Примітка (необов'язково) <input type="text" name="note" maxlength="200" placeholder="Напр.: Zoom, повторити дроби"></label>
+            <label class="sch-check"><input type="checkbox" name="repeat" value="weekly"> Щотижня (постійне)</label>
+            <button type="submit" class="sch-btn">Додати</button>
+        </form>
+    </details>
+    {% else %}
+    <div class="sch-card"><p style="margin: 0;">Щоб складати розклад, спершу додайте учнів: надішліть їм посилання-запрошення з <a href="{% url 'cabinet' %}#teach">кабінету</a>.</p></div>
+    {% endif %}
+
+    <div class="sch-week">
+        {% for day in days %}
+        <section class="sch-day{% if day.is_today %} today{% endif %}{% if not day.lessons %} no-lessons{% endif %}" aria-label="{{ day.name }} {{ day.date|date:'d.m' }}">
+            <div class="sch-day-head">{{ day.name }} <span>{{ day.date.day }} {{ day.month }}{% if day.is_today %} · сьогодні{% endif %}</span></div>
+            {% for l in day.lessons %}
+            <div class="sch-lesson{% if l.status == 'cancelled' %} cancelled{% elif l.report_id or l.status == 'done' %} done{% elif l.needs_report %} report{% endif %}">
+                <div class="sch-time">{{ l.local_start|time:"H:i" }}–{{ l.local_end|time:"H:i" }}</div>
+                <div class="sch-name">{{ l.student.real_name }}</div>
+                {% if l.curriculum_topic or l.note %}<div class="sch-meta">{% if l.curriculum_topic %}{{ l.curriculum_topic.name }}{% endif %}{% if l.curriculum_topic and l.note %} · {% endif %}{{ l.note }}</div>{% endif %}
+                <div>
+                    {% if l.series_id %}<span class="sch-badge" title="Постійне заняття">🔁 постійне</span>{% endif %}
+                    {% if l.moved_from %}<span class="sch-badge warn" title="Було {{ l.moved_from|date:'d.m H:i' }}">перенесено</span>{% endif %}
+                    {% if l.status == 'cancelled' %}<span class="sch-badge">скасовано</span>{% endif %}
+                    {% if l.report_id %}<span class="sch-badge ok">✓ звіт</span>{% elif l.status == 'done' %}<span class="sch-badge ok">✓ відбулося</span>{% elif l.needs_report %}<span class="sch-badge warn">чекає звіту</span>{% endif %}
+                </div>
+                <div class="sch-actions">
+                    {% if l.status == 'cancelled' %}
+                        <form method="post" action="{% url 'schedule_restore' l.id %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><button type="submit" class="sch-link">Повернути</button></form>
+                    {% elif not l.report_id %}
+                        {% if l.is_past and l.student.course != 'nmt' %}<a href="{% url 'schedule_report' l.id %}" class="sch-btn blue small">Звіт</a>{% endif %}
+                        {% if l.is_past and l.status == 'planned' and l.student.course == 'nmt' %}<form method="post" action="{% url 'schedule_done' l.id %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><button type="submit" class="sch-btn small">Відбулося</button></form>{% endif %}
+                        {% if not l.is_past and l.student.course != 'nmt' %}<a href="{% url 'schedule_report' l.id %}" class="sch-link">Звіт</a>{% endif %}
+                        {% if l.status == 'planned' %}
+                        <details class="sch-edit">
+                            <summary>Змінити</summary>
+                            <form method="post" action="{% url 'schedule_move' l.id %}" class="sch-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}">
+                                <label>Дата <input type="date" name="date" value="{{ l.local_start|date:'Y-m-d' }}" required></label>
+                                <label>Час <input type="time" name="time" value="{{ l.local_start|time:'H:i' }}" step="300" required></label>
+                                <label>Тривалість <select name="duration">{% for d in durations %}<option value="{{ d }}"{% if d == l.duration %} selected{% endif %}>{{ d }} хв</option>{% endfor %}{% if l.duration not in durations %}<option value="{{ l.duration }}" selected>{{ l.duration }} хв</option>{% endif %}</select></label>
+                                {% if l.series_id %}
+                                <div class="sch-scope">
+                                    <label><input type="radio" name="scope" value="one" checked> лише це заняття</label>
+                                    <label><input type="radio" name="scope" value="following"> це й усі наступні</label>
+                                </div>
+                                {% endif %}
+                                <button type="submit" class="sch-btn small">Перенести</button>
+                            </form>
+                            <form method="post" action="{% url 'schedule_cancel' l.id %}" class="sch-form" onsubmit="return confirm(this.scope && this.scope.value === 'following' ? 'Завершити постійне заняття з цієї дати?' : 'Скасувати це заняття?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}">
+                                {% if l.series_id %}
+                                <div class="sch-scope">
+                                    <label><input type="radio" name="scope" value="one" checked> лише це заняття</label>
+                                    <label><input type="radio" name="scope" value="following"> завершити постійне з цієї дати</label>
+                                </div>
+                                {% endif %}
+                                <button type="submit" class="sch-btn ghost small">Скасувати</button>
+                            </form>
+                        </details>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="sch-empty">—</div>
+            {% endfor %}
+        </section>
+        {% endfor %}
+    </div>
+
+    <div class="sch-columns">
+        {% if awaiting_report %}
+        <div class="sch-card">
+            <h2>📝 Чекають звіту</h2>
+            <p class="sch-note">Заняття, що вже минули. Звіт одразу з'являється на сторінці для батьків.</p>
+            {% for l in awaiting_report %}
+            <div class="sch-row">
+                <div><b>{{ l.student.real_name }}</b><div class="sch-meta">{{ l.local_start|date:"d.m" }}, {{ l.local_start|time:"H:i" }}</div></div>
+                {% if l.student.course != 'nmt' %}
+                <a href="{% url 'schedule_report' l.id %}" class="sch-btn blue small">Звіт</a>
+                {% else %}
+                <form method="post" action="{% url 'schedule_done' l.id %}">{% csrf_token %}<input type="hidden" name="week" value="{{ monday|date:'Y-m-d' }}"><button type="submit" class="sch-btn small">Відбулося</button></form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if series %}
+        <div class="sch-card">
+            <h2>🔁 Постійні заняття</h2>
+            {% for item in series %}
+            <div class="sch-row">
+                <div><b>{{ item.student.real_name }}</b>
+                    <div class="sch-meta">{{ item.every }} о {{ item.time|time:"H:i" }}, {{ item.duration }} хв{% if item.ends_on %} · до {{ item.ends_on|date:"d.m.Y" }}{% endif %}{% if item.starts_on > today %} · з {{ item.starts_on|date:"d.m" }}{% endif %}</div>
+                </div>
+            </div>
+            {% endfor %}
+            <p class="sch-note" style="margin: 10px 0 0;">Змінити час чи завершити постійне заняття — «Змінити» на будь-якому його занятті → «усі наступні».</p>
+        </div>
+        {% endif %}
+
+        <div class="sch-card">
+            <h2>📲 Розклад у телефоні</h2>
+            <p class="sch-note">Підпишіть розклад у своєму календарі — нові, перенесені й скасовані заняття з'являтимуться там самі (оновлення — до кількох годин). Учням і батькам бот нагадує про заняття, якщо вони підключили Telegram.</p>
+            <div class="sch-feed" style="margin-bottom: 10px;">
+                <a href="{{ feed.google }}" target="_blank" rel="noopener" class="sch-btn blue small">Google Календар</a>
+                <a href="{{ feed.webcal }}" class="sch-btn blue small">Apple / Outlook</a>
+            </div>
+            <div class="sch-feed">
+                <input type="text" id="feed-url" value="{{ feed.url }}" readonly aria-label="Посилання на календар">
+                <button type="button" class="sch-btn small" onclick="navigator.clipboard.writeText(document.getElementById('feed-url').value); this.textContent='Скопійовано ✓';">Копіювати</button>
+            </div>
+            <p class="sch-note" style="margin: 8px 0 0;">Посилання особисте — не публікуйте його.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

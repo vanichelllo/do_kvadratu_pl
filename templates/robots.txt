@@ -6,6 +6,7 @@ Disallow: /payment/
 Disallow: /accounts/
 Disallow: /accept-terms/
 Disallow: /api/
+Disallow: /calendar/
 Allow: /
 
 Sitemap: https://dokvadratu.com.ua/sitemap.xml
