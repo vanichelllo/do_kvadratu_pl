@@ -2691,6 +2691,7 @@ def add_quick_report(request):
     if form.is_valid():
         report = form.save(commit=False)
         report.student = student
+        report.date = timezone.localdate()   # дата за Києвом (типове значення поля — момент в UTC)
         report.save()
         schedule.link_report(request.user, report)   # заняття цього дня в розкладі більше не чекає звіту
         plans.mark_reported(student, report.curriculum_topic)

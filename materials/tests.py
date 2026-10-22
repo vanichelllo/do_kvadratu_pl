@@ -4840,9 +4840,7 @@ class ScheduleReportConsistencyTests(BaseTestCase):
                                        nush_modeling=6, nush_solving=11, nush_analysis=4)
         PracticeAttempt.objects.filter(user=self.pupil).update(created_at=late + datetime.timedelta(minutes=55))
         after_midnight = timezone.make_aware(datetime.datetime(2026, 10, 22, 0, 20))
-        date_field = StudentReport._meta.get_field('date')
-        with mock.patch('django.utils.timezone.now', return_value=after_midnight), \
-                mock.patch.object(date_field, 'default', lambda: after_midnight):
+        with mock.patch('django.utils.timezone.now', return_value=after_midnight):
             page = self.client.get(f'/cabinet/schedule/{self.lesson.id}/report/')
             self.assertContains(page, 'name="nush_solving" min="1" max="12" value="11"')
             self.client.post('/cabinet/add-report/', self.report_data())
