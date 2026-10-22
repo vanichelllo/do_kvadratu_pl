@@ -2,9 +2,9 @@
 
 {% block title %}{{ material.title }} | ДО КВАДРАТУ{% endblock %}
 
-{% block meta_description %}{% if material.description %}{{ material.description|truncatechars:160 }}{% else %}Авторський конспект «{{ material.title }}» {% if material.is_nmt %}для підготовки до НМТ з математики{% else %}з математики ({{ material.curriculum_grade.short_label }}){% endif %}: теорія без води, формули, алгоритми та розбір типових завдань.{% endif %}{% endblock %}
+{% block meta_description %}{{ material.display_description|truncatechars:160 }}{% endblock %}
 {% block og_title %}{{ material.title }} | ДО КВАДРАТУ{% endblock %}
-{% block og_description %}{% if material.is_free %}Безкоштовний конспект{% else %}Конспект за {{ material.price }} ₴{% endif %} {% if material.is_nmt %}для підготовки до НМТ з математики{% else %}з математики ({{ material.curriculum_grade.short_label }}){% endif %}: теорія, формули й розбір завдань.{% endblock %}
+{% block og_description %}{% if material.is_free %}Безкоштовно{% else %}{{ material.price }} ₴{% endif %} · {% if material.is_nmt %}конспект для підготовки до НМТ з математики: теорія, формули й розбір завдань.{% elif material.is_bundle %}пакет уроків з математики ({{ material.curriculum_grade.short_label }}) з практикою.{% else %}інтерактивний урок з математики ({{ material.curriculum_grade.short_label }}): пояснення, приклади й практика.{% endif %}{% endblock %}
 {% block og_image %}{% if material.image %}{% with image_url=material.image.url %}{% if image_url|slice:":1" == "/" %}{{ SITE_URL }}{% endif %}{{ image_url }}{% endwith %}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block content %}
@@ -140,7 +140,7 @@
 
         <!-- Опис -->
         <div style="font-size: 1.1rem; line-height: 1.8; color: var(--text-dark); margin-bottom: 30px;">
-            {{ material.description|default:default_description }}
+            {{ material.display_description }}
         </div>
 
         <!-- ДИНАМІЧНИЙ БЛОК: ПАКЕТ АБО СТАНДАРТНА ЦІНА -->
@@ -266,11 +266,13 @@
                         <option value="1">⭐ (1/5) - Жахливо</option>
                     </select>
 
-                    <textarea name="text" rows="3" placeholder="Напишіть ваші враження від цього матеріалу..." required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; resize: vertical; font-family: inherit; font-size: 14px; box-sizing: border-box;"></textarea>
+                    <label for="review-text" style="font-weight: 700; color: var(--brand-blue);">Ваш відгук</label>
+                    <textarea id="review-text" name="text" rows="5" maxlength="1500" placeholder="Що сподобалося, що було незрозуміло, чи допоміг урок…" required style="padding: 10px; border: 2px solid var(--brand-blue); border-radius: 6px; resize: vertical; font-family: inherit; font-size: 15px; box-sizing: border-box; min-height: 120px;"></textarea>
 
                     <button type="submit" style="background-color: #000; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase;">
                         Надіслати відгук
                     </button>
+                    <p class="review-note" style="margin: 0; font-size: 0.85rem; color: #6c757d; text-align: center;">Відгук з'явиться на сайті після перевірки.</p>
                 </form>
             {% else %}
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ccc; margin-top: 15px;">

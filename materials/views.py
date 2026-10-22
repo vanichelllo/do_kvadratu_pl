@@ -37,7 +37,7 @@ from .games import record_game_answer, short_answer_matches
 from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
     Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, SchoolPriceRule, TutorStudentRequest, Review, StudentPresentation,
-    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
+    QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic,
     NMT_SUBJECT_NAME, ClassPlan, PromoCode,
 )
 
@@ -1554,7 +1554,6 @@ class MaterialDetailView(DetailView):
         context['is_owned'] = user_owns_material(self.request.user, material)
         if not context['is_owned'] and not material.is_free:
             context['class_plan'] = subscriptions.plan_for_material(material)
-        context['default_description'] = DEFAULT_MATERIAL_DESCRIPTION
         context['approved_reviews'] = material.reviews.filter(is_approved=True).select_related('user')
         context['has_preview'] = (material.is_published and not context['is_owned'] and not material.is_free
                                   and not material.is_bundle and bool(preview.preview_slides(material.html_content)))

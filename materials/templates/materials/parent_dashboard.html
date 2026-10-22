@@ -291,12 +291,13 @@
 
                 <div class="mb-4">
                     <label class="form-label fw-bold text-dark small">Текст відгуку</label>
-                    <textarea name="text" class="form-control" rows="4" placeholder="Напишіть кілька слів про результати та враження..." required style="border-radius: 8px; border: 2px solid #e9ecef; resize: vertical;"></textarea>
+                    <textarea name="text" class="form-control" rows="5" maxlength="1500" placeholder="Напишіть кілька слів про результати та враження..." required style="border-radius: 8px; border: 2px solid #e9ecef; resize: vertical;"></textarea>
                 </div>
 
                 <button type="submit" class="btn w-100 text-white" style="background-color: var(--brand-blue); border-radius: 8px; padding: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
                     Надіслати відгук
                 </button>
+                <p class="review-note" style="margin: 10px 0 0; font-size: 0.85rem; color: #6c757d; text-align: center;">Відгук з'явиться на сайті після перевірки.</p>
                 <p class="text-muted small mt-3 mb-0">
                     Після перевірки відгук з вашим ім'ям може з'явитися на головній сторінці сайту.
                     Як ми обробляємо дані — у <a href="{% url 'privacy' %}" target="_blank" rel="noopener">Політиці конфіденційності</a>.

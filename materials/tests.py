@@ -2731,6 +2731,50 @@ class CabinetProgressAndRenewalTests(BaseTestCase):
         self.assertContains(page, 'Списати з балансу')
         self.assertNotContains(page, 'не вистачає')
 
+class SchoolDescriptionsAndReviewFormTests(BaseTestCase):
+    """Шкільні уроки — не «конспект для НМТ»; форма відгуку; заява учня згорнута для всіх, кому вона не потрібна."""
+
+    def setUp(self):
+        from .models import DEFAULT_MATERIAL_DESCRIPTION
+        self.lesson = StudyMaterial.objects.create(
+            title='1.2. Цифри', price=29, is_published=True, description=DEFAULT_MATERIAL_DESCRIPTION,
+            curriculum_topic=make_school_topic('1.2. Цифри', 5, 102))
+        self.nmt = StudyMaterial.objects.create(title='5. Відсотки', price=25, is_published=True)
+        self.user = self.make_user('desc@example.com')
+
+    def test_school_lesson_described_as_interactive_lesson(self):
+        page = self.client.get(f'/material/{self.lesson.id}/').content.decode()
+        head = page[:page.index('</head>')]
+        self.assertIn('Інтерактивний урок за шкільною програмою (Математика · 5 клас)', page)
+        self.assertNotIn('Авторський конспект', page)
+        self.assertNotIn('НМТ', head.split('og:description')[1][:300])
+        self.assertIn('інтерактивний урок з математики (Математика · 5 клас)', head)
+        self.assertContains(self.client.get('/materials/'), 'Інтерактивний урок за шкільною')
+        nmt = self.client.get(f'/material/{self.nmt.id}/').content.decode()
+        self.assertIn('Авторський конспект', nmt)
+        self.assertIn('конспект для підготовки до НМТ', nmt)
+
+    def test_own_description_is_kept(self):
+        StudyMaterial.objects.filter(pk=self.lesson.pk).update(description='Мій опис уроку.')
+        self.assertContains(self.client.get(f'/material/{self.lesson.id}/'), 'Мій опис уроку.')
+
+    def test_review_form_has_text_field_and_moderation_note(self):
+        self.client.force_login(self.user)
+        page = self.client.get(f'/material/{self.lesson.id}/')
+        self.assertContains(page, '<label for="review-text"')
+        self.assertContains(page, "Відгук з'явиться на сайті після перевірки.")
+        self.assertContains(self.client.get('/cabinet/'), "Відгук з'явиться на сайті після перевірки.")
+
+    def test_student_status_request_is_collapsed_until_used(self):
+        self.client.force_login(self.user)
+        page = self.client.get('/cabinet/').content.decode()
+        self.assertIn('<details class="student-status-card student-status-ask"', page)
+        self.assertIn('Підтвердити статус учня', page)
+        TutorStudentRequest.objects.create(user=self.user, real_name='Учень', course='grade_5', status='pending')
+        page = self.client.get('/cabinet/').content.decode()
+        self.assertIn('<div class="student-status-card"', page)
+        self.assertIn('Заявка на розгляді', page)
+
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
         self.user = self.make_user('pupil@example.com')
