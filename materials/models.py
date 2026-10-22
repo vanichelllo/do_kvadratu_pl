@@ -171,6 +171,11 @@ class StudyMaterial(models.Model):
     is_bundle = models.BooleanField(default=False, verbose_name="Це Пакет (Bundle)")
     included_materials = models.ManyToManyField('self', blank=True, symmetrical=False,
                                                 verbose_name="Матеріали, що входять у пакет")
+    # Пакет розділу шкільного курсу: склад і ціну веде pricing.sync_chapter_bundles (нові уроки розділу
+    # додаються в пакет і відкриваються тим, хто його вже купив)
+    bundle_chapter = models.ForeignKey('CurriculumChapter', on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='bundles', verbose_name="Пакет розділу",
+                                       help_text="Склад і ціна оновлюються самі після кожного деплою.")
 
     def save(self, *args, **kwargs):
         is_new_file = False
@@ -206,6 +211,8 @@ class StudyMaterial(models.Model):
 
     @property
     def curriculum_grade(self):
+        if self.bundle_chapter_id:
+            return self.bundle_chapter.grade
         return self.curriculum_topic.chapter.grade if self.curriculum_topic_id else None
 
     @property

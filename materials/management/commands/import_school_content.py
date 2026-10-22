@@ -31,7 +31,7 @@ from django.db import transaction
 from materials.bank_import import BankFormatError, build_report, import_tasks, parse_bank_source
 from materials.content_check import check_bank, check_presentation
 from materials.models import CurriculumTopic, StudyMaterial
-from materials.pricing import apply_price_rules
+from materials.pricing import apply_price_rules, sync_chapter_bundles
 
 
 class Command(BaseCommand):
@@ -68,6 +68,9 @@ class Command(BaseCommand):
             repriced = apply_price_rules()
             if repriced:
                 self.stdout.write(f'Ціни за правилами оновлено: {repriced}')
+            created, updated = sync_chapter_bundles()
+            if created or updated:
+                self.stdout.write(f'Пакети розділів: нових {created}, оновлено цін {updated}')
         if failed and not keep_going:
             raise CommandError(f'Файлів з помилками: {failed} — їх пропущено.')
         if failed:

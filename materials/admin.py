@@ -20,7 +20,7 @@ from users.models import PurchaseHistory
 from .bank_import import (MAX_FILE_BYTES, SPEC_KEYS, BankFormatError, build_report, import_tasks, parse_bank_source,
                           validate_school_spec)
 from .content_check import check_bank, check_presentation
-from .pricing import apply_price_rules, school_materials
+from .pricing import apply_price_rules, school_materials, sync_chapter_bundles
 from .practice import describe_correct, recalculate_attempts
 from .models import (
     StudyMaterial, Tag, Cart, CartItem, DiagnosticOffer, Order, OrderItem,
@@ -554,7 +554,9 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         ('Контент', {'fields': ('file', 'html_file', 'reader_link')}),
         ('HTML-код вручну', {'classes': ('collapse',), 'fields': ('html_content',),
                              'description': 'Зручніше завантажити файл у блоці «Контент» вище.'}),
-        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'included_materials')}),
+        ('Пакет', {'classes': ('collapse',), 'fields': ('is_bundle', 'bundle_chapter', 'included_materials'),
+                   'description': 'Пакети розділів шкільних курсів створюються й наповнюються самі: ціна — 70% '
+                                  'суми платних тем, не більше 1,5 місячної підписки на клас.'}),
     )
 
     actions = ['publish', 'unpublish', 'price_by_rules']
@@ -566,6 +568,8 @@ class StudyMaterialAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
         if 'price_is_manual' in form.changed_data and not obj.price_is_manual:
             apply_price_rules(school_materials().filter(pk=obj.pk))
+            if obj.bundle_chapter_id:
+                sync_chapter_bundles()
         # Вставлену презентацію шкільної теми одразу перевіряємо за вимогами docs/html_prompt.md
         if obj.html_content and not obj.is_nmt and (
                 'html_content' in form.changed_data or form.cleaned_data.get('html_file')):
@@ -884,6 +888,10 @@ class ClassPlanAdmin(admin.ModelAdmin):
     list_display = ('number', 'price_month', 'price_year', 'is_active', 'note')
     list_editable = ('price_month', 'price_year', 'is_active', 'note')
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        sync_chapter_bundles()   # стеля ціни пакетів розділів залежить від місячної ціни класу
+
 
 @admin.register(ClassSubscription)
 class ClassSubscriptionAdmin(admin.ModelAdmin):
@@ -904,7 +912,9 @@ class SchoolPriceRuleAdmin(admin.ModelAdmin):
 
     def reprice(self, request):
         changed = apply_price_rules(school_materials())
-        self.message_user(request, f'Ціни шкільних уроків перераховано; змінено: {changed}.', messages.SUCCESS)
+        sync_chapter_bundles()
+        self.message_user(request, f'Ціни шкільних уроків і пакетів розділів перераховано; змінено уроків: {changed}.',
+                          messages.SUCCESS)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

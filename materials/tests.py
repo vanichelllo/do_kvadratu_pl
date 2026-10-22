@@ -2506,6 +2506,73 @@ def make_school_topic(name, grade_number, order, chapter_order=10, subject='Ма
     return CurriculumTopic.objects.create(chapter=chapter, name=name, order=order)
 
 
+class ChapterBundleTests(BaseTestCase):
+    """Пакет розділу: 70% суми платних тем, не дорожче за 1,5 місячної підписки; нові уроки — покупцям пакета."""
+
+    def setUp(self):
+        from .models import ClassPlan
+        ClassPlan.objects.filter(number=5).update(price_month=99)
+        self.lessons = [self.lesson(i) for i in range(1, 6)]   # 1.1 безкоштовна, 4 платні по 29 ₴
+
+    def lesson(self, n, price=29):
+        return StudyMaterial.objects.create(
+            title=f'1.{n}. Тема', price=0 if n == 1 else price, is_free=n == 1, is_published=True,
+            curriculum_topic=make_school_topic(f'1.{n}. Тема', 5, 100 + n))
+
+    def sync(self):
+        from .pricing import sync_chapter_bundles
+        return sync_chapter_bundles()
+
+    def bundle(self):
+        return StudyMaterial.objects.get(bundle_chapter__isnull=False)
+
+    def test_bundle_created_with_all_lessons_and_shown_in_grade(self):
+        self.assertEqual(self.sync(), (1, 0))
+        bundle = self.bundle()
+        self.assertEqual(bundle.price, 81)   # 0,7 × 116
+        self.assertTrue(bundle.is_bundle and bundle.is_published)
+        self.assertEqual(set(bundle.included_materials.all()), set(self.lessons))
+        self.assertEqual(bundle.title, 'Пакет: Розділ 10 · Математика · 5 клас')
+        self.assertFalse(bundle.is_nmt)
+        grade = bundle.bundle_chapter.grade
+        self.assertContains(self.client.get(f'/materials/?grade={grade.id}'), bundle.title)
+        self.assertContains(self.client.get('/prices/'), 'Пакет розділу')
+        self.assertEqual(self.sync(), (0, 0))   # повторний запуск нічого не змінює
+
+    def test_price_is_capped_by_one_and_a_half_month_subscriptions(self):
+        for n in range(6, 12):
+            self.lesson(n)
+        self.sync()
+        self.assertEqual(self.bundle().price, 149)   # 0,7 × 290 = 203 > 1,5 × 99
+
+    def test_too_few_paid_lessons_no_bundle(self):
+        StudyMaterial.objects.filter(pk__in=[m.pk for m in self.lessons[2:]]).delete()
+        self.assertEqual(self.sync(), (0, 0))
+
+    def test_new_lesson_opens_for_buyers_only(self):
+        self.sync()
+        buyer, other = self.make_user('buyer@example.com', balance=500), self.make_user('other@example.com')
+        CartItem.objects.create(cart=Cart.objects.create(user=buyer), material=self.bundle())
+        self.client.force_login(buyer)
+        with mock.patch('materials.views.send_telegram_notification'):
+            self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        self.assertEqual(buyer.purchased_materials.count(), 5)
+        new = self.lesson(6)
+        self.assertEqual(self.sync(), (0, 1))   # ціна 0,7 × 145 = 102
+        self.assertEqual(self.bundle().price, 102)
+        self.assertTrue(buyer.purchased_materials.filter(pk=new.pk).exists())
+        self.assertFalse(other.purchased_materials.exists())
+
+    def test_manual_price_and_unpublishing_are_kept(self):
+        self.sync()
+        StudyMaterial.objects.filter(bundle_chapter__isnull=False).update(price=60, price_is_manual=True,
+                                                                           is_published=False)
+        self.lesson(6)
+        self.sync()
+        bundle = self.bundle()
+        self.assertEqual((bundle.price, bundle.is_published), (60, False))
+        self.assertEqual(bundle.included_materials.count(), 6)
+
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
         self.user = self.make_user('pupil@example.com')

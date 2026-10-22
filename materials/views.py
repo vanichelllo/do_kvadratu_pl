@@ -1443,7 +1443,8 @@ def prices_view(request):
     rules = list(SchoolPriceRule.objects.all())
     on_sale = StudyMaterial.objects.filter(is_published=True, is_free=False, price__gt=0)
     nmt = Q(curriculum_topic__isnull=True) | Q(curriculum_topic__chapter__grade__subject__name=NMT_SUBJECT_NAME)
-    bundles = list(on_sale.filter(is_bundle=True).prefetch_related('included_materials').defer('html_content'))
+    bundles = list(on_sale.filter(is_bundle=True, bundle_chapter__isnull=True)   # пакети НМТ
+                   .prefetch_related('included_materials').defer('html_content'))
     nmt_subject = CurriculumSubject.objects.filter(name=NMT_SUBJECT_NAME).first()
     class_plans = subscriptions.plans_on_sale()
     tutor_monthly = TeacherPlan.objects.filter(is_active=True, price_month__gt=0).aggregate(m=Min('price_month'))['m']
@@ -1456,6 +1457,7 @@ def prices_view(request):
         'nmt_countdown': nmt_countdown(0),
         'nmt_free': StudyMaterial.objects.filter(nmt, is_published=True, is_free=True).exists(),
         'first_topic_free': any(r.first_topic_free for r in rules),
+        'chapter_bundles': on_sale.filter(is_bundle=True, bundle_chapter__isnull=False).exists(),
         'class_plans': class_plans,
         'support_price': min((p.support_price_month for p in class_plans if p.support_price_month), default=None),
         'lesson_formats': LESSON_FORMATS,
@@ -1474,7 +1476,7 @@ class MaterialListView(ListView):
 
     def get_queryset(self):
         queryset = StudyMaterial.objects.filter(is_published=True) \
-            .select_related('curriculum_topic__chapter__grade__subject') \
+            .select_related('curriculum_topic__chapter__grade__subject', 'bundle_chapter__grade__subject') \
             .prefetch_related('tags')
 
         filter_type = self.request.GET.get('type')
@@ -1491,13 +1493,18 @@ class MaterialListView(ListView):
         grade_id = self.request.GET.get('grade')
 
         if grade_id:
-            queryset = queryset.filter(curriculum_topic__chapter__grade_id=grade_id)
+            queryset = queryset.filter(Q(curriculum_topic__chapter__grade_id=grade_id) |
+                                       Q(bundle_chapter__grade_id=grade_id))
         elif subject_id:
-            queryset = queryset.filter(curriculum_topic__chapter__grade__subject_id=subject_id)
+            queryset = queryset.filter(Q(curriculum_topic__chapter__grade__subject_id=subject_id) |
+                                       Q(bundle_chapter__grade__subject_id=subject_id))
 
         materials_list = list(queryset)
 
         def get_sort_key(material):
+            if material.bundle_chapter_id:   # пакет розділу — перед першою темою розділу
+                chapter = material.bundle_chapter
+                return (chapter.grade.subject.order, chapter.grade.order, chapter.order, -1)
             if material.curriculum_topic:
                 ct = material.curriculum_topic
                 return (
