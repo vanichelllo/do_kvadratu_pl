@@ -17,6 +17,9 @@
         margin-bottom: 25px;
     }
 
+    .hide-owned { flex-basis: 100%; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;
+        color: var(--text-dark); }
+    .hide-owned input { width: 18px; height: 18px; accent-color: var(--brand-blue); }
     .search-input, .search-select {
         padding: 12px 20px;
         border: 2px solid var(--brand-blue);
@@ -183,11 +186,23 @@
 
         </select>
 
+        <select name="sort" class="search-select" style="flex: 1; min-width: 170px; cursor: pointer;" aria-label="Сортування">
+            {% for value, label in sorts.items %}
+            <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
         {% if request.GET.type %}
             <input type="hidden" name="type" value="{{ request.GET.type }}">
         {% endif %}
 
         <button type="submit" class="btn-brand" style="flex: 1; min-width: 120px; padding: 14px 20px;">ШУКАТИ</button>
+        {% if user.is_authenticated %}
+        <label class="hide-owned">
+            <input type="checkbox" name="hide_owned" value="1" {% if request.GET.hide_owned %}checked{% endif %} onchange="this.form.submit()">
+            Сховати те, що вже маю
+        </label>
+        {% endif %}
     </form>
 </div>
 

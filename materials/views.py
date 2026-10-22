@@ -1474,6 +1474,7 @@ class MaterialListView(ListView):
     model = StudyMaterial
     template_name = 'materials/list.html'
     context_object_name = 'materials'
+    SORTS = {'topic': 'За темами', 'price': 'Спершу дешевші', '-price': 'Спершу дорожчі', 'new': 'Спершу нові'}
 
     def get_queryset(self):
         queryset = StudyMaterial.objects.filter(is_published=True) \
@@ -1500,7 +1501,23 @@ class MaterialListView(ListView):
             queryset = queryset.filter(Q(curriculum_topic__chapter__grade__subject_id=subject_id) |
                                        Q(bundle_chapter__grade__subject_id=subject_id))
 
+        # «Сховати те, що вже маю»: куплене, пакети з усіма купленими темами, теми класів з підпискою чи свого класу
+        user = self.request.user
+        if self.request.GET.get('hide_owned') and user.is_authenticated:
+            owned = set(user.purchased_materials.values_list('id', flat=True))
+            open_grades = teachers.taught_class_grade_ids(user) | teachers.subscribed_grade_ids(user)
+            queryset = queryset.exclude(id__in=owned).exclude(
+                is_bundle=False, curriculum_topic__chapter__grade_id__in=open_grades)
+            full_bundles = [b.id for b in queryset.filter(is_bundle=True).prefetch_related('included_materials')
+                            if b.included_materials.all() and {m.id for m in b.included_materials.all()} <= owned]
+            queryset = queryset.exclude(id__in=full_bundles)
+
         materials_list = list(queryset)
+        sort = self.request.GET.get('sort')
+        if sort in self.SORTS and sort != 'topic':
+            key, descending = {'price': (lambda m: m.price, False), '-price': (lambda m: m.price, True),
+                               'new': (lambda m: m.id, True)}[sort]
+            return sorted(materials_list, key=key, reverse=descending)
 
         def get_sort_key(material):
             if material.bundle_chapter_id:   # пакет розділу — перед першою темою розділу
@@ -1528,6 +1545,8 @@ class MaterialListView(ListView):
         context['current_subject'] = self.request.GET.get('subject', '')
         context['current_grade'] = self.request.GET.get('grade', '')
         context['search_query'] = self.request.GET.get('search', '')
+        context['sorts'] = self.SORTS
+        context['current_sort'] = self.request.GET.get('sort', 'topic')
         context['nmt_countdown'] = nmt_countdown(0)
         grade = CurriculumGrade.objects.filter(id=to_int(self.request.GET.get('grade'))).first()
         if grade and grade.number and grade.subject.name != NMT_SUBJECT_NAME:

@@ -2823,6 +2823,39 @@ class SelfLearnerParentPageTests(BaseTestCase):
         TutorStudentRequest.objects.create(user=self.pupil, real_name='Учень', course='grade_5', status='approved')
         self.assertNotContains(self.client.get('/cabinet/'), 'Створити посилання')
 
+class StorefrontSortAndOwnedTests(BaseTestCase):
+    def setUp(self):
+        self.cheap = StudyMaterial.objects.create(title='1.1. Дешева', price=10, is_published=True,
+                                                  curriculum_topic=make_school_topic('1.1. Дешева', 5, 101))
+        self.dear = StudyMaterial.objects.create(title='1.2. Дорога', price=90, is_published=True,
+                                                 curriculum_topic=make_school_topic('1.2. Дорога', 5, 102))
+        self.mid = StudyMaterial.objects.create(title='1.3. Середня', price=50, is_published=True,
+                                                curriculum_topic=make_school_topic('1.3. Середня', 5, 103))
+        self.bundle = StudyMaterial.objects.create(title='Пакет', price=100, is_published=True, is_bundle=True)
+        self.bundle.included_materials.add(self.cheap, self.dear)
+        self.user = self.make_user('shop@example.com')
+
+    def titles(self, query=''):
+        return [m.title for m in self.client.get('/materials/' + query).context['materials'] if not m.is_bundle]
+
+    def test_sorting(self):
+        self.assertEqual(self.titles(), ['1.1. Дешева', '1.2. Дорога', '1.3. Середня'])
+        self.assertEqual(self.titles('?sort=price'), ['1.1. Дешева', '1.3. Середня', '1.2. Дорога'])
+        self.assertEqual(self.titles('?sort=-price'), ['1.2. Дорога', '1.3. Середня', '1.1. Дешева'])
+        self.assertEqual(self.titles('?sort=new'), ['1.3. Середня', '1.2. Дорога', '1.1. Дешева'])
+        self.assertContains(self.client.get('/materials/?sort=price'), '<option value="price" selected>')
+
+    def test_hide_owned(self):
+        self.assertNotContains(self.client.get('/materials/'), 'Сховати те, що вже маю')
+        self.client.force_login(self.user)
+        self.user.purchased_materials.add(self.cheap, self.dear)
+        page = self.client.get('/materials/?hide_owned=1')
+        shown = {m.title for m in page.context['materials']}
+        self.assertEqual(shown, {'1.3. Середня'})   # куплені теми й пакет з ними сховано
+        ClassSubscription.objects.create(user=self.user, number=5, valid_until=timezone.localdate())
+        self.assertEqual(list(self.client.get('/materials/?hide_owned=1').context['materials']), [])
+        self.assertEqual(len(self.client.get('/materials/').context['materials']), 4)
+
 class SchoolPracticeTests(BaseTestCase):
     def setUp(self):
         self.user = self.make_user('pupil@example.com')
