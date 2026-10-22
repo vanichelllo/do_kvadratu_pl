@@ -614,6 +614,7 @@
                                 <strong style="color: var(--brand-blue); font-size: 1rem;">{{ st.real_name }}</strong><br>
                                 <span style="font-size: 0.8rem; color: #666; font-weight: bold;">{{ st.get_course_display }}</span>
                                 {% if st.support_until %}<br><span style="font-size: 0.75rem; font-weight: 800; color: #27ae60;">🤝 Супровід до {{ st.support_until|date:"d.m" }}</span>{% endif %}
+                                <br><a href="{% url 'study_plan' st.id %}" class="hw-link">🧭 Навчальний план</a>
                             </td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
@@ -685,6 +686,36 @@
                 <a href="{{ my_lessons_feed.google }}" target="_blank" rel="noopener" class="hw-btn">Google Календар</a>
                 <a href="{{ my_lessons_feed.webcal }}" class="hw-btn">Apple / Outlook</a>
             </div>
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- НАВЧАЛЬНИЙ ПЛАН УЧНЯ (складає викладач) -->
+        {% if my_plan %}
+        <details class="cab-section" data-section="my-plan" data-default-open open>
+            <summary><h2 class="cab-section-title"><span>🧭 Мій навчальний план</span> <span class="toggle-icon" aria-hidden="true">🔽</span></h2></summary>
+            <div class="cab-section-body">
+                <div class="course-progress">
+                    <span>Пройдено <b>{{ my_plan.done }}</b> з {{ my_plan.total }} тем</span>
+                    <div class="course-progress-bar" aria-hidden="true"><span style="width: {{ my_plan.percent }}%;"></span></div>
+                </div>
+                {% if my_plan.next %}
+                <h3 class="lesson-day-title">Далі за планом</h3>
+                {% for item in my_plan.next %}
+                <div class="hw-row">
+                    <div><b>{{ item.slot_name }}</b>{% if item.level %}<div style="font-size: 0.85rem; color: #666;">практика: {{ item.level }}</div>{% endif %}</div>
+                    {% if item.material %}<a href="{% url 'download_material' item.material.id %}" class="hw-link">Відкрити</a>{% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+                <details style="margin-top: 12px;">
+                    <summary class="hw-link" style="display: inline;">Увесь план ({{ my_plan.items|length }})</summary>
+                    <ol style="margin: 10px 0 0; padding-left: 34px; line-height: 1.7;">
+                        {% for item in my_plan.items %}
+                        <li style="{% if item.status == 'skipped' %}color: #adb5bd; text-decoration: line-through;{% elif item.status == 'done' %}color: #27ae60;{% endif %}">{% if item.status == 'done' %}✓ {% endif %}{% if item.material %}<a href="{% url 'download_material' item.material.id %}" style="color: inherit;">{{ item.name }}</a>{% else %}{{ item.name }}{% endif %}</li>
+                        {% endfor %}
+                    </ol>
+                </details>
             </div>
         </details>
         {% endif %}

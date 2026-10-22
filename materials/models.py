@@ -1148,3 +1148,45 @@ class Lesson(models.Model):
     @property
     def end(self):
         return self.start + datetime.timedelta(minutes=self.duration)
+
+
+# ==========================================
+# НАВЧАЛЬНИЙ ПЛАН УЧНЯ (materials/plans.py)
+# ==========================================
+class StudyPlanItem(models.Model):
+    """Тема в навчальному плані учня. План складається з дерева тем, далі викладач міняє його під учня: порядок,
+    теми з інших класів, власні теми (без теми з дерева — лише назва). Дерево від цього не змінюється."""
+    STATUS_CHOICES = (
+        ('todo', 'За планом'),
+        ('done', 'Пройдено'),
+        ('skipped', 'Пропущено'),
+    )
+
+    student = models.ForeignKey(TutorStudentRequest, on_delete=models.CASCADE, related_name='plan_items',
+                                verbose_name="Учень")
+    position = models.PositiveIntegerField(default=0, verbose_name="Порядок")
+    topic = models.ForeignKey(CurriculumTopic, on_delete=models.CASCADE, null=True, blank=True,
+                              related_name='plan_items', verbose_name="Тема з дерева")
+    title = models.CharField(max_length=255, blank=True, verbose_name="Власна тема")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='todo', verbose_name="Стан")
+    done_on = models.DateField(null=True, blank=True, verbose_name="Пройдено")
+    # Тема на кілька уроків: пройдена, коли звітів з нею стільки, скільки уроків (held — скільки вже проведено)
+    lessons = models.PositiveSmallIntegerField(default=1, verbose_name="Уроків на тему")
+    held = models.PositiveSmallIntegerField(default=0, verbose_name="Проведено уроків")
+    # Разом з попередньою темою плану — одним уроком (звіт з будь-якою з них закриває обидві)
+    joined = models.BooleanField(default=False, verbose_name="Разом з попередньою темою")
+    # Примітку бачить лише викладач (учневі й батькам — ні)
+    note = models.CharField(max_length=300, blank=True, verbose_name="Примітка викладача")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['student', 'position', 'id']
+        verbose_name = "Тема навчального плану"
+        verbose_name_plural = "Навчальні плани учнів"
+
+    def __str__(self):
+        return f"{self.student.real_name}: {self.name}"
+
+    @property
+    def name(self):
+        return self.topic.name if self.topic_id else self.title

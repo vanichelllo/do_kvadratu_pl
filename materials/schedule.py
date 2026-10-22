@@ -20,14 +20,14 @@ from django.utils.crypto import constant_time_compare, salted_hmac
 from django.utils.http import urlencode
 from django.views.decorators.http import require_POST
 
-from . import homework, teachers
+from . import homework, plans, teachers
 from .forms import StudentReportForm
 from .models import (NMT_SUBJECT_NAME, CurriculumTopic, Lesson, LessonSeries, PracticeAttempt, StudentReport,
                      TutorStudentRequest)
 
 FILL_WEEKS = 10                      # на скільки тижнів наперед створювати дати постійних занять
 FILL_BACK = datetime.timedelta(days=14)
-DURATIONS = (30, 45, 60, 90, 120)
+DURATIONS = (30, 45, 50, 60, 90, 120)
 REPORT_DAYS = 30                     # заняття без звіту за останні REPORT_DAYS днів — у «Чекають звіту»
 NOTIFY_DAYS = 14                     # про зміни в розкладі далі ніж на NOTIFY_DAYS наперед учневі не пишемо
 WEEKDAYS_SHORT = ('пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'нд')
@@ -189,6 +189,25 @@ def lesson_practice(lesson):
                                            created_at__gte=aware(day, datetime.time.min),
                                            created_at__lt=aware(day + datetime.timedelta(days=1), datetime.time.min))
             .select_related('material').defer('material__html_content').order_by('-created_at').first())
+
+
+def plan_for_lessons(teacher, lessons, until):
+    """Майбутнім запланованим заняттям без теми — наступні уроки навчального плану учня, по черзі: перше заняття
+    від сьогодні — перший урок плану, що чекає, друге — другий і т. д. (lesson.plan_topic, лише для показу)."""
+    ahead = list(Lesson.objects.filter(teacher=teacher, status='planned', start__gte=timezone.now(), start__lt=until)
+                 .order_by('start').values_list('id', 'student_id', 'curriculum_topic_id'))
+    upcoming = plans.next_slots({student_id for _, student_id, _ in ahead})
+    queue, picked = {}, {}
+    for lesson_id, student_id, topic_id in ahead:
+        if topic_id:
+            continue
+        index = queue.get(student_id, 0)
+        queue[student_id] = index + 1
+        slots = upcoming.get(student_id, [])
+        if index < len(slots):
+            picked[lesson_id] = slots[index][0]
+    for lesson in lessons:
+        lesson.plan_topic = picked.get(lesson.id)
 
 
 def own_lesson(request, lesson_id):
@@ -390,6 +409,7 @@ def schedule_week(request):
         Lesson.objects.filter(teacher=request.user, start__gte=aware(monday, datetime.time.min),
                               start__lt=aware(sunday + datetime.timedelta(days=1), datetime.time.min))
         .select_related('student', 'curriculum_topic', 'series').order_by('start')))
+    plan_for_lessons(request.user, lessons, until=aware(sunday + datetime.timedelta(days=1), datetime.time.min))
     days = []
     for offset in range(7):
         date = monday + datetime.timedelta(days=offset)
@@ -570,6 +590,7 @@ def schedule_report(request, lesson_id):
                 report.date = local.date()
                 report.save()
                 attach_report(lesson, report)
+                plans.mark_reported(lesson.student, report.curriculum_topic)
             messages.success(request, f'✅ Звіт для {lesson.student.real_name} збережено — його вже видно батькам.')
             if request.POST.get('next') == 'cabinet':
                 return redirect(reverse('cabinet') + '#teach')
@@ -578,11 +599,15 @@ def schedule_report(request, lesson_id):
         form = None
     previous = (StudentReport.objects.filter(student=lesson.student).select_related('curriculum_topic')
                 .order_by('-date', '-id').first())
-    # Як у звіті зі сторінки результатів: оцінки й тема — з практики на занятті, статус ДЗ — з останнього ДЗ
+    # Як у звіті зі сторінки результатів: оцінки й тема — з практики на занятті, статус ДЗ — з останнього ДЗ;
+    # без практики тема — наступна за навчальним планом, а без плану — з минулого звіту
     attempt = lesson_practice(lesson)
+    planned = next((topic_id for _, topic_id in plans.next_slots([lesson.student_id]).get(lesson.student_id, [])
+                    if topic_id), None)
     initial = {'nush_modeling': 10, 'nush_solving': 10, 'nush_analysis': 10, 'teacher_comment': '',
                'homework_status': homework.report_status(lesson.student) or 'completed',
-               'curriculum_topic': lesson.curriculum_topic_id or (previous.curriculum_topic_id if previous else None)}
+               'curriculum_topic': lesson.curriculum_topic_id or planned or (
+                   previous.curriculum_topic_id if previous else None)}
     if attempt:
         initial.update(nush_modeling=attempt.nush_modeling, nush_solving=attempt.nush_solving,
                        nush_analysis=attempt.nush_analysis)
