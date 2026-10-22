@@ -216,6 +216,19 @@ class StudyMaterial(models.Model):
         return self.curriculum_topic.chapter.grade if self.curriculum_topic_id else None
 
     @property
+    def display_description(self):
+        """Опис для сторінки, вітрини й соцмереж. Уроки шкільного курсу зі стандартним описом конспекту НМТ
+        (його ставило поле за замовчуванням) отримують опис інтерактивного уроку."""
+        if self.description and self.description.strip() != DEFAULT_MATERIAL_DESCRIPTION:
+            return self.description
+        grade = self.curriculum_grade
+        if grade is not None and not self.is_nmt and not self.is_bundle:
+            return (f"Інтерактивний урок за шкільною програмою ({grade.short_label}): пояснення на слайдах, "
+                    f"приклади й практика сходинками — від простого до складного, з перевіркою відповідей. "
+                    f"Підходить і щоб вивчити тему вперше, і щоб підтягнути її перед контрольною.")
+        return self.description or DEFAULT_MATERIAL_DESCRIPTION
+
+    @property
     def is_nmt(self):
         # Пакети й старі конспекти без теми в класифікаторі — це матеріали НМТ
         grade = self.curriculum_grade

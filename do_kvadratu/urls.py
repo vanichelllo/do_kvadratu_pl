@@ -43,6 +43,7 @@ from materials.views import (
     math_sprint_game,
     mono_webhook,
     parent_dashboard_view,
+    parent_link_view,
     parent_view_material,
     parent_view_attempt,
     parent_view_presentation,
@@ -153,6 +154,7 @@ urlpatterns = [
     path('robots.txt', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 
     # Дашборд для батьків
+    path('parents/link/', parent_link_view, name='parent_link'),
     path('parents/<uuid:parent_token>/', parent_dashboard_view, name='parent_dashboard'),
     path('cabinet/add-report/', add_quick_report, name='add_quick_report'),
     path('cabinet/add-nmt-score/', add_nmt_score, name='add_nmt_score'),
