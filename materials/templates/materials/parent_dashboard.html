@@ -83,7 +83,7 @@
                 <div class="progress"><div class="progress-bar" style="width: {{ plan.percent }}%; background-color: #f39c12;"></div></div>
                 {% if plan.next %}
                 <div class="small fw-bold mt-2 mb-1">Далі за планом:</div>
-                <ul class="mb-0 ps-3">{% for item in plan.next %}<li>{{ item.name }}</li>{% endfor %}</ul>
+                <ul class="mb-0 ps-3">{% for item in plan.next %}<li>{{ item.slot_name }}</li>{% endfor %}</ul>
                 {% endif %}
                 <details class="nush-details mt-2">
                     <summary>Увесь план ({{ plan.items|length }})</summary>

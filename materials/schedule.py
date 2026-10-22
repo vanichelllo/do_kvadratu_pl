@@ -192,20 +192,20 @@ def lesson_practice(lesson):
 
 
 def plan_for_lessons(teacher, lessons, until):
-    """Майбутнім запланованим заняттям без теми — наступні теми навчального плану учня, по черзі: перше заняття
-    від сьогодні — перша тема, що чекає, друге — друга і т. д. (lesson.plan_topic, лише для показу)."""
+    """Майбутнім запланованим заняттям без теми — наступні уроки навчального плану учня, по черзі: перше заняття
+    від сьогодні — перший урок плану, що чекає, друге — другий і т. д. (lesson.plan_topic, лише для показу)."""
     ahead = list(Lesson.objects.filter(teacher=teacher, status='planned', start__gte=timezone.now(), start__lt=until)
                  .order_by('start').values_list('id', 'student_id', 'curriculum_topic_id'))
-    upcoming = plans.next_topics({student_id for _, student_id, _ in ahead})
+    upcoming = plans.next_slots({student_id for _, student_id, _ in ahead})
     queue, picked = {}, {}
     for lesson_id, student_id, topic_id in ahead:
         if topic_id:
             continue
         index = queue.get(student_id, 0)
         queue[student_id] = index + 1
-        items = upcoming.get(student_id, [])
-        if index < len(items):
-            picked[lesson_id] = items[index].name
+        slots = upcoming.get(student_id, [])
+        if index < len(slots):
+            picked[lesson_id] = slots[index][0]
     for lesson in lessons:
         lesson.plan_topic = picked.get(lesson.id)
 
@@ -602,8 +602,8 @@ def schedule_report(request, lesson_id):
     # Як у звіті зі сторінки результатів: оцінки й тема — з практики на занятті, статус ДЗ — з останнього ДЗ;
     # без практики тема — наступна за навчальним планом, а без плану — з минулого звіту
     attempt = lesson_practice(lesson)
-    planned = next((item.topic_id for item in plans.next_topics([lesson.student_id]).get(lesson.student_id, [])
-                    if item.topic_id), None)
+    planned = next((topic_id for _, topic_id in plans.next_slots([lesson.student_id]).get(lesson.student_id, [])
+                    if topic_id), None)
     initial = {'nush_modeling': 10, 'nush_solving': 10, 'nush_analysis': 10, 'teacher_comment': '',
                'homework_status': homework.report_status(lesson.student) or 'completed',
                'curriculum_topic': lesson.curriculum_topic_id or planned or (

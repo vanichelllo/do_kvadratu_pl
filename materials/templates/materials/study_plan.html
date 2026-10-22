@@ -67,6 +67,8 @@
     .plan-icon:hover { border-color: var(--brand-blue); }
     .plan-icon.done { border-color: #27ae60; color: #27ae60; font-weight: 900; }
     .plan-more { grid-column: 2 / -1; }
+    .plan-join { grid-column: 1 / -1; font-size: 0.78rem; font-weight: 800; color: #8a6d00; margin: -6px 0 2px 44px; }
+    .plan-item.joined { border-top: 2px dashed #f1d36b; }
     .plan-more > summary { cursor: pointer; color: #344e86; font-weight: 700; font-size: 0.82rem; text-decoration: underline; width: max-content; }
     .plan-more .plan-form { margin-top: 8px; gap: 8px; }
     .plan-more input[type="number"] { width: 80px; }
@@ -88,7 +90,7 @@
         <h1>🧭 Навчальний план</h1>
         <p><b>{{ student.real_name }}</b> · {{ student.get_course_display }}</p>
         {% if items %}
-        <p>Пройдено {{ summary.done }} з {{ summary.total }} тем{% if summary.next %} · далі: «{{ summary.next.0.name }}»{% endif %}</p>
+        <p>Пройдено {{ summary.done }} з {{ summary.total }} тем{% if summary.next %} · далі: «{{ summary.next.0.slot_name }}»{% endif %}</p>
         <div class="plan-bar" aria-hidden="true"><span style="width: {{ summary.percent }}%;"></span></div>
         {% endif %}
     </div>
@@ -111,16 +113,19 @@
 
     <div class="plan-card">
         <h2>Теми плану</h2>
-        <p class="plan-note">Пройдені теми відмічаються самі, коли ви зберігаєте звіт заняття з цією темою. Наступна тема плану підставляється в розклад і звіт. Учень і батьки бачать план без ваших приміток.</p>
+        <p class="plan-note">Пройдені теми відмічаються самі, коли ви зберігаєте звіт заняття з цією темою. Наступна тема плану підставляється в розклад і звіт. Учень і батьки бачать план без ваших приміток.<br>
+            У «Ще»: <b>кількість уроків</b> на тему (тема пройдена, коли проведено всі), <b>🔗 разом з попередньою</b> — дві теми одним уроком, <b>🔁 повторити пізніше</b> — тема ще раз у плані, <b>пропустити</b> — тему не проводимо.</p>
         <ol class="plan-list">
             {% for item in items %}
-            <li class="plan-item {{ item.status }}{% if item == summary.next.0 %} is-next{% endif %}" id="item-{{ item.id }}">
+            <li class="plan-item {{ item.status }}{% if item == summary.next.0 %} is-next{% endif %}{% if item.joined %} joined{% endif %}" id="item-{{ item.id }}">
+                {% if item.joined %}<div class="plan-join">🔗 одним уроком з попередньою темою</div>{% endif %}
                 <span class="plan-num">{% if item.status == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
                 <div>
                     <div class="plan-name">{{ item.name }}</div>
                     <div class="plan-place">{{ item.place }}</div>
                     {% if item == summary.next.0 %}<span class="plan-badge next">далі</span>{% endif %}
                     {% if item.status == 'done' %}<span class="plan-badge ok">пройдено{% if item.done_on %} {{ item.done_on|date:"d.m" }}{% endif %}</span>{% elif item.status == 'skipped' %}<span class="plan-badge">пропущено</span>{% endif %}
+                    {% if item.lessons > 1 %}<span class="plan-badge">📚 {{ item.lessons }} уроки{% if item.held %} · проведено {{ item.held }}{% endif %}</span>{% endif %}
                     {% if item.level %}<span class="plan-badge">практика: {{ item.level }}</span>{% endif %}
                     {% if item.note %}<div class="plan-teacher-note">🔒 {{ item.note }}</div>{% endif %}
                 </div>
@@ -135,6 +140,10 @@
                 <details class="plan-more">
                     <summary>Ще</summary>
                     <div class="plan-form">
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="lessons">
+                            <label>Уроків на тему <input type="number" name="lessons" min="1" max="10" value="{{ item.lessons }}"></label>
+                            <button type="submit" class="plan-btn small blue">Зберегти</button>
+                        </form>
                         <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="move">
                             <label>На позицію <input type="number" name="position" min="1" max="{{ items|length }}" value="{{ forloop.counter }}"></label>
                             <button type="submit" class="plan-btn small blue">Перемістити</button>
@@ -143,6 +152,15 @@
                             {% if item.status == 'skipped' %}<input type="hidden" name="status" value="todo"><button type="submit" class="plan-btn small blue">Повернути в план</button>
                             {% else %}<input type="hidden" name="status" value="skipped"><button type="submit" class="plan-btn small blue">Пропустити</button>{% endif %}
                         </form>
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="repeat">
+                            <button type="submit" class="plan-btn small blue" title="Додати цю тему ще раз у кінець плану">🔁 Повторити пізніше</button>
+                        </form>
+                        {% if not forloop.first %}
+                        <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="join">
+                            {% if item.joined %}<input type="hidden" name="joined" value="0"><button type="submit" class="plan-btn small blue">Окремим уроком</button>
+                            {% else %}<input type="hidden" name="joined" value="1"><button type="submit" class="plan-btn small blue" title="Провести разом з попередньою темою">🔗 Разом з попередньою</button>{% endif %}
+                        </form>
+                        {% endif %}
                         <form method="post" action="{% url 'study_plan_item' item.id %}" class="plan-form">{% csrf_token %}<input type="hidden" name="action" value="delete">
                             <button type="submit" class="plan-btn small ghost" onclick="return confirm('Прибрати тему з плану?');">Прибрати</button>
                         </form>

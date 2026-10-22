@@ -4947,3 +4947,54 @@ class StudyPlanTests(BaseTestCase):
         self.student.save()
         page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
         self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')
+
+    def report(self, topic):
+        self.client.post('/cabinet/add-report/', {'student_id': self.student.id, 'curriculum_topic': topic.id,
+                                                  'nush_modeling': 8, 'nush_solving': 8, 'nush_analysis': 8,
+                                                  'homework_status': 'completed'})
+
+    def slots(self):
+        from .plans import next_slots
+        return [name for name, _ in next_slots([self.student.id]).get(self.student.id, [])]
+
+    def test_topic_for_several_lessons(self):
+        items = self.build()
+        self.client.post(f'/cabinet/plan-item/{items[0].id}/', {'action': 'lessons', 'lessons': '2'})
+        self.assertEqual(self.slots(), ['1.1. Натуральні числа', '1.1. Натуральні числа', '1.2. Цифри', '1.3. Порівняння'])
+        self.report(self.t1)
+        item = self.Item.objects.get(id=items[0].id)
+        self.assertEqual((item.status, item.held), ('todo', 1))
+        self.assertContains(self.client.get(f'/cabinet/students/{self.student.id}/plan/'), '2 уроки · проведено 1')
+        self.report(self.t1)
+        self.assertEqual(self.Item.objects.get(id=items[0].id).status, 'done')
+        self.assertEqual(self.slots(), ['1.2. Цифри', '1.3. Порівняння'])
+
+    def test_two_topics_in_one_lesson(self):
+        items = self.build()
+        self.client.post(f'/cabinet/plan-item/{items[2].id}/', {'action': 'join', 'joined': '1'})
+        self.assertEqual(self.slots(), ['1.1. Натуральні числа', '1.2. Цифри + 1.3. Порівняння'])
+        self.report(self.t3)   # звіт з будь-якою з об'єднаних тем закриває обидві
+        self.assertEqual(list(self.Item.objects.filter(id__in=[items[1].id, items[2].id])
+                              .values_list('status', flat=True)), ['done', 'done'])
+        self.assertEqual(self.Item.objects.get(id=items[0].id).status, 'todo')
+        # Переміщення розриває об'єднання
+        self.client.post(f'/cabinet/plan-item/{items[2].id}/', {'action': 'join', 'joined': '1'})
+        self.client.post(f'/cabinet/plan-item/{items[1].id}/', {'action': 'up'})
+        self.assertFalse(self.Item.objects.get(id=items[2].id).joined)
+        # Першу тему плану нема з чим об'єднати
+        first = self.Item.objects.filter(student=self.student).order_by('position').first()
+        self.client.post(f'/cabinet/plan-item/{first.id}/', {'action': 'join', 'joined': '1'})
+        self.assertFalse(self.Item.objects.get(id=first.id).joined)
+
+    def test_repeat_and_skip(self):
+        items = self.build()
+        self.report(self.t1)
+        self.client.post(f'/cabinet/plan-item/{items[0].id}/', {'action': 'repeat'})
+        self.assertEqual(self.names()[-1], '1.1. Натуральні числа')
+        self.client.post(f'/cabinet/plan-item/{items[1].id}/', {'action': 'status', 'status': 'skipped'})
+        self.assertEqual(self.slots(), ['1.3. Порівняння', '1.1. Натуральні числа'])
+        self.report(self.t1)   # повторення закривається наступним звітом з темою
+        self.assertEqual(self.slots(), ['1.3. Порівняння'])
+        # Додати тему з дерева, що вже є в плані, — теж повторення
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/add/', {'topic_id': self.t3.id, 'where': 'end'})
+        self.assertEqual(self.names().count('1.3. Порівняння'), 2)

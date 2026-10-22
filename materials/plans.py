@@ -3,8 +3,11 @@
 
 * Склад — кнопкою «Скласти з дерева»: теми класу учня («N клас» — усі шкільні курси класу; НМТ — курс НМТ) у порядку
   дерева. Теми, з яких уже є звіти заняття, одразу позначаються пройденими.
-* Прогрес: звіт заняття з темою позначає тему пройденою (mark_reported); рівень — з останньої практики з теми.
-* Розклад: наступним заняттям учня підставляються наступні теми плану (next_topics), звіт — так само.
+* Під учня: тема на кілька уроків (lessons), дві-три теми одним уроком (joined — разом з попередньою), повторення
+  пройденої теми пізніше (копія теми в плані), «Пропустити» — тему не проводять.
+* Прогрес: звіт заняття з темою — проведено урок цієї теми (mark_reported); тема пройдена, коли проведено всі її
+  уроки. Рівень — з останньої практики з теми.
+* Розклад: наступним заняттям учня підставляються наступні уроки плану (next_slots), звіт — так само.
 * План бачать учень (кабінет) і батьки (їхня сторінка) — без приміток викладача."""
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -72,11 +75,34 @@ def renumber(student):
 
 
 # ─── ПРОГРЕС ─────────────────────────────────────────────────
+# Тема плану може йти кілька уроків (lessons) і бути об'єднаною з попередньою темою в один урок (joined).
+# Урок плану — група тем, з'єднаних joined, і він повторюється стільки разів, скільки уроків лишилося.
+def group_items(items):
+    """Сусідні теми, з'єднані joined, — одна група (один урок)."""
+    groups = []
+    for item in items:
+        if item.joined and groups:
+            groups[-1].append(item)
+        else:
+            groups.append([item])
+    return groups
+
+
 def mark_reported(student, topic):
-    """Звіт заняття з темою — тема плану пройдена."""
+    """Звіт заняття з темою — проведено урок першої теми плану з нею, що чекає, і тем, об'єднаних з нею в
+    один урок; тема пройдена, коли проведено всі її уроки."""
     if topic is None:
         return
-    student.plan_items.filter(topic=topic, status='todo').update(status='done', done_on=timezone.localdate())
+    items = list(student.plan_items.order_by('position', 'id'))
+    group = next((group for group in group_items(items)
+                  if any(item.topic_id == topic.id and item.status == 'todo' for item in group)), None)
+    for item in group or []:
+        if item.status != 'todo':
+            continue
+        item.held += 1
+        if item.held >= item.lessons:
+            item.status, item.done_on = 'done', timezone.localdate()
+        item.save(update_fields=['held', 'status', 'done_on'])
 
 
 def plan_items(student):
@@ -98,20 +124,40 @@ def plan_items(student):
     return items
 
 
+def lesson_slots(items):
+    """Уроки, що чекають, по порядку: [(назва уроку, перша тема з дерева, теми групи)]. Тема на 3 уроки, з якої
+    проведено 1, дає 2 уроки; об'єднані теми — один урок «1.4 + 1.5»."""
+    slots = []
+    for group in group_items(items):
+        todo = [item for item in group if item.status == 'todo']
+        if not todo:
+            continue
+        name = ' + '.join(item.name for item in todo)
+        topic_id = next((item.topic_id for item in todo if item.topic_id), None)
+        slots += [(name, topic_id, todo)] * max(1, max(item.lessons - item.held for item in todo))
+    return slots
+
+
 def summary(items):
     counted = [item for item in items if item.status != 'skipped']
     done = sum(item.status == 'done' for item in counted)
+    upcoming = []
+    for name, _, group in lesson_slots(items):
+        if group[0] not in [g[0] for _, g in upcoming]:
+            group[0].slot_name = name
+            upcoming.append((name, group))
     return {'done': done, 'total': len(counted), 'percent': round(100 * done / len(counted)) if counted else 0,
-            'next': [item for item in items if item.status == 'todo'][:3]}
+            'next': [group[0] for _, group in upcoming[:3]]}
 
 
-def next_topics(student_ids):
-    """{id учня: [теми плану, що чекають, по порядку]} — для розкладу й звіту."""
-    upcoming = {}
-    for item in (StudyPlanItem.objects.filter(student_id__in=student_ids, status='todo')
-                 .select_related('topic').order_by('position', 'id')):
-        upcoming.setdefault(item.student_id, []).append(item)
-    return upcoming
+def next_slots(student_ids):
+    """{id учня: [(назва уроку, тема з дерева), ...]} — уроки плану, що чекають, для розкладу й звіту."""
+    by_student = {}
+    for item in (StudyPlanItem.objects.filter(student_id__in=student_ids)
+                 .exclude(status='skipped').select_related('topic').order_by('position', 'id')):
+        by_student.setdefault(item.student_id, []).append(item)
+    return {student_id: [(name, topic_id) for name, topic_id, _ in lesson_slots(items)]
+            for student_id, items in by_student.items()}
 
 
 def student_view(student):
@@ -187,9 +233,7 @@ def plan_add(request, student_id):
     if not topic and not title:
         messages.error(request, 'Оберіть тему з дерева або напишіть власну.')
         return back(student)
-    if topic and student.plan_items.filter(topic=topic).exists():
-        messages.info(request, f'Тема «{topic.name}» уже є в плані.')
-        return back(student)
+    again = bool(topic and student.plan_items.filter(topic=topic).exists())
     with transaction.atomic():
         items = renumber(student)
         if request.POST.get('where') == 'next':
@@ -200,7 +244,8 @@ def plan_add(request, student_id):
             position = len(items) + 1
         StudyPlanItem.objects.create(student=student, topic=topic, title='' if topic else title, position=position,
                                      note=request.POST.get('note', '').strip()[:300])
-    messages.success(request, f'✅ Тему «{topic.name if topic else title}» додано до плану.')
+    messages.success(request, f'✅ Тему «{topic.name if topic else title}» додано до плану'
+                              + (' ще раз — для повторення.' if again else '.'))
     return back(student)
 
 
@@ -211,27 +256,64 @@ def own_item(request, item_id):
                              student__in=teachers.students_of(request.user))
 
 
+MAX_LESSONS = 10
+
+
+def unjoin_next(student, item):
+    """Тема, об'єднана з item, після переміщення чи видалення item більше ні до чого не прив'язана."""
+    following = student.plan_items.filter(position__gt=item.position).order_by('position', 'id').first()
+    if following and following.joined:
+        following.joined = False
+        following.save(update_fields=['joined'])
+
+
 @login_required
 @require_POST
 def plan_item_update(request, item_id):
-    """Дії з темою: стан (пройдено / пропущено / за планом), примітка, вгору / вниз / на позицію, видалити."""
+    """Дії з темою: стан (пройдено / пропущено / за планом), кількість уроків, разом з попередньою (один урок),
+    повторити пізніше, примітка, вгору / вниз / на позицію, видалити."""
     item = own_item(request, item_id)
     student = item.student
     action = request.POST.get('action', '')
     anchor = f'#item-{item.id}'
     if action == 'status' and request.POST.get('status') in dict(StudyPlanItem.STATUS_CHOICES):
+        if item.status == 'done' and request.POST['status'] == 'todo':
+            item.held = 0   # повернули пройдену тему в план — її уроки рахуються заново
         item.status = request.POST['status']
         item.done_on = timezone.localdate() if item.status == 'done' else None
-        item.save(update_fields=['status', 'done_on'])
+        item.save(update_fields=['status', 'done_on', 'held'])
     elif action == 'note':
         item.note = request.POST.get('note', '').strip()[:300]
         item.save(update_fields=['note'])
+    elif action == 'lessons':
+        count = request.POST.get('lessons', '')
+        item.lessons = max(1, min(MAX_LESSONS, int(count))) if count.isdigit() else item.lessons
+        if item.status == 'todo' and item.held >= item.lessons:
+            item.status, item.done_on = 'done', timezone.localdate()
+        elif item.status == 'done' and item.held < item.lessons:
+            item.status, item.done_on = 'todo', None
+        item.save(update_fields=['lessons', 'status', 'done_on'])
+    elif action == 'join':
+        item.joined = request.POST.get('joined') == '1' and student.plan_items.filter(
+            position__lt=item.position).exists()
+        item.save(update_fields=['joined'])
+    elif action == 'repeat':
+        # Повторення — копія теми в кінці плану (її можна перемістити ближче)
+        last = student.plan_items.aggregate(top=Max('position'))['top'] or 0
+        copy = StudyPlanItem.objects.create(student=student, topic=item.topic, title=item.title, position=last + 1)
+        messages.success(request, f'🔁 «{item.name}» додано в кінець плану ще раз — перемістіть, коли повторювати.')
+        anchor = f'#item-{copy.id}'
     elif action == 'delete':
-        item.delete()
-        renumber(student)
+        with transaction.atomic():
+            unjoin_next(student, item)
+            item.delete()
+            renumber(student)
         anchor = ''
     elif action in ('up', 'down', 'move'):
         with transaction.atomic():
+            unjoin_next(student, item)
+            item.joined = False
+            item.save(update_fields=['joined'])
             items = renumber(student)
             index = next(i for i, other in enumerate(items) if other.id == item.id)
             if action == 'move':

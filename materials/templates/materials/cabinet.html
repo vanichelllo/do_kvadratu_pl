@@ -703,7 +703,7 @@
                 <h3 class="lesson-day-title">Далі за планом</h3>
                 {% for item in my_plan.next %}
                 <div class="hw-row">
-                    <div><b>{{ item.name }}</b>{% if item.level %}<div style="font-size: 0.85rem; color: #666;">практика: {{ item.level }}</div>{% endif %}</div>
+                    <div><b>{{ item.slot_name }}</b>{% if item.level %}<div style="font-size: 0.85rem; color: #666;">практика: {{ item.level }}</div>{% endif %}</div>
                     {% if item.material %}<a href="{% url 'download_material' item.material.id %}" class="hw-link">Відкрити</a>{% endif %}
                 </div>
                 {% endfor %}
