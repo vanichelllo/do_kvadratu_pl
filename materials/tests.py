@@ -2495,7 +2495,7 @@ class DiagnosticOfferTests(BaseTestCase):
         from .views import uk_plural
         self.assertEqual([uk_plural(n, 'день', 'дні', 'днів') for n in (1, 2, 5, 11, 21, 22, 112, 213)],
                          ['день', 'дні', 'днів', 'днів', 'день', 'дні', 'днів', 'днів'])
-        self.assertContains(self.client.get('/materials/'), 'Пройди безкоштовну діагностику')
+        self.assertContains(self.client.get('/materials/'), 'Пройдіть безкоштовну діагностику')
 
 
 def make_school_topic(name, grade_number, order, chapter_order=10, subject='Математика (5-6 класи)'):
