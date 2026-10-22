@@ -240,7 +240,8 @@ class Cart(models.Model):
     def cached_items(self):
         """Позиції кошика з матеріалами одним запитом (ціни на сторінці рахуються кілька разів)."""
         if getattr(self, '_items_cache', None) is None:
-            self._items_cache = list(self.items.select_related('material').defer('material__html_content'))
+            self._items_cache = list(self.items.select_related(
+                'material__curriculum_topic__chapter__grade__subject').defer('material__html_content'))
         return self._items_cache
 
     def get_original_price(self):

@@ -125,6 +125,15 @@
         align-items: center;
         gap: 10px;
     }
+    .class-offer {
+        display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between;
+        background: var(--brand-yellow); color: var(--brand-blue); border: 2px solid var(--brand-blue);
+        border-radius: 12px; padding: 14px 18px; margin-top: 20px; text-decoration: none; font-weight: 700;
+    }
+    .class-offer strong { font-weight: 900; }
+    .class-offer-go { font-weight: 900; white-space: nowrap; }
+    .class-offer:hover .class-offer-go { text-decoration: underline; }
+
     .btn-pay-balance:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--brand-blue); }
 </style>
 
@@ -157,6 +166,16 @@
                         </form>
                     </div>
                 </div>
+            {% endfor %}
+
+            {% for offer in class_offers %}
+            <!-- ПІДКАЗКА: ПІДПИСКА НА КЛАС -->
+            <a class="class-offer" href="{% url 'class_subscribe' %}?class={{ offer.plan.number }}#class-{{ offer.plan.number }}">
+                <span>🎒 {{ offer.count }} {{ offer.count_word }} {{ offer.plan.number }} класу = <strong>{{ offer.total }} ₴</strong>,
+                    а весь {{ offer.plan.number }} клас — <strong>{{ offer.plan.price_month }} ₴/міс</strong>{% if offer.ready %}:
+                    усі {{ offer.ready }} {{ offer.ready_word }} класу й практика{% else %}: усі уроки й практика{% endif %}.</span>
+                <span class="class-offer-go">Дивитися підписку →</span>
+            </a>
             {% endfor %}
 
             {% if cart.get_offer_discount > 0 and not cart.promo_applies %}

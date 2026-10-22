@@ -81,18 +81,9 @@
         box-shadow: 8px 8px 0px #ffffff;
     }
 
-    .hero-btn-test {
-        background-color: #ff4757;
-        color: #ffffff;
-        border-color: #c0392b;
-    }
-
-    /* Кнопка для безкоштовних матеріалів */
-    .hero-btn-free {
-        background-color: #27c93f;
-        color: #ffffff;
-        border-color: #1e9930;
-    }
+    .hero-note { margin: 18px 0 0; font-weight: 600; opacity: 0.9; }
+    .hero-paths { list-style: none; padding: 0; margin: 26px 0 0; display: grid; gap: 10px; font-weight: 700; line-height: 1.4; }
+    .hero-paths a { color: var(--brand-yellow); }
 
     /* Блок "Про формат" */
     .features-grid {
@@ -545,14 +536,16 @@
         для підготовки до НМТ і шкільної програми 5–11 класів. Для учнів, батьків і репетиторів.
     </p>
 
+    <!-- Одна головна дія; решта шляхів — тихими посиланнями нижче -->
     <div class="hero-buttons">
-        <a href="{% url 'diagnostic_test' %}" class="hero-btn hero-btn-test">🔥 Пройти діагностику</a>
-        <a href="{% url 'materials_list' %}" class="hero-btn">Відкрити вітрину ➔</a>
-        <a href="{% url 'materials_list' %}?type=free" class="hero-btn hero-btn-free">🎁 Безкоштовні матеріали</a>
+        <a href="{% url 'materials_list' %}" class="hero-btn">Обрати клас і почати ➔</a>
     </div>
-    <p style="margin: 28px 0 0; font-weight: 700;">
-        Ви репетитор? <a href="{% url 'for_tutors' %}#trial" style="color: var(--brand-yellow);">Ведіть уроки на платформі — 14 днів безкоштовно ➔</a>
-    </p>
+    <p class="hero-note">Перша тема кожного розділу — безкоштовно, без картки.</p>
+    <ul class="hero-paths">
+        <li>Готуєтесь до НМТ? <a href="{% url 'diagnostic_test' %}">Пройдіть безкоштовну діагностику ➔</a></li>
+        <li>Потрібен викладач? <a href="{% url 'booking' %}">Перше заняття — безкоштовно ➔</a></li>
+        <li>Ви репетитор? <a href="{% url 'for_tutors' %}#trial">Ведіть уроки на платформі — 14 днів безкоштовно ➔</a></li>
+    </ul>
 </div>
 
 <!-- АКТУАЛЬНІ ПРОПОЗИЦІЇ (лише в дати акцій) -->

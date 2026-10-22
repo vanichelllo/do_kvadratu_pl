@@ -92,6 +92,7 @@
             font-weight: 900;
             font-size: 1.2rem;
             letter-spacing: 1px;
+            white-space: nowrap;
             z-index: 1001;
         }
 
@@ -127,13 +128,14 @@
             font-weight: 600;
             margin-left: 25px;
             transition: color 0.3s;
-            text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .nav-logout { display: inline; margin-left: 25px; }
 
         /* Вузький ПК: для залогіненого меню (кабінет, кошик, вихід) відступи 25px не вміщуються */
-        @media (min-width: 1200px) and (max-width: 1439px) {
+        @media (min-width: 1024px) and (max-width: 1279px) {
+            .navbar { padding: 15px 24px; }
             .nav-links a, .nav-logout { margin-left: 16px; }
         }
 
@@ -239,9 +241,14 @@
             transition: opacity 0.2s;
         }
 
+        /* На телефоні посилання переносяться, і роздільники «|» опиняються на початку рядків */
+        @media (max-width: 600px) {
+            .footer-links > span { display: none; }
+        }
+
         /* === АДАПТИВНІСТЬ ДЛЯ ТЕЛЕФОНІВ ТА ПЛАНШЕТІВ === */
-        /* Меню-бургер і на невеликих ноутбуках: до 1200 px пункти меню не вміщалися в рядок */
-        @media (max-width: 1199px) {
+        /* Меню-бургер на планшетах і телефонах: від 1024 px пункти меню вміщаються в рядок */
+        @media (max-width: 1023px) {
             .navbar {
                 padding: 15px 20px;
             }
@@ -389,26 +396,24 @@
         </button>
 
         <div class="nav-links" id="navLinks">
-            <a href="{% url 'home' %}">ГОЛОВНА</a>
-            <a href="{% url 'booking' %}" class="nav-cta">ЗАПИСАТИСЯ</a>
-            <a href="{% url 'diagnostic_test' %}">ДІАГНОСТИКА НМТ</a>
-            <a href="{% url 'game_hub' %}">🎮 ІГРИ</a>
-            <a href="{% url 'materials_list' %}">ВІТРИНА</a>
-            <a href="{% url 'prices' %}">ЦІНИ</a>
-            <a href="{% url 'about' %}">ПРО ВИКЛАДАЧА</a>
+            <!-- Головну відкриває логотип; «Ігри» й «Про викладача» — у підвалі -->
+            <a href="{% url 'materials_list' %}">Вітрина</a>
+            <a href="{% url 'diagnostic_test' %}">Діагностика НМТ</a>
+            <a href="{% url 'prices' %}">Ціни</a>
+            <a href="{% url 'booking' %}" class="nav-cta">Записатися</a>
 
             <!-- РОЗДІЛЯЄМО ЛОГІКУ ДЛЯ АВТОРИЗОВАНИХ І ГОСТЕЙ -->
             {% if user.is_authenticated %}
-                <a href="{% url 'cabinet' %}">МІЙ КАБІНЕТ</a>
-                <a href="{% url 'cart_detail' %}">КОШИК</a>
+                <a href="{% url 'cabinet' %}">Мій кабінет</a>
+                <a href="{% url 'cart_detail' %}">Кошик</a>
 
                 <form action="{% url 'logout' %}" method="post" class="nav-logout">
                     {% csrf_token %}
-                    <button type="submit" class="btn-brand" style="background-color: transparent; border-color: var(--brand-blue); color: var(--brand-blue); box-shadow: none;">ВИЙТИ</button>
+                    <button type="submit" class="btn-brand" style="background-color: transparent; border-color: var(--brand-blue); color: var(--brand-blue); box-shadow: none;">Вийти</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}">УВІЙТИ</a>
-                <a href="{% url 'register' %}" class="btn-brand" style="margin-left: 15px;">РЕЄСТРАЦІЯ</a>
+                <a href="{% url 'login' %}">Увійти</a>
+                <a href="{% url 'register' %}" class="btn-brand" style="margin-left: 15px;">Реєстрація</a>
             {% endif %}
         </div>
     </nav>
@@ -444,6 +449,10 @@
         </div>
 
         <div class="footer-links">
+            <a href="{% url 'about' %}">Про викладача</a>
+            <span>|</span>
+            <a href="{% url 'game_hub' %}">🎮 Ігри</a>
+            <span>|</span>
             <a href="{% url 'prices' %}">Ціни</a>
             <span>|</span>
             <a href="{% url 'for_tutors' %}">Для репетиторів</a>
