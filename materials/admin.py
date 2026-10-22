@@ -2,11 +2,12 @@ import uuid
 import datetime
 from django.contrib import admin
 from django.contrib import messages
-from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Q, Subquery, Value, When
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
 # Імпорти для вивантаження бази в Excel
@@ -26,7 +27,7 @@ from .models import (
     Question, AnswerOption, MatchItem, TutorStudentRequest,
     Review, StudentPresentation, QuestionError, StudentReport,
     CurriculumSubject, CurriculumGrade, CurriculumChapter, CurriculumTopic, Homework, TeacherLicense, TeacherInvite, TeacherPlan, SchoolPriceRule, NMT_SUBJECT_NAME,
-    ClassPlan, ClassSubscription
+    ClassPlan, ClassSubscription, PromoCode
 )
 
 User = get_user_model()
@@ -648,6 +649,34 @@ class CartAdmin(admin.ModelAdmin):
     inlines = [CartItemInline]
 
 
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    """Промокоди на матеріали в Кошику: знижка до −30%, не сумується зі знижкою за діагностикою."""
+    list_display = ['code', 'discount_percent', 'starts_on', 'ends_on', 'state', 'once_per_user', 'paid_orders', 'note']
+    list_filter = ['is_active', 'once_per_user']
+    search_fields = ['code', 'note']
+    fields = ['code', 'discount_percent', 'starts_on', 'ends_on', 'is_active', 'once_per_user', 'note']
+
+    def get_queryset(self, request):
+        paid = Order.objects.filter(promo_code=OuterRef('code'), status='paid').order_by()
+        return super().get_queryset(request).annotate(
+            paid_count=Subquery(paid.values('promo_code').annotate(n=Count('id')).values('n')))
+
+    @admin.display(description="Оплачених замовлень", ordering='paid_count')
+    def paid_orders(self, obj):
+        if not obj.paid_count:
+            return 0
+        url = reverse('admin:materials_order_changelist') + f'?status__exact=paid&q={obj.code}'
+        return format_html('<a href="{}">{}</a>', url, obj.paid_count)
+
+    @admin.display(description="Зараз")
+    def state(self, obj):
+        today = timezone.localdate()
+        if not obj.is_active or (obj.ends_on and today > obj.ends_on):
+            return '⛔ не діє'
+        return '⏳ ще не почався' if today < obj.starts_on else '✅ діє'
+
+
 @admin.register(DiagnosticOffer)
 class DiagnosticOfferAdmin(admin.ModelAdmin):
     """Хто отримав знижку на пакет слабких тем після діагностики і до коли вона діє."""
@@ -672,9 +701,10 @@ class OrderResource(resources.ModelResource):
 class OrderAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = OrderResource
 
-    list_display = ['id', 'user', 'customer_email', 'total_amount', 'status', 'source', 'created_at', 'paid_at']
+    list_display = ['id', 'user', 'customer_email', 'total_amount', 'promo_code', 'status', 'source', 'created_at',
+                    'paid_at']
     list_filter = ['status', 'source', 'created_at']
-    search_fields = ['user__email', 'customer_email', 'mono_invoice_id']
+    search_fields = ['user__email', 'customer_email', 'mono_invoice_id', 'promo_code']
     inlines = [OrderItemInline]
     actions = ['check_monobank_status']
     readonly_fields = ['instant_access_agreed_at']

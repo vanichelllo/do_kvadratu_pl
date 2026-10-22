@@ -1128,14 +1128,80 @@ class PromoBannerTests(BaseTestCase):
                      'href="#calendar"', 'id="calendar"', '490 грн'):
             self.assertIn(text, booking)
 
-    def test_cart_discount_follows_same_dates(self):
-        user = self.make_user('promo@example.com')
-        cart = Cart.objects.create(user=user, promo_code='ВЧИТЕЛЬ')
-        CartItem.objects.create(cart=cart, material=StudyMaterial.objects.create(title='1. Тема', price=100))
-        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 11)):
-            self.assertEqual(cart.get_total_price(), 60)
-        with mock.patch('materials.models.timezone.localdate', return_value=datetime.date(2026, 10, 12)):
-            self.assertEqual(cart.get_total_price(), 100)
+
+
+class PromoCodeTests(BaseTestCase):
+    """Промокоди з адмінки: строк дії, стеля −30%, один раз на покупця, не сумуються зі знижкою за діагностикою."""
+
+    def setUp(self):
+        from .models import PromoCode
+        self.PromoCode = PromoCode
+        self.user = self.make_user('promo@example.com', balance=1000)
+        self.lesson = StudyMaterial.objects.create(title='1. Тема', price=100, is_published=True)
+        self.cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=self.cart, material=self.lesson)
+        self.client.force_login(self.user)
+
+    def apply(self, code):
+        return self.client.post('/cart/', {'action': 'apply_promo', 'promo_code': code}, follow=True)
+
+    def total(self):
+        return Cart.objects.get(pk=self.cart.pk).get_total_price()
+
+    def test_code_from_admin_applies_case_insensitive_within_dates(self):
+        today = timezone.localdate()
+        self.PromoCode.objects.create(code='осінь', discount_percent=20, starts_on=today,
+                                      ends_on=today + datetime.timedelta(days=3))
+        self.assertContains(self.apply(' Осінь '), 'Промокод ОСІНЬ застосовано: −20%')
+        self.assertEqual(self.total(), 80)
+        self.assertContains(self.client.get('/cart/'), 'АКТИВОВАНО: ОСІНЬ (−20%)')
+
+    def test_wrong_expired_future_and_disabled_codes(self):
+        today = timezone.localdate()
+        self.assertContains(self.apply('НЕМАЄ'), 'Такого промокоду немає')
+        self.PromoCode.objects.create(code='МИНУВ', discount_percent=10, starts_on=today - datetime.timedelta(days=9),
+                                      ends_on=today - datetime.timedelta(days=1))
+        self.assertContains(self.apply('минув'), 'Термін дії цього промокоду минув')
+        self.PromoCode.objects.create(code='СКОРО', discount_percent=10, starts_on=today + datetime.timedelta(days=2))
+        self.assertContains(self.apply('скоро'), 'почне діяти з')
+        promo = self.PromoCode.objects.create(code='ДІЄ', discount_percent=10)
+        self.apply('діє')
+        self.assertEqual(self.total(), 90)
+        promo.is_active = False   # вимкнено в адмінці — знижка зникає й з кошика
+        promo.save()
+        self.assertEqual(self.total(), 100)
+
+    def test_discount_is_capped_at_30_percent(self):
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            self.PromoCode(code='БАГАТО', discount_percent=40).full_clean()
+        self.PromoCode.objects.create(code='БАГАТО', discount_percent=40)   # в обхід форми — однаково не більше 30%
+        self.apply('багато')
+        self.assertEqual(self.total(), 70)
+
+    def test_once_per_user_and_recorded_in_order(self):
+        self.PromoCode.objects.create(code='РАЗ', discount_percent=10)
+        self.apply('раз')
+        with mock.patch('materials.views.send_telegram_notification'):
+            self.client.post('/cart/pay/balance/', {'agree': 'on'})
+        order = Order.objects.get(user=self.user)
+        self.assertEqual((order.promo_code, int(order.total_amount)), ('РАЗ', 90))
+        CartItem.objects.create(cart=self.cart, material=StudyMaterial.objects.create(title='2. Тема', price=100))
+        self.assertEqual(self.total(), 100)
+        self.assertContains(self.apply('раз'), 'Ви вже скористалися цим промокодом')
+
+    def test_promo_and_diagnostic_discounts_do_not_add_up(self):
+        self.PromoCode.objects.create(code='МАЛО', discount_percent=5)
+        offer = DiagnosticOffer.objects.create(user=self.user, discount_percent=15,
+                                               expires_at=timezone.now() + datetime.timedelta(hours=1))
+        offer.materials.add(self.lesson)
+        self.assertContains(self.apply('мало'), 'знижка за діагностикою вигідніша')
+        self.assertEqual(self.total(), 85)
+        page = self.client.get('/cart/')
+        self.assertContains(page, 'Знижка за діагностикою')
+        self.assertContains(page, 'Знижки не сумуються')
+        self.PromoCode.objects.filter(code='МАЛО').update(discount_percent=25)
+        self.assertEqual(self.total(), 75)
 
 
 class CabinetStudentNameTests(BaseTestCase):

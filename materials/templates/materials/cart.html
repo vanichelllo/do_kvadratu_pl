@@ -190,7 +190,7 @@
             </a>
             {% endfor %}
 
-            {% if cart.get_offer_discount > 0 and not cart.promo_applies %}
+            {% if cart.discount_source == 'offer' %}
             <!-- ЗНИЖКА ЗА ДІАГНОСТИКОЮ -->
             <div style="background: #eafaf1; border: 2px solid #27c93f; border-radius: 12px; padding: 16px 20px; margin-top: 30px; color: #1e8449; font-weight: 800;">
                 🎯 Знижка за діагностикою −{{ cart.diagnostic_offer.discount_percent }}% на уроки слабких тем: −{{ cart.get_offer_discount }} ₴
@@ -205,7 +205,13 @@
                     {% csrf_token %}
                     {% if cart.promo_applies %}
                         <div style="flex: 1; min-width: 200px; padding: 10px 15px; background: #eafaf1; border: 2px solid #27c93f; border-radius: 8px; color: #27c93f; font-weight: 800; display: flex; align-items: center;">
-                            ✅ АКТИВОВАНО: {{ cart.promo_code }} (-40%)
+                            ✅ АКТИВОВАНО: {{ cart.promo.code }} (−{{ cart.promo.percent }}%)
+                        </div>
+                        <input type="hidden" name="action" value="remove_promo">
+                        <button type="submit" style="background: #ff5f56; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Скасувати</button>
+                    {% elif cart.promo %}
+                        <div style="flex: 1; min-width: 200px; padding: 10px 15px; background: #fff; border: 2px solid var(--brand-blue); border-radius: 8px; color: var(--brand-blue); font-weight: 700;">
+                            Промокод {{ cart.promo.code }} (−{{ cart.promo.percent }}%) прийнято, але знижка за діагностикою вигідніша — діє вона. Знижки не сумуються.
                         </div>
                         <input type="hidden" name="action" value="remove_promo">
                         <button type="submit" style="background: #ff5f56; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase;">Скасувати</button>

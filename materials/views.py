@@ -38,7 +38,7 @@ from .models import (
     StudyMaterial, Cart, CartItem, DiagnosticOffer, Order, OrderItem, Question,
     Homework, PracticeAttempt, PracticeRun, TeacherInvite, TeacherLicense, TeacherPlan, SchoolPriceRule, TutorStudentRequest, Review, StudentPresentation,
     QuestionError, StudentReport, CurriculumSubject, CurriculumGrade, CurriculumTopic, DEFAULT_MATERIAL_DESCRIPTION,
-    NMT_SUBJECT_NAME, ClassPlan,
+    NMT_SUBJECT_NAME, ClassPlan, PromoCode,
 )
 
 from rest_framework.decorators import api_view
@@ -1302,21 +1302,19 @@ def cart_detail(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'apply_promo':
-            promo = request.POST.get('promo_code', '').strip().upper()
-            if promo == Cart.PROMO_CODE:
-                now = timezone.localdate()
-                start_date, end_date = Cart.PROMO_START, Cart.PROMO_END
-
-                if start_date <= now <= end_date:
-                    cart.promo_code = promo
-                    cart.save()
-                    messages.success(request, "🎉 Промокод ВЧИТЕЛЬ успішно застосовано! Ваша знижка 40%.")
-                elif now < start_date:
-                    messages.error(request, f"⏳ Цей промокод почне діяти з {start_date:%d.%m}!")
-                else:
-                    messages.error(request, "❌ Термін дії цього промокоду минув.")
+            code = PromoCode.normalize(request.POST.get('promo_code', ''))
+            promo = PromoCode.objects.filter(code=code).first() if code else None
+            problem = promo.problem_for(request.user) if promo else "❌ Такого промокоду немає. Перевірте написання."
+            if problem:
+                messages.error(request, problem)
             else:
-                messages.error(request, "❌ Невірний промокод.")
+                cart.promo_code = promo.code
+                cart.save(update_fields=['promo_code'])
+                if cart.promo_applies():
+                    messages.success(request, f"🎉 Промокод {promo.code} застосовано: −{promo.percent}%.")
+                else:
+                    messages.info(request, f"Промокод {promo.code} прийнято, але знижка за діагностикою вигідніша — "
+                                           f"діє вона (знижки не сумуються).")
 
         elif action == 'remove_promo':
             cart.promo_code = None
@@ -1886,6 +1884,7 @@ def pay_from_balance(request):
             paid_at=timezone.now(),
             mono_invoice_id='balance_payment',
             instant_access_agreed_at=timezone.now(),
+            promo_code=cart.applied_promo_code(),
         )
 
         for item in cart_items:
@@ -1979,6 +1978,7 @@ def pay_with_mono(request):
             total_amount=total_price,
             status='pending',
             instant_access_agreed_at=timezone.now(),
+            promo_code=cart.applied_promo_code(),
         )
         for item in cart.items.all():
             OrderItem.objects.create(order=order, material=item.material, price=item.material.price)
