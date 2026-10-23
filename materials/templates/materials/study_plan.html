@@ -37,7 +37,9 @@
     .plan-course > label { flex: 0 1 260px; }
     .plan-course select { flex: 1 1 240px; min-width: 0; max-width: 100%; padding: 6px; border: 2px solid #dce3ec;
         border-radius: 8px; font-family: inherit; font-size: 0.88rem; background: #fff; }
-    .plan-course select[hidden] { display: none; }
+    .plan-course select[hidden], .plan-first[hidden] { display: none; }
+    .plan-first { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: 700; color: var(--brand-blue);
+        white-space: nowrap; }
     .plan-alternate { margin-top: 4px; font-weight: 700; color: var(--brand-blue); }
     .plan-radio { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.88rem; }
     .plan-radio label { flex-direction: row; align-items: center; gap: 5px; font-weight: 600; color: var(--text-dark); font-size: 0.88rem; }
@@ -105,7 +107,7 @@
     {% if not items %}
     <div class="plan-card">
         <h2>Скласти план з дерева тем</h2>
-        <p class="plan-note">Теми обраних курсів потраплять у план у порядку дерева. Якщо курсів два (алгебра й геометрія), їх можна чергувати; кожен курс можна почати з потрібної теми — попередні теми в план не потраплять. Далі план можна змінювати під учня: прибрати чи пропустити теми, змінити порядок, додати повторення з інших класів або власні теми. Теми, за якими вже є звіти заняття, одразу позначаться пройденими.</p>
+        <p class="plan-note">Теми обраних курсів потраплять у план у порядку дерева. Якщо курсів два (алгебра й геометрія), їх можна чергувати й обрати, з якого буде перший урок; кожен курс можна почати з потрібної теми — попередні теми в план не потраплять. Далі план можна змінювати під учня: прибрати чи пропустити теми, змінити порядок, додати повторення з інших класів або власні теми. Теми, за якими вже є звіти заняття, одразу позначаться пройденими.</p>
         <form method="post" action="{% url 'study_plan_build' student.id %}">
             {% csrf_token %}
             {% include "materials/_plan_courses.html" with preselect=True %}
@@ -232,11 +234,19 @@
         alternate.addEventListener('change', function () { touched = true; });
         function refresh() {
             let checked = 0;
+            const firsts = [];
             box.querySelectorAll('.plan-course').forEach(function (row) {
                 const on = row.querySelector('[name="grade"]').checked;
+                const first = row.querySelector('[data-first]');
                 row.querySelector('[data-start]').hidden = !on;
+                first.hidden = !on;
+                if (on) firsts.push(first.querySelector('input'));
+                else first.querySelector('input').checked = false;
                 checked += on ? 1 : 0;
             });
+            // «Перший урок» має сенс, коли курсів кілька; за замовчуванням — перший позначений курс
+            firsts.forEach(function (input) { input.parentElement.hidden = firsts.length < 2; });
+            if (firsts.length && !firsts.some(function (input) { return input.checked; })) firsts[0].checked = true;
             if (!touched) alternate.checked = checked > 1;
         }
         box.addEventListener('change', function (e) { if (e.target.name === 'grade') refresh(); });

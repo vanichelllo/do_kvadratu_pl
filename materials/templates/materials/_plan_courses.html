@@ -1,13 +1,15 @@
-{% comment %}Вибір курсів для навчального плану: курс (клас дерева), з якої теми починати і чи чергувати курси.
+{% comment %}Вибір курсів для навчального плану: курс (клас дерева; НМТ — алгебра й геометрія окремо), з якої теми починати, з якого курсу перший урок
+і чи чергувати курси.
 preselect — позначити класи учня (форма «Скласти план»).{% endcomment %}
 <div class="plan-courses" data-plan-courses>
-    {% for grade in grades %}
+    {% for course in courses %}
     <div class="plan-course">
-        <label><input type="checkbox" name="grade" value="{{ grade.id }}"{% if preselect and grade.is_own %} checked{% endif %}> {{ grade.short_label }}</label>
-        <select name="start_{{ grade.id }}" aria-label="З якої теми почати: {{ grade.short_label }}" data-start>
+        <label><input type="checkbox" name="grade" value="{{ course.key }}"{% if preselect and course.is_own %} checked{% endif %}> {{ course.label }}</label>
+        <select name="start_{{ course.key }}" aria-label="З якої теми почати: {{ course.label }}" data-start>
             <option value="">з початку курсу</option>
-            {% for t in grade.topics %}<option value="{{ t.id }}">з теми: {{ t.name|truncatechars:60 }}</option>{% endfor %}
+            {% for t in course.topics %}<option value="{{ t.id }}">з теми: {{ t.name|truncatechars:60 }}</option>{% endfor %}
         </select>
+        <label class="plan-first" data-first><input type="radio" name="first" value="{{ course.key }}"> перший урок</label>
     </div>
     {% endfor %}
     <label class="plan-alternate"><input type="checkbox" name="alternate" value="1"{% if preselect and own_courses > 1 %} checked{% endif %}> Чергувати курси: алгебра, геометрія, алгебра, геометрія…</label>

@@ -1,4 +1,5 @@
 import random
+import re
 
 from django import template
 
@@ -26,3 +27,13 @@ def practice_label(material):
     """Напис кнопки практики: «Практика НМТ» для курсу НМТ, «Тренажер» / «Практика» — для шкільних тем."""
     from materials.practice import practice_button_label
     return practice_button_label(material)
+
+
+PLAIN_NUMBER = re.compile(r'^\s*[-−]?\d+([.,]\d+)?\s*$')
+
+
+@register.filter
+def short_keyboard(question):
+    """Клавіатура для короткої відповіді на телефоні й планшеті: цифрова («decimal») — лише коли відповідь —
+    звичайне число чи десятковий дріб; звичайний дріб («4/9») чи текст на цифровій клавіатурі не набрати."""
+    return 'decimal' if PLAIN_NUMBER.match(question.correct_short_answer or '') else 'text'

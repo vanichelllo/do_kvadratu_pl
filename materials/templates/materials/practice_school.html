@@ -75,6 +75,8 @@
         .text-input { padding: 10px 12px; font-size: 1.1rem; border: 2px solid var(--brand-blue); border-radius: 8px; text-align: center; width: 140px; }
         .text-input.wide { width: 100%; max-width: 360px; text-align: left; }
         .short-wrap { text-align: center; }
+        .kb-toggle { margin-top: 8px; background: none; border: 1.5px solid var(--border-color, #dce3ec); border-radius: 8px;
+            padding: 5px 10px; font: inherit; font-size: 0.8rem; color: var(--text-muted, #666); cursor: pointer; }
         .correct-note { font-size: 0.9rem; color: var(--brand-green); font-weight: 700; }
 
         /* Пряма і площина */
@@ -236,8 +238,9 @@
                 </div>
             {% elif question.question_type == 'SHORT' %}
                 <div class="short-wrap">
-                    <div class="how">{% if actor.lesson %}Відповідь — число (дріб через кому):{% else %}Впиши відповідь (число; дріб — через кому):{% endif %}</div>
-                    <input type="text" id="short-input" class="text-input" autocomplete="off" inputmode="decimal">
+                    <div class="how">{% if actor.lesson %}Відповідь — число{% else %}Впиши відповідь — число{% endif %}: десятковий дріб — через кому (0,5), звичайний — через / (4/9).</div>
+                    <input type="text" id="short-input" class="text-input" autocomplete="off" inputmode="{{ question|short_keyboard }}">
+                    <div><button type="button" class="kb-toggle" data-kb-toggle aria-label="Перемкнути клавіатуру: цифри або букви">⌨ 123 ⇄ абв</button></div>
                 </div>
             {% else %}
                 <div id="widget"></div>
@@ -384,6 +387,11 @@
                     box.appendChild(f);
                 });
                 widget.appendChild(box);
+                const toggle = el('button', 'kb-toggle', '⌨ 123 ⇄ абв');
+                toggle.type = 'button';
+                toggle.dataset.kbToggle = '';
+                toggle.setAttribute('aria-label', 'Перемкнути клавіатуру: цифри або букви');
+                widget.appendChild(toggle);
             },
             read() {
                 const values = [...widget.querySelectorAll('input')].map(i => i.value.trim());
@@ -773,6 +781,18 @@
                 closeErrorModal();
             }).catch(() => alert("Помилка зв'язку із сервером."));
         }
+
+        // Планшет: цифрова клавіатура без «/» і букв — кнопка перемикає клавіатуру полів відповіді поруч
+        document.addEventListener('click', (e) => {
+            const button = e.target.closest('[data-kb-toggle]');
+            if (!button) return;
+            const box = button.closest('.short-wrap') || button.parentElement;
+            const inputs = [...box.querySelectorAll('input.text-input')];
+            const next = inputs[0] && inputs[0].inputMode === 'decimal' ? 'text' : 'decimal';
+            inputs.forEach(i => { i.inputMode = next; });
+            const target = inputs.find(i => !i.value) || inputs[0];
+            if (target) { target.blur(); setTimeout(() => target.focus(), 50); }
+        });
     </script>
 </body>
 </html>

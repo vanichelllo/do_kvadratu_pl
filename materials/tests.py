@@ -2928,6 +2928,21 @@ class SchoolPracticeTests(BaseTestCase):
         topic = make_school_topic('3.2. Формула коренів', 8, 302, subject='Алгебра (7-9 класи)')
         return topic, self.make_lesson(topic)
 
+    def test_short_answer_keyboard_fits_the_answer(self):
+        """Планшет: для звичайного дробу «4/9» — клавіатура з «/» і буквами, для числа — цифрова; перемикач є завжди."""
+        from .templatetags.question_tags import short_keyboard
+        for level in (1, 2, 3):
+            for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+                Question.objects.create(text=f'7/10 − 2/5 ({skill}{level})', question_type='SHORT',
+                                        correct_short_answer='3/10', curriculum_topic=self.topic2, difficulty=level,
+                                        nush_skill=skill)
+        page = self.client.get(f'/practice/{self.lesson.id}/')
+        self.assertContains(page, 'id="short-input" class="text-input" autocomplete="off" inputmode="text"')
+        self.assertContains(page, 'data-kb-toggle')
+        self.assertContains(page, 'звичайний — через / (4/9)')
+        self.assertEqual([short_keyboard(Question(correct_short_answer=a)) for a in ('0,5', '-12', '3.75', '1/2', 'x=2', '')],
+                         ['decimal', 'decimal', 'decimal', 'text', 'text', 'text'])
+
     def test_profiles_and_button_labels(self):
         from .practice import practice_button_label, practice_profile
         self.assertEqual(practice_profile(self.lesson), 'A')
@@ -4962,7 +4977,29 @@ class StudyPlanTests(BaseTestCase):
         self.student.course = 'nmt'
         self.student.save()
         page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
-        self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')
+        self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')   # без розділів геометрії — один курс
+
+    def test_nmt_splits_into_algebra_and_geometry(self):
+        """НМТ у дереві — один клас; у плані — «НМТ · Алгебра» і «НМТ · Геометрія» (розділи 8–10), по черзі."""
+        algebra = [make_nmt_topic(name, chapter_order=n) for n, name in
+                   ((1, '1. Числові множини'), (1, '2. Відсотки'), (2, '6. Лінійні рівняння'))]
+        grade = algebra[0].chapter.grade
+        plan_chapter = CurriculumChapter.objects.create(grade=grade, name='Розділ 8. Планіметрія', order=8)
+        solid_chapter = CurriculumChapter.objects.create(grade=grade, name='Розділ 9. Стереометрія', order=9)
+        geometry = [CurriculumTopic.objects.create(chapter=plan_chapter, name='30. Фігури', order=1),
+                    CurriculumTopic.objects.create(chapter=plan_chapter, name='31. Трикутники', order=2),
+                    CurriculumTopic.objects.create(chapter=solid_chapter, name='40. Призма', order=1)]
+        self.student.course = 'nmt'
+        self.student.save()
+        page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
+        self.assertContains(page, f'value="{grade.id}a" checked> НМТ · Алгебра')
+        self.assertContains(page, f'value="{grade.id}g" checked> НМТ · Геометрія')
+        self.assertContains(page, 'name="alternate" value="1" checked')
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/', {
+            'grade': [f'{grade.id}a', f'{grade.id}g'], 'alternate': '1', 'first': f'{grade.id}g',
+            f'start_{grade.id}a': algebra[1].id})
+        self.assertEqual(self.names(), ['30. Фігури', '2. Відсотки', '31. Трикутники', '6. Лінійні рівняння',
+                                        '40. Призма'])
 
     def report(self, topic):
         self.client.post('/cabinet/add-report/', {'student_id': self.student.id, 'curriculum_topic': topic.id,
@@ -5193,11 +5230,20 @@ class StudyPlanCoursesTests(BaseTestCase):
         self.assertContains(page, f'value="{self.geo_grade.id}" checked')
         self.assertContains(page, 'name="alternate" value="1" checked')
         self.assertContains(page, f'<option value="{self.algebra[2].id}">з теми: 1.3. Алгебра 3</option>')
+        self.assertContains(page, f'name="first" value="{self.geo_grade.id}"> перший урок')
 
     def test_alternating_courses(self):
         self.build(alternate='1')
         self.assertEqual(self.names(), ['1.1. Алгебра 1', '1.1. Геометрія 1', '1.2. Алгебра 2', '1.2. Геометрія 2',
                                         '1.3. Алгебра 3', '1.3. Геометрія 3', '1.4. Алгебра 4'])
+
+    def test_choose_which_course_comes_first(self):
+        self.build(alternate='1', first=self.geo_grade.id)
+        self.assertEqual(self.names()[:4], ['1.1. Геометрія 1', '1.1. Алгебра 1', '1.2. Геометрія 2', '1.2. Алгебра 2'])
+        self.assertEqual(self.names()[-1], '1.4. Алгебра 4')
+        self.Item.objects.all().delete()
+        self.build(first=self.geo_grade.id)   # без чергування: спершу вся геометрія
+        self.assertEqual(self.names()[:4], ['1.1. Геометрія 1', '1.2. Геометрія 2', '1.3. Геометрія 3', '1.1. Алгебра 1'])
 
     def test_course_after_course_without_alternating(self):
         self.build()
