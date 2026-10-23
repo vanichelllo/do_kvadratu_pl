@@ -4977,7 +4977,29 @@ class StudyPlanTests(BaseTestCase):
         self.student.course = 'nmt'
         self.student.save()
         page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
-        self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')
+        self.assertContains(page, f'value="{nmt.chapter.grade_id}" checked')   # без розділів геометрії — один курс
+
+    def test_nmt_splits_into_algebra_and_geometry(self):
+        """НМТ у дереві — один клас; у плані — «НМТ · Алгебра» і «НМТ · Геометрія» (розділи 8–10), по черзі."""
+        algebra = [make_nmt_topic(name, chapter_order=n) for n, name in
+                   ((1, '1. Числові множини'), (1, '2. Відсотки'), (2, '6. Лінійні рівняння'))]
+        grade = algebra[0].chapter.grade
+        plan_chapter = CurriculumChapter.objects.create(grade=grade, name='Розділ 8. Планіметрія', order=8)
+        solid_chapter = CurriculumChapter.objects.create(grade=grade, name='Розділ 9. Стереометрія', order=9)
+        geometry = [CurriculumTopic.objects.create(chapter=plan_chapter, name='30. Фігури', order=1),
+                    CurriculumTopic.objects.create(chapter=plan_chapter, name='31. Трикутники', order=2),
+                    CurriculumTopic.objects.create(chapter=solid_chapter, name='40. Призма', order=1)]
+        self.student.course = 'nmt'
+        self.student.save()
+        page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
+        self.assertContains(page, f'value="{grade.id}a" checked> НМТ · Алгебра')
+        self.assertContains(page, f'value="{grade.id}g" checked> НМТ · Геометрія')
+        self.assertContains(page, 'name="alternate" value="1" checked')
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/', {
+            'grade': [f'{grade.id}a', f'{grade.id}g'], 'alternate': '1', 'first': f'{grade.id}g',
+            f'start_{grade.id}a': algebra[1].id})
+        self.assertEqual(self.names(), ['30. Фігури', '2. Відсотки', '31. Трикутники', '6. Лінійні рівняння',
+                                        '40. Призма'])
 
     def report(self, topic):
         self.client.post('/cabinet/add-report/', {'student_id': self.student.id, 'curriculum_topic': topic.id,

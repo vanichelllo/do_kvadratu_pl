@@ -1,8 +1,8 @@
 """Навчальний план учня: теми за деревом, які викладач міняє під учня (порядок, пропуск, теми з інших класів, власні
 теми). Дерево тем при цьому не змінюється — план зберігається окремо для кожного учня (StudyPlanItem).
 
-* Склад — кнопкою «Скласти з дерева»: теми класу учня («N клас» — усі шкільні курси класу; НМТ — курс НМТ) у порядку
-  дерева. Теми, з яких уже є звіти заняття, одразу позначаються пройденими.
+* Склад — кнопкою «Скласти з дерева»: теми класу учня («N клас» — усі шкільні курси класу; НМТ — алгебра й
+  геометрія НМТ окремими курсами) у порядку дерева, курси можна чергувати й починати з певної теми. Теми, з яких уже є звіти заняття, одразу позначаються пройденими.
 * Під учня: тема на кілька уроків (lessons), дві-три теми одним уроком (joined — разом з попередньою), повторення
   пройденої теми пізніше (копія теми в плані), «Пропустити» — тему не проводять.
 * Прогрес: звіт заняття з темою — проведено урок цієї теми (mark_reported); тема пройдена, коли проведено всі її
@@ -66,15 +66,52 @@ def grade_topics(grades):
         *TOPIC_ORDER)
 
 
-def course_topics(grades, starts=None, alternate=False, first=None):
-    """Теми обраних класів дерева для плану. starts — {id класу: id теми}: з якої теми починати цей курс
-    (попередні теми курсу в план не потрапляють). alternate — чергувати курси (алгебра, геометрія, алгебра…),
-    інакше — курс за курсом. first — id класу, з якого план починається (інакше — порядок дерева)."""
+# Курс НМТ у дереві — один «клас» без поділу на алгебру й геометрію; на заняттях їх чергують, тож у плані
+# він — два курси. Геометрія НМТ — розділи з такими назвами (решта — алгебра).
+NMT_GEOMETRY_CHAPTERS = ('Планіметрія', 'Стереометрія', 'Координати та вектори')
+
+
+class Course:
+    """Курс для складання плану: клас дерева або частина класу НМТ (алгебра / геометрія). key — значення у формі."""
+
+    def __init__(self, key, label, grade, topics):
+        self.key, self.label, self.grade, self.topics = key, label, grade, topics
+        self.is_own = False
+
+
+def is_nmt_geometry(topic):
+    return any(name in topic.chapter.name for name in NMT_GEOMETRY_CHAPTERS)
+
+
+def plan_courses(grades):
+    """Курси для форми плану в порядку дерева: кожен шкільний клас — курс, НМТ — «НМТ · Алгебра» і «НМТ · Геометрія»."""
+    grades = list(grades)
+    topics = list(grade_topics(grades))
+    courses = []
+    for grade in grades:
+        own = [t for t in topics if t.chapter.grade_id == grade.id]
+        if grade.subject.name != NMT_SUBJECT_NAME:
+            courses.append(Course(str(grade.id), grade.short_label, grade, own))
+            continue
+        algebra = [t for t in own if not is_nmt_geometry(t)]
+        geometry = [t for t in own if is_nmt_geometry(t)]
+        if not geometry:
+            courses.append(Course(str(grade.id), grade.short_label, grade, own))
+            continue
+        courses.append(Course(f'{grade.id}a', 'НМТ · Алгебра', grade, algebra))
+        courses.append(Course(f'{grade.id}g', 'НМТ · Геометрія', grade, geometry))
+    return courses
+
+
+def course_topics(courses, starts=None, alternate=False, first=None):
+    """Теми обраних курсів для плану. starts — {курс: id теми}: з якої теми починати цей курс (попередні теми курсу
+    в план не потрапляють). alternate — чергувати курси (алгебра, геометрія, алгебра…), інакше — курс за курсом.
+    first — курс, з якого план починається (інакше — порядок дерева)."""
     starts = starts or {}
     lists = []
-    for grade in sorted(grades, key=lambda g: (g.id != first, g.subject.order, g.order)):
-        topics = list(grade_topics([grade]))
-        start = next((i for i, t in enumerate(topics) if t.id == starts.get(grade.id)), 0)
+    for course in sorted(courses, key=lambda c: c.key != first):   # sorted стабільний: решта — у порядку дерева
+        topics = course.topics
+        start = next((i for i, t in enumerate(topics) if t.id == starts.get(course.key)), 0)
         lists.append(topics[start:])
     if not alternate:
         return [topic for topics in lists for topic in topics]
@@ -207,15 +244,14 @@ def plan_page(request, student_id):
     items = plan_items(student)
     grades = list(available_grades(request.user))
     own = set(class_grades(student).values_list('id', flat=True))
-    for grade in grades:
-        grade.is_own = grade.id in own
+    courses = plan_courses(grades)
+    for course in courses:
+        course.is_own = course.grade.id in own
     topics = grade_topics(grades)
-    for grade in grades:
-        grade.topics = [t for t in topics if t.chapter.grade_id == grade.id]
     return render(request, 'materials/study_plan.html', {
-        'student': student, 'items': items, 'summary': summary(items), 'grades': grades,
-        'topic_groups': [(grade, grade.topics) for grade in grades],
-        'own_courses': sum(grade.is_own for grade in grades),
+        'student': student, 'items': items, 'summary': summary(items), 'courses': courses,
+        'topic_groups': [(grade, [t for t in topics if t.chapter.grade_id == grade.id]) for grade in grades],
+        'own_courses': sum(course.is_own for course in courses),
         'status_choices': StudyPlanItem.STATUS_CHOICES,
     })
 
@@ -230,16 +266,15 @@ def plan_build(request, student_id):
     """Скласти план з дерева (порожній план) або додати теми ще одного класу в кінець; курси можна чергувати й
     починати кожен з певної теми."""
     student = own_student(request, student_id)
-    ids = [int(value) for value in request.POST.getlist('grade') if value.isdigit()]
-    grades = available_grades(request.user).filter(id__in=ids)
-    if not grades:
+    keys = request.POST.getlist('grade')
+    chosen = [course for course in plan_courses(available_grades(request.user)) if course.key in keys]
+    if not chosen:
         messages.error(request, 'Оберіть хоча б один курс і клас.')
         return back(student)
-    starts = {grade.id: int(value) for grade in grades
-              if (value := request.POST.get(f'start_{grade.id}', '')).isdigit()}
-    first = request.POST.get('first', '')
-    topics = course_topics(grades, starts, alternate=request.POST.get('alternate') == '1',
-                           first=int(first) if first.isdigit() else None)
+    starts = {course.key: int(value) for course in chosen
+              if (value := request.POST.get(f'start_{course.key}', '')).isdigit()}
+    topics = course_topics(chosen, starts, alternate=request.POST.get('alternate') == '1',
+                           first=request.POST.get('first') or None)
     with transaction.atomic():
         if request.POST.get('replace') == '1':
             student.plan_items.all().delete()
