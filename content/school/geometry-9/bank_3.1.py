@@ -299,7 +299,7 @@ TASKS = [
     },
     {
         "type": "TF", "difficulty": 3, "skill": "ANALYZE",
-        "text": r"Сторона $c$ лежить проти кута $\gamma$. Правда чи ні?",
+        "text": r"Сторона $c$ трикутника лежить проти кута $\gamma$. Чи правильний висновок про кут?",
         "statements": [(r"Якщо $a^2 + b^2 - c^2 = ab$, то $\gamma = 60^\circ$", True),
                        (r"Якщо $a^2 + b^2 - c^2 = -ab$, то $\gamma = 120^\circ$", True),
                        (r"Якщо $a^2 + b^2 - c^2 = 2ab$, то $\gamma = 60^\circ$", False)],
