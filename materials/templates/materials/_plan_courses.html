@@ -1,0 +1,14 @@
+{% comment %}Вибір курсів для навчального плану: курс (клас дерева), з якої теми починати і чи чергувати курси.
+preselect — позначити класи учня (форма «Скласти план»).{% endcomment %}
+<div class="plan-courses" data-plan-courses>
+    {% for grade in grades %}
+    <div class="plan-course">
+        <label><input type="checkbox" name="grade" value="{{ grade.id }}"{% if preselect and grade.is_own %} checked{% endif %}> {{ grade.short_label }}</label>
+        <select name="start_{{ grade.id }}" aria-label="З якої теми почати: {{ grade.short_label }}" data-start>
+            <option value="">з початку курсу</option>
+            {% for t in grade.topics %}<option value="{{ t.id }}">з теми: {{ t.name|truncatechars:60 }}</option>{% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+    <label class="plan-alternate"><input type="checkbox" name="alternate" value="1"{% if preselect and own_courses > 1 %} checked{% endif %}> Чергувати курси: алгебра, геометрія, алгебра, геометрія…</label>
+</div>
