@@ -7,7 +7,9 @@
 Перехід: один раз імпортувати майбутні уроки з таблиці (CSV вкладки, рядки «Ще рано») — import_rows. Регулярні
 уроки учня (той самий день тижня, час і тривалість) стають постійним заняттям, решта — разовими. Дати серії, яких
 у таблиці немає (канікули), позначаються скасованими. Учень з таблиці зіставляється з учнем сайту за іменем;
-ім'я з таблиці запам'ятовується (TutorStudentRequest.sheet_name), і таблиця далі отримує саме його."""
+ім'я з таблиці запам'ятовується (TutorStudentRequest.sheet_name), і таблиця далі отримує саме його.
+
+Лише для власника сайту (teachers.is_owner): репетитори таблиці не ведуть, їм усе це не показується."""
 import csv
 import datetime
 import io
@@ -15,7 +17,9 @@ import re
 from collections import Counter, defaultdict
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.db.models import Q
 from django.conf import settings
@@ -60,6 +64,8 @@ def schedule_export(request, token):
             schedule.feed_token('t', int(head[1:])), token):
         raise Http404
     teacher_id = int(head[1:])
+    if not teachers.is_owner(get_user_model().objects.filter(id=teacher_id).first() or AnonymousUser()):
+        raise Http404
     today = timezone.localdate()
     until = today + datetime.timedelta(weeks=schedule.FILL_WEEKS)
     schedule.fill_series(LessonSeries.objects.filter(teacher_id=teacher_id), until=until)
@@ -223,7 +229,7 @@ def import_rows(teacher, plan, mapping):
 def schedule_import(request):
     """Імпорт майбутніх уроків з CSV вкладки «Розклад уроків»: спершу перегляд (хто кому відповідає, скільки
     постійних і разових занять), потім — імпорт."""
-    if not teachers.is_tutor(request.user):
+    if not teachers.is_owner(request.user):
         return redirect('cabinet')
     students = list(teachers.students_of(request.user).order_by('real_name'))
     context = {'students': students, 'export_url': export_url(request.user)}
@@ -268,7 +274,7 @@ def schedule_import(request):
 @login_required
 def sheet_script(request):
     """Скрипт для Google-таблиці (tools/schedule_sheet_sync.gs) — відкрити й скопіювати в Apps Script."""
-    if not teachers.is_tutor(request.user):
+    if not teachers.is_owner(request.user):
         raise Http404
     code = (settings.BASE_DIR / 'tools' / 'schedule_sheet_sync.gs').read_text(encoding='utf-8')
     return HttpResponse(code, content_type='text/plain; charset=utf-8')

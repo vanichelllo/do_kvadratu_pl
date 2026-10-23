@@ -438,6 +438,7 @@ def schedule_week(request):
         'awaiting_report': awaiting_report(request.user),
         'default_date': today if monday <= today <= sunday else monday,
         'feed': teacher_feed_links(request.user),
+        'is_owner': teachers.is_owner(request.user),   # Google-таблиця розкладу — лише власника сайту
     }
     for item in series:
         item.every = WEEKDAYS_EVERY[item.weekday]
