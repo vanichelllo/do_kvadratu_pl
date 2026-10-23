@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Паралельність площин | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; --violet: #8e44ad; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; --violet: #c39bd3; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 14px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.7rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 7px 0; line-height: 1.5; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; }
+        .box > p:first-of-type { margin-top: 0; } .box > p:last-child { margin-bottom: 0; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .math-widget > p:first-child { margin-top: 0; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); display: block; }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); min-width: 0; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 34px; text-align: right; }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+
+        .step, .hidden-answer { display: none; margin: 6px 0; line-height: 1.45; }
+        .step.shown, .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .task-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .readout { font-size: 1.12rem; font-weight: 700; min-height: 1.5em; }
+        .formula { font-size: 1.25rem; text-align: center; margin: 6px 0; }
+        .big-question { font-size: 1.25rem; font-weight: 700; text-align: center; margin-top: 12px; }
+        .muted { color: var(--text-muted); }
+        table.tbl { width: 100%; border-collapse: collapse; }
+        table.tbl th, table.tbl td { border-bottom: 1px solid var(--border-color); padding: 5px 8px; text-align: left; vertical-align: middle; }
+        table.tbl th { color: var(--brand-blue); }
+
+        /* Рисунки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.g { stroke: var(--brand-green); } .curve.y { stroke: var(--brand-yellow); } .curve.r { stroke: var(--warning-red); } .curve.v { stroke: var(--violet); }
+        .curve.thin { stroke-width: 2.4; }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .geo-line { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+        .geo-line.b { stroke: var(--brand-blue); } .geo-line.g { stroke: var(--brand-green); } .geo-line.y { stroke: var(--brand-yellow); } .geo-line.r { stroke: var(--warning-red); } .geo-line.v { stroke: var(--violet); }
+        .geo-line.thick { stroke-width: 4; }
+        .hidden-line { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 5; fill: none; }
+        .geo-dot { fill: currentColor; }
+        .dot-b { fill: var(--brand-blue); } .dot-g { fill: var(--brand-green); } .dot-y { fill: var(--brand-yellow); } .dot-r { fill: var(--warning-red); } .dot-v { fill: var(--violet); }
+        .fill-b { fill: var(--brand-blue); fill-opacity: 0.16; } .fill-g { fill: var(--brand-green); fill-opacity: 0.18; } .fill-y { fill: var(--brand-yellow); fill-opacity: 0.22; } .fill-r { fill: var(--warning-red); fill-opacity: 0.16; } .fill-v { fill: var(--violet); fill-opacity: 0.18; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .svg-note.b { fill: var(--brand-blue); } .svg-note.g { fill: var(--brand-green); } .svg-note.r { fill: var(--warning-red); } .svg-note.y { fill: var(--brand-yellow); } .svg-note.v { fill: var(--violet); }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); } .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; } .angle-arc.r { fill: var(--warning-red); opacity: 0.45; } .angle-arc.none { fill: var(--border-color); opacity: 0.7; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vec { stroke-width: 3.2; stroke-linecap: round; fill: none; stroke: currentColor; }
+        .vec.b { stroke: var(--brand-blue); } .head.b { fill: var(--brand-blue); }
+        .vec.y { stroke: var(--brand-yellow); } .head.y { fill: var(--brand-yellow); }
+        .vec.g { stroke: var(--brand-green); } .head.g { fill: var(--brand-green); }
+        .vec.r { stroke: var(--warning-red); } .head.r { fill: var(--warning-red); }
+        .vec.v { stroke: var(--violet); } .head.v { fill: var(--violet); }
+        .head.k { fill: currentColor; }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.4; }
+        .eval-line { font-size: 1.15rem; font-weight: 700; padding: 4px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 10px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        .plane-a { fill: var(--brand-blue); fill-opacity: 0.13; stroke: var(--brand-blue); stroke-width: 1.6; }
+        .plane-b { fill: var(--brand-green); fill-opacity: 0.15; stroke: var(--brand-green); stroke-width: 1.6; }
+        .plane-name { font-size: 18px; font-weight: 800; font-style: italic; }
+        .plane-name.a { fill: var(--brand-blue); } .plane-name.b { fill: var(--brand-green); }
+        .cube-svg svg { max-height: 300px; }
+        .mid-svg svg { max-height: 250px; }
+        .small-svg svg { max-height: 200px; }
+        .mode-btns .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .tight p { margin: 4px 0; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.3rem; }
+            .slide-body { font-size: 1rem; }
+            .formula { font-size: 1.1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            /* довгі формули на телефоні гортаються вбік у межах рядка */
+            .slide-body p, .step, .eval-line, .quiz-option, .slide-body li { overflow-x: auto; overflow-y: hidden; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (10-11 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Як можуть розміщуватися дві площини</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Два випадки</div>
+                        <p>1) Площини мають спільну точку — тоді (за аксіомою) вони <b>перетинаються по прямій</b>.</p>
+                        <p>2) Площини не мають жодної спільної точки.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Дві площини називають <b>паралельними</b>, якщо вони не перетинаються. Запис: $\alpha \parallel \beta$.</p>
+                        <p>Приклади: підлога і стеля кімнати, протилежні грані куба.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Проблема</div>
+                        <p>Площини нескінченні — «дійти до кінця» і перевірити, що спільних точок немає, неможливо. Потрібна <b>ознака</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="slider-control"><label for="tilt">Нахил $\beta$</label><input type="range" id="tilt" min="-40" max="40" step="2" value="20" oninput="renderPlanes()"><span id="tilt-val"></span></div>
+                    <div class="widget-svg-container">
+                        <svg viewBox="0 0 420 270" id="planes-scene" role="img" aria-label="Площина альфа і площина бета з регульованим нахилом"></svg>
+                    </div>
+                    <p class="readout" id="planes-note"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія: ознака -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Ознака паралельності площин</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема (ознака)</div>
+                        <p>Якщо дві прямі, що <b>перетинаються</b>, однієї площини відповідно паралельні двом прямим другої площини, то ці площини паралельні.</p>
+                        <p class="formula">$a, b \subset \alpha$, $\;a \cap b = M$, $\;a \parallel a_1$, $\;b \parallel b_1$, $\;a_1, b_1 \subset \beta$ $\;\Rightarrow\; \alpha \parallel \beta$</p>
+                    </div>
+                    <div class="math-widget widget-svg-container small-svg">
+                        <svg viewBox="0 0 400 230" id="sign-scene" role="img" aria-label="Площини альфа і бета, прямі a і b у площині альфа, паралельні їм прямі a1 і b1 у площині бета"></svg>
+                    </div>
+                </div>
+                <div class="box example tight" id="proof">
+                    <div class="box-title">Доведення (від супротивного)</div>
+                    <div class="step">1) $a \parallel a_1 \subset \beta$, тож $a \parallel \beta$ (ознака паралельності прямої і площини). Так само $b \parallel \beta$.</div>
+                    <div class="step">2) Припустимо, що $\alpha$ і $\beta$ перетинаються по прямій $c$.</div>
+                    <div class="step">3) Площина $\alpha$ проходить через $a \parallel \beta$ і перетинає $\beta$ по $c$, тому $a \parallel c$. Так само $b \parallel c$.</div>
+                    <div class="step">4) Через точку $M$ проходять дві різні прямі $a$ і $b$, паралельні $c$, — це суперечить аксіомі паралельних.</div>
+                    <div class="step">5) Отже, спільних точок немає: $\alpha \parallel \beta$. $\blacksquare$</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('proof')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Чому прямі мають перетинатися? 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Площина $\alpha$ перетинає $\beta$ по прямій $c$. Які прямі площини $\alpha$ паралельні площині $\beta$?</p>
+                    <div class="btn-row mode-btns">
+                        <button class="btn-secondary on" id="mode-1" onclick="setMode(1)">Дві паралельні прямі</button>
+                        <button class="btn-secondary" id="mode-2" onclick="setMode(2)">Дві, що перетинаються</button>
+                    </div>
+                    <div class="box theorem" id="mode-text"></div>
+                    <div class="box remark">
+                        <div class="box-title">Висновок</div>
+                        <p>Площина, що перетинає $\beta$, містить лише паралельні між собою прямі, паралельні $\beta$ (усі вони паралельні $c$). Тому <b>дві прямі, що перетинаються</b>, паралельні $\beta$, можливі лише при $\alpha \parallel \beta$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="counter-scene" role="img" aria-label="Площини альфа і бета перетинаються по прямій c; прямі площини альфа"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Методи -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Як довести паралельність і як побудувати</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Щоб довести $\alpha \parallel \beta$</div>
+                        <p>знайдіть у $\alpha$ <b>дві прямі, що перетинаються</b>, і доведіть, що вони паралельні двом прямим площини $\beta$ (або самій площині $\beta$).</p>
+                        <p>Паралельність прямих — через середню лінію, паралелограм, пропорційні відрізки (теорема Фалеса).</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Наслідок означення</div>
+                        <p>Якщо $\alpha \parallel \beta$, то <b>будь-яка</b> пряма площини $\alpha$ паралельна площині $\beta$: спільних точок у неї з $\beta$ немає.</p>
+                    </div>
+                </div>
+                <div class="math-widget" id="build">
+                    <p><b>Побудова.</b> Через точку $M \notin \alpha$ провести площину, паралельну $\alpha$.</p>
+                    <div class="widget-svg-container small-svg">
+                        <svg viewBox="0 0 400 220" id="build-scene" role="img" aria-label="Побудова площини через точку M, паралельної площині альфа"></svg>
+                    </div>
+                    <div class="step">1) У площині $\alpha$ беремо дві прямі $a$ і $b$, що перетинаються.</div>
+                    <div class="step">2) Через $M$ проводимо $a_1 \parallel a$ і $b_1 \parallel b$.</div>
+                    <div class="step">3) Площина, що проходить через $a_1$ і $b_1$, паралельна $\alpha$ за ознакою. (Така площина єдина — доведемо в темі 2.4.)</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('build'); renderBuild()">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад: куб -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Приклад 1. Площини в кубі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget">
+                    <p><b>Доведіть</b>, що в кубі $ABCDA_1B_1C_1D_1$ площини $A_1BD$ і $CB_1D_1$ паралельні.</p>
+                    <div class="slider-control"><label for="cube-phi">Поворот</label><input type="range" id="cube-phi" min="-40" max="40" step="2" value="-20" oninput="renderCube()"><span id="cube-phi-val"></span></div>
+                    <div class="widget-svg-container cube-svg">
+                        <svg viewBox="0 0 380 300" id="cube-scene" role="img" aria-label="Куб і два трикутники A1BD та CB1D1"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalNext()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад: тетраедр -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Приклад 2. Середини ребер тетраедра</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">$M$, $N$, $K$ — середини ребер $DA$, $DB$, $DC$ тетраедра $DABC$; $AB = 8$, $BC = 10$, $AC = 12$.</p>
+                    <p><b>а)</b> Доведіть, що $(MNK) \parallel (ABC)$. <b>б)</b> Знайдіть периметр $\triangle MNK$.</p>
+                    <div class="math-widget widget-svg-container mid-svg">
+                        <svg viewBox="0 0 380 260" id="tetra-scene" role="img" aria-label="Тетраедр DABC і трикутник MNK, утворений серединами бічних ребер"></svg>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-2">
+                    <div class="step">$MN$ — середня лінія $\triangle DAB$: $MN \parallel AB$, $MN = \frac12 AB = 4$.</div>
+                    <div class="step">$NK$ — середня лінія $\triangle DBC$: $NK \parallel BC$, $NK = 5$.</div>
+                    <div class="step">Прямі $MN$ і $NK$ площини $MNK$ перетинаються в точці $N$ і паралельні прямим $AB$ і $BC$ площини $ABC$.</div>
+                    <div class="step">За ознакою $(MNK) \parallel (ABC)$.</div>
+                    <div class="step">$MK = \frac12 AC = 6$, тож $P_{MNK} = 4 + 5 + 6 = 15$ — половина периметра $\triangle ABC$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2'); renderTetra()">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Однієї прямої мало</div>
+                        <p>$a \subset \alpha$, $a \parallel \beta$ — ще не означає $\alpha \parallel \beta$: через $a$ проходить безліч площин, і майже всі вони перетинають $\beta$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Двох паралельних прямих мало</div>
+                        <p>Прямі ознаки мають <b>перетинатися</b>. Дві паралельні прямі, паралельні $\beta$, є і в площині, що перетинає $\beta$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Прямі паралельних площин — не обов'язково паралельні</div>
+                        <p>Грані $ABCD$ і $A_1B_1C_1D_1$ куба паралельні, а прямі $AB$ і $B_1C_1$ — <b>мимобіжні</b>.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Не всі грані паралельні</div>
+                        <p>У кубі паралельні лише протилежні грані. Сусідні, як $(ABB_1)$ і $(BCC_1)$, перетинаються по ребру $BB_1$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ: складніше</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$ABCDA_1B_1C_1D_1$ — куб. Яка площина паралельна площині $AA_1D_1$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $ABB_1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $BB_1C_1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $CDD_1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $A_1B_1C_1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $BDD_1$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$(AA_1D_1)$ — грань $AA_1D_1D$. Протилежна грань — $BB_1C_1C$: $AD \parallel BC$, $AA_1 \parallel BB_1$, і ці прямі перетинаються — за ознакою площини паралельні.</p>
+                            <p>Усі інші площини мають з $(AA_1D_1)$ спільну пряму: $AA_1$, $DD_1$, $A_1D_1$ або спільну точку $D$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Прямі $a$ і $b$ лежать у площині $\alpha$ і паралельні площині $\beta$. Яке твердження правильне?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\alpha \parallel \beta$ за будь-якого розміщення $a$ і $b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) якщо $a$ і $b$ перетинаються, то $\alpha \parallel \beta$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\alpha$ і $\beta$ обов'язково перетинаються</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) якщо $a \parallel b$, то $\alpha \parallel \beta$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) прямі $a$ і $b$ мимобіжні</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Якщо $a$ і $b$ перетинаються, площина $\alpha$ не може перетинати $\beta$: інакше обидві прямі були б паралельні лінії перетину $c$ — дві паралельні $c$ прямі через одну точку. Отже, Б.</p>
+                            <p>А і Г хибні: при $a \parallel b$ площини можуть перетинатися (дослідження). В — хибне. Д — прямі однієї площини не бувають мимобіжними.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">На ребрах $DA$, $DB$, $DC$ тетраедра $DABC$ взято точки $M$, $N$, $K$ так, що $DM : MA = DN : NB = DK : KC = 1 : 2$. $AB = 9$, $BC = 12$, $AC = 15$. Знайдіть периметр трикутника $MNK$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $18$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $24$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $36$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$DM : DA = DN : DB = 1 : 3$, тож $\triangle DMN \sim \triangle DAB$: $MN \parallel AB$, $MN = \frac13 AB = 3$. Так само $NK = 4$, $MK = 5$ (і $(MNK) \parallel (ABC)$ за ознакою).</p>
+                            <p>$P = 3 + 4 + 5 = 12$. $18$ — узяли $\frac12$ замість $\frac13$; $24$ — узяли $\frac23$ (відношення $MA : DA$).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про тему -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Дві площини або перетинаються по прямій, або паралельні (не мають спільних точок).</p>
+                    <p><b>Ознака:</b> дві прямі, що перетинаються, однієї площини відповідно паралельні двом прямим другої $\Rightarrow$ площини паралельні.</p>
+                    <p>Якщо $\alpha \parallel \beta$, то кожна пряма площини $\alpha$ паралельна $\beta$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Метод ✍️</div>
+                        <p>Шукаємо в одній площині дві прямі, що перетинаються, паралельні іншій площині: середня лінія, паралелограм, пропорційні відрізки.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Одна пряма або дві паралельні прямі — не доведення. Прямі мають перетинатися.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            const deg = Math.PI / 180;
+            // Число для підпису: кома, справжній мінус
+            const num = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ',').replace('-', '−'); };
+            // Число для формули MathJax: десяткова кома в {,}
+            const tex = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', '{,}'); };
+            // Координатна площина: математичні координати → пікселі SVG
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad, k: (W - 2 * pad) / (x1 - x0) };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y', every = 1) {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 2}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                let i = 0;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX, i++) if (Math.abs(x) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${num(x)}</text>`;
+                i = 0;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY, i++) if (Math.abs(y) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${num(y)}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Графік функції f на [a; b]; розриви й вихід за рамку — розрив лінії
+            function curveSvg(P, f, a, b, cls = '', N = 300) {
+                let svg = '', d = '';
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.5 || y > P.y1 + 0.5) { if (d) svg += `<path d="${d}" class="curve ${cls}"/>`; d = ''; continue; }
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cls}"/>`;
+                return svg;
+            }
+            // Креслярські помічники (пікселі SVG; кути — проти годинникової стрілки, як у математиці)
+            const ln = (p, q, cls = 'geo-line') => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const poly = (pts, cls) => `<polygon points="${pts.map(p => p.join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p, cls = 'geo-dot', r = 4.5) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            function arrow(x1, y1, x2, y2, cls = 'b') {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(14, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            const angNorm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            // Сектор кута у вершині (cx; cy) від напрямку t1 до t2 (кути в радіанах, математичні)
+            function wedge(cx, cy, r, t1, t2, cls = '') {
+                const d = angNorm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            // Напрямок з точки p на точку q (математичний кут для wedge)
+            const dir = (p, q) => Math.atan2(p[1] - q[1], q[0] - p[0]);
+            // Сектор кута при вершині V між променями VA і VB (менший кут)
+            const angleAt = (V, A, B, r, cls = '') => wedge(V[0], V[1], r, dir(V, A), dir(V, B), cls);
+            // Підпис кута — на бісектрисі
+            const angleText = (V, A, B, r, t) => { const a = dir(V, A), m = a + angNorm(dir(V, B) - a) / 2; return label(V[0] + r * Math.cos(m), V[1] - r * Math.sin(m) + 5, t, 'angle-label'); };
+            function rightMark(V, A, B, s = 12) {
+                const t1 = dir(V, A), t2 = dir(V, B);
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${V[0] + ux * s} ${V[1] + uy * s} L${V[0] + (ux + vx) * s} ${V[1] + (uy + vy) * s} L${V[0] + vx * s} ${V[1] + vy * s}" class="right-mark"/>`;
+            }
+            // Риски рівності на відрізку pq (n рисок)
+            function ticks(p, q, n = 1, cls = 'geo-line') {
+                const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+                const ux = (q[0] - p[0]) / L, uy = (q[1] - p[1]) / L; let s = '';
+                for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 5; s += `<line x1="${mx + ux * o - uy * 7}" y1="${my + uy * o + ux * 7}" x2="${mx + ux * o + uy * 7}" y2="${my + uy * o - ux * 7}" class="${cls}" style="stroke-width:2"/>`; }
+                return s;
+            }
+            // Точка на відрізку pq з часткою t
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            // Покрокове розв'язання: STEPS = [[рядок, примітка], …]; [[…]] — підсвітка нового в останньому рядку
+            function stepper(linesId, noteId, STEPS, after) {
+                let shown = 1;
+                const render = () => {
+                    const box = document.getElementById(linesId);
+                    box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                        const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                        return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                    }).join('');
+                    document.getElementById(noteId).innerHTML = STEPS[shown - 1][1];
+                    if (after) after(shown);
+                    typeset([box, document.getElementById(noteId)]);
+                };
+                return { render, next: () => { shown = Math.min(shown + 1, STEPS.length); render(); }, reset: () => { shown = 1; render(); }, get shown() { return shown; } };
+            }
+
+            // --- Просторові рисунки: x — вправо, y — вглиб, z — вгору ---
+            // Поворот навколо вертикальної осі на phi° і нахил погляду e° (паралельна проекція)
+            function view3(phi, e, S, cx, cy) {
+                const cp = Math.cos(phi * deg), sp = Math.sin(phi * deg), ce = Math.cos(e * deg), se = Math.sin(e * deg);
+                const rot = ([x, y, z]) => [x * cp - y * sp, x * sp + y * cp, z];
+                const P = (p) => { const [x, y, z] = rot(p); return [cx + S * x, cy - S * (z * ce + y * se)]; };
+                // Чи дивиться нормаль n на глядача
+                const facing = (n) => { const [, y, z] = rot(n); return -y * ce + z * se > 1e-9; };
+                return { P, facing };
+            }
+            // Те саме, але точка c3 простору — у центрі рисунка W×H
+            function view3c(phi, e, S, W, H, c3) {
+                const v = view3(phi, e, S, 0, 0), c = v.P(c3);
+                return view3(phi, e, S, W / 2 - c[0], H / 2 - c[1]);
+            }
+            const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+            const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+            const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+            const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+            const avg3 = (ps) => ps.reduce((s, p) => [s[0] + p[0] / ps.length, s[1] + p[1] / ps.length, s[2] + p[2] / ps.length], [0, 0, 0]);
+            // Многогранник: V = {A: [x, y, z], …}, F = [['A','B','C','D'], …] (грані); невидимі ребра — штрихом.
+            // opt.labels — підписи вершин (false — без них), opt.skip — назви вершин без підпису
+            function solid(view, V, F, opt = {}) {
+                const C = avg3(Object.values(V)), seen = {};
+                const vis = F.map((f) => {
+                    let n = cross3(sub3(V[f[1]], V[f[0]]), sub3(V[f[2]], V[f[0]]));
+                    if (dot3(n, sub3(avg3(f.map((k) => V[k])), C)) < 0) n = n.map((v) => -v);
+                    return view.facing(n);
+                });
+                F.forEach((f, i) => f.forEach((a, j) => {
+                    const b = f[(j + 1) % f.length], key = [a, b].sort().join('');
+                    seen[key] = seen[key] || { a, b, vis: false };
+                    seen[key].vis = seen[key].vis || vis[i];
+                }));
+                let s = '';
+                Object.values(seen).forEach(({ a, b, vis: v }) => { s += ln(view.P(V[a]), view.P(V[b]), v ? 'geo-line' : 'hidden-line'); });
+                if (opt.labels !== false) {
+                    const c = view.P(C);
+                    Object.entries(V).forEach(([k, p]) => {
+                        if ((opt.skip || []).includes(k)) return;
+                        const q = view.P(p), d = Math.hypot(q[0] - c[0], q[1] - c[1]) || 1;
+                        s += label(q[0] + (q[0] - c[0]) / d * 16, q[1] + (q[1] - c[1]) / d * 16 + 6, k.replace(/(\d)/, (m) => '₀₁₂₃₄₅₆₇₈₉'[m]));
+                    });
+                }
+                return s;
+            }
+            // Вершини куба / прямокутного паралелепіпеда ABCDA₁B₁C₁D₁ (основа ABCD внизу)
+            function boxV(a = 1, b = 1, c = 1) {
+                return { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], A1: [0, 0, c], B1: [a, 0, c], C1: [a, b, c], D1: [0, b, c] };
+            }
+            const BOX_F = [['A', 'B', 'C', 'D'], ['A1', 'B1', 'C1', 'D1'], ['A', 'B', 'B1', 'A1'], ['B', 'C', 'C1', 'B1'], ['C', 'D', 'D1', 'C1'], ['D', 'A', 'A1', 'D1']];
+            const polyP = (view, pts, cls) => poly(pts.map(view.P), cls);
+
+            // Площина як паралелограм із чотирьох точок простору
+            const sheet = (v, pts, cls) => polyP(v, pts, cls);
+            const pname = (v, p, t, c) => { const q = v.P(p); return `<text x="${q[0]}" y="${q[1]}" class="plane-name ${c}">${t}</text>`; };
+            const seg3 = (v, p, q, cls = 'geo-line') => ln(v.P(p), v.P(q), cls);
+
+            // --- Слайд 1: нахил площини β ---
+            window.renderPlanes = function () {
+                const t = parseInt(document.getElementById('tilt').value, 10);
+                document.getElementById('tilt-val').textContent = `${num(t)}°`;
+                const v = view3c(-22, 24, 52, 420, 270, [2, 1.5, 1]);
+                const h = 1.6, k = Math.tan(t * deg), z = (x) => h + k * (x - 2);
+                let s = sheet(v, [[-1.5, 0, 0], [5.5, 0, 0], [5.5, 3, 0], [-1.5, 3, 0]], 'plane-a') + pname(v, [-1.2, 0.3, 0], 'α', 'a');
+                let x0 = null, xa = 0, xb = 4;
+                if (t !== 0) {
+                    x0 = 2 - h / k;
+                    if (x0 > 0 && x0 < 4) { if (k > 0) xa = x0; else xb = x0; }
+                }
+                s += sheet(v, [[xa, 0, z(xa)], [xb, 0, z(xb)], [xb, 3, z(xb)], [xa, 3, z(xa)]], 'plane-b') + pname(v, [xb - 0.4, 0.2, z(xb) + 0.25], 'β', 'b');
+                const note = document.getElementById('planes-note');
+                if (t === 0) note.innerHTML = 'Спільних точок немає: $\\alpha \\parallel \\beta$';
+                else if (x0 > -1.5 && x0 < 5.5) {
+                    s += seg3(v, [x0, 0, 0], [x0, 3, 0], 'geo-line r thick');
+                    note.innerHTML = 'Площини перетинаються по прямій (червона)';
+                } else note.innerHTML = 'Перетнуться за межами рисунка — площини нескінченні';
+                document.getElementById('planes-scene').innerHTML = s;
+                typeset([note]);
+            };
+
+            // --- Слайд 2: ознака ---
+            window.renderSign = function () {
+                const v = view3c(-20, 26, 46, 400, 230, [2.5, 1.5, 1.1]);
+                let s = sheet(v, [[0, 0, 0], [5, 0, 0], [5, 3, 0], [0, 3, 0]], 'plane-b') + pname(v, [0.2, 0.3, 0], 'β', 'b');
+                s += sheet(v, [[0, 0, 2.2], [5, 0, 2.2], [5, 3, 2.2], [0, 3, 2.2]], 'plane-a') + pname(v, [0.2, 0.3, 2.2], 'α', 'a');
+                const M = [2, 1.4, 2.2], d1 = [1, 0.25, 0], d2 = [0.7, -0.5, 0];
+                const pt = (p, d, t) => [p[0] + d[0] * t, p[1] + d[1] * t, p[2] + d[2] * t];
+                s += seg3(v, pt(M, d1, -1.8), pt(M, d1, 2.4), 'geo-line b') + seg3(v, pt(M, d2, -1.6), pt(M, d2, 1.8), 'geo-line y');
+                const M1 = [2.8, 1.6, 0];
+                s += seg3(v, pt(M1, d1, -2.2), pt(M1, d1, 1.8), 'geo-line b') + seg3(v, pt(M1, d2, -1.5), pt(M1, d2, 1.9), 'geo-line y');
+                const lab = (p, t, c) => { const q = v.P(p); return label(q[0], q[1], t, 'svg-note ' + c); };
+                s += dot(v.P(M)) + lab([2, 1.4, 2.45], 'M', '') + lab(pt(M, d1, 2.6), 'a', 'b') + lab(pt(M, d2, -1.9), 'b', 'y');
+                s += lab(pt(M1, d1, 2.0), 'a₁', 'b') + lab(pt(M1, d2, -1.8), 'b₁', 'y');
+                document.getElementById('sign-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: контрприклад ---
+            let mode = 1;
+            window.setMode = function (m) {
+                mode = m;
+                [1, 2].forEach((k) => document.getElementById(`mode-${k}`).classList.toggle('on', k === m));
+                renderCounter();
+            };
+            window.renderCounter = function () {
+                const v = view3c(-24, 24, 50, 420, 300, [2.5, 1.5, 0.8]);
+                // α: точки (2,5 − 0,7u; y; u) — перетинає β (z = 0) по прямій c: x = 2,5
+                const A = (u, y) => [2.5 - 0.7 * u, y, u];
+                let s = sheet(v, [[0, 0, 0], [5.5, 0, 0], [5.5, 3, 0], [0, 3, 0]], 'plane-b') + pname(v, [5.1, 0.3, 0], 'β', 'b');
+                s += sheet(v, [A(-0.8, 0), A(2.4, 0), A(2.4, 3), A(-0.8, 3)], 'plane-a') + pname(v, A(2.2, 0.2), 'α', 'a');
+                s += seg3(v, A(0, 0), A(0, 3), 'geo-line r thick');
+                const lab = (p, t, c) => { const q = v.P(p); return label(q[0] + 12, q[1], t, 'svg-note ' + c); };
+                s += lab(A(0, 3), 'c', 'r');
+                s += seg3(v, A(1.0, 0), A(1.0, 3), 'geo-line b') + lab(A(1.0, 3), 'a', 'b');
+                if (mode === 1) {
+                    s += seg3(v, A(1.8, 0), A(1.8, 3), 'geo-line g') + lab(A(1.8, 3), 'b', 'g');
+                } else {
+                    s += seg3(v, A(-0.6, 0.2), A(2.2, 2.8), 'geo-line y') + lab(A(2.2, 2.8), 'b', 'y');
+                    const K = A(0, 0.2 + 2.6 * 0.6 / 2.8);
+                    s += dot(v.P(K), 'dot-r', 6) + lab([K[0] + 0.1, K[1] - 0.35, 0], 'K', 'r');
+                }
+                document.getElementById('counter-scene').innerHTML = s;
+                const text = document.getElementById('mode-text');
+                text.innerHTML = mode === 1
+                    ? '<p>$a \\parallel c$ і $b \\parallel c$, тож $a \\parallel \\beta$ і $b \\parallel \\beta$. Але $\\alpha$ перетинає $\\beta$! Двох паралельних прямих <b>не досить</b>.</p>'
+                    : '<p>Пряма $b$ перетинає $a$, отже, не паралельна $c$ і перетинає $\\beta$ у точці $K$. Тому в площині, що перетинає $\\beta$, прямих, які перетинаються і обидві паралельні $\\beta$, <b>немає</b>.</p>';
+                typeset([text]);
+            };
+
+            // --- Слайд 4: побудова ---
+            window.renderBuild = function () {
+                const k = document.querySelectorAll('#build .step.shown').length;
+                const v = view3c(-20, 26, 44, 400, 220, [2.5, 1.5, 1.1]);
+                const M = [2.6, 1.5, 2.2], O = [2.2, 1.4, 0], d1 = [1, 0.2, 0], d2 = [0.6, -0.55, 0];
+                const pt = (p, d, t) => [p[0] + d[0] * t, p[1] + d[1] * t, p[2] + d[2] * t];
+                let s = sheet(v, [[0, 0, 0], [5, 0, 0], [5, 3, 0], [0, 3, 0]], 'plane-a') + pname(v, [0.2, 0.3, 0], 'α', 'a');
+                if (k >= 3) s += sheet(v, [[0, 0, 2.2], [5, 0, 2.2], [5, 3, 2.2], [0, 3, 2.2]], 'plane-b') + pname(v, [0.2, 0.3, 2.2], 'β', 'b');
+                const lab = (p, t, c) => { const q = v.P(p); return label(q[0], q[1], t, 'svg-note ' + c); };
+                if (k >= 1) s += seg3(v, pt(O, d1, -2), pt(O, d1, 2.4), 'geo-line b') + seg3(v, pt(O, d2, -1.4), pt(O, d2, 1.9), 'geo-line y') + lab(pt(O, d1, 2.6), 'a', 'b') + lab(pt(O, d2, -1.7), 'b', 'y');
+                if (k >= 2) s += seg3(v, pt(M, d1, -2), pt(M, d1, 2.2), 'geo-line b') + seg3(v, pt(M, d2, -1.4), pt(M, d2, 1.8), 'geo-line y') + lab(pt(M, d1, 2.4), 'a₁', 'b') + lab(pt(M, d2, -1.7), 'b₁', 'y');
+                s += dot(v.P(M), 'dot-r', 5) + lab([2.6, 1.5, 2.5], 'M', 'r');
+                document.getElementById('build-scene').innerHTML = s;
+            };
+
+            // --- Слайд 5: куб ---
+            const STEPS = [
+                ['$BB_1 \\parallel DD_1$, $\\;BB_1 = DD_1$', 'Бічні ребра куба паралельні й рівні'],
+                ['$BB_1D_1D$ — паралелограм $\\Rightarrow$ [[$BD \\parallel B_1D_1$]]', 'Протилежні сторони паралелограма паралельні'],
+                ['$A_1D_1 \\parallel BC$, $\\;A_1D_1 = BC$ $\\Rightarrow$ [[$A_1B \\parallel D_1C$]]', '$A_1BCD_1$ — паралелограм'],
+                ['$BD \\cap A_1B = B$, обидві в площині $A_1BD$', 'Прямі ознаки мають перетинатися — так і є'],
+                ['[[$(A_1BD) \\parallel (CB_1D_1)$]]', 'За ознакою паралельності площин'],
+            ];
+            const ev = stepper('eval-lines', 'eval-note', STEPS, () => renderCube());
+            window.evalNext = ev.next; window.evalReset = ev.reset;
+            window.renderCube = function () {
+                const phi = parseInt(document.getElementById('cube-phi').value, 10);
+                document.getElementById('cube-phi-val').textContent = `${num(phi)}°`;
+                const V = boxV(), v = view3c(phi, 24, 150, 380, 300, [0.5, 0.5, 0.5]), k = ev.shown;
+                let s = polyP(v, [V.A1, V.B, V.D], 'fill-b') + polyP(v, [V.C, V.B1, V.D1], 'fill-g');
+                s += solid(v, V, BOX_F);
+                const hl = (p, q, c) => seg3(v, V[p], V[q], `geo-line ${c} thick`);
+                s += hl('A1', 'B', 'b') + hl('B', 'D', 'b') + hl('D', 'A1', 'b') + hl('C', 'B1', 'g') + hl('B1', 'D1', 'g') + hl('D1', 'C', 'g');
+                if (k >= 2) s += hl('B', 'D', 'y') + hl('B1', 'D1', 'y');
+                if (k >= 3) s += hl('A1', 'B', 'r') + hl('D1', 'C', 'r');
+                document.getElementById('cube-scene').innerHTML = s;
+            };
+
+            // --- Слайд 6: тетраедр ---
+            window.renderTetra = function () {
+                const k = document.querySelectorAll('#ex-2 .step.shown').length;
+                const V = { A: [0, 0, 0], B: [4, -0.6, 0], C: [3, 2.6, 0], D: [1.8, 0.8, 3.2] };
+                const v = view3c(-12, 20, 56, 380, 260, [2, 0.9, 1.3]);
+                let s = solid(v, V, [['A', 'B', 'C'], ['A', 'B', 'D'], ['B', 'C', 'D'], ['A', 'C', 'D']]);
+                const M = mix3(V.D, V.A, 0.5), N = mix3(V.D, V.B, 0.5), K = mix3(V.D, V.C, 0.5);
+                s += polyP(v, [M, N, K], 'fill-g') + seg3(v, M, N, `geo-line ${k >= 1 ? 'y' : 'g'} thick`) + seg3(v, N, K, `geo-line ${k >= 2 ? 'r' : 'g'} thick`) + seg3(v, M, K, 'geo-line g');
+                if (k >= 1) s += seg3(v, V.A, V.B, 'geo-line y thick');
+                if (k >= 2) s += seg3(v, V.B, V.C, 'geo-line r thick');
+                [[M, 'M', -14], [N, 'N', 16], [K, 'K', 16]].forEach(([p, t, dx]) => { const q = v.P(p); s += dot(q) + label(q[0] + dx, q[1] - 4, t); });
+                document.getElementById('tetra-scene').innerHTML = s;
+            };
+
+            const RENDER = { 1: renderPlanes, 2: renderSign, 3: renderCounter, 4: renderBuild, 5: ev.render, 6: renderTetra };
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (RENDER[currentSlide]) RENDER[currentSlide]();
+                typeset();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Кроки прикладів з'являються по одному: <div id="ex-1"><div class="step">…</div>… <button onclick="nextStep('ex-1')">
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+                typeset();
+            };
+            // Відповідь по кліку
+            window.reveal = function (id) { document.getElementById(id).classList.add('shown'); typeset(); };
+
+            // Вкладки практики: кнопки id="tab-1"…, блоки class="practice-task" (перший — з класом on)
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    const tab = document.getElementById(`tab-${k + 1}`);
+                    if (tab) tab.classList.toggle('on', k + 1 === n);
+                });
+                typeset();
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                typeset();
+            };
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
