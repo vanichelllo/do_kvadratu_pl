@@ -2928,6 +2928,21 @@ class SchoolPracticeTests(BaseTestCase):
         topic = make_school_topic('3.2. Формула коренів', 8, 302, subject='Алгебра (7-9 класи)')
         return topic, self.make_lesson(topic)
 
+    def test_short_answer_keyboard_fits_the_answer(self):
+        """Планшет: для звичайного дробу «4/9» — клавіатура з «/» і буквами, для числа — цифрова; перемикач є завжди."""
+        from .templatetags.question_tags import short_keyboard
+        for level in (1, 2, 3):
+            for skill in ('MODEL', 'SOLVE', 'ANALYZE'):
+                Question.objects.create(text=f'7/10 − 2/5 ({skill}{level})', question_type='SHORT',
+                                        correct_short_answer='3/10', curriculum_topic=self.topic2, difficulty=level,
+                                        nush_skill=skill)
+        page = self.client.get(f'/practice/{self.lesson.id}/')
+        self.assertContains(page, 'id="short-input" class="text-input" autocomplete="off" inputmode="text"')
+        self.assertContains(page, 'data-kb-toggle')
+        self.assertContains(page, 'звичайний — через / (4/9)')
+        self.assertEqual([short_keyboard(Question(correct_short_answer=a)) for a in ('0,5', '-12', '3.75', '1/2', 'x=2', '')],
+                         ['decimal', 'decimal', 'decimal', 'text', 'text', 'text'])
+
     def test_profiles_and_button_labels(self):
         from .practice import practice_button_label, practice_profile
         self.assertEqual(practice_profile(self.lesson), 'A')
