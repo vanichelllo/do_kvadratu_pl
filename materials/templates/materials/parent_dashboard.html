@@ -112,26 +112,6 @@
             </div>
         </div>
     {% endif %}
-<!-- БЛОК: ІНДИВІДУАЛЬНІ УРОКИ (ПРЕЗЕНТАЦІЇ) -->
-    {% if presentations %}
-        <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Матеріали уроків</h6>
-
-        {% for pres in presentations %}
-        <div class="card report-card mb-3" style="border-left: 4px solid #27c93f;">
-            <div class="report-card-body d-flex justify-content-between align-items-center p-3">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark" style="font-size: 1.05rem;">{{ pres.title }}</h6>
-                    <small class="text-muted">{{ pres.created_at|date:"d.m.Y" }}</small>
-                </div>
-                <a href="{% url 'parent_view_presentation' student.parent_token pres.id %}" target="_blank" class="btn btn-sm text-white rounded-pill px-3" style="background-color: #27c93f; font-weight: bold; white-space: nowrap;">
-                    Відкрити
-                </a>
-            </div>
-        </div>
-        {% endfor %}
-
-        <hr class="mt-4 mb-4 text-muted" style="opacity: 0.15;">
-    {% endif %}
     <!-- Презентації тем, які учень уже практикував (НМТ і школа) -->
         {% if passed_materials %}
             <h6 class="text-muted text-uppercase fw-bold mb-3 mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">Пройдені презентації</h6>
@@ -333,7 +313,7 @@
                     <textarea name="text" class="form-control" rows="5" maxlength="1500" placeholder="Напишіть кілька слів про результати та враження..." required style="border-radius: 8px; border: 2px solid #e9ecef; resize: vertical;"></textarea>
                 </div>
 
-                <button type="submit" class="btn w-100 text-white" style="background-color: var(--brand-blue); border-radius: 8px; padding: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                <button type="submit" class="btn w-100 text-white" style="background-color: #4f46e5; border-radius: 8px; padding: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
                     Надіслати відгук
                 </button>
                 <p class="review-note" style="margin: 10px 0 0; font-size: 0.85rem; color: #6c757d; text-align: center;">Відгук з'явиться на сайті після перевірки.</p>

@@ -140,6 +140,14 @@ def regenerate_parent_links(modeladmin, request, queryset):
                               f"скопіюйте нові в кабінеті й надішліть батькам.")
 
 
+@admin.action(description="📋 Батькам — лише звіти від сьогодні (старі сховати)")
+def hide_old_reports(modeladmin, request, queryset):
+    today = timezone.localdate()
+    count = queryset.update(reports_since=today)
+    messages.success(request, f"Учнів: {count}. Батьки бачать звіти від {today:%d.%m.%Y}; старі звіти лишилися в базі "
+                              f"(повернути — очистити поле «Звіти для батьків — з дати»).")
+
+
 @admin.register(TutorStudentRequest)
 class TutorStudentRequestAdmin(admin.ModelAdmin):
     list_display = ('user', 'real_name', 'course', 'teacher', 'status', 'created_at', 'parent_token')
@@ -148,7 +156,8 @@ class TutorStudentRequestAdmin(admin.ModelAdmin):
     raw_id_fields = ('teacher',)
     search_fields = ('user__email', 'real_name', 'sheet_name')
     readonly_fields = ('parent_token',)
-    actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links]
+    actions = [approve_student_requests, reject_student_requests, revoke_student_access, regenerate_parent_links,
+               hide_old_reports]
 
 
 # ==========================================
