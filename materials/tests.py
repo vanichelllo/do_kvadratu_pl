@@ -5160,3 +5160,59 @@ class SheetSyncTests(BaseTestCase):
         result = subprocess.run(['node', str(settings.BASE_DIR / 'tools' / 'schedule_sheet_sync.test.js')],
                                 capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class StudyPlanCoursesTests(BaseTestCase):
+    """План учня 7–11 класу: алгебра й геометрія по черзі; старт курсу з певної теми; «Почати звідси»."""
+
+    def setUp(self):
+        from .models import StudyPlanItem
+        self.Item = StudyPlanItem
+        self.teacher = self.make_user('courses-owner@example.com', is_staff=True)
+        self.student = TutorStudentRequest.objects.create(user=self.make_user('courses-pupil@example.com'),
+                                                          real_name='Учень Восьмий', course='grade_8', status='approved')
+        self.algebra = [make_school_topic(f'1.{n}. Алгебра {n}', 8, 100 + n, subject='Алгебра (7-9 класи)')
+                        for n in range(1, 5)]
+        self.geometry = [make_school_topic(f'1.{n}. Геометрія {n}', 8, 100 + n, subject='Геометрія (7-9 класи)')
+                         for n in range(1, 4)]
+        CurriculumSubject.objects.filter(name='Геометрія (7-9 класи)').update(order=20)
+        CurriculumSubject.objects.filter(name='Алгебра (7-9 класи)').update(order=10)
+        self.alg_grade, self.geo_grade = self.algebra[0].chapter.grade, self.geometry[0].chapter.grade
+        self.client.force_login(self.teacher)
+
+    def names(self):
+        return [item.name for item in self.Item.objects.filter(student=self.student).order_by('position')]
+
+    def build(self, **extra):
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/',
+                         {'grade': [self.alg_grade.id, self.geo_grade.id], **extra})
+
+    def test_build_page_offers_alternating_both_courses(self):
+        page = self.client.get(f'/cabinet/students/{self.student.id}/plan/')
+        self.assertContains(page, f'value="{self.alg_grade.id}" checked')
+        self.assertContains(page, f'value="{self.geo_grade.id}" checked')
+        self.assertContains(page, 'name="alternate" value="1" checked')
+        self.assertContains(page, f'<option value="{self.algebra[2].id}">з теми: 1.3. Алгебра 3</option>')
+
+    def test_alternating_courses(self):
+        self.build(alternate='1')
+        self.assertEqual(self.names(), ['1.1. Алгебра 1', '1.1. Геометрія 1', '1.2. Алгебра 2', '1.2. Геометрія 2',
+                                        '1.3. Алгебра 3', '1.3. Геометрія 3', '1.4. Алгебра 4'])
+
+    def test_course_after_course_without_alternating(self):
+        self.build()
+        self.assertEqual(self.names()[:5], ['1.1. Алгебра 1', '1.2. Алгебра 2', '1.3. Алгебра 3', '1.4. Алгебра 4',
+                                            '1.1. Геометрія 1'])
+
+    def test_start_each_course_from_a_topic(self):
+        self.build(alternate='1', **{f'start_{self.alg_grade.id}': self.algebra[2].id,
+                                     f'start_{self.geo_grade.id}': self.geometry[1].id})
+        self.assertEqual(self.names(), ['1.3. Алгебра 3', '1.2. Геометрія 2', '1.4. Алгебра 4', '1.3. Геометрія 3'])
+
+    def test_start_here_skips_earlier_topics_of_same_course(self):
+        self.build(alternate='1')
+        item = self.Item.objects.get(student=self.student, topic=self.algebra[2])
+        self.client.post(f'/cabinet/plan-item/{item.id}/', {'action': 'start_here'})
+        statuses = {i.name: i.status for i in self.Item.objects.filter(student=self.student)}
+        self.assertEqual((statuses['1.1. Алгебра 1'], statuses['1.2. Алгебра 2']), ('skipped', 'skipped'))
+        self.assertEqual((statuses['1.1. Геометрія 1'], statuses['1.3. Алгебра 3']), ('todo', 'todo'))

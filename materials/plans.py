@@ -66,6 +66,24 @@ def grade_topics(grades):
         *TOPIC_ORDER)
 
 
+def course_topics(grades, starts=None, alternate=False):
+    """Теми обраних класів дерева для плану. starts — {id класу: id теми}: з якої теми починати цей курс
+    (попередні теми курсу в план не потрапляють). alternate — чергувати курси (алгебра, геометрія, алгебра…),
+    інакше — курс за курсом."""
+    starts = starts or {}
+    lists = []
+    for grade in sorted(grades, key=lambda g: (g.subject.order, g.order)):
+        topics = list(grade_topics([grade]))
+        start = next((i for i, t in enumerate(topics) if t.id == starts.get(grade.id)), 0)
+        lists.append(topics[start:])
+    if not alternate:
+        return [topic for topics in lists for topic in topics]
+    merged = []
+    for index in range(max((len(topics) for topics in lists), default=0)):
+        merged += [topics[index] for topics in lists if index < len(topics)]
+    return merged
+
+
 def renumber(student):
     items = list(student.plan_items.order_by('position', 'id'))
     for number, item in enumerate(items, start=1):
@@ -192,9 +210,12 @@ def plan_page(request, student_id):
     for grade in grades:
         grade.is_own = grade.id in own
     topics = grade_topics(grades)
+    for grade in grades:
+        grade.topics = [t for t in topics if t.chapter.grade_id == grade.id]
     return render(request, 'materials/study_plan.html', {
         'student': student, 'items': items, 'summary': summary(items), 'grades': grades,
-        'topic_groups': [(grade, [t for t in topics if t.chapter.grade_id == grade.id]) for grade in grades],
+        'topic_groups': [(grade, grade.topics) for grade in grades],
+        'own_courses': sum(grade.is_own for grade in grades),
         'status_choices': StudyPlanItem.STATUS_CHOICES,
     })
 
@@ -206,17 +227,21 @@ def back(student, anchor=''):
 @login_required
 @require_POST
 def plan_build(request, student_id):
-    """Скласти план з дерева (порожній план) або додати теми ще одного класу в кінець."""
+    """Скласти план з дерева (порожній план) або додати теми ще одного класу в кінець; курси можна чергувати й
+    починати кожен з певної теми."""
     student = own_student(request, student_id)
     ids = [int(value) for value in request.POST.getlist('grade') if value.isdigit()]
     grades = available_grades(request.user).filter(id__in=ids)
     if not grades:
         messages.error(request, 'Оберіть хоча б один курс і клас.')
         return back(student)
+    starts = {grade.id: int(value) for grade in grades
+              if (value := request.POST.get(f'start_{grade.id}', '')).isdigit()}
+    topics = course_topics(grades, starts, alternate=request.POST.get('alternate') == '1')
     with transaction.atomic():
         if request.POST.get('replace') == '1':
             student.plan_items.all().delete()
-        added = append_topics(student, grade_topics(grades))
+        added = append_topics(student, topics)
     messages.success(request, f'✅ До плану {student.real_name} додано тем: {added}.' if added
                      else 'Усі теми цих класів уже є в плані.')
     return back(student)
@@ -271,7 +296,7 @@ def unjoin_next(student, item):
 @require_POST
 def plan_item_update(request, item_id):
     """Дії з темою: стан (пройдено / пропущено / за планом), кількість уроків, разом з попередньою (один урок),
-    повторити пізніше, примітка, вгору / вниз / на позицію, видалити."""
+    почати звідси, повторити пізніше, примітка, вгору / вниз / на позицію, видалити."""
     item = own_item(request, item_id)
     student = item.student
     action = request.POST.get('action', '')
@@ -297,6 +322,13 @@ def plan_item_update(request, item_id):
         item.joined = request.POST.get('joined') == '1' and student.plan_items.filter(
             position__lt=item.position).exists()
         item.save(update_fields=['joined'])
+    elif action == 'start_here':
+        # Учень починає з цієї теми: попередні теми того самого курсу (класу дерева), що ще чекають, — пропущені
+        earlier = student.plan_items.filter(position__lt=item.position, status='todo')
+        if item.topic_id:
+            earlier = earlier.filter(topic__chapter__grade_id=item.topic.chapter.grade_id)
+        skipped = earlier.update(status='skipped')
+        messages.success(request, f'▶ План починається з «{item.name}»; попередніх тем пропущено: {skipped}.')
     elif action == 'repeat':
         # Повторення — копія теми в кінці плану (її можна перемістити ближче)
         last = student.plan_items.aggregate(top=Max('position'))['top'] or 0
