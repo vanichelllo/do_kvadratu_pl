@@ -66,13 +66,13 @@ def grade_topics(grades):
         *TOPIC_ORDER)
 
 
-def course_topics(grades, starts=None, alternate=False):
+def course_topics(grades, starts=None, alternate=False, first=None):
     """Теми обраних класів дерева для плану. starts — {id класу: id теми}: з якої теми починати цей курс
     (попередні теми курсу в план не потрапляють). alternate — чергувати курси (алгебра, геометрія, алгебра…),
-    інакше — курс за курсом."""
+    інакше — курс за курсом. first — id класу, з якого план починається (інакше — порядок дерева)."""
     starts = starts or {}
     lists = []
-    for grade in sorted(grades, key=lambda g: (g.subject.order, g.order)):
+    for grade in sorted(grades, key=lambda g: (g.id != first, g.subject.order, g.order)):
         topics = list(grade_topics([grade]))
         start = next((i for i, t in enumerate(topics) if t.id == starts.get(grade.id)), 0)
         lists.append(topics[start:])
@@ -237,7 +237,9 @@ def plan_build(request, student_id):
         return back(student)
     starts = {grade.id: int(value) for grade in grades
               if (value := request.POST.get(f'start_{grade.id}', '')).isdigit()}
-    topics = course_topics(grades, starts, alternate=request.POST.get('alternate') == '1')
+    first = request.POST.get('first', '')
+    topics = course_topics(grades, starts, alternate=request.POST.get('alternate') == '1',
+                           first=int(first) if first.isdigit() else None)
     with transaction.atomic():
         if request.POST.get('replace') == '1':
             student.plan_items.all().delete()

@@ -5193,11 +5193,20 @@ class StudyPlanCoursesTests(BaseTestCase):
         self.assertContains(page, f'value="{self.geo_grade.id}" checked')
         self.assertContains(page, 'name="alternate" value="1" checked')
         self.assertContains(page, f'<option value="{self.algebra[2].id}">з теми: 1.3. Алгебра 3</option>')
+        self.assertContains(page, f'name="first" value="{self.geo_grade.id}"> перший урок')
 
     def test_alternating_courses(self):
         self.build(alternate='1')
         self.assertEqual(self.names(), ['1.1. Алгебра 1', '1.1. Геометрія 1', '1.2. Алгебра 2', '1.2. Геометрія 2',
                                         '1.3. Алгебра 3', '1.3. Геометрія 3', '1.4. Алгебра 4'])
+
+    def test_choose_which_course_comes_first(self):
+        self.build(alternate='1', first=self.geo_grade.id)
+        self.assertEqual(self.names()[:4], ['1.1. Геометрія 1', '1.1. Алгебра 1', '1.2. Геометрія 2', '1.2. Алгебра 2'])
+        self.assertEqual(self.names()[-1], '1.4. Алгебра 4')
+        self.Item.objects.all().delete()
+        self.build(first=self.geo_grade.id)   # без чергування: спершу вся геометрія
+        self.assertEqual(self.names()[:4], ['1.1. Геометрія 1', '1.2. Геометрія 2', '1.3. Геометрія 3', '1.1. Алгебра 1'])
 
     def test_course_after_course_without_alternating(self):
         self.build()
