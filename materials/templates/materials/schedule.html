@@ -255,11 +255,13 @@
             <p class="sch-note" style="margin: 8px 0 0;">Посилання особисте — не публікуйте його.</p>
         </div>
 
+        {% if is_owner %}
         <div class="sch-card">
             <h2>📊 Google-таблиця</h2>
             <p class="sch-note">Перенесіть майбутні уроки з таблиці на сайт, а таблиця далі сама підтягуватиме розклад звідси (оплати й ціни лишаються в ній).</p>
             <a href="{% url 'schedule_import' %}" class="sch-btn blue small">Таблиця розкладу →</a>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

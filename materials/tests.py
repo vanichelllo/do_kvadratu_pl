@@ -5131,6 +5131,22 @@ class SheetSyncTests(BaseTestCase):
         self.client.force_login(self.vlad.user)
         self.assertEqual(self.client.get('/cabinet/schedule/sheet-script/').status_code, 404)
 
+    def test_sheet_tools_only_for_site_owner(self):
+        from .models import TeacherLicense
+        from .schedule import feed_token
+        tutor = self.make_user('sheet-tutor@example.com')
+        grade = make_school_topic('1.1. Тема', 5, 101).chapter.grade
+        TeacherLicense.objects.create(teacher=tutor, scope='grade', grade=grade,
+                                      valid_until=self.today + datetime.timedelta(days=30))
+        self.assertContains(self.client.get('/cabinet/schedule/'), 'Google-таблиця')
+        self.client.force_login(tutor)
+        self.assertEqual(self.client.get('/cabinet/schedule/').status_code, 200)
+        self.assertNotContains(self.client.get('/cabinet/schedule/'), 'Google-таблиця')
+        self.assertRedirects(self.client.get('/cabinet/schedule/import/'), '/cabinet/', fetch_redirect_response=False)
+        self.assertEqual(self.client.get('/cabinet/schedule/sheet-script/').status_code, 404)
+        self.assertEqual(self.client.get(f'/calendar/{feed_token("t", tutor.id)}.json').status_code, 404)
+        self.assertEqual(self.client.get(f'/calendar/{feed_token("t", tutor.id)}.ics').status_code, 200)   # календар — для всіх
+
     def test_import_page_only_for_teachers(self):
         self.client.force_login(self.vlad.user)
         self.assertRedirects(self.client.get('/cabinet/schedule/import/'), '/cabinet/', fetch_redirect_response=False)
