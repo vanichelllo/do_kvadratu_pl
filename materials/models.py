@@ -670,6 +670,9 @@ class TutorStudentRequest(models.Model):
     real_name = models.CharField(max_length=100, verbose_name="Прізвище та ім'я учня")
     # Як учня записано в Google-таблиці розкладу власника (стовпець «Student»); імпорт ставить сам
     sheet_name = models.CharField(max_length=100, blank=True, verbose_name="Ім'я в таблиці розкладу")
+    # Звіти занять, датовані раніше, батькам не показуються (старі звіти лишаються в базі)
+    reports_since = models.DateField(null=True, blank=True, verbose_name="Звіти для батьків — з дати",
+                                     help_text="Порожньо — усі звіти. Раніші звіти батьки не бачать, у базі вони лишаються.")
     course = models.CharField(max_length=20, choices=COURSE_CHOICES, default='nmt', verbose_name="Напрямок / Клас")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     # Учень за платним супроводом: після цієї дати статус стає «Супровід завершено» (subscriptions.end_expired_support).

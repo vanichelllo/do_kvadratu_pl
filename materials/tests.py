@@ -5262,3 +5262,42 @@ class StudyPlanCoursesTests(BaseTestCase):
         statuses = {i.name: i.status for i in self.Item.objects.filter(student=self.student)}
         self.assertEqual((statuses['1.1. Алгебра 1'], statuses['1.2. Алгебра 2']), ('skipped', 'skipped'))
         self.assertEqual((statuses['1.1. Геометрія 1'], statuses['1.3. Алгебра 3']), ('todo', 'todo'))
+
+
+class ParentPageCleanupTests(BaseTestCase):
+    """Сторінка батьків: без «Матеріалів уроків»; звіти — від дати, яку власник ставить учневі в адмінці."""
+
+    def setUp(self):
+        from .models import StudentPresentation
+        self.kid = self.make_user('cleanup-kid@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.kid, real_name='Олійник Демид', course='grade_6',
+                                                          status='approved')
+        StudentPresentation.objects.create(student=self.kid, title='16.10.2026', html_content='<p>x</p>')
+        topic = make_school_topic('2.3. Дроби', 6, 203)
+        StudentReport.objects.create(student=self.student, curriculum_topic=topic, date=datetime.date(2026, 10, 9),
+                                     teacher_comment='ЗВІТ ЗА УРОК №2 старий формат')
+        StudentReport.objects.create(student=self.student, curriculum_topic=topic, date=datetime.date(2026, 10, 23),
+                                     teacher_comment='Новий звіт')
+        self.url = f'/parents/{self.student.parent_token}/'
+
+    def test_no_lesson_materials_block(self):
+        page = self.client.get(self.url)
+        self.assertNotContains(page, 'Матеріали уроків')
+        self.assertNotContains(page, '/lesson/')
+
+    def test_reports_since_hides_old_reports(self):
+        self.assertContains(self.client.get(self.url), 'ЗВІТ ЗА УРОК №2')
+        self.student.reports_since = datetime.date(2026, 10, 21)
+        self.student.save()
+        page = self.client.get(self.url)
+        self.assertNotContains(page, 'ЗВІТ ЗА УРОК №2')
+        self.assertContains(page, 'Новий звіт')
+        self.assertEqual(StudentReport.objects.count(), 2)   # у базі лишилися
+
+    def test_admin_action_hides_reports_before_today(self):
+        owner = self.make_user('cleanup-owner@example.com', is_staff=True, is_superuser=True)
+        self.client.force_login(owner)
+        self.client.post('/do-kvadratu-secret-control/materials/tutorstudentrequest/', {
+            'action': 'hide_old_reports', '_selected_action': [self.student.id]})
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.reports_since, timezone.localdate())

@@ -2569,11 +2569,8 @@ def parent_link_view(request):
 def parent_dashboard_view(request, parent_token):
     student_request = parent_student(parent_token)
 
-    presentations = StudentPresentation.objects.filter(student=student_request.user).order_by('-created_at')
-
     context = {
         'student': student_request,
-        'presentations': presentations,
         'self_learner': isinstance(student_request, SelfLearner),
     }
 
@@ -2608,9 +2605,12 @@ def parent_dashboard_view(request, parent_token):
             attempt.level_label = (f'рівень: {practice.level_name(grade)}' if grade else
                                    'діагностика' if attempt.answers_json.get('kind') == 'diagnostic' else '')
         context['school_attempts'] = school_attempts
-        reports = list(StudentReport.objects.filter(student=student_request)
-                       .select_related('curriculum_topic__chapter__grade').order_by('-date', '-id')
-                       ) if isinstance(student_request, TutorStudentRequest) else []
+        reports = []
+        if isinstance(student_request, TutorStudentRequest):
+            report_qs = StudentReport.objects.filter(student=student_request)
+            if student_request.reports_since:   # старі звіти (до цієї дати) батькам не показуємо
+                report_qs = report_qs.filter(date__gte=student_request.reports_since)
+            reports = list(report_qs.select_related('curriculum_topic__chapter__grade').order_by('-date', '-id'))
         context['reports'] = reports
         context['last_report'] = reports[0] if reports else None
         context['is_nmt'] = False
