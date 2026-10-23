@@ -215,6 +215,16 @@ def next_slots(student_ids):
             for student_id, items in by_student.items()}
 
 
+def next_slot_topics(student_ids):
+    """{id учня: [[теми дерева уроку], ...]} — наступні уроки плану з усіма темами (об'єднані — разом), по черзі."""
+    by_student = {}
+    for item in (StudyPlanItem.objects.filter(student_id__in=student_ids).exclude(status='skipped')
+                 .select_related('topic__chapter__grade__subject').order_by('position', 'id')):
+        by_student.setdefault(item.student_id, []).append(item)
+    return {student_id: [[item.topic for item in group if item.topic_id] for _, _, group in lesson_slots(items)]
+            for student_id, items in by_student.items()}
+
+
 def student_view(student):
     """План для учня й батьків — без приміток викладача; None, якщо плану немає."""
     items = plan_items(student)

@@ -19,7 +19,7 @@ from users.views import accept_terms_view
 admin.site.login = rate_limited_admin_login(admin.site.login)
 
 # ІМПОРТ З MATERIALS
-from materials import games, plans, schedule, sheet_sync
+from materials import games, plans, prep, schedule, sheet_sync
 from materials.views import (
     AboutView,
     CabinetView,
@@ -189,6 +189,7 @@ urlpatterns = [
     path('cabinet/plan-item/<int:item_id>/', plans.plan_item_update, name='study_plan_item'),
     path('calendar/<str:token>.ics', schedule.calendar_feed, name='calendar_feed'),
     path('calendar/<str:token>.json', sheet_sync.schedule_export, name='schedule_export'),
+    path('cabinet/schedule/prep/', prep.prep_page, name='schedule_prep'),
     path('cabinet/schedule/import/', sheet_sync.schedule_import, name='schedule_import'),
     path('cabinet/schedule/sheet-script/', sheet_sync.sheet_script, name='schedule_sheet_script'),
     path('parents/<uuid:parent_token>/calendar.ics', schedule.parent_calendar_feed, name='parent_calendar_feed'),

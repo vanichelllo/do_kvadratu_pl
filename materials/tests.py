@@ -5301,3 +5301,117 @@ class ParentPageCleanupTests(BaseTestCase):
             'action': 'hide_old_reports', '_selected_action': [self.student.id]})
         self.student.refresh_from_db()
         self.assertEqual(self.student.reports_since, timezone.localdate())
+
+
+class PrepPriorityTests(BaseTestCase):
+    """«Що підготувати»: теми майбутніх занять (з заняття або з плану учня) без презентації чи завдань — за датою."""
+
+    def setUp(self):
+        from .models import Lesson
+        self.Lesson = Lesson
+        self.owner = self.make_user('prep-owner@example.com', is_staff=True)
+        self.pupil = self.make_user('prep-pupil@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Олена Підготовка',
+                                                          course='grade_5', status='approved')
+        self.t1 = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.t2 = make_school_topic('1.2. Цифри', 5, 102)
+        self.t3 = make_school_topic('1.3. Порівняння', 5, 103)
+        self.client.force_login(self.owner)
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/', {'grade': [self.t1.chapter.grade.id]})
+
+    def lesson(self, days, topic=None):
+        start = timezone.make_aware(datetime.datetime.combine(timezone.localdate() + datetime.timedelta(days=days),
+                                                              datetime.time(15)))
+        return self.Lesson.objects.create(teacher=self.owner, student=self.student, start=start, curriculum_topic=topic)
+
+    def test_priority_by_date_with_readiness_and_files(self):
+        self.lesson(10)                       # другий урок плану — 1.2
+        self.lesson(2)                        # перший — 1.1
+        self.lesson(5, topic=self.t3)         # тема задана в занятті
+        self.lesson(40)                       # поза горизонтом (4 тижні)
+        StudyMaterial.objects.create(title='1.2. Цифри', curriculum_topic=self.t2, html_content='<p>урок</p>')
+        for i in range(9):
+            Question.objects.create(text=f'q{i}', question_type='SHORT', correct_short_answer='1',
+                                    curriculum_topic=self.t2)
+        Question.objects.create(text='q', question_type='SHORT', correct_short_answer='1', curriculum_topic=self.t3)
+        page = self.client.get('/cabinet/schedule/prep/')
+        self.assertEqual([row['topic'] for row in page.context['todo']], [self.t1, self.t3])
+        self.assertEqual([row['topic'] for row in page.context['ready']], [self.t2])
+        self.assertContains(page, 'немає презентації')
+        self.assertContains(page, 'мало завдань (1)')
+        self.assertContains(page, 'content/school/math-5/1.1.html')
+        self.assertContains(page, 'чекає деплою')    # 1.1.html уже є в репозиторії
+        self.assertContains(page, 'Зроби урок Математика · 5 клас, 1.1. Натуральні числа')
+        self.assertContains(page, 'Олена Підготовка')
+
+    def test_lessons_beyond_plan_listed_without_topic(self):
+        for days in (1, 2, 3, 4):
+            self.lesson(days)
+        page = self.client.get('/cabinet/schedule/prep/')
+        self.assertEqual(len(page.context['todo']), 3)
+        self.assertEqual(len(page.context['without_topic']), 1)
+        self.assertContains(page, 'Заняття без теми')
+
+    def test_owner_only(self):
+        self.client.force_login(self.pupil)
+        self.assertRedirects(self.client.get('/cabinet/schedule/prep/'), '/cabinet/', fetch_redirect_response=False)
+
+
+class PrepPriorityTests(BaseTestCase):
+    """«Що підготувати»: теми майбутніх занять (з заняття або з плану учня) без презентації чи завдань — за датою."""
+
+    def setUp(self):
+        from .models import Lesson
+        self.Lesson = Lesson
+        self.owner = self.make_user('prep-owner@example.com', is_staff=True)
+        self.pupil = self.make_user('prep-pupil@example.com')
+        self.student = TutorStudentRequest.objects.create(user=self.pupil, real_name='Олена Підготовка',
+                                                          course='grade_5', status='approved')
+        self.t1 = make_school_topic('1.1. Натуральні числа', 5, 101)
+        self.t2 = make_school_topic('1.2. Цифри', 5, 102)
+        self.t3 = make_school_topic('1.3. Порівняння', 5, 103)
+        self.client.force_login(self.owner)
+        self.client.post(f'/cabinet/students/{self.student.id}/plan/build/', {'grade': [self.t1.chapter.grade.id]})
+
+    def lesson(self, days, topic=None):
+        start = timezone.make_aware(datetime.datetime.combine(timezone.localdate() + datetime.timedelta(days=days),
+                                                              datetime.time(15)))
+        return self.Lesson.objects.create(teacher=self.owner, student=self.student, start=start, curriculum_topic=topic)
+
+    def test_priority_by_date_with_readiness_and_files(self):
+        self.lesson(10)                       # другий урок плану — 1.2
+        self.lesson(2)                        # перший — 1.1
+        self.lesson(5, topic=self.t3)         # тема задана в занятті
+        self.lesson(40)                       # поза горизонтом (4 тижні)
+        StudyMaterial.objects.create(title='1.2. Цифри', curriculum_topic=self.t2, html_content='<p>урок</p>')
+        for i in range(9):
+            Question.objects.create(text=f'q{i}', question_type='SHORT', correct_short_answer='1',
+                                    curriculum_topic=self.t2)
+        Question.objects.create(text='q', question_type='SHORT', correct_short_answer='1', curriculum_topic=self.t3)
+        page = self.client.get('/cabinet/schedule/prep/')
+        self.assertEqual([row['topic'] for row in page.context['todo']], [self.t1, self.t3])
+        self.assertEqual([row['topic'] for row in page.context['ready']], [self.t2])
+        self.assertContains(page, 'немає презентації')
+        self.assertContains(page, 'мало завдань (1)')
+        self.assertContains(page, 'content/school/math-5/1.1.html')
+        self.assertContains(page, 'чекає деплою')    # 1.1.html уже є в репозиторії
+        self.assertContains(page, 'Зроби урок Математика · 5 клас, 1.1. Натуральні числа')
+        text = self.client.get('/cabinet/schedule/prep/?format=txt')
+        self.assertIn('attachment', text['Content-Disposition'])
+        body = text.content.decode()
+        self.assertIn('1. ', body)
+        self.assertLess(body.index('1.1. Натуральні числа'), body.index('1.3. Порівняння'))
+        self.assertIn('учні: Олена Підготовка', body)
+        self.assertIn('ГОТОВІ ТЕМИ (1)', body)
+
+    def test_lessons_beyond_plan_listed_without_topic(self):
+        for days in (1, 2, 3, 4):
+            self.lesson(days)
+        page = self.client.get('/cabinet/schedule/prep/')
+        self.assertEqual(len(page.context['todo']), 3)
+        self.assertEqual(len(page.context['without_topic']), 1)
+        self.assertContains(page, 'Заняття без теми')
+
+    def test_owner_only(self):
+        self.client.force_login(self.pupil)
+        self.assertRedirects(self.client.get('/cabinet/schedule/prep/'), '/cabinet/', fetch_redirect_response=False)

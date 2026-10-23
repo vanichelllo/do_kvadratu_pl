@@ -257,6 +257,12 @@
 
         {% if is_owner %}
         <div class="sch-card">
+            <h2>🛠 Що підготувати</h2>
+            <p class="sch-note">Які презентації й завдання потрібні найближчими тижнями — за розкладом і планами учнів, найтерміновіші вгорі.</p>
+            <a href="{% url 'schedule_prep' %}" class="sch-btn blue small">Що підготувати →</a>
+            <a href="{% url 'schedule_prep' %}?format=txt" class="sch-btn small" download>⬇ Текстовим файлом</a>
+        </div>
+        <div class="sch-card">
             <h2>📊 Google-таблиця</h2>
             <p class="sch-note">Перенесіть майбутні уроки з таблиці на сайт, а таблиця далі сама підтягуватиме розклад звідси (оплати й ціни лишаються в ній).</p>
             <a href="{% url 'schedule_import' %}" class="sch-btn blue small">Таблиця розкладу →</a>
