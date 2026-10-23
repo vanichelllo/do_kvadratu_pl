@@ -1,16 +1,42 @@
 {% extends 'base.html' %}
-{% block title %}Для репетиторів — уроки, практика, ДЗ і звіти | ДО КВАДРАТУ{% endblock %}
+{% block title %}Для репетиторів математики — уроки без підготовки, розклад і звіти | ДО КВАДРАТУ{% endblock %}
+{% block meta_description %}Платформа для репетиторів математики: готові презентації й практика на кожну тему 5–11 класів і НМТ, розклад з нагадуваннями учням, навчальний план і звіти для батьків. {{ trial_days }} днів безкоштовно.{% endblock %}
 {% block content %}
 <style>
     .ft { max-width: 1000px; margin: 30px auto 60px; padding: 0 16px; }
     .ft-hero { background: var(--brand-blue); color: #fff; border-radius: 16px; padding: 32px 28px; box-shadow: 8px 8px 0 var(--brand-yellow); }
-    .ft-hero h1 { margin: 0 0 10px; font-size: 1.9rem; color: #fff; }
-    .ft-hero p { margin: 0 0 18px; font-size: 1.1rem; line-height: 1.5; opacity: 0.95; }
-    .ft-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 28px 0; }
-    .ft-card { background: #fff; border: 2px solid #dce3ec; border-radius: 14px; padding: 18px; }
-    .ft-card h3 { margin: 0 0 6px; color: var(--brand-blue); font-size: 1.05rem; }
-    .ft-card p { margin: 0; color: #555; line-height: 1.5; font-size: 0.95rem; }
-    .ft h2 { color: var(--brand-blue); margin: 34px 0 12px; }
+    .ft-hero h1 { margin: 0 0 12px; font-size: 2rem; line-height: 1.2; color: #fff; }
+    .ft-hero p { margin: 0 0 20px; font-size: 1.1rem; line-height: 1.5; opacity: 0.95; max-width: 760px; }
+    .ft-cta { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+    .ft-cta .btn-ghost { color: #fff; font-weight: 800; border: 2px solid #fff; border-radius: 8px; padding: 10px 16px; text-decoration: none; }
+    .ft-trust { margin-top: 14px; font-size: 0.9rem; opacity: 0.85; }
+    .ft h2 { color: var(--brand-blue); margin: 38px 0 12px; }
+    .ft-lead { color: #555; margin: -4px 0 16px; line-height: 1.5; }
+    .ft-swap { display: grid; gap: 10px; }
+    .ft-swap-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.3fr); gap: 12px; align-items: center;
+        background: #fff; border: 2px solid #dce3ec; border-radius: 12px; padding: 12px 16px; }
+    .ft-swap-row .was { color: #8a8f98; text-decoration: line-through; text-decoration-color: #c0392b55; }
+    .ft-swap-row .arrow { color: var(--brand-blue); font-weight: 900; }
+    .ft-swap-row .now { font-weight: 700; color: var(--text-dark); }
+    .ft-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .ft-group { background: #fff; border: 2px solid #dce3ec; border-radius: 14px; padding: 18px; }
+    .ft-group h3 { margin: 0 0 10px; color: var(--brand-blue); font-size: 1.1rem; }
+    .ft-group ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .ft-group li { line-height: 1.45; color: #555; font-size: 0.95rem; }
+    .ft-group li b { color: var(--text-dark); display: block; }
+    .ft-steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .ft-step { background: #fff; border: 2px solid var(--brand-blue); border-radius: 14px; padding: 16px; position: relative; }
+    .ft-step::before { counter-increment: step; content: counter(step); display: inline-flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; border-radius: 50%; background: var(--brand-yellow); color: var(--brand-blue); font-weight: 900; margin-bottom: 8px; }
+    .ft-step b { display: block; color: var(--brand-blue); margin-bottom: 4px; }
+    .ft-step span { color: #555; font-size: 0.93rem; line-height: 1.45; }
+    .ft-demo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; background: #fff8e1;
+        border: 2px solid var(--brand-yellow); border-radius: 14px; padding: 16px 20px; margin-top: 26px; }
+    .ft-demo p { margin: 0; color: var(--text-dark); line-height: 1.45; }
+    .ft-demo a { background: var(--brand-blue); color: var(--brand-yellow); font-weight: 800; border-radius: 8px; padding: 10px 16px; text-decoration: none; white-space: nowrap; }
+    .ft-faq details { background: #fff; border: 2px solid #dce3ec; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+    .ft-faq summary { cursor: pointer; font-weight: 800; color: var(--brand-blue); }
+    .ft-faq p { margin: 10px 0 0; color: #555; line-height: 1.5; }
     .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
     .plan { background: #fff; border: 3px solid var(--brand-blue); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
     .plan h3 { margin: 0; font-size: 1.3rem; color: var(--brand-blue); }
@@ -29,25 +55,78 @@
     .ft-trial button { background: #27ae60; color: #fff; max-width: 360px; }
     .ft-note { color: #666; font-size: 0.9rem; line-height: 1.5; }
     .ft-mine { background: #eef7f0; border-radius: 10px; padding: 12px 16px; margin-top: 16px; }
+    @media (max-width: 600px) {
+        .ft-hero { padding: 22px 18px; }
+        .ft-hero h1 { font-size: 1.45rem; }
+        .ft-hero p { font-size: 1rem; }
+        .ft-cta > a { flex: 1 1 100%; text-align: center; }
+        .ft-swap-row { grid-template-columns: 1fr; gap: 2px; }
+        .ft-swap-row .arrow { display: none; }
+        .ft-demo a { flex: 1 1 100%; text-align: center; }
+    }
 </style>
 <div class="ft">
     <div class="ft-hero">
-        <h1>🧑‍🏫 Усе для занять з математики — в одному місці</h1>
-        <p>Інтерактивні презентації для показу на екрані, практика «сходинками» для учнів, домашні завдання, групові заняття й звіти для батьків з оцінками за критеріями НУШ. 5–11 класи, НМТ — додатком.</p>
-        {% if trial_available %}<a href="#trial" class="btn-brand">Спробувати {{ trial_days }} днів безкоштовно</a>{% endif %}
+        <h1>🧑‍🏫 Уроки математики без підготовки — і без рутини після них</h1>
+        <p>Готова презентація й практика на кожну тему 5–11 класів і НМТ. Розклад з нагадуваннями учням, навчальний план за програмою НУШ і звіти для батьків — в одному кабінеті. Ви займаєтеся математикою, решту робить платформа.</p>
+        <div class="ft-cta">
+            {% if trial_available %}<a href="#trial" class="btn-brand">Спробувати {{ trial_days }} днів безкоштовно</a>{% endif %}
+            {% if demo_lesson %}<a href="{{ demo_lesson.get_absolute_url }}" class="btn-ghost">Подивитися урок</a>{% endif %}
+        </div>
+        <div class="ft-trust">Без картки · до {{ trial_students }} учнів у пробному періоді · усі класи 5–11 і НМТ</div>
     </div>
 
-    <div class="ft-grid">
-        <div class="ft-card"><h3>🖥 Урок з показом екрана</h3><p>Презентація на кожну тему програми НУШ: ви показуєте екран і натискаєте, учень відповідає вголос.</p></div>
-        <div class="ft-card"><h3>🪜 Практика сходинками</h3><p>Кожен учень у своєму темпі: правильно — вище, помилка — підказка. 12 типів завдань, не лише тести.</p></div>
-        <div class="ft-card"><h3>👥 Один учень чи група</h3><p>Практика на уроці для обраного учня або групи — оцінки зараховуються кожному.</p></div>
-        <div class="ft-card"><h3>🏠 Домашні завдання</h3><p>Задали тему до дати — бачите, хто почав, хто виконав і де «вдома краще, ніж на уроці».</p></div>
-        <div class="ft-card"><h3>📝 Звіти для батьків</h3><p>Три оцінки НУШ підставляються з практики; батьки бачать звіти, рівень і прогрес за посиланням.</p></div>
-        <div class="ft-card"><h3>🗺 Діагностика й узагальнення</h3><p>Карта прогалин за минулий клас і практика-узагальнення кожного розділу.</p></div>
+    <h2>Що забирає ваш час — і що бере на себе платформа</h2>
+    <div class="ft-swap">
+        <div class="ft-swap-row"><span class="was">Готувати матеріали до кожного уроку</span><span class="arrow">→</span><span class="now">🖥 Презентація й практика на кожну тему вже готові</span></div>
+        <div class="ft-swap-row"><span class="was">Перевіряти зошити й тести вручну</span><span class="arrow">→</span><span class="now">🪜 Практика перевіряється сама й підлаштовується під учня</span></div>
+        <div class="ft-swap-row"><span class="was">Нагадувати учням про заняття й ДЗ</span><span class="arrow">→</span><span class="now">🔔 Бот у Telegram нагадує сам</span></div>
+        <div class="ft-swap-row"><span class="was">Вести розклад у таблиці чи блокноті</span><span class="arrow">→</span><span class="now">🗓 Тиждень у кабінеті й у календарі телефона</span></div>
+        <div class="ft-swap-row"><span class="was">Писати батькам, як пройшло заняття</span><span class="arrow">→</span><span class="now">📝 Звіт за два кліки — оцінки НУШ підставляються з практики</span></div>
+        <div class="ft-swap-row"><span class="was">Згадувати, що проходили й що далі</span><span class="arrow">→</span><span class="now">🧭 Навчальний план учня за програмою — наступна тема вже в розкладі</span></div>
+    </div>
+
+    <h2>Усе для занять — в одному місці</h2>
+    <div class="ft-groups">
+        <div class="ft-group">
+            <h3>🎓 На уроці</h3>
+            <ul>
+                <li><b>Урок з показом екрана</b>Презентація на кожну тему програми НУШ: ви показуєте й натискаєте, учень відповідає вголос.</li>
+                <li><b>Практика сходинками</b>Кожен у своєму темпі: правильно — вище, помилка — підказка. 12 типів завдань, не лише тести.</li>
+                <li><b>Один учень чи група</b>Практика на уроці для учня або групи — оцінки зараховуються кожному.</li>
+            </ul>
+        </div>
+        <div class="ft-group">
+            <h3>🏠 Між уроками</h3>
+            <ul>
+                <li><b>Домашні завдання</b>Задали тему до дати — бачите, хто почав, хто виконав і де «вдома краще, ніж на уроці».</li>
+                <li><b>Нагадування в Telegram</b>Учневі — про заняття й ДЗ, вам — розклад на завтра.</li>
+                <li><b>Діагностика й узагальнення</b>Карта прогалин за минулий клас і практика-узагальнення кожного розділу.</li>
+            </ul>
+        </div>
+        <div class="ft-group">
+            <h3>📋 Організація</h3>
+            <ul>
+                <li><b>Розклад занять</b>Разові й постійні заняття, перенесення й скасування — учень дізнається одразу. Підписка в Google чи Apple-календарі.</li>
+                <li><b>Навчальний план учня</b>З дерева тем за кілька секунд, далі — під учня: свій порядок, повторення, алгебра й геометрія по черзі.</li>
+                <li><b>Звіти для батьків</b>Батьки бачать звіти, розклад, план і прогрес за посиланням — без реєстрації.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>Як почати за 5 хвилин</h2>
+    <div class="ft-steps">
+        <div class="ft-step"><b>Почніть пробний період</b><span>{{ trial_days }} днів, усі класи й НМТ, без картки.</span></div>
+        <div class="ft-step"><b>Запросіть учня</b><span>Надішліть посилання з кабінету — учень практикується в темах вашої підписки безкоштовно.</span></div>
+        <div class="ft-step"><b>Складіть план і розклад</b><span>План — з дерева тем, заняття — разові чи щотижня.</span></div>
+        <div class="ft-step"><b>Проведіть урок</b><span>Показ екрана й практика — і звіт батькам за два кліки.</span></div>
     </div>
 
     {% if demo_lesson %}
-        <p class="ft-note">Подивитися, як виглядає урок: <a href="{{ demo_lesson.get_absolute_url }}">{{ demo_lesson.title }}</a> (безкоштовний).</p>
+    <div class="ft-demo">
+        <p><b>Подивіться урок очима учня:</b> «{{ demo_lesson.title }}» — безкоштовно, без реєстрації.</p>
+        <a href="{{ demo_lesson.get_absolute_url }}">Відкрити урок →</a>
+    </div>
     {% endif %}
 
     {% if owner_view %}
@@ -117,6 +196,16 @@
         {% endfor %}
     </div>
     {% endif %}
+
+    <h2>Часті запитання</h2>
+    <div class="ft-faq">
+        <details><summary>Чи потрібна картка для пробного періоду?</summary><p>Ні. Пробний період — {{ trial_days }} днів, гроші не списуються, а після нього підписка сама не продовжується.</p></details>
+        <details><summary>Чи платять учні за практику?</summary><p>Ні. Ваші учні практикуються в темах вашої підписки безкоштовно, поки підписка діє.</p></details>
+        <details><summary>Чим відрізняються тарифи?</summary><p>Лише кількістю учнів, яких ви ведете на платформі. Класи 5–11 і всі можливості — у кожному тарифі; НМТ — додатком.</p></details>
+        <details><summary>Можна вести групу?</summary><p>Так: практику на уроці можна проводити для групи — оцінки зараховуються кожному учневі.</p></details>
+        <details><summary>Що бачать батьки?</summary><p>За особистим посиланням без реєстрації: найближчі заняття, навчальний план і прогрес, звіти після занять з оцінками НУШ, результати практики. Ваші примітки до плану батьки не бачать.</p></details>
+        <details><summary>Чи бачу я чужих учнів чи вони — моїх?</summary><p>Ні. Кожен викладач бачить лише своїх учнів, їхні спроби, ДЗ і звіти.</p></details>
+    </div>
 
 </div>
 {% endblock %}
