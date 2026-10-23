@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}Що підготувати | ДО КВАДРАТУ{% endblock %}
+
+{% block content %}
+<style>
+    .prep { margin: 30px 0 60px; }
+    .prep-back { display: inline-block; margin-bottom: 12px; color: var(--brand-blue); font-weight: 700; }
+    .prep-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px;
+        background: var(--brand-blue); color: #fff; padding: 20px 24px; border-radius: 16px;
+        box-shadow: 6px 6px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .prep-head h1 { color: #fff; margin: 0; font-size: 1.6rem; font-weight: 900; text-transform: uppercase; }
+    .prep-head p { margin: 4px 0 0; opacity: 0.9; }
+    .prep-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .prep-nav a { background: #fff; color: var(--brand-blue); font-weight: 800; text-decoration: none; padding: 8px 14px;
+        border-radius: 8px; white-space: nowrap; }
+    .prep-nav a.active { background: var(--brand-yellow); }
+
+    .prep-card { background: #fff; border: 3px solid var(--brand-blue); border-radius: 12px; padding: 18px 20px;
+        box-shadow: 4px 4px 0 var(--brand-yellow); margin-bottom: 24px; }
+    .prep-card h2 { color: var(--brand-blue); font-size: 1.15rem; font-weight: 900; text-transform: uppercase; margin: 0 0 12px; }
+    .prep-card > summary { list-style: none; cursor: pointer; }
+    .prep-card > summary::-webkit-details-marker { display: none; }
+    .prep-card > summary h2 { margin: 0; }
+    .prep-card[open] > summary h2 { margin-bottom: 12px; }
+    .prep-note { color: #6c757d; font-size: 0.85rem; margin: 0 0 10px; }
+
+    .prep-list { list-style: none; margin: 0; padding: 0; counter-reset: prep; }
+    .prep-item { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: 4px 12px; align-items: start;
+        border-left: 4px solid var(--brand-blue); background: #f4f7fb; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+    .prep-item.soon { border-left-color: #c0392b; background: #fdf0ee; }
+    .prep-item.ready { border-left-color: #27ae60; background: #eefaf2; }
+    .prep-num { font-weight: 900; color: var(--brand-blue); font-size: 1.1rem; }
+    .prep-num::before { counter-increment: prep; content: counter(prep) "."; }
+    .prep-topic { font-weight: 800; color: var(--text-dark); overflow-wrap: anywhere; }
+    .prep-grade { color: #6c757d; font-size: 0.8rem; font-weight: 700; }
+    .prep-when { text-align: right; font-weight: 900; color: var(--brand-blue); white-space: nowrap; font-size: 0.9rem; }
+    .prep-when span { display: block; color: #6c757d; font-weight: 700; font-size: 0.78rem; }
+    .prep-item.soon .prep-when { color: #c0392b; }
+    .prep-meta { grid-column: 2 / -1; color: #495057; font-size: 0.85rem; }
+    .prep-meta code { font-size: 0.8rem; background: #e6ebf2; padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+    .prep-badge { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;
+        background: #e6ebf2; color: var(--brand-blue); margin: 3px 3px 0 0; }
+    .prep-badge.bad { background: #fde2de; color: #a93226; }
+    .prep-badge.warn { background: #ffe8cc; color: #b35900; }
+    .prep-badge.ok { background: #d4f5df; color: #1e7e44; }
+
+    .prep-copy textarea { width: 100%; box-sizing: border-box; min-height: 120px; border: 2px solid #dce3ec; border-radius: 8px;
+        padding: 8px; font-family: inherit; font-size: 0.9rem; color: var(--text-dark); background: #fff; }
+    .prep-btn { background: var(--brand-blue); color: var(--brand-yellow); border: none; border-radius: 8px; padding: 8px 14px;
+        font-weight: 800; cursor: pointer; font-family: inherit; font-size: 0.9rem; margin-top: 6px; }
+    .prep-empty { margin: 0; color: #1e7e44; font-weight: 700; }
+
+    @media (max-width: 600px) {
+        .prep-head { padding: 16px; }
+        .prep-head h1 { font-size: 1.3rem; }
+        .prep-nav a { flex: 1; text-align: center; padding: 8px 6px; }
+        .prep-card { padding: 14px; }
+        .prep-item { grid-template-columns: 1.8rem minmax(0, 1fr); }
+        .prep-when { grid-column: 2; text-align: left; }
+        .prep-when span { display: inline; margin-left: 6px; }
+    }
+</style>
+
+<div class="prep">
+    <a href="{% url 'schedule' %}" class="prep-back">← До розкладу</a>
+
+    <div class="prep-head">
+        <div>
+            <h1>🛠 Що підготувати</h1>
+            <p>Теми за розкладом і планами учнів на {{ weeks }} тиж. · не готово: {{ todo|length }} · готово: {{ ready|length }}</p>
+        </div>
+        <nav class="prep-nav" aria-label="На скільки тижнів">
+            {% for w in week_choices %}<a href="?weeks={{ w }}"{% if w == weeks %} class="active" aria-current="true"{% endif %}>{{ w }} тиж.</a>{% endfor %}
+            <a href="?weeks={{ weeks }}&amp;format=txt" download>⬇ .txt</a>
+        </nav>
+    </div>
+
+    <div class="prep-card">
+        <h2>Неготові теми — за датою заняття</h2>
+        <p class="prep-note">Тема — задана в занятті або наступна за навчальним планом учня. Готова, коли на сайті є презентація
+            й щонайменше {{ min_questions }} завдань для практики. Найближчі (до 7 днів) — червоні.</p>
+        {% if todo %}
+        <ol class="prep-list">
+            {% for row in todo %}
+            <li class="prep-item{% if row.days < 7 %} soon{% endif %}">
+                <div class="prep-num" aria-hidden="true"></div>
+                <div>
+                    <div class="prep-topic">{{ row.topic.name }}</div>
+                    <div class="prep-grade">{{ row.topic.chapter.grade.short_label }} · {{ row.topic.chapter.name }}</div>
+                </div>
+                <div class="prep-when">{{ row.first|date:"d.m" }}<span>{% if row.days == 0 %}сьогодні{% elif row.days == 1 %}завтра{% else %}через {{ row.days }} дн.{% endif %}</span></div>
+                <div class="prep-meta">
+                    {% if not row.presentation and row.topic.kind != 'diagnostic' %}<span class="prep-badge bad">немає презентації</span>{% endif %}
+                    {% if not row.special %}{% if row.few_questions %}<span class="prep-badge warn">мало завдань ({{ row.questions }})</span>{% elif not row.questions %}<span class="prep-badge bad">немає завдань</span>{% endif %}{% endif %}
+                    {% if row.awaiting_deploy %}<span class="prep-badge ok">файл уже в репозиторії — чекає деплою</span>{% endif %}
+                    {% if row.nmt %}<span class="prep-badge">НМТ</span>{% endif %}
+                    <div>👥 {{ row.students|join:", " }} · занять: {{ row.lessons|length }}</div>
+                    {% if row.file %}<div>📄 <code>{{ row.file }}</code>{% if row.bank_file %} · <code>{{ row.bank_file }}</code>{% endif %}</div>{% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="prep-empty">✓ На {{ weeks }} тиж. усе готово.</p>
+        {% endif %}
+    </div>
+
+    {% if requests %}
+    <div class="prep-card prep-copy">
+        <h2>Запити для Claude</h2>
+        <p class="prep-note">Скопіюйте один рядок (або кілька) у нову сесію Claude Code — у порядку пріоритету.</p>
+        <textarea id="prep-requests" readonly aria-label="Запити для Claude">{{ requests }}</textarea>
+        <button type="button" class="prep-btn" onclick="navigator.clipboard.writeText(document.getElementById('prep-requests').value); this.textContent='Скопійовано ✓';">Копіювати</button>
+    </div>
+    {% endif %}
+
+    {% if without_topic %}
+    <div class="prep-card">
+        <h2>Заняття без теми</h2>
+        <p class="prep-note">У заняття немає теми, а план учня порожній або закінчився — додайте теми в план, щоб вони потрапили в список.</p>
+        <ul style="margin: 0; padding-left: 20px;">
+            {% for lesson in without_topic %}
+            <li><a href="{% url 'study_plan' lesson.student_id %}">{{ lesson.student.real_name }}</a> — {{ lesson.start|date:"d.m H:i" }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if ready %}
+    <details class="prep-card">
+        <summary><h2>Готові теми ({{ ready|length }}) ▾</h2></summary>
+        <ol class="prep-list" style="counter-reset: prep;">
+            {% for row in ready %}
+            <li class="prep-item ready">
+                <div class="prep-num" aria-hidden="true"></div>
+                <div>
+                    <div class="prep-topic">{{ row.topic.name }}</div>
+                    <div class="prep-grade">{{ row.topic.chapter.grade.short_label }} · 👥 {{ row.students|join:", " }}</div>
+                </div>
+                <div class="prep-when">{{ row.first|date:"d.m" }}<span>{% if not row.special %}завдань: {{ row.questions }}{% endif %}</span></div>
+            </li>
+            {% endfor %}
+        </ol>
+    </details>
+    {% endif %}
+</div>
+{% endblock %}
