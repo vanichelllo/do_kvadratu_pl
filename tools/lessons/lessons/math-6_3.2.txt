@@ -1,0 +1,235 @@
+@@TITLE Пропорція. Основна властивість пропорції
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        .prop { font-size: 1.5rem; text-align: center; margin: 10px 0; }
+        .ext { color: var(--brand-green); font-weight: 800; }
+        .mid { color: var(--brand-blue); font-weight: 800; }
+        .slider-control label { font-weight: 800; min-width: 170px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; min-height: 1.6em; color: var(--brand-green); }
+        .recipe { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
+        .recipe > div { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 10px; padding: 10px; font-weight: 700; }
+        @media (max-width: 760px) { .slider-control label { min-width: 110px; } .prop { font-size: 1.25rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Скільки борошна на 10 млинців? 🥞</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> У рецепті: на $4$ млинці — $100$ г борошна.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я хочу спекти $10$ млинців. Скільки ж борошна взяти?</div>
+                    <p class="big-question">Як не помилитися?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$250$ г! 🎉</div>
+                        <p>Відношення млинців до борошна однакове: $4 : 100 = 10 : x$. Звідси $x = \dfrac{100 \cdot 10}{4} = 250$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="recipe">
+                        <div>🥞 $4$ млинці<br>🌾 $100$ г</div>
+                        <div>🥞 $10$ млинців<br>🌾 $x$ г</div>
+                    </div>
+                    <p class="prop">$\dfrac{4}{100} = \dfrac{10}{x}$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Добутки «навхрест» 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Беремо відношення $a : b$ і множимо обидва члени на $k$. Учні порівнюють добутки крайніх і середніх членів — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Перший член $a$</label><input type="range" id="w-a" min="1" max="9" step="1" value="2" oninput="renderLab()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-b">Другий член $b$</label><input type="range" id="w-b" min="1" max="9" step="1" value="3" oninput="renderLab()"><span id="w-b-val"></span></div>
+                    <div class="slider-control"><label for="w-k">Множник $k$</label><input type="range" id="w-k" min="2" max="6" step="1" value="4" oninput="renderLab()"><span id="w-k-val"></span></div>
+                </div>
+                <div class="math-widget">
+                    <p class="prop" id="lab-prop"></p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealLab()">Порівняти добутки</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Пропорція та її властивість</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Пропорція</b> — рівність двох відношень:</p>
+                    <p class="prop"><span class="ext">$a$</span> $:$ <span class="mid">$b$</span> $=$ <span class="mid">$c$</span> $:$ <span class="ext">$d$</span></p>
+                    <p><span class="ext">$a$ і $d$</span> — крайні члени, <span class="mid">$b$ і $c$</span> — середні.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Основна властивість</div>
+                    <p>Добуток крайніх членів дорівнює добутку середніх:</p>
+                    <p class="prop">$a \cdot d = b \cdot c$</p>
+                    <p>$2 : 3 = 8 : 12$, бо $2 \cdot 12 = 3 \cdot 8 = 24$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Шукаємо невідомий член ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $x : 6 = 10 : 15$</p>
+                    <p>2) $\dfrac{3{,}5}{x} = \dfrac{7}{4}$</p>
+                    <p>Правило: невідомий крайній член = добуток середніх : відомий крайній (і навпаки).</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Множимо навхрест, а не вздовж ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Обережно, пастка!</div>
+                    <p>$\dfrac{x}{5} = \dfrac{6}{10}$. Не $x \cdot 6 = 5 \cdot 10$!</p>
+                    <p>Навхрест: $x \cdot 10 = 5 \cdot 6$, тоді $x = 3$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Лайфхак</div>
+                    <p>Перевір: підстав відповідь — відношення мають бути рівні: $\dfrac{3}{5} = 0{,}6$ і $\dfrac{6}{10} = 0{,}6$ ✓</p>
+                    <p>У задачах однакові величини записуй в одному відношенні: млинці до млинців, грами до грамів.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Чи є пропорцією рівність $3 : 4 = 9 : 12$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) Так</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) Ні</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint"><div class="box-title">Підказка 💡</div><p>Порівняй $3 \cdot 12$ і $4 \cdot 9$.</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Молодець! 🎉</div><p>$3 \cdot 12 = 36 = 4 \cdot 9$.</p></div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Знайди $x$: $x : 8 = 3 : 4$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $\dfrac{3}{32}$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $10\dfrac{2}{3}$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint"><div class="box-title">Підказка 💡</div><p>$x \cdot 4 = 8 \cdot 3$.</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Чудово! 🎉</div><p>$x = \dfrac{8 \cdot 3}{4} = 6$. В — помножили вздовж: $x \cdot 3 = 8 \cdot 4$.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Знайди $x$: $\dfrac{2{,}4}{x} = \dfrac{0{,}8}{5}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $15$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $1{,}5$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $0{,}384$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint"><div class="box-title">Підказка 💡</div><p>$x \cdot 0{,}8 = 2{,}4 \cdot 5$.</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Так! 🎉</div><p>$x = \dfrac{12}{0{,}8} = 15$.</p></div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. За $3$ кг яблук заплатили $84$ грн. Скільки коштують $5$ кг таких яблук?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $50{,}4$ грн</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $86$ грн</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $140$ грн</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint"><div class="box-title">Підказка 💡</div><p>$3 : 84 = 5 : x$.</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Супер! 🎉</div><p>$x = \dfrac{84 \cdot 5}{3} = 140$ грн. А — переплутали члени пропорції.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Пропорція: $a : b = c : d$. Крайні — $a$, $d$; середні — $b$, $c$.</p>
+                    <p class="prop">$a \cdot d = b \cdot c$</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як знайти невідомий член ✍️</div>
+                        <p>1) Множимо навхрест. 2) Ділимо на число біля $x$. 3) Перевіряємо підстановкою.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$\dfrac{x}{5} = \dfrac{6}{10}$: $10x = 30$, а не $6x = 50$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderLab();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const v = (id) => +document.getElementById(id).value;
+            window.renderLab = function () {
+                const a = v('w-a'), b = v('w-b'), k = v('w-k');
+                ['a', 'b', 'k'].forEach(n => document.getElementById(`w-${n}-val`).textContent = v('w-' + n));
+                const p = document.getElementById('lab-prop');
+                p.innerHTML = `$${a} : ${b} = ${a * k} : ${b * k}$`;
+                document.getElementById('lab-out').classList.remove('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([p]);
+            };
+            window.revealLab = function () {
+                const a = v('w-a'), b = v('w-b'), k = v('w-k'), o = document.getElementById('lab-out');
+                o.innerHTML = `Крайні: $${a} \\cdot ${b * k} = ${a * b * k}$<br>Середні: $${b} \\cdot ${a * k} = ${a * b * k}$<br>Однакові! ✓`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$x \\cdot 15 = 6 \\cdot 10$', 'Задача 1: крайні $x$ і $15$, середні $6$ і $10$'],
+                ['$x = \\dfrac{60}{15} = $ [[$4$]]', 'Перевірка: $4 : 6 = \\dfrac{2}{3}$ і $10 : 15 = \\dfrac{2}{3}$ ✓'],
+                ['$7 \\cdot x = 3{,}5 \\cdot 4$', 'Задача 2: множимо навхрест'],
+                ['$x = \\dfrac{14}{7} = $ [[$2$]]', 'Перевірка: $\\dfrac{3{,}5}{2} = 1{,}75$ і $\\dfrac{7}{4} = 1{,}75$ ✓'],
+            ];
+@@INCLUDE steps.js
