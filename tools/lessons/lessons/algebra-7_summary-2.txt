@@ -1,0 +1,241 @@
+@@TITLE Узагальнення: Цілі вирази. Одночлени та многочлени
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+@@SLIDES
+
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 2 — $8$ тем. Клацаємо на тему — учні пригадують головне, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 200" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Оберіть тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Степені й одночлени</div>
+                    <p>$a^m a^n = a^{m+n}$, $\;(a^m)^n = a^{mn}$, $\;(ab)^n = a^n b^n$.</p>
+                    <p>Стандартний вигляд: $-3a^2b^3$ — коефіцієнт і степені різних змінних.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Дії з многочленами</div>
+                    <p>$a(b + c) = ab + ac$; $\;(a + b)(c + d) = ac + ad + bc + bd$.</p>
+                    <p>Мінус перед дужками змінює знаки всіх членів.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Розклад на множники</div>
+                    <p>Спільний множник: $6x^2 - 9x = 3x(2x - 3)$.</p>
+                    <p>Групування: $ax - ay + 2x - 2y = (x - y)(a + 2)$.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Перевірка</div>
+                    <p>Тотожність перевіряйте підстановкою кількох чисел; розклад — множенням.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні визначають, яка тема розділу потрібна, потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Спрощення і значення</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Спростіть і знайдіть значення при $x = -2$: $(x + 3)(x - 1) - x(x + 4)$.</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">$(x + 3)(x - 1) = x^2 + 2x - 3$ (2.6); $\;x(x + 4) = x^2 + 4x$ (2.5).</div>
+                    <div class="step">Різниця (2.4): $x^2 + 2x - 3 - x^2 - 4x = -2x - 3$.</div>
+                    <div class="step">При $x = -2$: $4 - 3 = 1$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Розклад і рівняння</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Розв'яжіть рівняння $x^3 - 3x^2 - 4x + 12 = 0$.</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Групування (2.8): $x^2(x - 3) - 4(x - 3) = (x - 3)(x^2 - 4)$.</div>
+                    <div class="step">$x - 3 = 0$ або $x^2 = 4$.</div>
+                    <div class="step">Корені: $3$, $2$, $-2$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>2.2:</b> $a^2 \cdot a^3 = a^5$, а не $a^6$; $(a^2)^3 = a^6$.</div>
+                <div class="trap-card"><b>2.4:</b> $-(x - 3) = -x + 3$ — змінюємо знаки <b>всіх</b> членів.</div>
+                <div class="trap-card"><b>2.6:</b> $(x + 3)(x + 2) \ne x^2 + 6$ — пропущені «перехресні» добутки.</div>
+                <div class="trap-card"><b>2.7–2.8:</b> $3x^2 + 3x = 3x(x + 1)$ — не губіть $1$; $a(x + y) + 3(x + y)$ — ще не добуток.</div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Спростіть $(-2x^2y)^3$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $-8x^6y^3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $-6x^6y^3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $8x^6y^3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $-8x^5y^3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $-2x^6y^3$</div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$(-2)^3 x^{6} y^3 = -8x^6y^3$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. Розкладіть $12a^2b - 18ab^2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $6ab(2a - 3b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $6a(2ab - 3b^2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $3ab(4a - 6b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $6ab(2a + 3b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $ab(12a - 18b)$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>НСД $6$, $a$, $b$: $6ab(2a - 3b)$. Б, В, Д — не весь множник.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. Знайдіть значення $a^2b + ab^2$, якщо $a + b = 7$, $ab = -3$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $-21$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $21$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $10$</div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$ab(a + b) = -21$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. Розв'яжіть $(x - 2)(x + 3) - x(x + 4) = 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $-6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $0$</div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Розв'язання</div><p>$x^2 + x - 6 - x^2 - 4x = -3x - 6 = 0$, $x = -2$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>Степені: показники додаються при множенні, множаться при піднесенні до степеня.</p>
+                    <p>Многочлени: розкрити дужки, звести подібні. Розклад: спільний множник, групування.</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Спростити — розкрити дужки (2.4–2.6); розв'язати рівняння чи скоротити — розкласти на множники (2.7–2.8).</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>$(x + 3)(x + 2) \ne x^2 + 6$; $3x^2 + 3x \ne 3x \cdot x$.</p></div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+@@JS
+
+            const TOPICS = [{"g": 0, "n": "2.1", "t": "Тотожні вирази", "d": "Рівні при всіх значеннях змінних: 2(a + b) = 2a + 2b."}, {"g": 0, "n": "2.2", "t": "Степінь", "d": "aᵐ · aⁿ = aᵐ⁺ⁿ, aᵐ : aⁿ = aᵐ⁻ⁿ, (aᵐ)ⁿ = aᵐⁿ."}, {"g": 0, "n": "2.3", "t": "Одночлени", "d": "Добуток чисел і степенів змінних; стандартний вигляд."}, {"g": 1, "n": "2.4", "t": "Многочлени ±", "d": "Розкриваємо дужки, зводимо подібні."}, {"g": 1, "n": "2.5", "t": "Одночлен × мн.", "d": "Множимо одночлен на кожен член."}, {"g": 1, "n": "2.6", "t": "Мн. × мн.", "d": "Кожен член на кожен, потім подібні."}, {"g": 2, "n": "2.7", "t": "Спільний множник", "d": "ab + ac = a(b + c)."}, {"g": 2, "n": "2.8", "t": "Групування", "d": "ax + ay + bx + by = (x + y)(a + b)."}];
+            const GROUPS = ["Вирази і степені", "Дії з многочленами", "Розклад на множники"];
+            const GW = 226;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["Спростіть $(2a^3)^2 \\cdot a$.", "2.2–2.3: $4a^7$"], ["Спростіть $(x + 2)(x - 5)$.", "2.6: $x^2 - 3x - 10$"], ["Розкладіть $15m^2 - 10m$.", "2.7: $5m(3m - 2)$"], ["Розкладіть $xy + 3x + 2y + 6$.", "2.8: $(y + 3)(x + 2)$"], ["Спростіть $(3a^2 - a) - (a^2 - 4a)$.", "2.4: $2a^2 + 3a$"], ["Розв\'яжіть $x^2 = 7x$.", "2.7: $x(x - 7) = 0$, $x = 0$ або $7$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
