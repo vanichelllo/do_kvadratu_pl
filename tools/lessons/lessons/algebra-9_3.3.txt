@@ -1,0 +1,263 @@
+@@TITLE Геометрична прогресія
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .slider-control label { font-weight: 800; min-width: 80px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .bar { fill: var(--brand-green); fill-opacity: 0.5; stroke: currentColor; stroke-width: 1; }
+        .bar.neg { fill: var(--warning-red); }
+        .svg-caption { fill: currentColor; font-size: 13px; font-weight: 700; text-anchor: middle; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .vs > div { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px; text-align: center; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Зерна на шахівниці</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Легенда: винахідник шахів попросив $1$ зерно на першу клітинку, $2$ — на другу, $4$ — на третю… щоразу вдвічі більше.</p>
+                    <p>На $64$-й клітинці — $2^{63}$ зерен, це більше, ніж увесь урожай Землі за тисячі років!</p>
+                    <p>Послідовність $1, 2, 4, 8, \ldots$ — не арифметична: кожен член <b>множиться</b> на те саме число. Це <b>геометрична прогресія</b>.</p>
+                </div>
+                <div class="vs">
+                    <div><b>Арифметична</b><br>$+d$<br>$3, 5, 7, 9, \ldots$</div>
+                    <div><b>Геометрична</b><br>$\times q$<br>$3, 6, 12, 24, \ldots$</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Означення і формула $n$-го члена</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><b>Геометрична прогресія</b> — послідовність ненульових чисел, у якій кожен член, починаючи з другого, дорівнює попередньому, помноженому на одне й те саме число $q$ — <b>знаменник</b> прогресії:</p>
+                    <p class="big-formula">$b_{n+1} = b_n \cdot q$, $\;q = \dfrac{b_2}{b_1}$, $\;b_1 \ne 0$, $q \ne 0$</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Формула $n$-го члена</div>
+                    <p class="big-formula">$b_n = b_1 \cdot q^{n-1}$</p>
+                    <p><b>Характеристична властивість</b>: $b_n^2 = b_{n-1} \cdot b_{n+1}$; для додатних членів $b_n$ — середнє геометричне сусідніх.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Сума перших $n$ членів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Формула ($q \ne 1$)</div>
+                    <p class="big-formula">$S_n = \dfrac{b_1(q^n - 1)}{q - 1}$</p>
+                    <p>При $q = 1$: $S_n = n b_1$.</p>
+                </div>
+                <div class="box example" id="why">
+                    <div class="box-title">Чому так</div>
+                    <div class="step">$S_n = b_1 + b_1q + \ldots + b_1q^{n-1}$; $\;qS_n = b_1q + \ldots + b_1q^{n}$.</div>
+                    <div class="step">Віднімемо: $qS_n - S_n = b_1q^n - b_1$ — середні доданки знищилися.</div>
+                    <div class="step">$S_n(q - 1) = b_1(q^n - 1)$ ⟹ формула. ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    <p>Зерна: $S_{64} = 2^{64} - 1$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Як $q$ впливає на прогресію</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо $q$ при $b_1 = 1$. Учні передбачають: зростає, спадає, чи чергуються знаки?</p>
+                    <div class="slider-control"><label for="w-q">$q$</label><input type="range" id="w-q" min="-2" max="2" step="0.5" value="2" oninput="renderLab()"><span id="w-q-val"></span></div>
+                    <p class="readout" id="lab-seq"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Висновок</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="lab-scene" role="img" aria-label="Стовпчики членів геометричної прогресії"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $b_1 = 3$, $q = 2$. Знайдіть $b_6$ і $S_6$.</p>
+                    <p>2) $b_2 = 6$, $b_5 = 162$. Знайдіть $b_1$ і $q$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">$q^n$ замість $q^{n-1}$</div>
+                    <p>$b_5 = b_1 q^4$, а не $b_1 q^5$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Знак знаменника</div>
+                    <p>$b_1q^2 = 18$, $b_1 = 2$ ⟹ $q^2 = 9$, $q = \pm 3$ — дві прогресії!</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Ділення чи віднімання</div>
+                    <p>$q = \dfrac{b_2}{b_1}$, а не $b_2 - b_1$ (це для арифметичної).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Нуль у прогресії</div>
+                    <p>$0$ не може бути членом геометричної прогресії, а $q \ne 0$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$b_1 = 2$, $q = 3$. Знайдіть $b_4$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $162$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $54$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $11$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $24$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$2 \cdot 3^3 = 54$. А — $q^4$; В — арифметична; Г — $2 \cdot 3 \cdot 4$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть суму перших $5$ членів прогресії $1, 3, 9, \ldots$</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $121$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $81$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $243$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $40$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$\dfrac{3^5 - 1}{2} = 121$. Б — $b_5$; Г — $S_4$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">У геометричній прогресії $b_3 = 12$, $b_5 = 48$. Знайдіть $b_1$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $\pm 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $1{,}5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$q^2 = 4$, $q = \pm 2$; $b_1 = \dfrac{12}{q^2} = 3$ в обох випадках. Г — знак $q$ на $b_1$ не впливає.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>$b_{n+1} = b_n q$; $\;b_n = b_1 q^{n-1}$; $\;b_n^2 = b_{n-1} b_{n+1}$.</p>
+                    <p>$S_n = \dfrac{b_1(q^n - 1)}{q - 1}$ ($q \ne 1$).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>Ділимо члени: $\dfrac{b_m}{b_k} = q^{m-k}$ — знаходимо $q$, далі $b_1$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$q^{n-1}$, а не $q^n$; при парному степені — $q = \pm$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 4) renderLab();
+                if (currentSlide === 5) renderEval();
+@@JS
+            window.renderLab = function () {
+                const q = +document.getElementById('w-q').value;
+                document.getElementById('w-q-val').textContent = String(q).replace('.', ',');
+                if (q === 0) { document.getElementById('lab-seq').innerHTML = '$q = 0$ — не прогресія!'; document.getElementById('lab-scene').innerHTML = ''; return; }
+                const seq = Array.from({ length: 7 }, (_, k) => Math.pow(q, k));
+                const mx = Math.max(...seq.map(Math.abs)), h = 100 / mx, y0 = 130;
+                let s = `<line x1="10" y1="${y0}" x2="390" y2="${y0}" stroke="currentColor" stroke-width="1.5"/>`;
+                seq.forEach((v, k) => {
+                    const x = 20 + k * 53, top = v >= 0 ? y0 - v * h : y0;
+                    s += `<rect x="${x}" y="${top}" width="40" height="${Math.max(Math.abs(v) * h, 1)}" class="bar${v < 0 ? ' neg' : ''}"/>`;
+                    s += `<text x="${x + 20}" y="${v >= 0 ? top - 6 : top + Math.abs(v) * h + 16}" class="svg-caption">${String(Math.round(v * 1000) / 1000).replace('.', ',').replace('-', '−')}</text>`;
+                });
+                document.getElementById('lab-scene').innerHTML = s;
+                const t = document.getElementById('lab-seq');
+                t.innerHTML = `$1;\\; ${String(q).replace('.', '{,}')};\\; ${String(q * q).replace('.', '{,}')};\\; \\ldots$`;
+                document.getElementById('lab-out').classList.remove('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([t]);
+            };
+            window.revealLab = function () {
+                const q = +document.getElementById('w-q').value, o = document.getElementById('lab-out');
+                o.innerHTML = q > 1 ? 'Зростає (при $b_1 \\gt 0$)' : q === 1 ? 'Стала' : q > 0 ? 'Спадає, наближаючись до $0$' : 'Знаки чергуються — не монотонна';
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$b_6 = 3 \\cdot 2^5 = $ [[$96$]]', 'Задача 1: $n - 1 = 5$'],
+                ['$S_6 = \\dfrac{3(2^6 - 1)}{2 - 1} = $ [[$189$]]', '$3 \\cdot 63 = 189$'],
+                ['$\\dfrac{b_5}{b_2} = q^3 = \\dfrac{162}{6} = 27$ ⟹ [[$q = 3$]]', 'Задача 2: ділимо члени'],
+                ['$b_1 = \\dfrac{b_2}{q} = $ [[$2$]]', 'Перевірка: $2 \\cdot 3^4 = 162$ ✓'],
+            ];
+@@INCLUDE steps.js
