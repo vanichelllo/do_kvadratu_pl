@@ -1,0 +1,259 @@
+@@TITLE Розкладання многочлена на множники. Винесення спільного множника за дужки
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 8px 0; }
+        .term { display: inline-block; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 8px; padding: 6px 10px; margin: 4px; font-weight: 700; }
+        .term.on { border-color: var(--brand-green); }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Обчисліть усно: $37 \cdot 64 + 37 \cdot 36$</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Множити «в стовпчик» довго. Але обидва доданки містять множник $37$:</p>
+                    <p class="big-formula">$37 \cdot 64 + 37 \cdot 36 = 37 \cdot (64 + 36) = 3700$</p>
+                    <p>Ми застосували розподільний закон <b>справа наліво</b>. Для многочленів це дає <b>розкладання на множники</b> — перетворення суми в добуток.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Навіщо добуток?</div>
+                    <p>Обчислювати швидше; скорочувати дроби (у 8 класі); розв'язувати рівняння: $x(x - 5) = 0$ ⟹ $x = 0$ або $x = 5$.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Ще приклад</button></p>
+                    <div class="hidden-answer" id="answer-1"><p class="big-formula">$5{,}7 \cdot 13 - 5{,}7 \cdot 3 = 5{,}7 \cdot 10 = 57$</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Розкладання на множники</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><b>Розкласти многочлен на множники</b> — подати його у вигляді добутку кількох многочленів (одночленів).</p>
+                    <p class="big-formula">$ab + ac = a(b + c)$</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Спільний множник</div>
+                    <p>Числовий коефіцієнт — <b>НСД</b> коефіцієнтів.</p>
+                    <p>Змінна — та, що є в <b>кожному</b> члені, у <b>найменшому</b> степені.</p>
+                    <p>$12a^3b - 18a^2b^2 = 6a^2b(2a - 3b)$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Шукаємо спільний множник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо многочлен. Учні називають спільний множник кожної частини — числа, кожної змінної — потім відкриваємо по кроку.</p>
+                    <p class="center">
+                        <button class="btn-secondary on" id="pb-0" onclick="pickPoly(0)">1</button>
+                        <button class="btn-secondary" id="pb-1" onclick="pickPoly(1)">2</button>
+                        <button class="btn-secondary" id="pb-2" onclick="pickPoly(2)">3</button>
+                    </p>
+                    <p class="big-formula" id="poly-q"></p>
+                    <p class="center"><button class="btn-primary" onclick="polyStep()">Наступний крок ▸</button></p>
+                </div>
+                <div class="math-widget" id="poly-steps"></div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box hack">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) НСД коефіцієнтів.</p>
+                    <p>2) Змінні, що є в кожному члені, — з найменшим показником.</p>
+                    <p>3) Ділимо кожен член на спільний множник — отримуємо вираз у дужках.</p>
+                    <p>4) Перевірка: розкриваємо дужки.</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>$15x^4y^2 - 10x^3y^3 + 5x^2y$</b></p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Многочлен як множник і рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розкладіть: $3a(x - 2) + 5b(x - 2)$</div>
+                    <div class="step">Спільний множник — двочлен $(x - 2)$.</div>
+                    <div class="step">$= (x - 2)(3a + 5b)$.</div>
+                    <div class="step">А для $2x(a - b) + 7(b - a)$: $b - a = -(a - b)$ ⟹ $(a - b)(2x - 7)$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'яжіть: $x^2 = 6x$</div>
+                    <div class="step">$x^2 - 6x = 0$ (не ділимо на $x$ — втратимо корінь!).</div>
+                    <div class="step">$x(x - 6) = 0$.</div>
+                    <div class="step">Добуток дорівнює нулю, якщо хоча б один множник нуль: $x = 0$ або $x = 6$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Загублена одиниця</div>
+                    <p>$3x^2 + 3x = 3x(x + 1)$, а не $3x \cdot x$. На місці винесеного члена лишається $1$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Не весь спільний множник</div>
+                    <p>$8a^2 + 12a = 2a(4a + 6)$ — можна ще: <b>$4a(2a + 3)$</b>.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Мінус перед дужками</div>
+                    <p>$-6x - 9 = -3(2x + 3)$, а не $-3(2x - 3)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Ділення на змінну</div>
+                    <p>$x^2 = 6x$ ⟹ $x = 6$ — загублено корінь $0$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розкладіть на множники: $14a - 21b$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $7(2a - 21b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $7(2a - 3b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $7(2a + 3b)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $2(7a - 3b)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>НСД$(14, 21) = 7$: $7(2a - 3b)$. А — поділили лише перший член, Г — $2 \cdot 3b \ne 21b$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розкладіть на множники: $6x^3y - 9x^2y^2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $3xy(2x^2 - 3xy)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $3x^2y(2x - 3)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $3x^2y(2x - 3y)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $x^2y(6x - 9)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>НСД $3$, $x^2$, $y$: $3x^2y(2x - 3y)$. А — не весь множник; Б — загубили $y$; Г — неправильно поділили.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння: $5x^2 + 15x = 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $0$ і $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $0$ і $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $5$ і $-3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$5x(x + 3) = 0$: $x = 0$ або $x = -3$. А — поділили на $x$ і загубили корінь.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p class="big-formula">$ab + ac = a(b + c)$</p>
+                    <p>Спільний множник: НСД коефіцієнтів × спільні змінні з найменшим показником. Може бути й многочлен: $(x - 2)$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) НСД. 2) Змінні з найменшим показником. 3) Ділимо кожен член. 4) Перевіряємо розкриттям дужок.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$3x^2 + 3x = 3x(x + 1)$ — не забудьте $1$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 3) renderPoly();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const POLYS = [
+                ['$8a^2 + 12a$', ['Числа: НСД$(8, 12) = 4$', 'Змінна $a$ є в обох членах, найменший степінь — $a^1$', 'Спільний множник: $4a$', '$8a^2 + 12a = 4a(2a + 3)$']],
+                ['$10x^3y^2 - 15x^2y^4$', ['Числа: НСД$(10, 15) = 5$', '$x$: найменший степінь $x^2$; $y$: найменший $y^2$', 'Спільний множник: $5x^2y^2$', '$= 5x^2y^2(2x - 3y^2)$']],
+                ['$7m^5 - 14m^3 + 21m^2$', ['Числа: НСД$(7, 14, 21) = 7$', 'Змінна $m$, найменший степінь — $m^2$', 'Спільний множник: $7m^2$', '$= 7m^2(m^3 - 2m + 3)$']],
+            ];
+            let polyK = 0, polyN = 0;
+            window.pickPoly = function (k) {
+                polyK = k; polyN = 0;
+                POLYS.forEach((_, i) => document.getElementById('pb-' + i).classList.toggle('on', i === k));
+                renderPoly();
+            };
+            window.polyStep = function () { polyN = Math.min(polyN + 1, POLYS[polyK][1].length); renderPoly(); };
+            window.renderPoly = function () {
+                const q = document.getElementById('poly-q'), box = document.getElementById('poly-steps');
+                q.innerHTML = POLYS[polyK][0];
+                box.innerHTML = POLYS[polyK][1].slice(0, polyN).map((t, k) => `<div class="eval-line${k === 3 ? ' done' : ''}">${t}</div>`).join('') || '<p class="eval-note">Учні називають спільний множник…</p>';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([q, box]);
+            };
+            const STEPS = [
+                ['НСД$(15, 10, 5) = $ [[$5$]]', 'Коефіцієнти $15$, $10$, $5$'],
+                ['$x$: [[$x^2$]], $\\;y$: [[$y^1$]]', 'Найменші показники серед усіх членів'],
+                ['$= 5x^2y\\,($[[$3x^2y - 2xy^2 + 1$]]$)$', 'Ділимо кожен член на $5x^2y$; останній дає $1$'],
+                ['Перевірка: $5x^2y \\cdot 3x^2y = 15x^4y^2$ ✓', 'Розкриваємо дужки — отримуємо початковий многочлен'],
+            ];
+@@INCLUDE steps.js
