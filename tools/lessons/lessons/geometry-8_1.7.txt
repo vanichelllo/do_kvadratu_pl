@@ -1,0 +1,331 @@
+@@TITLE Вписані та описані чотирикутники
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .circ { fill: none; stroke: var(--brand-green); stroke-width: 2.4; }
+        .quad { fill: var(--brand-blue); fill-opacity: 0.12; stroke: currentColor; stroke-width: 2.6; stroke-linejoin: round; }
+        .v-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .tan-seg1 { stroke: var(--brand-yellow); stroke-width: 5; stroke-linecap: round; }
+        .tan-seg2 { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; opacity: 0.8; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Навколо якого чотирикутника можна описати коло?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Навколо будь-якого трикутника можна описати коло. А навколо чотирикутника — не завжди: через три вершини коло пройде, а четверта може «не влучити».</p>
+                    <p>Так само вписати коло (дотичне до всіх сторін) можна не в кожен чотирикутник.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Відповідь</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Ключ — кути і сторони</div>
+                        <p>Описати коло можна ⟺ сума протилежних кутів $180^\circ$. Вписати коло можна ⟺ суми протилежних сторін рівні.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 280" id="intro-scene" role="img" aria-label="Квадрат з описаним колом і ромб без нього"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія: вписаний -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Чотирикутник, вписаний у коло</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Вписаний: усі вершини на колі</div>
+                        <p class="big-formula">$\angle A + \angle C = \angle B + \angle D = 180^\circ$</p>
+                        <p>І навпаки: сума протилежних кутів $180^\circ$ ⟹ можна описати коло.</p>
+                    </div>
+                    <div class="box example" id="why">
+                        <div class="box-title">Чому</div>
+                        <div class="step">$\angle A$ і $\angle C$ — вписані, спираються на дуги $BCD$ і $BAD$.</div>
+                        <div class="step">Дуги разом — $360^\circ$, кути — половини: $\angle A + \angle C = 180^\circ$. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="ins-scene" role="img" aria-label="Чотирикутник ABCD, вписаний у коло"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Рухаємо вершину по колу</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Вершина $C$ рухається по колу. Учні передбачають, як зміняться $\angle A$, $\angle C$ та їхня сума, — потім вимірюємо.</p>
+                    <div class="slider-control"><label for="w-c">Положення $C$</label><input type="range" id="w-c" min="-60" max="40" step="5" value="-10" oninput="renderLab()"></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Виміряти</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="lab-scene" role="img" aria-label="Вписаний чотирикутник з рухомою вершиною C"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Теорія: описаний -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Чотирикутник, описаний навколо кола</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Описаний: усі сторони дотикаються до кола</div>
+                        <p class="big-formula">$AB + CD = BC + AD$</p>
+                        <p>І навпаки: суми протилежних сторін опуклого чотирикутника рівні ⟹ можна вписати коло.</p>
+                    </div>
+                    <div class="box example" id="why2">
+                        <div class="box-title">Чому</div>
+                        <div class="step">Відрізки дотичних з однієї вершини рівні: позначимо їх $a$, $b$, $c$, $d$.</div>
+                        <div class="step">$AB + CD = (a + b) + (c + d)$, $BC + AD = (b + c) + (d + a)$ — однаково. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why2')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="circ-scene" role="img" aria-label="Чотирикутник, описаний навколо кола, з рівними відрізками дотичних"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Наслідки -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Які чотирикутники?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Описати коло можна</div>
+                    <p>✓ прямокутник, квадрат (кути по $90^\circ$)</p>
+                    <p>✓ рівнобічна трапеція</p>
+                    <p>✗ паралелограм, що не є прямокутником; ромб, що не є квадратом</p>
+                    <p>Центр описаного кола прямокутника — точка перетину діагоналей.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Вписати коло можна</div>
+                    <p>✓ ромб, квадрат (усі сторони рівні)</p>
+                    <p>✓ трапеція, у якої сума основ дорівнює сумі бічних сторін</p>
+                    <p>✗ прямокутник, що не є квадратом</p>
+                    <p>Діаметр вписаного в трапецію кола дорівнює її висоті.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Кути $A$, $B$, $C$ вписаного чотирикутника відносяться як $2 : 3 : 7$. Знайдіть $\angle D$.</p>
+                    <p>2) У рівнобічну трапецію з основами $4$ і $16$ вписано коло. Знайдіть бічну сторону.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Не ті кути</div>
+                    <p>$180^\circ$ дають <b>протилежні</b> кути ($A$ і $C$), а не сусідні ($A$ і $B$).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Не ті сторони</div>
+                    <p>Рівні суми <b>протилежних</b> сторін: $AB + CD = BC + AD$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Переплутали ознаки</div>
+                    <p>Кути — для <b>описаного</b> кола (вершини на колі); сторони — для <b>вписаного</b> (сторони дотикаються).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">«Будь-який паралелограм»</div>
+                    <p>Навколо паралелограма можна описати коло, лише якщо він прямокутник; вписати — лише якщо ромб.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$ABCD$ вписаний у коло, $\angle B = 112^\circ$. Знайдіть $\angle D$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $112^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $68^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $248^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $56^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$180^\circ - 112^\circ = 68^\circ$. В — від $360^\circ$, Г — половина.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$ABCD$ описаний навколо кола, $AB = 7$, $BC = 9$, $CD = 12$. Знайдіть $AD$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $14$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $4$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$AB + CD = BC + AD$: $19 = 9 + AD$, $AD = 10$. А — сусідні сторони.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Периметр рівнобічної трапеції, описаної навколо кола, — $40$. Знайдіть бічну сторону.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $20$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) недостатньо даних</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Сума основ = сума бічних = $20$; бічні рівні: по $10$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Вписаний у коло: $\angle A + \angle C = \angle B + \angle D = 180^\circ$ (і навпаки).</p>
+                    <p>Описаний навколо кола: $AB + CD = BC + AD$ (і навпаки).</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Пам'ятка</div>
+                        <p>Описати коло: прямокутник, рівнобічна трапеція. Вписати коло: ромб, квадрат.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Беремо <b>протилежні</b> кути і <b>протилежні</b> сторони.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 2) renderIns();
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 4) renderCirc();
+                if (currentSlide === 6) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1), R = 115, O = [200, 150];
+            const P = (deg) => [O[0] + R * Math.cos(deg * Math.PI / 180), O[1] - R * Math.sin(deg * Math.PI / 180)];
+            const poly = (Q, cls) => `<polygon points="${Q.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const lbl = (p, s) => { const dx = p[0] - O[0], dy = p[1] - O[1], L = Math.hypot(dx, dy) || 1; return `<text x="${f1(p[0] + dx / L * 20)}" y="${f1(p[1] + dy / L * 20 + 6)}" class="v-name">${s}</text>`; };
+            function angleArc(V, A, B, r, cls) {
+                const a1 = Math.atan2(A[1] - V[1], A[0] - V[0]), a2 = Math.atan2(B[1] - V[1], B[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            const ang = (V, A, B) => { const a = [A[0] - V[0], A[1] - V[1]], b = [B[0] - V[0], B[1] - V[1]]; return Math.acos((a[0] * b[0] + a[1] * b[1]) / Math.hypot(...a) / Math.hypot(...b)) * 180 / Math.PI; };
+            window.renderIntro = function () {
+                const c1 = [100, 140], r1 = 70, sq = [45, 135, 225, 315].map(d => [c1[0] + r1 * Math.cos(d * Math.PI / 180), c1[1] - r1 * Math.sin(d * Math.PI / 180)]);
+                let s = `<circle cx="${c1[0]}" cy="${c1[1]}" r="${r1}" class="circ"/>` + poly(sq, 'quad') + `<text x="100" y="250" class="svg-caption">квадрат — так</text>`;
+                const rh = [[300, 60], [360, 140], [300, 220], [240, 140]];
+                s += poly(rh.map(([x, y]) => [x + (x - 300) * 0.0, y]), 'quad') + `<text x="300" y="250" class="svg-caption">ромб — описати не можна</text>`;
+                document.getElementById('intro-scene').innerHTML = s;
+            };
+            const quadAt = (dc) => [P(160), P(70), P(dc), P(-110)];
+            function drawQuad(dc, arcs) {
+                const [A, B, C, D] = quadAt(dc);
+                let s = `<circle cx="${O[0]}" cy="${O[1]}" r="${R}" class="circ"/>`;
+                if (arcs) s += angleArc(A, B, D, 30, '') + angleArc(C, B, D, 30, 'g');
+                s += poly([A, B, C, D], 'quad') + lbl(A, 'A') + lbl(B, 'B') + lbl(C, 'C') + lbl(D, 'D');
+                return s;
+            }
+            window.renderIns = function () { document.getElementById('ins-scene').innerHTML = drawQuad(-10, true); };
+            window.renderLab = function () {
+                document.getElementById('lab-scene').innerHTML = drawQuad(+document.getElementById('w-c').value, true);
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const [A, B, C, D] = quadAt(+document.getElementById('w-c').value), a = Math.round(ang(A, B, D)), c = Math.round(ang(C, B, D));
+                const o = document.getElementById('lab-out');
+                o.innerHTML = `$\\angle A \\approx ${a}^\\circ$ (не змінюється), $\\angle C \\approx ${c}^\\circ$<br>$\\angle A + \\angle C \\approx ${a + c}^\\circ$`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            window.renderCirc = function () {
+                // Коло радіуса r у центрі; чотирикутник з дотичними під кутами
+                const c = [200, 150], r = 80, dirs = [100, 200, 280, 20].map(d => d * Math.PI / 180);
+                const tp = dirs.map(t => [c[0] + r * Math.cos(t), c[1] - r * Math.sin(t)]);
+                // Вершини — перетини сусідніх дотичних
+                const V = dirs.map((t, i) => {
+                    const t2 = dirs[(i + 1) % 4], m = (t + t2) / 2 + (t2 < t ? Math.PI : 0), dd = r / Math.cos((t2 - t + (t2 < t ? 2 * Math.PI : 0)) / 2);
+                    return [c[0] + dd * Math.cos(m), c[1] - dd * Math.sin(m)];
+                });
+                let s = `<circle cx="${c[0]}" cy="${c[1]}" r="${r}" class="circ"/>` + poly(V, 'quad');
+                const cls = ['tan-seg1', 'tan-seg2', 'tan-seg1', 'tan-seg2'];
+                V.forEach((v, i) => { s += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(tp[i][0])}" y2="${f1(tp[i][1])}" class="${cls[i]}"/><line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(tp[(i + 1) % 4][0])}" y2="${f1(tp[(i + 1) % 4][1])}" class="${cls[i]}"/>`; });
+                document.getElementById('circ-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['$\\angle A + \\angle C = 180^\\circ$: $2x + 7x = 180^\\circ$, [[$x = 20^\\circ$]]', 'Задача 1. $A$ і $C$ — протилежні'],
+                ['$\\angle B = 60^\\circ$, $\\angle D = 180^\\circ - 60^\\circ = $ [[$120^\\circ$]]', '$B$ і $D$ — протилежні'],
+                ['$4 + 16 = 2c$ ⟹ [[$c = 10$]]', 'Задача 2. Сума основ = сума бічних сторін, бічні рівні'],
+            ];
+@@INCLUDE steps.js
