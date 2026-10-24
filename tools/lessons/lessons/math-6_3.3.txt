@@ -1,0 +1,240 @@
+@@TITLE Пряма та обернена пропорційна залежність
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        .tbl { border-collapse: collapse; margin: 8px auto; font-size: 1.15rem; }
+        .tbl td, .tbl th { border: 2px solid var(--border-color); padding: 8px 12px; text-align: center; font-weight: 700; }
+        .tbl th { color: var(--brand-blue); }
+        .tbl td.new { color: var(--brand-green); }
+        .arrow { font-weight: 800; color: var(--brand-green); }
+        .arrow.r { color: var(--warning-red); }
+        .slider-control label { font-weight: 800; min-width: 160px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.15rem; font-weight: 800; text-align: center; min-height: 1.6em; }
+        .vs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
+        .vs-row > div { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 10px; padding: 8px; }
+        @media (max-width: 760px) { .slider-control label { min-width: 110px; } .tbl { font-size: 0.95rem; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Більше — більше чи більше — менше? 🤔</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Купую більше зошитів — плачу більше грошей.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А якщо їхати швидше, то часу в дорозі менше!</div>
+                    <p class="big-question">У скільки разів зміниться вартість чи час?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Дізнатися</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Удвічі! 🎉</div>
+                        <p>Зошитів удвічі більше — вартість удвічі більша. Швидкість удвічі більша — час удвічі менший.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="vs-row">
+                        <div>📒 зошити ×2<br><span class="arrow">вартість ×2</span></div>
+                        <div>🚲 швидкість ×2<br><span class="arrow r">час : 2</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Дві таблиці 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Учні заповнюють порожні клітинки, а ми відкриваємо їх по одній.</p>
+                    </div>
+                    <p><b>Зошит коштує $15$ грн</b></p>
+                    <div id="tbl-1"></div>
+                    <p><b>Дорога $120$ км</b></p>
+                    <div id="tbl-2"></div>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealCell()">Наступна клітинка ▸</button> <button class="btn-secondary" onclick="resetCells()">Спочатку</button></p>
+                </div>
+                <div class="math-widget">
+                    <p class="readout" id="tbl-note"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Пряма і обернена пропорційність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Пряма пропорційність ⭐</div>
+                    <p>Одна величина збільшується в кілька разів — друга збільшується в <b>стільки ж</b> разів.</p>
+                    <p>Їхня <b>частка</b> стала: вартість $:$ кількість $= 15$.</p>
+                    <p>Пропорція: $\dfrac{x_1}{x_2} = \dfrac{y_1}{y_2}$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Обернена пропорційність ⭐</div>
+                    <p>Одна величина збільшується в кілька разів — друга <b>зменшується</b> в стільки ж разів.</p>
+                    <p>Їхній <b>добуток</b> сталий: швидкість $\cdot$ час $= 120$.</p>
+                    <p>Пропорція: $\dfrac{x_1}{x_2} = \dfrac{y_2}{y_1}$ — друге відношення «перевернуте».</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Розв'язуємо пропорцією ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $3$ кг яблук коштують $90$ грн. Скільки коштують $5$ кг?</p>
+                    <p>2) $4$ маляри фарбують паркан за $6$ год. За скільки годин пофарбують $3$ маляри?</p>
+                    <p>Спершу: пряма чи обернена?</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Не кожне «більше — більше» пропорційне ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Обережно, пастка!</div>
+                    <p>Вік і зріст: старший — вищий, але у $20$ років людина не вдвічі вища, ніж у $10$. Це <b>не</b> пропорційність!</p>
+                    <p>Перевір: чи збільшується друга величина <b>у стільки ж разів</b>?</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Лайфхак</div>
+                    <p>Пряма — частка стала. Обернена — добуток сталий. Порахуй для двох пар чисел.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. Кількість однакових цукерок і їхня маса — це…</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) пряма пропорційність</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) обернена пропорційність</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) не пропорційність</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint"><div class="box-title">Підказка 💡</div><p>Цукерок удвічі більше — маса яка?</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Молодець! 🎉</div><p>Удвічі більше цукерок — удвічі більша маса.</p></div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. $5$ робітників виконують роботу за $8$ днів. За скільки днів її виконають $10$ робітників?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $16$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $13$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint"><div class="box-title">Підказка 💡</div><p>Робітників більше — днів більше чи менше?</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Чудово! 🎉</div><p>Обернена: робітників удвічі більше — днів удвічі менше: $4$.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Автомобіль за $2{,}5$ год проїхав $200$ км. Скільки він проїде за $4$ год з тією самою швидкістю?</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $125$ км</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $320$ км</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $500$ км</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint"><div class="box-title">Підказка 💡</div><p>$2{,}5 : 4 = 200 : x$.</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Так! 🎉</div><p>$x = \dfrac{200 \cdot 4}{2{,}5} = 320$ км. А — переплутали пряму з оберненою.</p></div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Зі шматка тканини можна пошити $12$ суконь, на кожну по $2{,}5$ м. Скільки суконь вийде, якщо на кожну треба $3$ м?</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $10$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $14{,}4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $11$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint"><div class="box-title">Підказка 💡</div><p>На сукню треба більше тканини — суконь більше чи менше?</p></div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Супер! 🎉</div><p>Тканини $12 \cdot 2{,}5 = 30$ м; $30 : 3 = 10$. Б — узяли пряму пропорційність.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Пряма:</b> більше в $k$ разів — більше в $k$ разів; частка стала.</p>
+                    <p><b>Обернена:</b> більше в $k$ разів — менше в $k$ разів; добуток сталий.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як розв'язувати ✍️</div>
+                        <p>1) Визнач вид залежності. 2) Склади пропорцію (для оберненої — переверни друге відношення). 3) Знайди $x$ і перевір.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>«Більше — більше» ще не означає пропорційність.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderCells();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const T1 = { h: ['Зошитів', 'Вартість, грн'], cols: [[1, 15], [2, 30], [4, 60], [6, 90]] };
+            const T2 = { h: ['Швидкість, км/год', 'Час, год'], cols: [[20, 6], [40, 3], [60, 2], [120, 1]] };
+            const ORDER = [[0, 1], [0, 2], [0, 3], [1, 1], [1, 2], [1, 3]];
+            let shownCells = 0;
+            const tbl = (T, ti) => `<table class="tbl"><tr><th>${T.h[0]}</th>${T.cols.map(c => `<td>${c[0]}</td>`).join('')}</tr><tr><th>${T.h[1]}</th>${T.cols.map((c, k) => {
+                const idx = ORDER.findIndex(([t, j]) => t === ti && j === k);
+                return `<td class="${idx >= 0 ? 'new' : ''}">${idx < 0 || idx < shownCells ? c[1] : '?'}</td>`;
+            }).join('')}</tr></table>`;
+            window.renderCells = function () {
+                document.getElementById('tbl-1').innerHTML = tbl(T1, 0);
+                document.getElementById('tbl-2').innerHTML = tbl(T2, 1);
+                const n = document.getElementById('tbl-note');
+                n.innerHTML = shownCells >= 3 ? 'Зошити: вартість : кількість $= 15$ — частка стала' : '';
+                if (shownCells >= 6) n.innerHTML += '<br>Дорога: швидкість $\\cdot$ час $= 120$ — добуток сталий';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([n]);
+            };
+            window.revealCell = function () { shownCells = Math.min(shownCells + 1, 6); renderCells(); };
+            window.resetCells = function () { shownCells = 0; renderCells(); };
+            const STEPS = [
+                ['Яблука: [[пряма]]', 'Більше кілограмів — більша вартість у стільки ж разів'],
+                ['$\\dfrac{3}{5} = \\dfrac{90}{x}$ ⟹ $x = \\dfrac{90 \\cdot 5}{3} = $ [[$150$ грн]]', 'Перевірка: $1$ кг — $30$ грн, $5$ кг — $150$ грн ✓'],
+                ['Маляри: [[обернена]]', 'Більше малярів — менше часу'],
+                ['$\\dfrac{4}{3} = \\dfrac{x}{6}$ ⟹ $x = \\dfrac{4 \\cdot 6}{3} = $ [[$8$ год]]', 'Друге відношення перевернули. Перевірка: $4 \\cdot 6 = 3 \\cdot 8 = 24$ ✓'],
+            ];
+@@INCLUDE steps.js
