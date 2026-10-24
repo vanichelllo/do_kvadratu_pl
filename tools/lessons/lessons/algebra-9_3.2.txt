@@ -1,0 +1,281 @@
+@@TITLE Арифметична прогресія
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 800; min-width: 36px; text-align: right; }
+        .bar { fill: var(--brand-blue); fill-opacity: 0.45; stroke: currentColor; stroke-width: 1; }
+        .bar.flip { fill: var(--brand-green); fill-opacity: 0.45; }
+        .svg-caption { fill: currentColor; font-size: 13px; font-weight: 700; text-anchor: middle; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Задача юного Гаусса</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Учитель попросив клас додати всі числа від $1$ до $100$. Маленький Гаусс відповів за хвилину. Як?</p>
+                    <p>Числа $1, 2, 3, \ldots, 100$ — кожне на $1$ більше за попереднє. Такі послідовності — <b>арифметичні прогресії</b>, і для них є зручні формули.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Як рахував Гаусс</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Пари з однаковою сумою</div>
+                        <p>$1 + 100 = 2 + 99 = \ldots = 101$ — $50$ пар: $50 \cdot 101 = 5050$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 230" id="gauss-scene" role="img" aria-label="Стовпчики 1, 2, ..., n і перевернуті — разом прямокутник"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Означення і формула $n$-го члена</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><b>Арифметична прогресія</b> — послідовність, у якій кожен член, починаючи з другого, дорівнює попередньому, до якого додано одне й те саме число $d$ — <b>різницю</b> прогресії:</p>
+                    <p class="big-formula">$a_{n+1} = a_n + d$, $\;d = a_2 - a_1$</p>
+                    <p>$d \gt 0$ — зростає; $d \lt 0$ — спадає; $d = 0$ — стала.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Формула $n$-го члена</div>
+                    <p class="big-formula">$a_n = a_1 + (n - 1)d$</p>
+                    <p>Від $a_1$ до $a_n$ — $(n - 1)$ кроків по $d$.</p>
+                    <p><b>Характеристична властивість:</b> $a_n = \dfrac{a_{n-1} + a_{n+1}}{2}$ — кожен член (крім першого) є середнім арифметичним сусідніх.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Сума перших $n$ членів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Формули суми</div>
+                    <p class="big-formula">$S_n = \dfrac{a_1 + a_n}{2} \cdot n$</p>
+                    <p class="big-formula">$S_n = \dfrac{2a_1 + (n - 1)d}{2} \cdot n$</p>
+                </div>
+                <div class="box example" id="why">
+                    <div class="box-title">Чому так (ідея Гаусса)</div>
+                    <div class="step">$S_n = a_1 + a_2 + \ldots + a_n$ і $S_n = a_n + a_{n-1} + \ldots + a_1$.</div>
+                    <div class="step">Додамо почленно: кожна пара $a_k + a_{n+1-k} = a_1 + a_n$ (одне зростає на $d$, інше спадає на $d$).</div>
+                    <div class="step">$2S_n = (a_1 + a_n) \cdot n$ ⟹ $S_n = \dfrac{a_1 + a_n}{2} \cdot n$. ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Будуємо прогресію</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо $a_1$ і $d$. Учні обчислюють $a_{10}$ і $S_{10}$, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-a">$a_1$</label><input type="range" id="w-a" min="-5" max="10" step="1" value="2" oninput="renderLab()"><span id="w-a-val"></span></div>
+                    <div class="slider-control"><label for="w-d">$d$</label><input type="range" id="w-d" min="-3" max="4" step="1" value="3" oninput="renderLab()"><span id="w-d-val"></span></div>
+                    <p class="readout" id="lab-seq"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">$a_{10}$ і $S_{10}$</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="lab-scene" role="img" aria-label="Стовпчики членів прогресії"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $a_1 = 7$, $d = -2$. Знайдіть $a_{15}$.</p>
+                    <p>2) $a_3 = 11$, $a_8 = 26$. Знайдіть $a_1$ і $d$.</p>
+                    <p>3) Знайдіть суму всіх двоцифрових чисел, кратних $5$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">$nd$ замість $(n - 1)d$</div>
+                    <p>$a_{10} = a_1 + 9d$, а не $a_1 + 10d$: від першого до десятого — $9$ кроків.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Різниця зі знаком</div>
+                    <p>$10, 7, 4, \ldots$: $d = 7 - 10 = -3$, а не $3$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Кількість членів</div>
+                    <p>Від $10$ до $95$ з кроком $5$: $n = \dfrac{95 - 10}{5} + 1 = 18$, а не $17$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">$S_n$ і $a_n$</div>
+                    <p>$S_n$ — сума $n$ членів, $a_n$ — один член. $a_n = S_n - S_{n-1}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$a_1 = 4$, $d = 3$. Знайдіть $a_{20}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $64$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $61$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $60$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $83$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$4 + 19 \cdot 3 = 61$. А — $20d$, В — $20 \cdot 3$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$a_2 = 5$, $a_6 = 17$. Знайдіть $S_{10}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $155$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $160$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $290$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $29$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$4d = 12$, $d = 3$, $a_1 = 2$, $a_{10} = 29$. $S_{10} = \dfrac{2 + 29}{2} \cdot 10 = 155$. В — не поділили на $2$, Г — це $a_{10}$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки від'ємних членів має прогресія $-38, -35, -32, \ldots$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $13$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $14$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $38$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) безліч</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$a_n = -38 + 3(n - 1) \lt 0$ ⟹ $n \lt 13\dfrac23$: $n \le 13$. $a_{13} = -2$, $a_{14} = 1$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>$a_{n+1} = a_n + d$; $\;a_n = a_1 + (n - 1)d$.</p>
+                    <p>$S_n = \dfrac{a_1 + a_n}{2} \cdot n = \dfrac{2a_1 + (n - 1)d}{2} \cdot n$.</p>
+                    <p>$a_n = \dfrac{a_{n-1} + a_{n+1}}{2}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Знайти $a_1$ і $d$ (часто — система з двох членів). 2) Формула $a_n$ або $S_n$. 3) Перевірка на перших членах.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$(n - 1)d$, а не $nd$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderGauss();
+                if (currentSlide === 4) renderLab();
+                if (currentSlide === 5) renderEval();
+@@JS
+            window.renderGauss = function () {
+                const n = 8, w = 36, u = 20, x0 = 56, y0 = 200;
+                let s = '';
+                for (let k = 1; k <= n; k++) {
+                    const x = x0 + (k - 1) * w;
+                    s += `<rect x="${x}" y="${y0 - k * u}" width="${w - 4}" height="${k * u}" class="bar"/>`;
+                    s += `<rect x="${x}" y="${y0 - (n + 1) * u}" width="${w - 4}" height="${(n + 1 - k) * u}" class="bar flip"/>`;
+                }
+                s += `<text x="200" y="222" class="svg-caption">1 + 2 + … + 8 удвічі = 8 · 9 → сума 36</text>`;
+                document.getElementById('gauss-scene').innerHTML = s;
+            };
+            const vals = () => [+document.getElementById('w-a').value, +document.getElementById('w-d').value];
+            window.renderLab = function () {
+                const [a, d] = vals();
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-d-val').textContent = d;
+                const seq = Array.from({ length: 10 }, (_, k) => a + k * d);
+                const q = document.getElementById('lab-seq');
+                q.innerHTML = `$${seq.slice(0, 4).join(';\\; ')};\\; \\ldots$`;
+                const mx = Math.max(1, ...seq.map(Math.abs)), h = 100 / mx, y0 = 130;
+                let s = `<line x1="10" y1="${y0}" x2="390" y2="${y0}" stroke="currentColor" stroke-width="1.5"/>`;
+                seq.forEach((v, k) => {
+                    const x = 18 + k * 37, top = v >= 0 ? y0 - v * h : y0;
+                    s += `<rect x="${x}" y="${top}" width="30" height="${Math.abs(v) * h}" class="bar"/>` + (k < 9 ? '' : `<text x="${x + 15}" y="${v >= 0 ? top - 6 : top + Math.abs(v) * h + 16}" class="svg-caption">a₁₀</text>`);
+                });
+                document.getElementById('lab-scene').innerHTML = s;
+                document.getElementById('lab-out').classList.remove('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([q]);
+            };
+            window.revealLab = function () {
+                const [a, d] = vals(), a10 = a + 9 * d, s10 = (a + a10) * 5, o = document.getElementById('lab-out');
+                o.innerHTML = `$a_{10} = ${a} + 9 \\cdot (${d}) = ${a10}$<br>$S_{10} = \\dfrac{${a} + (${a10})}{2} \\cdot 10 = ${s10}$`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$a_{15} = 7 + 14 \\cdot (-2) = $ [[$-21$]]', 'Задача 1: $(n - 1) = 14$ кроків'],
+                ['$a_8 - a_3 = 5d = 15$ ⟹ [[$d = 3$]]', 'Задача 2: між $a_3$ і $a_8$ — $5$ кроків'],
+                ['$a_1 = a_3 - 2d = $ [[$5$]]', 'Перевірка: $a_8 = 5 + 7 \\cdot 3 = 26$ ✓'],
+                ['$10, 15, \\ldots, 95$: $n = \\dfrac{95 - 10}{5} + 1 = $ [[$18$]]', 'Задача 3: перший $10$, останній $95$, $d = 5$'],
+                ['$S = \\dfrac{10 + 95}{2} \\cdot 18 = $ [[$945$]]', 'Формула суми'],
+            ];
+@@INCLUDE steps.js
