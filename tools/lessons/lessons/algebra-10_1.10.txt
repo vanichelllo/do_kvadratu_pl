@@ -1,0 +1,292 @@
+@@TITLE Метод інтервалів
+@@BRAND Алгебра і початки аналізу (10-11 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .axis-l { stroke: currentColor; stroke-width: 2; }
+        .pt-in { fill: currentColor; }
+        .pt-out { fill: var(--card-bg); stroke: currentColor; stroke-width: 2; }
+        .sign { font-size: 22px; font-weight: 800; text-anchor: middle; }
+        .sign.p { fill: var(--brand-green); }
+        .sign.m { fill: var(--warning-red); }
+        .shade { fill: var(--brand-green); fill-opacity: 0.25; }
+        .lbl { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .snake { fill: none; stroke: var(--brand-blue); stroke-width: 2.5; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Знак добутку і частки</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Ідея</div>
+                        <p>Розв'язуємо нерівності виду $f(x) \gt 0$ ($\lt$, $\ge$, $\le$), де $f(x) = \dfrac{(x - a_1)(x - a_2)\ldots}{(x - b_1)\ldots}$.</p>
+                        <p>Функція може змінити знак лише в <b>нулях</b> ($x = a_i$) і в точках, де вона <b>не визначена</b> ($x = b_j$).</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Чому</div>
+                        <p>Між сусідніми такими точками кожен множник $(x - c)$ зберігає знак, тож і весь добуток (частка) — теж.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 140" id="idea-scene" role="img" aria-label="Числова пряма з точками 1 і 4 та знаками на інтервалах"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Методи розв'язування</span>
+                <h2 class="slide-title">Алгоритм методу інтервалів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box hack">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Перенести все в ліву частину: $f(x) \vee 0$; розкласти на множники.</p>
+                    <p>2) Знайти ОДЗ (нулі знаменника — <b>завжди виколоті</b>).</p>
+                    <p>3) Нулі чисельника — зафарбовані для $\ge, \le$, виколоті для $\gt, \lt$.</p>
+                    <p>4) Позначити точки на прямій; визначити знак на кожному інтервалі (пробна точка).</p>
+                    <p>5) Вибрати потрібні інтервали.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Чергування знаків</div>
+                    <p>Якщо кожен множник $(x - c)$ у <b>першому</b> степені і коефіцієнти при $x$ додатні, то праворуч від найбільшої точки «$+$», далі знаки чергуються.</p>
+                    <p>Множник у <b>парному</b> степені ($(x - c)^2$) — знак при переході через $c$ <b>не змінюється</b>.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Розставляємо знаки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо нерівність. Учні називають точки і знаки на інтервалах, потім відкриваємо крок за кроком.</p>
+                    <p class="center">
+                        <button class="btn-secondary" id="ib-0" onclick="pickIneq(0)">1</button>
+                        <button class="btn-secondary" id="ib-1" onclick="pickIneq(1)">2</button>
+                        <button class="btn-secondary" id="ib-2" onclick="pickIneq(2)">3</button>
+                    </p>
+                    <p class="big-formula" id="ineq-q"></p>
+                    <p class="center"><button class="btn-primary" onclick="ineqStep()">Наступний крок ▸</button></p>
+                    <p class="big-formula hidden-answer" id="ineq-a"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 160" id="ineq-scene" role="img" aria-label="Метод інтервалів на числовій прямій"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Приклад -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Дробово-раціональна нерівність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Розв'яжіть</div>
+                    <p class="big-formula">$\dfrac{x + 3}{x - 2} \ge 1$</p>
+                    <p>Не можна множити на $x - 2$: невідомо, який у нього знак!</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад 2 -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Парні степені і «кратні» корені</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">$(x - 1)^2(x + 2)(3 - x) \le 0$</div>
+                    <div class="step">$3 - x = -(x - 3)$: нерівність ⟺ $(x - 1)^2(x + 2)(x - 3) \ge 0$ — знак змінився!</div>
+                    <div class="step">Точки $-2$, $1$, $3$ — зафарбовані. Праворуч від $3$: «$+$»; через $3$ — «$-$»; через $1$ — знак <b>не змінюється</b> (квадрат): «$-$»; через $-2$ — «$+$».</div>
+                    <div class="step">$x \in (-\infty; -2] \cup \{1\} \cup [3; +\infty)$. Точку $x = 1$ не губимо!</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box remark">
+                    <div class="box-title">Пробна точка — надійний спосіб</div>
+                    <p>Сумніваєтеся у знаках — підставте число з інтервалу. Наприклад, $x = 0$: $(0 - 1)^2 \cdot 2 \cdot 3 = 6 \gt 0$ — отже, для $\le 0$ інтервал $(-2; 1)$ не підходить ✓.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Множення на знаменник</div>
+                    <p>$\dfrac{1}{x} \gt 2$ ⟹ $1 \gt 2x$ — <b>хибно</b> для $x \lt 0$. Переносимо все вліво.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Знаменник зафарбували</div>
+                    <p>У $\dfrac{x}{x - 3} \ge 0$ точка $3$ — <b>виколота</b>, навіть для «$\ge$».</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Загублена ізольована точка</div>
+                    <p>$x^2(x - 2) \ge 0$: відповідь $\{0\} \cup [2; +\infty)$ — точку $x = 0$ (корінь парного степеня) легко загубити.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Від'ємний коефіцієнт</div>
+                    <p>$(2 - x)$ — спершу $-(x - 2)$ і змінити знак нерівності.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ+</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть: $(x + 1)(x - 5) \lt 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $(-1; 5)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $(-\infty; -1) \cup (5; +\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $[-1; 5]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(-5; 1)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>Знаки: $+, -, +$; «$\lt 0$» — середній інтервал $(-1; 5)$. В — точки виколоті.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть: $\dfrac{x - 4}{x + 2} \ge 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $(-\infty; -2] \cup [4; +\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $(-\infty; -2) \cup [4; +\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(-2; 4]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $[4; +\infty)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $(-\infty; -2) \cup (4; +\infty)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$-2$ — виколота (знаменник), $4$ — зафарбована. Знаки $+, -, +$. А — зафарбували знаменник; Д — загубили $x = 4$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки цілих розв'язків має нерівність $\dfrac{(x - 3)^2(x + 1)}{x - 6} \le 0$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $4$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Знаки: праворуч від $6$ «$+$», на $(3; 6)$ «$-$», через $3$ без зміни — «$-$» на $(-1; 3)$, лівіше $-1$ «$+$». Розв'язки $[-1; 6)$: цілі $-1, 0, 1, 2, 3, 4, 5$ — $7$. Б — включили $6$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Усе — вліво, розклад на множники, ОДЗ.</p>
+                    <p>Точки: нулі чисельника (за знаком нерівності), нулі знаменника — завжди виколоті.</p>
+                    <p>Знак на інтервалі сталий; парний степінь — без зміни знака.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Перевірка</div>
+                        <p>Пробна точка на кожному інтервалі + окремо точки з парних степенів.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Не множте нерівність на вираз зі змінною невідомого знака.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIdea();
+                if (currentSlide === 3) renderIneq();
+                if (currentSlide === 4) renderEval();
+@@JS
+            // Числова пряма: points — [{x, filled}], signs — знаки на інтервалах зліва направо, shade — індекси інтервалів
+            function lineSvg(pts, signs, shade = [], shadePts = []) {
+                const W = 420, y = 90, x0 = 30, x1 = 390, n = pts.length, pos = (k) => x0 + (x1 - x0) * (k + 1) / (n + 1);
+                let s = '';
+                const edges = [x0 - 10, ...pts.map((_, k) => pos(k)), x1 + 10];
+                shade.forEach(i => s += `<rect x="${edges[i]}" y="${y - 12}" width="${edges[i + 1] - edges[i]}" height="24" class="shade"/>`);
+                s += `<line x1="${x0 - 10}" y1="${y}" x2="${x1 + 10}" y2="${y}" class="axis-l"/><path d="M${x1 + 14} ${y} l-10 -5 v10 z" fill="currentColor"/>`;
+                signs.forEach((sg, i) => { if (sg) s += `<text x="${(edges[i] + edges[i + 1]) / 2}" y="${y - 22}" class="sign ${sg === '+' ? 'p' : 'm'}">${sg === '+' ? '+' : '−'}</text>`; });
+                pts.forEach((p, k) => {
+                    s += `<circle cx="${pos(k)}" cy="${y}" r="6" class="${p.filled || shadePts.includes(k) ? 'pt-in' : 'pt-out'}"/><text x="${pos(k)}" y="${y + 28}" class="lbl">${p.t}</text>`;
+                });
+                return s;
+            }
+            window.renderIdea = function () {
+                document.getElementById('idea-scene').innerHTML = lineSvg([{ t: '1', filled: false }, { t: '4', filled: false }], ['+', '−', '+']);
+            };
+            const INEQ = [
+                { q: '$(x + 3)(x - 2) \\ge 0$', pts: [{ t: '−3', filled: true }, { t: '2', filled: true }], signs: ['+', '−', '+'], shade: [0, 2], a: '$x \\in (-\\infty; -3] \\cup [2; +\\infty)$' },
+                { q: '$\\dfrac{x + 1}{x - 4} \\lt 0$', pts: [{ t: '−1', filled: false }, { t: '4', filled: false }], signs: ['+', '−', '+'], shade: [1], a: '$x \\in (-1; 4)$' },
+                { q: '$x(x - 2)(x + 5) \\le 0$', pts: [{ t: '−5', filled: true }, { t: '0', filled: true }, { t: '2', filled: true }], signs: ['−', '+', '−', '+'], shade: [0, 2], a: '$x \\in (-\\infty; -5] \\cup [0; 2]$' },
+            ];
+            let ineqK = 0, ineqN = 0;
+            window.pickIneq = function (k) {
+                ineqK = k; ineqN = 0;
+                INEQ.forEach((_, i) => document.getElementById('ib-' + i).classList.toggle('on', i === k));
+                document.getElementById('ineq-a').classList.remove('shown');
+                renderIneq();
+            };
+            window.ineqStep = function () {
+                ineqN = Math.min(ineqN + 1, 3); renderIneq();
+                if (ineqN === 3) { const a = document.getElementById('ineq-a'); a.innerHTML = INEQ[ineqK].a; a.classList.add('shown'); if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([a]); }
+            };
+            window.renderIneq = function () {
+                const I = INEQ[ineqK], q = document.getElementById('ineq-q');
+                q.innerHTML = I.q;
+                document.getElementById('ib-' + ineqK).classList.add('on');
+                document.getElementById('ineq-scene').innerHTML = ineqN === 0 ? lineSvg([], []) : lineSvg(I.pts, ineqN >= 2 ? I.signs : [], ineqN >= 3 ? I.shade : []);
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([q]);
+            };
+            const STEPS = [
+                ['$\\dfrac{x + 3}{x - 2} - 1 \\ge 0$', 'Переносимо все вліво'],
+                ['$\\dfrac{x + 3 - x + 2}{x - 2} = $ [[$\\dfrac{5}{x - 2}$]] $\\ge 0$', 'Зводимо до спільного знаменника'],
+                ['$5 \\gt 0$ ⟹ $x - 2 \\gt 0$', 'Чисельник завжди додатний, рівності нулю немає; знаменник $\\ne 0$'],
+                ['[[$x \\in (2; +\\infty)$]]', 'Перевірка: $x = 3$: $\\dfrac{6}{1} = 6 \\ge 1$ ✓; $x = 0$: $-\\dfrac32 \\lt 1$ ✓'],
+            ];
+@@INCLUDE steps.js
