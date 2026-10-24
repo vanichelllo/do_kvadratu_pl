@@ -1,0 +1,290 @@
+@@TITLE Медіана, бісектриса і висота трикутника
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .tri { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.1; }
+        .med { stroke: var(--brand-green); stroke-width: 3.5; }
+        .bis { stroke: var(--brand-yellow); stroke-width: 3.5; }
+        .alt { stroke: var(--warning-red); stroke-width: 3.5; }
+        .ext { stroke: var(--warning-red); stroke-width: 2; stroke-dasharray: 6 5; }
+        .rm { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .v-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .seg-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
+        .seg-btns .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .slider-control label { font-weight: 800; min-width: 140px; }
+        @media (max-width: 760px) { .slider-control label { min-width: 0; flex: 0 0 38%; font-size: 0.9rem; } }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Три важливі відрізки</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>З вершини трикутника до протилежної сторони можна провести безліч відрізків. Три з них особливі:</p>
+                    <p>🟢 ділить сторону <b>навпіл</b>; 🟡 ділить <b>кут</b> навпіл; 🔴 падає на сторону <b>під прямим кутом</b>.</p>
+                    <p>Висота потрібна для площі, медіана — щоб знайти «центр мас», бісектриса — щоб розділити кут.</p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="intro-scene" role="img" aria-label="Медіана, бісектриса і висота з однієї вершини"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Означення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">🟢 Медіана</div>
+                        <p>Відрізок, що сполучає вершину із серединою протилежної сторони: $BM$, $AM = MC$.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">🟡 Бісектриса</div>
+                        <p>Відрізок бісектриси кута трикутника від вершини до протилежної сторони: $BL$, $\angle ABL = \angle LBC$.</p>
+                    </div>
+                    <div class="box definition">
+                        <div class="box-title">🔴 Висота</div>
+                        <p>Перпендикуляр, проведений з вершини до прямої, що містить протилежну сторону: $BH \perp AC$.</p>
+                    </div>
+                </div>
+                <div class="box remark">
+                    <div class="box-title">Скільки їх?</div>
+                    <p>У кожного трикутника $3$ медіани, $3$ бісектриси, $3$ висоти.</p>
+                    <p>Медіани і бісектриси завжди лежать усередині трикутника.</p>
+                    <p>Висота тупокутного трикутника з вершини гострого кута падає на <b>продовження</b> сторони — поза трикутник. У прямокутному два катети — це висоти.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Рухаємо вершину</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Рухаємо вершину $B$. Учні передбачають: де буде висота? коли всі три відрізки збігаються?</p>
+                    <div class="slider-control"><label for="w-x">Вершина $B$ вбік</label><input type="range" id="w-x" min="20" max="400" step="5" value="160" oninput="renderLab()"></div>
+                    <div class="seg-btns">
+                        <button class="btn-secondary on" id="sb-0" onclick="toggleSeg(0)">Медіана</button>
+                        <button class="btn-secondary on" id="sb-1" onclick="toggleSeg(1)">Бісектриса</button>
+                        <button class="btn-secondary on" id="sb-2" onclick="toggleSeg(2)">Висота</button>
+                    </div>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('lab-a').classList.add('shown')">Що помітили?</button></p>
+                    <div class="box hack hidden-answer" id="lab-a"><p>Якщо $AB = BC$ (вершина посередині), усі три відрізки збігаються. Якщо кут $A$ тупий, висота падає поза трикутник.</p></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="lab-scene" role="img" aria-label="Трикутник з рухомою вершиною та трьома відрізками"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Теорія -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивість рівнобедреного трикутника</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>У рівнобедреному трикутнику бісектриса, проведена до основи, є медіаною і висотою.</p>
+                    </div>
+                    <div class="box example" id="why">
+                        <div class="box-title">Чому</div>
+                        <div class="step">$AB = BC$, $BL$ — бісектриса: $\triangle ABL = \triangle CBL$ (дві сторони і кут між ними).</div>
+                        <div class="step">Отже, $AL = LC$ — $BL$ медіана.</div>
+                        <div class="step">$\angle BLA = \angle BLC$, разом $180^\circ$ — по $90^\circ$: $BL$ висота. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Ознаки рівнобедреного</div>
+                    <p>Якщо в трикутнику збігаються медіана і висота, або бісектриса і висота, або медіана і бісектриса, проведені з однієї вершини, — трикутник рівнобедрений.</p>
+                    <p>Наприклад, висота $BH$ є медіаною ⟹ $\triangle ABH = \triangle CBH$ (два катети) ⟹ $AB = CB$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $BM$ — медіана $\triangle ABC$, $AC = 14$ см. Знайдіть $AM$.</p>
+                    <p>2) У $\triangle ABC$ $\angle A = 50^\circ$, $\angle C = 70^\circ$. Знайдіть кут між бісектрисою $BL$ і висотою $BH$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Медіана ділить сторону, а не кут</div>
+                    <p>У загальному трикутнику медіана не ділить кут навпіл, а бісектриса не ділить сторону навпіл.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Висота поза трикутником</div>
+                    <p>У тупокутному трикутнику висоту з вершини гострого кута проводять до <b>продовження</b> сторони.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Не та основа</div>
+                    <p>Властивість «бісектриса = медіана = висота» — лише для відрізка, проведеного <b>до основи</b> рівнобедреного трикутника.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Бісектриса трикутника — відрізок</div>
+                    <p>Бісектриса кута — промінь, а бісектриса трикутника — відрізок від вершини до сторони.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$BL$ — бісектриса $\triangle ABC$, $\angle ABC = 84^\circ$. Знайдіть $\angle ABL$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $84^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $42^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $96^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $21^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$84^\circ : 2 = 42^\circ$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">У рівнобедреному $\triangle ABC$ ($AB = BC$) медіана $BM = 8$ см, $\angle ABC = 100^\circ$. Знайдіть $\angle ABM$ і $\angle BMA$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $50^\circ$ і $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $100^\circ$ і $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $50^\circ$ і $40^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $40^\circ$ і $90^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>Медіана до основи — і бісектриса, і висота: $50^\circ$ і $90^\circ$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">У $\triangle ABC$ висота $BH$ ділить $AC$ навпіл, $AB = 9$ см, $AC = 10$ см. Знайдіть периметр.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $27$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $28$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $19$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $29$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) не вистачає даних</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Висота є медіаною ⟹ $AB = BC = 9$. $P = 9 + 9 + 10 = 28$ см.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>🟢 Медіана — до середини сторони. 🟡 Бісектриса — ділить кут. 🔴 Висота — перпендикуляр до прямої сторони.</p>
+                    <p>У рівнобедреному до основи — усі три збігаються; і навпаки, збіг двох — трикутник рівнобедрений.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Що відомо: рівні відрізки (медіана), рівні кути (бісектриса), прямий кут (висота). 2) Шукаємо рівні трикутники.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Висота тупокутного трикутника може бути поза ним.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1);
+            const ln = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="tri"/>`;
+            const nm = (p, s, dx, dy) => `<text x="${f1(p[0] + dx)}" y="${f1(p[1] + dy)}" class="v-name">${s}</text>`;
+            function segs(A, B, C, show = [true, true, true]) {
+                const M = [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2];
+                const a = Math.hypot(B[0] - C[0], B[1] - C[1]), c = Math.hypot(B[0] - A[0], B[1] - A[1]);
+                const L = [A[0] + (C[0] - A[0]) * c / (a + c), A[1] + (C[1] - A[1]) * c / (a + c)];
+                const H = [B[0], A[1]];
+                let s = '';
+                if (H[0] < A[0]) s += ln(A, [H[0] - 10, H[1]], 'ext');
+                if (H[0] > C[0]) s += ln(C, [H[0] + 10, H[1]], 'ext');
+                if (show[2]) s += ln(B, H, 'alt') + `<path d="M${f1(H[0] + (H[0] <= C[0] ? 12 : -12))} ${H[1]} v-12 h${H[0] <= C[0] ? -12 : 12}" class="rm"/>`;
+                if (show[1]) s += ln(B, L, 'bis');
+                if (show[0]) s += ln(B, M, 'med');
+                return s;
+            }
+            window.renderIntro = function () {
+                const A = [40, 220], B = [130, 40], C = [370, 220];
+                document.getElementById('intro-scene').innerHTML = poly([A, B, C]) + segs(A, B, C) + nm(A, 'A', -14, 6) + nm(B, 'B', 0, -10) + nm(C, 'C', 14, 6);
+            };
+            const SHOW = [true, true, true];
+            window.toggleSeg = function (k) { SHOW[k] = !SHOW[k]; document.getElementById('sb-' + k).classList.toggle('on', SHOW[k]); renderLab(); };
+            window.renderLab = function () {
+                const x = +document.getElementById('w-x').value, A = [80, 220], B = [x, 50], C = [300, 220];
+                document.getElementById('lab-scene').innerHTML = poly([A, B, C]) + segs(A, B, C, SHOW) + nm(A, 'A', -14, 6) + nm(B, 'B', 0, -10) + nm(C, 'C', 14, 6);
+            };
+            const STEPS = [
+                ['$AM = \\dfrac{AC}{2} = $ [[$7$ см]]', 'Задача 1: медіана ділить сторону навпіл'],
+                ['$\\angle B = 180^\\circ - 50^\\circ - 70^\\circ = $ [[$60^\\circ$]], $\\angle ABL = 30^\\circ$', 'Задача 2: бісектриса ділить кут $B$ навпіл'],
+                ['$\\angle ABH = 90^\\circ - 50^\\circ = $ [[$40^\\circ$]]', 'У прямокутному $\\triangle ABH$'],
+                ['$\\angle LBH = 40^\\circ - 30^\\circ = $ [[$10^\\circ$]]', 'Відповідь: $10^\\circ$'],
+            ];
+@@INCLUDE steps.js
