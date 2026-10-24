@@ -1,0 +1,244 @@
+@@TITLE Функція y = x² та її графік
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .val-table { border-collapse: collapse; margin: 6px auto; font-size: 1.05rem; }
+        .val-table td, .val-table th { border: 1px solid var(--border-color); padding: 6px 9px; text-align: center; }
+        .val-table th { color: var(--brand-blue); }
+        .pt { fill: var(--brand-yellow); stroke: currentColor; stroke-width: 1; }
+        .slider-control label { font-weight: 800; min-width: 60px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .hline { stroke: var(--warning-red); stroke-width: 2; stroke-dasharray: 6 4; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Площа квадрата як функція сторони</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Площа квадрата зі стороною $a$: $S = a^2$. Сторону збільшили вдвічі — площа зросла вчетверо. Це вже не лінійна залежність!</p>
+                    <p>Функцію $y = x^2$ задано на всій числовій прямій; її графік — <b>парабола</b>.</p>
+                    <table class="val-table">
+                        <tr><th>$x$</th><td>$-3$</td><td>$-2$</td><td>$-1$</td><td>$0$</td><td>$1$</td><td>$2$</td><td>$3$</td></tr>
+                        <tr><th>$y$</th><td>$9$</td><td>$4$</td><td>$1$</td><td>$0$</td><td>$1$</td><td>$4$</td><td>$9$</td></tr>
+                    </table>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="par-scene" role="img" aria-label="Парабола y = x² за точками таблиці"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Властивості функції $y = x^2$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Властивості</div>
+                    <p>1) $D(y) = \mathbb{R}$; $E(y) = [0; +\infty)$.</p>
+                    <p>2) $y = 0$ лише при $x = 0$; при $x \ne 0$ $y \gt 0$.</p>
+                    <p>3) Протилежним $x$ відповідають рівні $y$: $(-x)^2 = x^2$ — графік симетричний відносно осі $Oy$.</p>
+                    <p>4) Спадає на $(-\infty; 0]$, зростає на $[0; +\infty)$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Парабола</div>
+                    <p>Точка $(0; 0)$ — <b>вершина</b> параболи; вісь $Oy$ — її <b>вісь симетрії</b>; гілки спрямовані вгору.</p>
+                    <p>Найменше значення функції — $0$; найбільшого немає.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Скільки розв'язків має $x^2 = a$?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Пряма $y = a$ рухається вгору-вниз. Учні передбачають кількість точок перетину з параболою, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-a">$a$</label><input type="range" id="w-a" min="-3" max="9" step="0.5" value="4" oninput="renderLab()"><span id="w-a-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Перевірити</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="lab-scene" role="img" aria-label="Парабола і горизонтальна пряма y = a"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Чи належить графіку $y = x^2$ точка $A(-1{,}5; 2{,}25)$? А $B(4; -16)$?</p>
+                    <p>2) Порівняйте $(-3{,}7)^2$ і $(2{,}9)^2$, не обчислюючи.</p>
+                    <p>3) Розв'яжіть графічно $x^2 = x + 2$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастки -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Квадрат від'ємного числа</div>
+                    <p>$(-3)^2 = 9$, а $-3^2 = -9$. Графіку $y = x^2$ належить $(-3; 9)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">«Зростає скрізь»</div>
+                    <p>$y = x^2$ спадає при $x \le 0$: $(-3)^2 \gt (-1)^2$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Гострий кут у вершині</div>
+                    <p>Парабола в вершині плавна, а не «галочка» з відрізків.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Забули від'ємний розв'язок</div>
+                    <p>$x^2 = 9$ має два розв'язки: $3$ і $-3$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Практика -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Яка точка належить графіку $y = x^2$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $(-2; -4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $(-2; 4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(4; 2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(2; -4)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$(-2)^2 = 4$. А — $-2^2$; В — переставлено координати.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть найбільше значення $y = x^2$ на відрізку $[-3; 2]$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $-9$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>Найдальша від $0$ точка — $x = -3$: $9$. А — узяли правий кінець.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки спільних точок мають графіки $y = x^2$ і $y = 2x$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) жодної</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) одну</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) дві</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) три</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$x^2 = 2x$ ⟹ $x(x - 2) = 0$: $(0; 0)$ і $(2; 4)$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Коротко -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>$y = x^2$: парабола з вершиною $(0; 0)$, симетрична відносно $Oy$, гілки вгору.</p>
+                    <p>$E(y) = [0; +\infty)$; спадає на $(-\infty; 0]$, зростає на $[0; +\infty)$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>Точка на графіку: $y_0 = x_0^2$. Порівняння квадратів: порівнюємо $|x|$. $x^2 = a$: два, один чи нуль розв'язків.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$(-3)^2 = 9$, а не $-9$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderPar();
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 4) renderEval();
+@@JS
+@@INCLUDE plot.js
+            window.renderPar = function () {
+                const P = plane(-4, 4, -1, 10, 420, 300);
+                let s = axesSvg(P, 1, 1) + curveSvg(P, (x) => x * x, -3.2, 3.2);
+                [-3, -2, -1, 0, 1, 2, 3].forEach(x => s += `<circle cx="${P.sx(x)}" cy="${P.sy(x * x)}" r="5" class="pt"/>`);
+                document.getElementById('par-scene').innerHTML = s;
+            };
+            window.renderLab = function () {
+                const a = +document.getElementById('w-a').value, P = plane(-4, 4, -4, 10, 420, 300);
+                document.getElementById('w-a-val').textContent = String(a).replace('.', ',');
+                let s = axesSvg(P, 1, 2) + curveSvg(P, (x) => x * x, -3.2, 3.2);
+                s += `<line x1="${P.sx(-4)}" y1="${P.sy(a)}" x2="${P.sx(4)}" y2="${P.sy(a)}" class="hline"/>`;
+                if (a >= 0) { const r = Math.sqrt(a); s += `<circle cx="${P.sx(r)}" cy="${P.sy(a)}" r="5" class="pt"/><circle cx="${P.sx(-r)}" cy="${P.sy(a)}" r="5" class="pt"/>`; }
+                document.getElementById('lab-scene').innerHTML = s;
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const a = +document.getElementById('w-a').value, o = document.getElementById('lab-out');
+                o.innerHTML = a > 0 ? `$a \\gt 0$: два розв'язки, протилежні числа` : a === 0 ? `$a = 0$: один розв'язок $x = 0$` : `$a \\lt 0$: розв'язків немає`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$(-1{,}5)^2 = 2{,}25$ ⟹ [[$A$ належить]]', 'Задача 1: перевіряємо $y_0 = x_0^2$'],
+                ['$4^2 = 16 \\ne -16$ ⟹ [[$B$ не належить]]', 'Значення $y = x^2$ невід\'ємні'],
+                ['$|-3{,}7| \\gt |2{,}9|$ ⟹ [[$(-3{,}7)^2 \\gt (2{,}9)^2$]]', 'Задача 2: квадрат більший у числа, більшого за модулем'],
+                ['Графіки $y = x^2$ і $y = x + 2$ перетинаються в [[$(-1; 1)$, $(2; 4)$]]', 'Задача 3: будуємо параболу і пряму'],
+                ['[[$x = -1$, $x = 2$]]', 'Перевірка: $1 = -1 + 2$ ✓, $4 = 2 + 2$ ✓'],
+            ];
+@@INCLUDE steps.js

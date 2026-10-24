@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра: Функція y = x² та її графік | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Координатна площина і графіки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.pos, .curve.up { stroke: var(--brand-green); }
+        .curve.neg { stroke: var(--warning-red); }
+        .curve.down { stroke: var(--brand-yellow); }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .end-dot { fill: var(--brand-blue); }
+        .probe { fill: var(--brand-blue); stroke: var(--card-bg); stroke-width: 2; }
+        .probe-line { stroke: var(--brand-blue); stroke-width: 1.5; stroke-dasharray: 5 4; }
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .val-table { border-collapse: collapse; margin: 6px auto; font-size: 1.05rem; }
+        .val-table td, .val-table th { border: 1px solid var(--border-color); padding: 6px 9px; text-align: center; }
+        .val-table th { color: var(--brand-blue); }
+        .pt { fill: var(--brand-yellow); stroke: currentColor; stroke-width: 1; }
+        .slider-control label { font-weight: 800; min-width: 60px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .hline { stroke: var(--warning-red); stroke-width: 2; stroke-dasharray: 6 4; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Алгебра (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Площа квадрата як функція сторони</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Площа квадрата зі стороною $a$: $S = a^2$. Сторону збільшили вдвічі — площа зросла вчетверо. Це вже не лінійна залежність!</p>
+                    <p>Функцію $y = x^2$ задано на всій числовій прямій; її графік — <b>парабола</b>.</p>
+                    <table class="val-table">
+                        <tr><th>$x$</th><td>$-3$</td><td>$-2$</td><td>$-1$</td><td>$0$</td><td>$1$</td><td>$2$</td><td>$3$</td></tr>
+                        <tr><th>$y$</th><td>$9$</td><td>$4$</td><td>$1$</td><td>$0$</td><td>$1$</td><td>$4$</td><td>$9$</td></tr>
+                    </table>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="par-scene" role="img" aria-label="Парабола y = x² за точками таблиці"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Властивості функції $y = x^2$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Властивості</div>
+                    <p>1) $D(y) = \mathbb{R}$; $E(y) = [0; +\infty)$.</p>
+                    <p>2) $y = 0$ лише при $x = 0$; при $x \ne 0$ $y \gt 0$.</p>
+                    <p>3) Протилежним $x$ відповідають рівні $y$: $(-x)^2 = x^2$ — графік симетричний відносно осі $Oy$.</p>
+                    <p>4) Спадає на $(-\infty; 0]$, зростає на $[0; +\infty)$.</p>
+                </div>
+                <div class="box definition">
+                    <div class="box-title">Парабола</div>
+                    <p>Точка $(0; 0)$ — <b>вершина</b> параболи; вісь $Oy$ — її <b>вісь симетрії</b>; гілки спрямовані вгору.</p>
+                    <p>Найменше значення функції — $0$; найбільшого немає.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Скільки розв'язків має $x^2 = a$?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Пряма $y = a$ рухається вгору-вниз. Учні передбачають кількість точок перетину з параболою, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-a">$a$</label><input type="range" id="w-a" min="-3" max="9" step="0.5" value="4" oninput="renderLab()"><span id="w-a-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Перевірити</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="lab-scene" role="img" aria-label="Парабола і горизонтальна пряма y = a"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Чи належить графіку $y = x^2$ точка $A(-1{,}5; 2{,}25)$? А $B(4; -16)$?</p>
+                    <p>2) Порівняйте $(-3{,}7)^2$ і $(2{,}9)^2$, не обчислюючи.</p>
+                    <p>3) Розв'яжіть графічно $x^2 = x + 2$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастки -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Квадрат від'ємного числа</div>
+                    <p>$(-3)^2 = 9$, а $-3^2 = -9$. Графіку $y = x^2$ належить $(-3; 9)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">«Зростає скрізь»</div>
+                    <p>$y = x^2$ спадає при $x \le 0$: $(-3)^2 \gt (-1)^2$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Гострий кут у вершині</div>
+                    <p>Парабола в вершині плавна, а не «галочка» з відрізків.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Забули від'ємний розв'язок</div>
+                    <p>$x^2 = 9$ має два розв'язки: $3$ і $-3$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Практика -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Яка точка належить графіку $y = x^2$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $(-2; -4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $(-2; 4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $(4; 2)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $(2; -4)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$(-2)^2 = 4$. А — $-2^2$; В — переставлено координати.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть найбільше значення $y = x^2$ на відрізку $[-3; 2]$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $-9$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>Найдальша від $0$ точка — $x = -3$: $9$. А — узяли правий кінець.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки спільних точок мають графіки $y = x^2$ і $y = 2x$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) жодної</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) одну</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) дві</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) три</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$x^2 = 2x$ ⟹ $x(x - 2) = 0$: $(0; 0)$ і $(2; 4)$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Коротко -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>$y = x^2$: парабола з вершиною $(0; 0)$, симетрична відносно $Oy$, гілки вгору.</p>
+                    <p>$E(y) = [0; +\infty)$; спадає на $(-\infty; 0]$, зростає на $[0; +\infty)$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>Точка на графіку: $y_0 = x_0^2$. Порівняння квадратів: порівнюємо $|x|$. $x^2 = a$: два, один чи нуль розв'язків.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$(-3)^2 = 9$, а не $-9$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 7</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderPar();
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 4) renderEval();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            // --- Координатна площина: спільні перетворення координат ---
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y') {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 4}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1; x += stepX) if (x !== 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${String(x).replace('-', '−').replace('.', ',')}</text>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1; y += stepY) if (y !== 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${String(y).replace('-', '−').replace('.', ',')}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Гладка крива через точки екстремумів: між сусідніми точками s(t) = 3t² − 2t³
+            const smooth = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) { const t = (x - ax) / (bx - ax); return ay + (by - ay) * (3 * t * t - 2 * t * t * t); }
+                }
+                return NaN;
+            };
+            // Ламана через точки
+            const broken = (pts) => (x) => {
+                for (let i = 0; i + 1 < pts.length; i++) {
+                    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+                    if (x >= ax - 1e-9 && x <= bx + 1e-9) return ay + (by - ay) * (x - ax) / (bx - ax);
+                }
+                return NaN;
+            };
+            // Крива, розфарбована за класом кожної точки (cls(x, y) → 'pos' / 'neg' / 'up' / …)
+            function curveSvg(P, f, a, b, cls = () => '') {
+                let svg = '', d = '', cur = null;
+                const N = 240;
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.05 || y > P.y1 + 0.05) { if (d) svg += `<path d="${d}" class="curve ${cur}"/>`; d = ''; continue; }
+                    const c = cls(x, y);
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    if (d && c !== cur) { svg += `<path d="${d} L${pt}" class="curve ${cur}"/>`; d = ''; }
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                    cur = c;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cur}"/>`;
+                return svg;
+            }
+            const num = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',').replace('-', '−');
+            window.renderPar = function () {
+                const P = plane(-4, 4, -1, 10, 420, 300);
+                let s = axesSvg(P, 1, 1) + curveSvg(P, (x) => x * x, -3.2, 3.2);
+                [-3, -2, -1, 0, 1, 2, 3].forEach(x => s += `<circle cx="${P.sx(x)}" cy="${P.sy(x * x)}" r="5" class="pt"/>`);
+                document.getElementById('par-scene').innerHTML = s;
+            };
+            window.renderLab = function () {
+                const a = +document.getElementById('w-a').value, P = plane(-4, 4, -4, 10, 420, 300);
+                document.getElementById('w-a-val').textContent = String(a).replace('.', ',');
+                let s = axesSvg(P, 1, 2) + curveSvg(P, (x) => x * x, -3.2, 3.2);
+                s += `<line x1="${P.sx(-4)}" y1="${P.sy(a)}" x2="${P.sx(4)}" y2="${P.sy(a)}" class="hline"/>`;
+                if (a >= 0) { const r = Math.sqrt(a); s += `<circle cx="${P.sx(r)}" cy="${P.sy(a)}" r="5" class="pt"/><circle cx="${P.sx(-r)}" cy="${P.sy(a)}" r="5" class="pt"/>`; }
+                document.getElementById('lab-scene').innerHTML = s;
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const a = +document.getElementById('w-a').value, o = document.getElementById('lab-out');
+                o.innerHTML = a > 0 ? `$a \\gt 0$: два розв'язки, протилежні числа` : a === 0 ? `$a = 0$: один розв'язок $x = 0$` : `$a \\lt 0$: розв'язків немає`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$(-1{,}5)^2 = 2{,}25$ ⟹ [[$A$ належить]]', 'Задача 1: перевіряємо $y_0 = x_0^2$'],
+                ['$4^2 = 16 \\ne -16$ ⟹ [[$B$ не належить]]', 'Значення $y = x^2$ невід\'ємні'],
+                ['$|-3{,}7| \\gt |2{,}9|$ ⟹ [[$(-3{,}7)^2 \\gt (2{,}9)^2$]]', 'Задача 2: квадрат більший у числа, більшого за модулем'],
+                ['Графіки $y = x^2$ і $y = x + 2$ перетинаються в [[$(-1; 1)$, $(2; 4)$]]', 'Задача 3: будуємо параболу і пряму'],
+                ['[[$x = -1$, $x = 2$]]', 'Перевірка: $1 = -1 + 2$ ✓, $4 = 2 + 2$ ✓'],
+            ];
+            // --- Покрокове розв'язання (STEPS задає урок): кожен клік додає рядок ---
+            let shown = 1;
+            window.renderEval = function () {
+                const box = document.getElementById('eval-lines');
+                box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                    const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                    return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                }).join('');
+                document.getElementById('eval-note').innerHTML = STEPS[shown - 1][1];
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, document.getElementById('eval-note')]);
+            };
+            window.evalStep = function () { shown = Math.min(shown + 1, STEPS.length); renderEval(); };
+            window.evalReset = function () { shown = 1; renderEval(); };
+
+            // --- Кроки прикладів з'являються по кліку ---
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            // --- Практика: перемикач завдань ---
+            window.showTask = function (n) {
+                document.querySelectorAll('.practice-task').forEach((t, k) => {
+                    t.classList.toggle('on', k + 1 === n);
+                    document.getElementById(`tab-${k + 1}`).classList.toggle('on', k + 1 === n);
+                });
+                if (window.onTask) window.onTask(n);
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
