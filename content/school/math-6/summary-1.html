@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математика: Узагальнення: Подільність натуральних чисел | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 16px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.8rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 8px 0; line-height: 1.55; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        /* Діалог на першому слайді */
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 12px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+        .big-question { font-size: 1.3rem; font-weight: 700; text-align: center; margin-top: 14px; }
+        .hidden-answer { display: none; }
+        .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Покрокові розв'язання */
+        .eval-line { font-size: 1.2rem; font-weight: 700; padding: 5px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .step { display: none; margin: 8px 0; line-height: 1.5; }
+        .step.shown { display: block; animation: fade 0.3s ease; }
+
+        /* Практика: перемикач завдань */
+        .task-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.35rem; }
+            .slide-body { font-size: 1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Математика (5-6 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 1 «Подільність натуральних чисел» — $6$ тем. Клацаємо на тему — учні пригадують, про що вона, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 150" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Обери тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Дільники і кратні</div>
+                    <p>$12$ ділиться на $4$: $4$ — дільник $12$, $12$ — кратне $4$.</p>
+                    <p>Просте: $2, 3, 5, 7, 11, 13, \ldots$ Складене — має більше двох дільників.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Ознаки подільності ⭐</div>
+                    <p>На $2$ — остання цифра парна; на $5$ — $0$ або $5$; на $10$ — $0$.</p>
+                    <p>На $3$ / на $9$ — сума цифр ділиться на $3$ / на $9$.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Розклад на прості множники</div>
+                    <p>$60 = 2 \cdot 2 \cdot 3 \cdot 5 = 2^2 \cdot 3 \cdot 5$ — ділимо по черзі на $2, 3, 5, \ldots$</p>
+                </div>
+                <div class="box remark know">
+                    <div class="box-title">НСД і НСК</div>
+                    <p>НСД: спільні множники. НСК: усі множники.</p>
+                    <p>$24 = 2^3 \cdot 3$, $36 = 2^2 \cdot 3^2$: НСД $= 12$, НСК $= 72$.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні визначають, що потрібно: ознака, НСД чи НСК. Потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Задача на НСК</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Оля ходить на басейн кожен $4$-й день, а Тарас — кожен $6$-й. Сьогодні вони зустрілися в басейні. Через скільки днів зустрінуться знову?</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Шукаємо число, яке ділиться і на $4$, і на $6$ — спільне кратне.</div>
+                    <div class="step">$4 = 2^2$, $6 = 2 \cdot 3$. НСК $= 2^2 \cdot 3 = 12$.</div>
+                    <div class="step">Через $12$ днів. Перевірка: $12 : 4 = 3$, $12 : 6 = 2$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Задача на НСД</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Є $48$ червоних і $60$ синіх кульок. Яку найбільшу кількість однакових букетів можна скласти з усіх кульок? Скільки кульок кожного кольору в букеті?</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Кількість букетів ділить і $48$, і $60$ — шукаємо найбільший спільний дільник.</div>
+                    <div class="step">$48 = 2^4 \cdot 3$, $60 = 2^2 \cdot 3 \cdot 5$. НСД $= 2^2 \cdot 3 = 12$.</div>
+                    <div class="step">$12$ букетів: по $48 : 12 = 4$ червоні і $60 : 12 = 5$ синіх.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>1.4:</b> $1$ — <b>не</b> просте число (має лише один дільник). <span class="ok">Найменше просте — $2$, і воно парне.</span></div>
+                <div class="trap-card"><b>1.3:</b> ознака на $3$ — за <b>сумою</b> цифр, а не за останньою цифрою: $13$ не ділиться на $3$, а $27$ — ділиться.</div>
+                <div class="trap-card"><b>1.5 / 1.6:</b> НСД — найбільше число, на яке діляться <b>обидва</b>; НСК — найменше, що ділиться <b>на обидва</b>.</div>
+                <div class="trap-card"><b>1.6:</b> НСК$(4, 6) \ne 4 \cdot 6 = 24$. <span class="ok">НСК $= 12$.</span></div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Яке з чисел ділиться і на $5$, і на $9$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $315$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $245$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $549$</div>
+                        <div class="box hack quiz-hint" id="quiz-1-hint"><div class="box-title">Підказка 💡</div><p>Остання цифра — $0$ або $5$, а сума цифр ділиться на $9$.</p></div>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Так! 🎉</div><p>$315$: закінчується на $5$, $3 + 1 + 5 = 9$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. Знайди НСД$(18, 30)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $90$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $3$</div>
+                        <div class="box hack quiz-hint" id="quiz-2-hint"><div class="box-title">Підказка 💡</div><p>Розклади: $18 = 2 \cdot 3^2$, $30 = 2 \cdot 3 \cdot 5$.</p></div>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Так! 🎉</div><p>Спільні множники $2 \cdot 3 = 6$. $90$ — це НСК.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. Знайди НСК$(8, 12)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $96$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $24$</div>
+                        <div class="box hack quiz-hint" id="quiz-3-hint"><div class="box-title">Підказка 💡</div><p>Розклади: $8 = 2^3$, $12 = 2^2 \cdot 3$.</p></div>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Так! 🎉</div><p>$2^3 \cdot 3 = 24$. $96 = 8 \cdot 12$ — не найменше.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. Скільки простих чисел між $20$ і $40$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $6$</div>
+                        <div class="box hack quiz-hint" id="quiz-4-hint"><div class="box-title">Підказка 💡</div><p>Перевір непарні числа, що не діляться на $3$ і $5$.</p></div>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Так! 🎉</div><p>$23, 29, 31, 37$ — чотири.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>Ознаки: на $2, 5, 10$ — остання цифра; на $3, 9$ — сума цифр.</p>
+                    <p>Прості множники → НСД (спільні) і НСК (усі, з найбільшими степенями).</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Ділимо на найбільші однакові частини — НСД; шукаємо, коли події збіжуться, — НСК.</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>$1$ не є простим числом, а НСК двох чисел не завжди дорівнює їхньому добутку.</p></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Тисячі через вузький нерозривний пробіл: 1 248
+            const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+            const TOPICS = [{"g": 0, "n": "1.1", "t": "Дільники, кратні", "d": "a ділиться на b без остачі: b — дільник a, a — кратне b."}, {"g": 0, "n": "1.4", "t": "Прості, складені", "d": "Просте число має рівно два дільники: 1 і саме число. 1 — ні просте, ні складене."}, {"g": 1, "n": "1.2", "t": "На 2, 5, 10", "d": "Дивимось на останню цифру: парна — на 2; 0 або 5 — на 5; 0 — на 10."}, {"g": 1, "n": "1.3", "t": "На 3 і 9", "d": "Сума цифр ділиться на 3 (на 9) — число ділиться на 3 (на 9)."}, {"g": 2, "n": "1.5", "t": "НСД", "d": "Найбільший спільний дільник: спільні прості множники."}, {"g": 2, "n": "1.6", "t": "НСК", "d": "Найменше спільне кратне: усі прості множники з найбільшими степенями."}];
+            const GROUPS = ["Дільники і кратні", "Ознаки подільності", "НСД і НСК"];
+            const GW = 226;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["Чи можна $252$ цукерки розкласти порівну в $9$ коробок?", "Ознака на $9$: $2 + 5 + 2 = 9$ — так"], ["Яку найбільшу кількість однакових подарунків можна скласти з $24$ яблук і $36$ груш?", "НСД$(24, 36) = 12$ подарунків"], ["Автобуси ходять кожні $12$ і $18$ хв. Через скільки хвилин вони знову вирушать разом?", "НСК$(12, 18) = 36$ хв"], ["Чи просте число $91$?", "Ні: $91 = 7 \\cdot 13$"], ["Яку цифру поставити замість *, щоб $4*5$ ділилося на $3$?", "Ознака на $3$: $4 + * + 5$ — $0$, $3$, $6$ або $9$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
+
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.remove('correct', 'wrong'));
+                element.classList.add(isCorrect ? 'correct' : 'wrong');
+                const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? 'block' : 'none'; };
+                show(`quiz-${quizNum}-explanation`, isCorrect);
+                show(`quiz-${quizNum}-hint`, !isCorrect);  // підказка є лише в профілі А
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+            };
+
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
