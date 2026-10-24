@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Узагальнення: Розділ 3. Розв'язування трикутників | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; --violet: #8e44ad; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; --violet: #c39bd3; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 14px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.7rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 7px 0; line-height: 1.5; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; }
+        .box > p:first-of-type { margin-top: 0; } .box > p:last-child { margin-bottom: 0; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .math-widget > p:first-child { margin-top: 0; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); display: block; }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); min-width: 0; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 34px; text-align: right; }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+
+        .step, .hidden-answer { display: none; margin: 6px 0; line-height: 1.45; }
+        .step.shown, .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .task-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .readout { font-size: 1.12rem; font-weight: 700; min-height: 1.5em; }
+        .formula { font-size: 1.25rem; text-align: center; margin: 6px 0; }
+        .big-question { font-size: 1.25rem; font-weight: 700; text-align: center; margin-top: 12px; }
+        .muted { color: var(--text-muted); }
+        table.tbl { width: 100%; border-collapse: collapse; }
+        table.tbl th, table.tbl td { border-bottom: 1px solid var(--border-color); padding: 5px 8px; text-align: left; vertical-align: middle; }
+        table.tbl th { color: var(--brand-blue); }
+
+        /* Рисунки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.g { stroke: var(--brand-green); } .curve.y { stroke: var(--brand-yellow); } .curve.r { stroke: var(--warning-red); } .curve.v { stroke: var(--violet); }
+        .curve.thin { stroke-width: 2.4; }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .geo-line { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+        .geo-line.b { stroke: var(--brand-blue); } .geo-line.g { stroke: var(--brand-green); } .geo-line.y { stroke: var(--brand-yellow); } .geo-line.r { stroke: var(--warning-red); } .geo-line.v { stroke: var(--violet); }
+        .geo-line.thick { stroke-width: 4; }
+        .hidden-line { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 5; fill: none; }
+        .geo-dot { fill: currentColor; }
+        .dot-b { fill: var(--brand-blue); } .dot-g { fill: var(--brand-green); } .dot-y { fill: var(--brand-yellow); } .dot-r { fill: var(--warning-red); } .dot-v { fill: var(--violet); }
+        .fill-b { fill: var(--brand-blue); fill-opacity: 0.16; } .fill-g { fill: var(--brand-green); fill-opacity: 0.18; } .fill-y { fill: var(--brand-yellow); fill-opacity: 0.22; } .fill-r { fill: var(--warning-red); fill-opacity: 0.16; } .fill-v { fill: var(--violet); fill-opacity: 0.18; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .svg-note.b { fill: var(--brand-blue); } .svg-note.g { fill: var(--brand-green); } .svg-note.r { fill: var(--warning-red); } .svg-note.y { fill: var(--brand-yellow); } .svg-note.v { fill: var(--violet); }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); } .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; } .angle-arc.r { fill: var(--warning-red); opacity: 0.45; } .angle-arc.none { fill: var(--border-color); opacity: 0.7; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vec { stroke-width: 3.2; stroke-linecap: round; fill: none; stroke: currentColor; }
+        .vec.b { stroke: var(--brand-blue); } .head.b { fill: var(--brand-blue); }
+        .vec.y { stroke: var(--brand-yellow); } .head.y { fill: var(--brand-yellow); }
+        .vec.g { stroke: var(--brand-green); } .head.g { fill: var(--brand-green); }
+        .vec.r { stroke: var(--warning-red); } .head.r { fill: var(--warning-red); }
+        .vec.v { stroke: var(--violet); } .head.v { fill: var(--violet); }
+        .head.k { fill: currentColor; }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.4; }
+        .eval-line { font-size: 1.15rem; font-weight: 700; padding: 4px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 10px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        .map-svg svg { max-height: 300px; }
+        .node rect { fill: var(--widget-bg); stroke: var(--brand-blue); stroke-width: 2.5; cursor: pointer; }
+        .node.on rect { fill: var(--brand-blue); }
+        .node text { fill: var(--text-dark); font-size: 17px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .node.on text { fill: #fff; }
+        .node-num { font-size: 24px !important; font-weight: 800 !important; }
+        .link { stroke: var(--brand-green); stroke-width: 2.5; fill: none; }
+        .link-head { fill: var(--brand-green); }
+        .cheat { font-size: 0.97rem; }
+        .cheat .box p { margin: 4px 0; line-height: 1.38; }
+        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .task-card { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: var(--transition); }
+        .task-card:hover { border-color: var(--brand-blue); }
+        .task-card .rule { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); font-size: 0.95rem; }
+        .task-card.open { border-color: var(--brand-green); }
+        .task-card.open .rule { display: block; }
+        .topic-tag { display: inline-block; font-weight: 800; color: #fff; background: var(--brand-green); border-radius: 6px; padding: 0 6px; margin-right: 4px; }
+        .tri-svg svg { max-height: 280px; }
+        .known { stroke: var(--warning-red); stroke-width: 5; stroke-linecap: round; }
+        .plan-btns .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.3rem; }
+            .slide-body { font-size: 1rem; }
+            .formula { font-size: 1.1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            /* довгі формули на телефоні гортаються вбік у межах рядка */
+            .slide-body p, .step, .eval-line, .quiz-option, .slide-body li { overflow-x: auto; overflow-y: hidden; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Карта розділу -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили в розділі 3 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <div class="math-widget widget-svg-container map-svg">
+                    <svg viewBox="0 0 900 330" id="map-scene" role="img" aria-label="Карта розділу: шість тем і зв'язки між ними"></svg>
+                </div>
+                <p style="margin:10px 0 6px">Клацаємо на тему — учень розповідає, про що вона, потім перевіряємо.</p>
+                <div class="box theorem" id="map-text"><p>Оберіть тему на карті.</p></div>
+            </div>
+        </section>
+
+        <!-- 2. Шпаргалка -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-3 cheat">
+                <div class="box theorem">
+                    <div class="box-title">3.6, 3.1, 3.2. Тригонометрія і теореми</div>
+                    <p>$\sin(180^\circ - \alpha) = \sin\alpha$, $\;\cos(180^\circ - \alpha) = -\cos\alpha$.</p>
+                    <p>$a^2 = b^2 + c^2 - 2bc\cos A$.</p>
+                    <p>$\dfrac{a}{\sin A} = \dfrac{b}{\sin B} = \dfrac{c}{\sin C} = 2R$.</p>
+                    <p>$a^2 \gt b^2 + c^2 \iff$ кут $A$ тупий.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">3.3. Розв'язування трикутників</div>
+                    <p><b>ССС:</b> кути — за теоремою косинусів.</p>
+                    <p><b>СКС:</b> третя сторона — за теоремою косинусів.</p>
+                    <p><b>КСК:</b> третій кут $= 180^\circ - A - B$, сторони — за теоремою синусів.</p>
+                    <p><b>ССК</b> (кут не між сторонами): теорема синусів — $0$, $1$ або $2$ трикутники.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">3.4–3.5. Площі</div>
+                    <p>$S = \frac12 ab\sin C$; $\;S = \sqrt{p(p - a)(p - b)(p - c)}$.</p>
+                    <p>$S = \dfrac{abc}{4R}$; $\;S = pr$.</p>
+                    <p>Паралелограм: $S = ab\sin\alpha$.</p>
+                    <p>Чотирикутник: $S = \frac12 d_1 d_2 \sin\varphi$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Що дано? -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Що дано — то й теорема 🔗</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Червоним позначено відомі елементи. Учень складає план, потім відкриваємо.</p>
+                    <div class="btn-row plan-btns" id="plan-btns"></div>
+                    <div class="btn-row"><button class="btn-secondary" onclick="showPlan()">План розв'язання</button></div>
+                    <div class="box theorem hidden-answer" id="plan-box"><p id="plan-out" style="margin:0"></p></div>
+                </div>
+                <div class="math-widget widget-svg-container tri-svg">
+                    <svg viewBox="0 0 340 250" id="plan-scene" role="img" aria-label="Трикутник ABC з виділеними відомими елементами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Яке правило? -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Яка формула потрібна? 🤔</h2>
+            </div>
+            <div class="slide-body">
+                <p style="margin-top:0">Учень називає формулу й план, потім клацаємо на картку.</p>
+                <div class="cards">
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">$a = 3$, $b = 5$, $\angle C = 120^\circ$. Знайдіть $c$.</p>
+                        <div class="rule"><span class="topic-tag">3.1</span> $c^2 = 9 + 25 - 30\cos 120^\circ = 49$, $c = 7$.</div>
+                    </div>
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">$a = 6$, $\angle A = 30^\circ$. Знайдіть радіус описаного кола.</p>
+                        <div class="rule"><span class="topic-tag">3.2</span> $2R = \frac{6}{\sin 30^\circ} = 12$, $R = 6$.</div>
+                    </div>
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">Сторони $5$, $6$, $9$. Гострокутний, прямокутний чи тупокутний?</p>
+                        <div class="rule"><span class="topic-tag">3.1</span> $81 \gt 25 + 36 = 61$ — кут проти $9$ тупий.</div>
+                    </div>
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">Сторони $13$, $14$, $15$. Знайдіть площу.</p>
+                        <div class="rule"><span class="topic-tag">3.4</span> Герон: $p = 21$, $S = \sqrt{21 \cdot 8 \cdot 7 \cdot 6} = 84$.</div>
+                    </div>
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">Діагоналі чотирикутника $8$ і $10$, кут між ними $150^\circ$. Площа?</p>
+                        <div class="rule"><span class="topic-tag">3.5</span> + <span class="topic-tag">3.6</span> $S = \frac12 \cdot 8 \cdot 10 \cdot \sin 150^\circ = 20$.</div>
+                    </div>
+                    <div class="task-card" onclick="this.classList.add('open')">
+                        <p style="margin:0">$\cos A = -\frac35$. Знайдіть $\sin A$.</p>
+                        <div class="rule"><span class="topic-tag">3.6</span> $\sin A = \sqrt{1 - \frac{9}{25}} = \frac45$ — синус кута трикутника додатний.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Розбір змішаних задач -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Задачі з кількох тем крок за кроком ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="ex-a">
+                    <p><b>а)</b> Сторони трикутника $5$, $7$ і $8$. Знайдіть кут проти сторони $7$, площу і радіус описаного кола.</p>
+                    <div class="step">$\cos\alpha = \dfrac{25 + 64 - 49}{2 \cdot 5 \cdot 8} = \dfrac{40}{80} = \dfrac12$, $\;\alpha = 60^\circ$ <span class="topic-tag">3.1</span></div>
+                    <div class="step">$S = \frac12 \cdot 5 \cdot 8 \cdot \sin 60^\circ = 10\sqrt3$ <span class="topic-tag">3.4</span></div>
+                    <div class="step">$2R = \dfrac{7}{\sin 60^\circ} = \dfrac{14}{\sqrt3}$, $\;R = \dfrac{7\sqrt3}{3}$ <span class="topic-tag">3.2</span></div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-a')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget" id="ex-b">
+                    <p><b>б)</b> Сторони паралелограма $4$ і $6$, тупий кут $120^\circ$. Знайдіть діагоналі й площу.</p>
+                    <div class="step">Більша діагональ — проти тупого кута: $d_1^2 = 16 + 36 - 48\cos 120^\circ = 76$, $d_1 = 2\sqrt{19}$ <span class="topic-tag">3.1</span> + <span class="topic-tag">3.6</span></div>
+                    <div class="step">Менша — проти гострого кута $60^\circ$: $d_2^2 = 52 - 48\cos 60^\circ = 28$, $d_2 = 2\sqrt7$</div>
+                    <div class="step">$S = 4 \cdot 6 \cdot \sin 120^\circ = 12\sqrt3$ <span class="topic-tag">3.5</span></div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-b')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Головні пастки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">3.1. Знак при тупому куті</div>
+                        <p>$\cos 120^\circ = -\frac12$, тому $-2bc\cos 120^\circ = +bc$. Проти тупого кута сторона <b>найбільша</b>.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">3.2. «Сторона — синус сусіднього кута»</div>
+                        <p>У теоремі синусів сторона ділиться на синус <b>протилежного</b> кута.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">3.3, 3.6. Кут за синусом</div>
+                        <p>$\sin B = \frac12$ — це $30^\circ$ <b>або</b> $150^\circ$. Перевіряйте, чи можливий тупий кут (сума кутів, проти більшої сторони — більший кут).</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">3.4–3.5. Не той кут</div>
+                        <p>$S = \frac12 ab\sin C$ — кут <b>між</b> сторонами $a$ і $b$. $S = ab\sin\alpha$ — кут паралелограма, а не між діагоналями.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Косинуси</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Синуси</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Площа</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">У трикутнику $ABC$: $AB = 8$, $AC = 5$, $\angle A = 60^\circ$. Знайдіть $BC$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $\sqrt{129}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\sqrt{89}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\sqrt{39}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$BC^2 = 64 + 25 - 2 \cdot 8 \cdot 5 \cdot \frac12 = 49$, $BC = 7$.</p>
+                            <p>А — плюс замість мінуса; В — забули доданок з косинусом.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">У трикутнику $\angle A = 45^\circ$, $\angle B = 30^\circ$, $BC = 6\sqrt2$. Знайдіть $AC$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $3\sqrt2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $6\sqrt3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{BC}{\sin A} = \dfrac{AC}{\sin B}$: $AC = \dfrac{6\sqrt2 \cdot \frac12}{\frac{\sqrt2}{2}} = 6$.</p>
+                            <p>Б — синуси переставили.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Сторони трикутника $6$ і $10$, кут між ними $150^\circ$. Знайдіть площу.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $30$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $15$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $15\sqrt3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-15\sqrt3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$S = \frac12 \cdot 6 \cdot 10 \cdot \sin 150^\circ = 30 \cdot \frac12 = 15$.</p>
+                            <p>А — забули $\frac12$; В, Г — взяли косинус замість синуса.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Перевір себе: складніше -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе: складніше 🚀</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-4" onclick="showTask(4)">4. Вид трикутника</button>
+                    <button class="btn-secondary" id="tab-5" onclick="showTask(5)">5. Радіуси</button>
+                    <button class="btn-secondary" id="tab-6" onclick="showTask(6)">6. Формат НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-4">
+                    <div>
+                        <p class="quiz-q">Сторони трикутника $4$, $5$ і $7$. Знайдіть косинус найбільшого кута.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $-\frac15$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $\frac15$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $-\frac{8}{40}$ — кут гострий</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $\frac{29}{35}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Найбільший кут — проти $7$: $\cos\gamma = \dfrac{16 + 25 - 49}{40} = -\dfrac{8}{40} = -\dfrac15$. Кут тупий.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-5">
+                    <div>
+                        <p class="quiz-q">Сторони трикутника $6$, $8$, $10$. Знайдіть $R$ і $r$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(5, this, true)">А) $R = 5$, $r = 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(5, this, false)">Б) $R = 10$, $r = 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(5, this, false)">В) $R = 5$, $r = 4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(5, this, false)">Г) $R = 4$, $r = 2$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-5-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-5-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$S = \frac12 \cdot 6 \cdot 8 = 24$ (трикутник прямокутний: $36 + 64 = 100$). $R = \frac{abc}{4S} = \frac{480}{96} = 5$, $r = \frac{S}{p} = \frac{24}{12} = 2$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-6">
+                    <div>
+                        <p class="quiz-q">Діагоналі паралелограма $6$ і $8$, кут між ними $60^\circ$. Знайдіть меншу сторону паралелограма.</p>
+                        <div class="quiz-option" onclick="checkAnswer(6, this, false)">А) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(6, this, true)">Б) $\sqrt{13}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(6, this, false)">В) $\sqrt{37}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(6, this, false)">Г) $2\sqrt{13}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(6, this, false)">Д) $\sqrt{7}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-6-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-6-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Півдіагоналі $3$ і $4$. Менша сторона лежить проти кута $60^\circ$: $a^2 = 9 + 16 - 24 \cdot \frac12 = 13$, $a = \sqrt{13}$.</p>
+                            <p>В — більша сторона (проти $120^\circ$); Г — узяли цілі діагоналі.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко про розділ -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$a^2 = b^2 + c^2 - 2bc\cos A$; $\;\dfrac{a}{\sin A} = 2R$.</p>
+                    <p>$S = \frac12 ab\sin C = \sqrt{p(p - a)(p - b)(p - c)} = \dfrac{abc}{4R} = pr$.</p>
+                    <p>$\sin(180^\circ - \alpha) = \sin\alpha$, $\;\cos(180^\circ - \alpha) = -\cos\alpha$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як вибрати метод ✍️</div>
+                        <p>Дві сторони й кут між ними або три сторони — теорема косинусів. Сторона й протилежний кут — теорема синусів. Площа — формула з тими елементами, що відомі.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Косинус тупого кута від'ємний; кут за синусом визначається неоднозначно.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            const deg = Math.PI / 180;
+            // Число для підпису: кома, справжній мінус
+            const num = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ',').replace('-', '−'); };
+            // Число для формули MathJax: десяткова кома в {,}
+            const tex = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', '{,}'); };
+            // Координатна площина: математичні координати → пікселі SVG
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad, k: (W - 2 * pad) / (x1 - x0) };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y', every = 1) {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 2}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                let i = 0;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX, i++) if (Math.abs(x) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${num(x)}</text>`;
+                i = 0;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY, i++) if (Math.abs(y) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${num(y)}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Графік функції f на [a; b]; розриви й вихід за рамку — розрив лінії
+            function curveSvg(P, f, a, b, cls = '', N = 300) {
+                let svg = '', d = '';
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.5 || y > P.y1 + 0.5) { if (d) svg += `<path d="${d}" class="curve ${cls}"/>`; d = ''; continue; }
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cls}"/>`;
+                return svg;
+            }
+            // Креслярські помічники (пікселі SVG; кути — проти годинникової стрілки, як у математиці)
+            const ln = (p, q, cls = 'geo-line') => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const poly = (pts, cls) => `<polygon points="${pts.map(p => p.join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p, cls = 'geo-dot', r = 4.5) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            function arrow(x1, y1, x2, y2, cls = 'b') {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(14, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            const angNorm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            // Сектор кута у вершині (cx; cy) від напрямку t1 до t2 (кути в радіанах, математичні)
+            function wedge(cx, cy, r, t1, t2, cls = '') {
+                const d = angNorm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            // Напрямок з точки p на точку q (математичний кут для wedge)
+            const dir = (p, q) => Math.atan2(p[1] - q[1], q[0] - p[0]);
+            // Сектор кута при вершині V між променями VA і VB (менший кут)
+            const angleAt = (V, A, B, r, cls = '') => wedge(V[0], V[1], r, dir(V, A), dir(V, B), cls);
+            // Підпис кута — на бісектрисі
+            const angleText = (V, A, B, r, t) => { const a = dir(V, A), m = a + angNorm(dir(V, B) - a) / 2; return label(V[0] + r * Math.cos(m), V[1] - r * Math.sin(m) + 5, t, 'angle-label'); };
+            function rightMark(V, A, B, s = 12) {
+                const t1 = dir(V, A), t2 = dir(V, B);
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${V[0] + ux * s} ${V[1] + uy * s} L${V[0] + (ux + vx) * s} ${V[1] + (uy + vy) * s} L${V[0] + vx * s} ${V[1] + vy * s}" class="right-mark"/>`;
+            }
+            // Риски рівності на відрізку pq (n рисок)
+            function ticks(p, q, n = 1, cls = 'geo-line') {
+                const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+                const ux = (q[0] - p[0]) / L, uy = (q[1] - p[1]) / L; let s = '';
+                for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 5; s += `<line x1="${mx + ux * o - uy * 7}" y1="${my + uy * o + ux * 7}" x2="${mx + ux * o + uy * 7}" y2="${my + uy * o - ux * 7}" class="${cls}" style="stroke-width:2"/>`; }
+                return s;
+            }
+            // Точка на відрізку pq з часткою t
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            // Покрокове розв'язання: STEPS = [[рядок, примітка], …]; [[…]] — підсвітка нового в останньому рядку
+            function stepper(linesId, noteId, STEPS, after) {
+                let shown = 1;
+                const render = () => {
+                    const box = document.getElementById(linesId);
+                    box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                        const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                        return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                    }).join('');
+                    document.getElementById(noteId).innerHTML = STEPS[shown - 1][1];
+                    if (after) after(shown);
+                    typeset([box, document.getElementById(noteId)]);
+                };
+                return { render, next: () => { shown = Math.min(shown + 1, STEPS.length); render(); }, reset: () => { shown = 1; render(); }, get shown() { return shown; } };
+            }
+
+            // --- Слайд 1: карта розділу ---
+            const TOPICS = [
+                ['3.1', 'Теорема', 'косинусів', '$a^2 = b^2 + c^2 - 2bc\\cos A$. Знаходимо сторону за двома сторонами й кутом між ними, кути — за трьома сторонами; визначаємо вид трикутника.'],
+                ['3.2', 'Теорема', 'синусів', '$\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R$. Сторони пропорційні синусам протилежних кутів; звідси — радіус описаного кола.'],
+                ['3.6', 'sin, cos, tg', 'від 0° до 180°', 'Означення через одиничне півколо. $\\sin(180^\\circ - \\alpha) = \\sin\\alpha$, $\\cos(180^\\circ - \\alpha) = -\\cos\\alpha$. Без цього не працюють теореми для тупих кутів.'],
+                ['3.3', 'Розв\'язування', 'трикутників', 'Чотири основні задачі: за трьома сторонами, двома сторонами й кутом між ними, стороною й двома кутами, двома сторонами й кутом проти однієї з них.'],
+                ['3.4', 'Площа', 'трикутника', '$S = \\frac12 ab\\sin C$, формула Герона, $S = \\frac{abc}{4R}$, $S = pr$.'],
+                ['3.5', 'Площа', 'чотирикутників', 'Паралелограм: $S = ab\\sin\\alpha$; довільний опуклий чотирикутник: $S = \\frac12 d_1 d_2 \\sin\\varphi$.'],
+            ];
+            let mapOn = -1;
+            window.mapClick = function (k) {
+                mapOn = k; renderMap();
+                const t = document.getElementById('map-text');
+                t.innerHTML = `<div class="box-title">${TOPICS[k][0]}. ${TOPICS[k][1]} ${TOPICS[k][2]}</div><p>${TOPICS[k][3]}</p>`;
+                typeset([t]);
+            };
+            window.renderMap = function () {
+                const X = [140, 450, 760], Y = [110, 260], w = 180, h = 92;
+                const pos = [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]];
+                const c = (k) => [X[pos[k][0]], Y[pos[k][1]]];
+                // стрілка між прямокутниками: обрізаємо відрізок центрів по межах блоків
+                const link = (a, b) => {
+                    const p = c(a), q = c(b), dx = q[0] - p[0], dy = q[1] - p[1];
+                    const t = Math.min(dx ? (w / 2) / Math.abs(dx) : 1, dy ? (h / 2) / Math.abs(dy) : 1);
+                    const P = [p[0] + dx * t, p[1] + dy * t], Q = [q[0] - dx * (t + 0.012), q[1] - dy * (t + 0.012)], L = Math.hypot(dx, dy);
+                    const ux = dx / L, uy = dy / L, H = [q[0] - dx * t, q[1] - dy * t];
+                    return `<line x1="${P[0]}" y1="${P[1]}" x2="${Q[0]}" y2="${Q[1]}" class="link"/>`
+                         + `<path d="M${H[0]} ${H[1]} L${H[0] - 12 * ux + 6 * uy} ${H[1] - 12 * uy - 6 * ux} L${H[0] - 12 * ux - 6 * uy} ${H[1] - 12 * uy + 6 * ux} Z" class="link-head"/>`;
+                };
+                let s = link(2, 1) + `<path d="M${X[2]} ${Y[0] - h / 2} Q${X[1]} ${Y[0] - h / 2 - 70} ${X[0] + 20} ${Y[0] - h / 2 - 4}" class="link" stroke-dasharray="7 5"/>`
+                      + link(0, 3) + link(1, 3) + link(1, 4) + link(4, 5) + link(0, 4);
+                TOPICS.forEach(([n, a, b], k) => {
+                    const [x, y] = c(k);
+                    s += `<g class="node${mapOn === k ? ' on' : ''}" onclick="mapClick(${k})"><rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="14"/>`
+                       + `<text x="${x}" y="${y - 14}" class="node-num">${n}</text><text x="${x}" y="${y + 10}">${a}</text><text x="${x}" y="${y + 30}">${b}</text></g>`;
+                });
+                s += `<text x="450" y="318" class="svg-note" text-anchor="middle" font-size="20">Розділ 3. Розв'язування трикутників</text>`;
+                document.getElementById('map-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: що дано ---
+            const TA = [40, 200], TB = [300, 200], TC = [120, 50];
+            const PLANS = [
+                ['ССС', ['a', 'b', 'c'], [], 'Три сторони <span class="topic-tag">3.3</span>: кути — за теоремою косинусів <span class="topic-tag">3.1</span>, $\\cos A = \\frac{b^2 + c^2 - a^2}{2bc}$. Третій кут — з суми $180^\\circ$. Площа — за Героном <span class="topic-tag">3.4</span>.'],
+                ['СКС', ['b', 'c'], ['A'], 'Дві сторони й кут між ними: третя сторона — за теоремою косинусів <span class="topic-tag">3.1</span>; далі — як ССС. Площа одразу: $S = \\frac12 bc\\sin A$ <span class="topic-tag">3.4</span>.'],
+                ['КСК', ['c'], ['A', 'B'], 'Сторона й два кути: $C = 180^\\circ - A - B$, інші сторони — за теоремою синусів <span class="topic-tag">3.2</span>: $a = \\frac{c\\sin A}{\\sin C}$.'],
+                ['ССК', ['a', 'c'], ['A'], 'Дві сторони й кут проти однієї з них: $\\sin C = \\frac{c\\sin A}{a}$ <span class="topic-tag">3.2</span>. Може бути $0$, $1$ або $2$ розв\'язки: кут $C$ і $180^\\circ - C$ <span class="topic-tag">3.6</span> — перевіряємо обидва.'],
+            ];
+            let pi = 0, planShown = false;
+            window.setPlan = function (k) { pi = k; planShown = false; renderPlan(); };
+            window.showPlan = function () { planShown = true; renderPlan(); };
+            window.renderPlan = function () {
+                document.getElementById('plan-btns').innerHTML = PLANS.map((p, k) => `<button class="btn-secondary${k === pi ? ' on' : ''}" onclick="setPlan(${k})">${p[0]}</button>`).join('');
+                const side = { a: [TB, TC], b: [TA, TC], c: [TA, TB] }, ang = { A: [TA, TB, TC], B: [TB, TC, TA], C: [TC, TA, TB] };
+                let s = poly([TA, TB, TC], 'fill-b');
+                PLANS[pi][1].forEach((k) => { s += ln(side[k][0], side[k][1], 'known'); });
+                s += ln(TA, TB) + ln(TB, TC) + ln(TC, TA);
+                PLANS[pi][2].forEach((k) => { const [V, P, Q] = ang[k]; s += angleAt(V, P, Q, 30, 'r'); });
+                s += label(TA[0] - 18, TA[1] + 8, 'A') + label(TB[0] + 6, TB[1] + 8, 'B') + label(TC[0] - 6, TC[1] - 10, 'C');
+                s += label(220, 120, 'a', 'svg-note') + label(64, 120, 'b', 'svg-note') + label(165, 226, 'c', 'svg-note');
+                document.getElementById('plan-scene').innerHTML = s;
+                const out = document.getElementById('plan-out');
+                out.innerHTML = PLANS[pi][3];
+                document.getElementById('plan-box').classList.toggle('shown', planShown);
+                typeset([out]);
+            };
+
+            const RENDER = { 1: renderMap, 3: renderPlan };
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (RENDER[currentSlide]) RENDER[currentSlide]();
+                typeset();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Кроки прикладів з'являються по одному: <div id="ex-1"><div class="step">…</div>… <button onclick="nextStep('ex-1')">
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+                typeset();
+            };
+            // Відповідь по кліку
+            window.reveal = function (id) { document.getElementById(id).classList.add('shown'); typeset(); };
+
+            // Вкладки практики: кнопки id="tab-N", блоки id="task-N" class="practice-task" (перший на слайді — з класом on)
+            window.showTask = function (n) {
+                const tab = document.getElementById(`tab-${n}`), scope = tab ? tab.closest('.slide-card') : document;
+                scope.querySelectorAll('.practice-task').forEach((t) => t.classList.toggle('on', t.id === `task-${n}`));
+                scope.querySelectorAll('.task-tabs button').forEach((b) => b.classList.toggle('on', b.id === `tab-${n}`));
+                typeset();
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                typeset();
+            };
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

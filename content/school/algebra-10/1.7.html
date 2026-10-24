@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгебра і початки аналізу: Множини. Операції над множинами | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; --violet: #8e44ad; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; --violet: #c39bd3; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 14px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.7rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 7px 0; line-height: 1.5; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; }
+        .box > p:first-of-type { margin-top: 0; } .box > p:last-child { margin-bottom: 0; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .math-widget > p:first-child { margin-top: 0; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); display: block; }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); min-width: 0; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 34px; text-align: right; }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+
+        .step, .hidden-answer { display: none; margin: 6px 0; line-height: 1.45; }
+        .step.shown, .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .task-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .readout { font-size: 1.12rem; font-weight: 700; min-height: 1.5em; }
+        .formula { font-size: 1.25rem; text-align: center; margin: 6px 0; }
+        .big-question { font-size: 1.25rem; font-weight: 700; text-align: center; margin-top: 12px; }
+        .muted { color: var(--text-muted); }
+        table.tbl { width: 100%; border-collapse: collapse; }
+        table.tbl th, table.tbl td { border-bottom: 1px solid var(--border-color); padding: 5px 8px; text-align: left; vertical-align: middle; }
+        table.tbl th { color: var(--brand-blue); }
+
+        /* Рисунки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.g { stroke: var(--brand-green); } .curve.y { stroke: var(--brand-yellow); } .curve.r { stroke: var(--warning-red); } .curve.v { stroke: var(--violet); }
+        .curve.thin { stroke-width: 2.4; }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .geo-line { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+        .geo-line.b { stroke: var(--brand-blue); } .geo-line.g { stroke: var(--brand-green); } .geo-line.y { stroke: var(--brand-yellow); } .geo-line.r { stroke: var(--warning-red); } .geo-line.v { stroke: var(--violet); }
+        .geo-line.thick { stroke-width: 4; }
+        .hidden-line { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 5; fill: none; }
+        .geo-dot { fill: currentColor; }
+        .dot-b { fill: var(--brand-blue); } .dot-g { fill: var(--brand-green); } .dot-y { fill: var(--brand-yellow); } .dot-r { fill: var(--warning-red); } .dot-v { fill: var(--violet); }
+        .fill-b { fill: var(--brand-blue); fill-opacity: 0.16; } .fill-g { fill: var(--brand-green); fill-opacity: 0.18; } .fill-y { fill: var(--brand-yellow); fill-opacity: 0.22; } .fill-r { fill: var(--warning-red); fill-opacity: 0.16; } .fill-v { fill: var(--violet); fill-opacity: 0.18; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .svg-note.b { fill: var(--brand-blue); } .svg-note.g { fill: var(--brand-green); } .svg-note.r { fill: var(--warning-red); } .svg-note.y { fill: var(--brand-yellow); } .svg-note.v { fill: var(--violet); }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); } .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; } .angle-arc.r { fill: var(--warning-red); opacity: 0.45; } .angle-arc.none { fill: var(--border-color); opacity: 0.7; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vec { stroke-width: 3.2; stroke-linecap: round; fill: none; stroke: currentColor; }
+        .vec.b { stroke: var(--brand-blue); } .head.b { fill: var(--brand-blue); }
+        .vec.y { stroke: var(--brand-yellow); } .head.y { fill: var(--brand-yellow); }
+        .vec.g { stroke: var(--brand-green); } .head.g { fill: var(--brand-green); }
+        .vec.r { stroke: var(--warning-red); } .head.r { fill: var(--warning-red); }
+        .vec.v { stroke: var(--violet); } .head.v { fill: var(--violet); }
+        .head.k { fill: currentColor; }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.4; }
+        .eval-line { font-size: 1.15rem; font-weight: 700; padding: 4px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 10px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        .venn-svg svg { max-height: 300px; }
+        .mini-svg svg { max-height: 120px; }
+        .line-svg svg { max-height: 170px; }
+        .set-circle { fill: none; stroke-width: 2.5; }
+        .set-circle.a { stroke: var(--brand-blue); } .set-circle.b { stroke: var(--brand-green); }
+        .universe { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .shade { fill: var(--brand-yellow); fill-opacity: 0.55; }
+        .el { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .set-name { font-size: 20px; font-weight: 800; font-style: italic; }
+        .set-name.a { fill: var(--brand-blue); } .set-name.b { fill: var(--brand-green); } .set-name.u { fill: currentColor; }
+        .op-btns .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .bar { stroke-width: 7; stroke-linecap: butt; }
+        .bar.a { stroke: var(--brand-blue); } .bar.b { stroke: var(--brand-green); } .bar.r { stroke: var(--brand-yellow); }
+        .end-fill { stroke-width: 2.2; } .end-fill.a { fill: var(--brand-blue); stroke: var(--brand-blue); } .end-fill.b { fill: var(--brand-green); stroke: var(--brand-green); } .end-fill.r { fill: var(--brand-yellow); stroke: var(--brand-yellow); }
+        .end-hole { fill: var(--card-bg); stroke-width: 2.2; } .end-hole.a { stroke: var(--brand-blue); } .end-hole.b { stroke: var(--brand-green); } .end-hole.r { stroke: var(--brand-yellow); }
+        .num-line { stroke: currentColor; stroke-width: 1.8; }
+        .tight p { margin: 4px 0; }
+        .grid-3 .box { margin-bottom: 0; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.3rem; }
+            .slide-body { font-size: 1rem; }
+            .formula { font-size: 1.1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            /* довгі формули на телефоні гортаються вбік у межах рядка */
+            .slide-body p, .step, .eval-line, .quiz-option, .slide-body li { overflow-x: auto; overflow-y: hidden; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Алгебра і початки аналізу (10-11 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Множина та її елементи</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Поняття</div>
+                        <p><b>Множина</b> — сукупність об'єктів, її <b>елементів</b>. Запис: $a \in A$ — $a$ належить $A$; $\;b \notin A$ — не належить.</p>
+                        <p><b>Порожня множина</b> $\varnothing$ не має жодного елемента.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Способи задання</div>
+                        <p>1) <b>Переліком</b>: $A = \{2;\,3;\,5;\,7\}$. Порядок і повтори не важливі: $\{1;\,2\} = \{2;\,1;\,1\}$.</p>
+                        <p>2) <b>Характеристичною властивістю</b>: $A = \{x \mid x$ — просте число, $x \lt 10\}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Числові множини</div>
+                        <p>$\mathbb{N}$ — натуральні, $\mathbb{Z}$ — цілі, $\mathbb{Q}$ — раціональні, $\mathbb{R}$ — дійсні числа.</p>
+                        <p>Проміжки — теж множини: $[1;\,3) = \{x \mid 1 \le x \lt 3\}$.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Перевір</div>
+                        <p>$\sqrt2 \in \mathbb{R}$, $\;\sqrt2 \notin \mathbb{Q}$, $\;-3 \in \mathbb{Z}$, $\;-3 \notin \mathbb{N}$, $\;0{,}5 \in [0;\,1)$.</p>
+                        <p>Множина коренів рівняння $x^2 = -1$ — порожня: $\varnothing$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Підмножина -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Підмножина. Рівні множини</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>$A$ — <b>підмножина</b> $B$ ($A \subset B$), якщо кожен елемент $A$ є елементом $B$.</p>
+                        <p>$A = B$, якщо $A \subset B$ і $B \subset A$ — ті самі елементи.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивості</div>
+                        <p>$\varnothing \subset A$ і $A \subset A$ для будь-якої $A$.</p>
+                        <p>Множина з $n$ елементів має $2^n$ підмножин: кожен елемент або беремо, або ні.</p>
+                    </div>
+                    <div class="box example">
+                        <p>Підмножини $\{a;\,b\}$: $\;\varnothing$, $\{a\}$, $\{b\}$, $\{a;\,b\}$ — їх $2^2 = 4$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container venn-svg">
+                        <svg viewBox="0 0 400 270" id="nested-scene" role="img" aria-label="Вкладені множини: N у Z у Q у R"></svg>
+                    </div>
+                    <p class="formula">$\mathbb{N} \subset \mathbb{Z} \subset \mathbb{Q} \subset \mathbb{R}$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Операції -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Операції над множинами</h2>
+            </div>
+            <div class="slide-body">
+                <div class="grid-3">
+                    <div class="box theorem tight">
+                        <div class="box-title">Перетин $A \cap B$</div>
+                        <div class="widget-svg-container mini-svg"><svg viewBox="0 0 220 120" id="op-and"></svg></div>
+                        <p>Елементи, що належать <b>і</b> $A$, <b>і</b> $B$.</p>
+                    </div>
+                    <div class="box theorem tight">
+                        <div class="box-title">Об'єднання $A \cup B$</div>
+                        <div class="widget-svg-container mini-svg"><svg viewBox="0 0 220 120" id="op-or"></svg></div>
+                        <p>Елементи, що належать <b>хоча б одній</b> з множин.</p>
+                    </div>
+                    <div class="box theorem tight">
+                        <div class="box-title">Різниця $A \setminus B$</div>
+                        <div class="widget-svg-container mini-svg"><svg viewBox="0 0 220 120" id="op-minus"></svg></div>
+                        <p>Елементи $A$, що <b>не</b> належать $B$.</p>
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-top:12px">
+                    <div class="box definition tight">
+                        <div class="box-title">Доповнення</div>
+                        <p>Якщо $A \subset U$ ($U$ — універсальна множина), то $\overline{A} = U \setminus A$ — доповнення $A$ до $U$.</p>
+                    </div>
+                    <div class="box hack tight">
+                        <div class="box-title">Зв'язок з рівняннями й нерівностями</div>
+                        <p>Розв'язки <b>системи</b> — перетин множин розв'язків, <b>сукупності</b> («або») — об'єднання.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Діаграма Ейлера — Венна 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">$U = \{1;\,2;\,\ldots;\,12\}$, $\;A$ — дільники числа $12$, $\;B$ — парні числа з $U$.</p>
+                    <div class="btn-row op-btns">
+                        <button class="btn-secondary on" id="op-0" onclick="setOp(0)">$A \cap B$</button>
+                        <button class="btn-secondary" id="op-1" onclick="setOp(1)">$A \cup B$</button>
+                        <button class="btn-secondary" id="op-2" onclick="setOp(2)">$A \setminus B$</button>
+                        <button class="btn-secondary" id="op-3" onclick="setOp(3)">$B \setminus A$</button>
+                        <button class="btn-secondary" id="op-4" onclick="setOp(4)">$\overline{A}$</button>
+                        <button class="btn-secondary" id="op-5" onclick="setOp(5)">$\overline{A \cup B}$</button>
+                    </div>
+                    <p>Учні називають елементи зафарбованої частини, потім перевіряємо.</p>
+                    <div class="btn-row"><button class="btn-primary" onclick="showOp()">Показати</button></div>
+                    <div class="box theorem hidden-answer" id="op-box"><p id="op-out" style="margin:0"></p></div>
+                </div>
+                <div class="math-widget widget-svg-container venn-svg">
+                    <svg viewBox="0 0 400 270" id="venn-scene" role="img" aria-label="Діаграма Ейлера — Венна: множини A і B в універсальній множині U"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Проміжки -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Операції з числовими проміжками</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Як діяти</div>
+                        <p>1) Зобразити обидва проміжки на одній прямій (різними кольорами, на різній висоті).</p>
+                        <p>2) $\cap$ — де є обидва штрихування; $\cup$ — де є хоча б одне; $A \setminus B$ — де є $A$, але немає $B$.</p>
+                        <p>3) Кінці: точка входить, якщо вона належить результату за означенням операції.</p>
+                    </div>
+                    <div class="math-widget widget-svg-container line-svg">
+                        <svg viewBox="0 0 400 170" id="line-scene" role="img" aria-label="Проміжки A і B на числовій прямій і результат операції"></svg>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p>$A = [-2;\,3)$, $\;B = (1;\,5]$. Знайдіть:</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalNext()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Кількість елементів -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Скільки елементів в об'єднанні?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Формула (для скінченних множин)</div>
+                        <p class="formula">$n(A \cup B) = n(A) + n(B) - n(A \cap B)$</p>
+                        <p>$n(A)$ — кількість елементів. Спільні елементи в сумі $n(A) + n(B)$ пораховано двічі — один раз віднімаємо.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Метод діаграми</div>
+                        <p>Заповнюємо діаграму <b>зсередини</b>: спершу перетин, потім «лише $A$», «лише $B$», нарешті — поза множинами.</p>
+                    </div>
+                </div>
+                <div class="math-widget" id="ex-n">
+                    <p>У класі $30$ учнів. $18$ грають у футбол, $15$ — у баскетбол, $7$ — в обидві гри. Скільки учнів не грає в жодну?</p>
+                    <div class="widget-svg-container mini-svg" style="margin-bottom:6px"><svg viewBox="0 0 300 130" id="sport-scene" role="img" aria-label="Діаграма: футбол і баскетбол"></svg></div>
+                    <div class="step">Перетин: $7$. Лише футбол: $18 - 7 = 11$; лише баскетбол: $15 - 7 = 8$.</div>
+                    <div class="step">Хоча б одну гру: $n(A \cup B) = 18 + 15 - 7 = 26$.</div>
+                    <div class="step">Жодної: $30 - 26 = 4$ учні.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-n'); renderSport()">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">$\in$ чи $\subset$?</div>
+                        <p>$2 \in \{1;\,2\}$ — елемент; $\{2\} \subset \{1;\,2\}$ — підмножина. Записи $2 \subset \{1;\,2\}$ і $\{2\} \in \{1;\,2\}$ хибні.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$\{0\}$ — не порожня</div>
+                        <p>$\{0\}$ має один елемент — число $0$. Порожня множина $\varnothing$ не має жодного.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Різниця не переставна</div>
+                        <p>$\{1;\,2;\,3\} \setminus \{2;\,5\} = \{1;\,3\}$, а $\{2;\,5\} \setminus \{1;\,2;\,3\} = \{5\}$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Кінці проміжків</div>
+                        <p>$[-2;\,3) \setminus (1;\,5] = [-2;\,1]$: точка $1$ не належить $B$, тож лишається — дужка квадратна.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">$n(A \cup B) \ne n(A) + n(B)$</div>
+                        <p>Якщо множини мають спільні елементи, просте додавання рахує їх двічі: $18 + 15 = 33 \gt 30$ учнів.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ: складніше</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$A = \{1;\,3;\,5;\,7\}$, $\;B = \{3;\,4;\,5;\,6\}$. Знайдіть $A \cap B$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\{3;\,5\}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\{1;\,3;\,4;\,5;\,6;\,7\}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $\{1;\,7\}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\{4;\,6\}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $\varnothing$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Спільні елементи — $3$ і $5$.</p>
+                            <p>Б — об'єднання; В — $A \setminus B$; Г — $B \setminus A$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$A = [-3;\,4)$, $\;B = (0;\,6]$. Знайдіть $A \setminus B$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $[-3;\,0)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $[-3;\,0]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(0;\,4)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $[4;\,6]$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $[-3;\,6]$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>З $A$ вилучаємо точки $B$, тобто $x \gt 0$. Лишаються $-3 \le x \le 0$: точка $0$ не належить $B$, тож лишається.</p>
+                            <p>А — загубили $0$; В — це $A \cap B$; Г — $B \setminus A$; Д — $A \cup B$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Із $40$ учнів $25$ вивчають англійську, $20$ — німецьку, а $10$ — обидві мови. Скільки учнів не вивчає жодної з цих мов?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $15$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $35$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Хоча б одну мову: $25 + 20 - 10 = 35$. Жодної: $40 - 35 = 5$.</p>
+                            <p>$0$ — склали $25 + 20 = 45 \ge 40$ без віднімання перетину; $35$ — відповіли на інше запитання.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>$a \in A$ — елемент; $A \subset B$ — підмножина; $\varnothing$ — порожня.</p>
+                    <p>$A \cap B$ — і в $A$, і в $B$; $\;A \cup B$ — хоча б в одній; $\;A \setminus B$ — в $A$, але не в $B$; $\;\overline{A} = U \setminus A$.</p>
+                    <p>$n(A \cup B) = n(A) + n(B) - n(A \cap B)$; у множині з $n$ елементів $2^n$ підмножин.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Метод ✍️</div>
+                        <p>Проміжки — на одну пряму, кінці перевіряти окремо. Задачі на кількість — діаграма Ейлера — Венна, заповнюємо від перетину.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>$\in$ — для елемента, $\subset$ — для множини. І не забувайте відняти перетин, рахуючи елементи об'єднання.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            const deg = Math.PI / 180;
+            // Число для підпису: кома, справжній мінус
+            const num = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ',').replace('-', '−'); };
+            // Число для формули MathJax: десяткова кома в {,}
+            const tex = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', '{,}'); };
+            // Координатна площина: математичні координати → пікселі SVG
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad, k: (W - 2 * pad) / (x1 - x0) };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y', every = 1) {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 2}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                let i = 0;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX, i++) if (Math.abs(x) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${num(x)}</text>`;
+                i = 0;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY, i++) if (Math.abs(y) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${num(y)}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Графік функції f на [a; b]; розриви й вихід за рамку — розрив лінії
+            function curveSvg(P, f, a, b, cls = '', N = 300) {
+                let svg = '', d = '';
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.5 || y > P.y1 + 0.5) { if (d) svg += `<path d="${d}" class="curve ${cls}"/>`; d = ''; continue; }
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cls}"/>`;
+                return svg;
+            }
+            // Креслярські помічники (пікселі SVG; кути — проти годинникової стрілки, як у математиці)
+            const ln = (p, q, cls = 'geo-line') => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const poly = (pts, cls) => `<polygon points="${pts.map(p => p.join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p, cls = 'geo-dot', r = 4.5) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            function arrow(x1, y1, x2, y2, cls = 'b') {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(14, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            const angNorm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            // Сектор кута у вершині (cx; cy) від напрямку t1 до t2 (кути в радіанах, математичні)
+            function wedge(cx, cy, r, t1, t2, cls = '') {
+                const d = angNorm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            // Напрямок з точки p на точку q (математичний кут для wedge)
+            const dir = (p, q) => Math.atan2(p[1] - q[1], q[0] - p[0]);
+            // Сектор кута при вершині V між променями VA і VB (менший кут)
+            const angleAt = (V, A, B, r, cls = '') => wedge(V[0], V[1], r, dir(V, A), dir(V, B), cls);
+            // Підпис кута — на бісектрисі
+            const angleText = (V, A, B, r, t) => { const a = dir(V, A), m = a + angNorm(dir(V, B) - a) / 2; return label(V[0] + r * Math.cos(m), V[1] - r * Math.sin(m) + 5, t, 'angle-label'); };
+            function rightMark(V, A, B, s = 12) {
+                const t1 = dir(V, A), t2 = dir(V, B);
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${V[0] + ux * s} ${V[1] + uy * s} L${V[0] + (ux + vx) * s} ${V[1] + (uy + vy) * s} L${V[0] + vx * s} ${V[1] + vy * s}" class="right-mark"/>`;
+            }
+            // Риски рівності на відрізку pq (n рисок)
+            function ticks(p, q, n = 1, cls = 'geo-line') {
+                const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+                const ux = (q[0] - p[0]) / L, uy = (q[1] - p[1]) / L; let s = '';
+                for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 5; s += `<line x1="${mx + ux * o - uy * 7}" y1="${my + uy * o + ux * 7}" x2="${mx + ux * o + uy * 7}" y2="${my + uy * o - ux * 7}" class="${cls}" style="stroke-width:2"/>`; }
+                return s;
+            }
+            // Точка на відрізку pq з часткою t
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            // Покрокове розв'язання: STEPS = [[рядок, примітка], …]; [[…]] — підсвітка нового в останньому рядку
+            function stepper(linesId, noteId, STEPS, after) {
+                let shown = 1;
+                const render = () => {
+                    const box = document.getElementById(linesId);
+                    box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                        const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                        return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                    }).join('');
+                    document.getElementById(noteId).innerHTML = STEPS[shown - 1][1];
+                    if (after) after(shown);
+                    typeset([box, document.getElementById(noteId)]);
+                };
+                return { render, next: () => { shown = Math.min(shown + 1, STEPS.length); render(); }, reset: () => { shown = 1; render(); }, get shown() { return shown; } };
+            }
+
+            // --- Діаграми Ейлера — Венна: області через маски (id унікальні для кожного рисунка) ---
+            function venn(id, W, H, ca, cb, r, op, opt = {}) {
+                const m = (n) => `${id}-${n}`;
+                let s = `<defs>
+                    <mask id="${m('notA')}"><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><circle cx="${ca[0]}" cy="${ca[1]}" r="${r}" fill="#000"/></mask>
+                    <mask id="${m('notB')}"><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><circle cx="${cb[0]}" cy="${cb[1]}" r="${r}" fill="#000"/></mask>
+                    <mask id="${m('notAB')}"><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/><circle cx="${ca[0]}" cy="${ca[1]}" r="${r}" fill="#000"/><circle cx="${cb[0]}" cy="${cb[1]}" r="${r}" fill="#000"/></mask>
+                    <clipPath id="${m('inB')}"><circle cx="${cb[0]}" cy="${cb[1]}" r="${r}"/></clipPath></defs>`;
+                const circA = (attr = '') => `<circle cx="${ca[0]}" cy="${ca[1]}" r="${r}" class="shade" ${attr}/>`;
+                const circB = (attr = '') => `<circle cx="${cb[0]}" cy="${cb[1]}" r="${r}" class="shade" ${attr}/>`;
+                const U = [6, 6, W - 12, H - 12];
+                const rectU = (attr) => `<rect x="${U[0]}" y="${U[1]}" width="${U[2]}" height="${U[3]}" rx="10" class="shade" ${attr}/>`;
+                if (op === 'and') s += circA(`clip-path="url(#${m('inB')})"`);
+                if (op === 'or') s += `<g>${circA()}${circB(`mask="url(#${m('notA')})"`)}</g>`;
+                if (op === 'aminusb') s += circA(`mask="url(#${m('notB')})"`);
+                if (op === 'bminusa') s += circB(`mask="url(#${m('notA')})"`);
+                if (op === 'nota') s += rectU(`mask="url(#${m('notA')})"`);
+                if (op === 'notab') s += rectU(`mask="url(#${m('notAB')})"`);
+                s += `<rect x="${U[0]}" y="${U[1]}" width="${U[2]}" height="${U[3]}" rx="10" class="universe"/>`;
+                s += `<circle cx="${ca[0]}" cy="${ca[1]}" r="${r}" class="set-circle a"/><circle cx="${cb[0]}" cy="${cb[1]}" r="${r}" class="set-circle b"/>`;
+                const nA = opt.nameA || [ca[0] - r * 0.75, ca[1] - r * 0.78], nB = opt.nameB || [cb[0] + r * 0.75, cb[1] - r * 0.78];
+                s += `<text x="${nA[0]}" y="${nA[1]}" class="set-name a" text-anchor="middle">A</text><text x="${nB[0]}" y="${nB[1]}" class="set-name b" text-anchor="middle">B</text>`;
+                if (opt.u) s += `<text x="${U[0] + 16}" y="${U[1] + 24}" class="set-name u">U</text>`;
+                return s;
+            }
+            window.renderOps = function () {
+                document.getElementById('op-and').innerHTML = venn('mand', 220, 120, [88, 60], [132, 60], 44, 'and');
+                document.getElementById('op-or').innerHTML = venn('mor', 220, 120, [88, 60], [132, 60], 44, 'or');
+                document.getElementById('op-minus').innerHTML = venn('mminus', 220, 120, [88, 60], [132, 60], 44, 'aminusb');
+            };
+
+            // --- Слайд 2: вкладені числові множини ---
+            window.renderNested = function () {
+                const sets = [['ℝ', 190, 125, 'u'], ['ℚ', 150, 98, 'b'], ['ℤ', 108, 72, 'a'], ['ℕ', 64, 46, 'a']];
+                let s = '';
+                sets.forEach(([n, rx, ry, c], k) => {
+                    s += `<ellipse cx="${200 - k * 18}" cy="${135 + k * 8}" rx="${rx}" ry="${ry}" class="set-circle ${c}" style="${c === 'u' ? 'stroke: var(--text-muted)' : ''}"/>`;
+                    s += `<text x="${200 - k * 18}" y="${135 + k * 8 - ry + 24}" class="set-name ${c}" text-anchor="middle">${n}</text>`;
+                });
+                s += label(146, 168, '1; 2; 3', 'el') + label(250, 150, '0; −5', 'el') + label(300, 190, '½; −0,3', 'el') + label(300, 62, '√2; π', 'el');
+                document.getElementById('nested-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: інтерактивна діаграма ---
+            const OPS = [['and', 'A \\cap B = \\{2;\\,4;\\,6;\\,12\\}'], ['or', 'A \\cup B = \\{1;\\,2;\\,3;\\,4;\\,6;\\,8;\\,10;\\,12\\}'],
+                         ['aminusb', 'A \\setminus B = \\{1;\\,3\\}'], ['bminusa', 'B \\setminus A = \\{8;\\,10\\}'],
+                         ['nota', '\\overline{A} = \\{5;\\,7;\\,8;\\,9;\\,10;\\,11\\}'], ['notab', '\\overline{A \\cup B} = \\{5;\\,7;\\,9;\\,11\\}']];
+            let opNow = 0, opShown = false;
+            window.setOp = function (k) {
+                opNow = k; opShown = false;
+                OPS.forEach((_, i) => document.getElementById(`op-${i}`).classList.toggle('on', i === k));
+                renderVenn();
+            };
+            window.showOp = function () { opShown = true; renderVenn(); };
+            window.renderVenn = function () {
+                const ca = [150, 140], cb = [250, 140], r = 92;
+                let s = venn('big', 400, 270, ca, cb, r, OPS[opNow][0], { u: true });
+                const put = (x, y, t) => `<text x="${x}" y="${y}" class="el">${t}</text>`;
+                s += put(105, 125, '1') + put(110, 165, '3');
+                s += put(200, 105, '2') + put(185, 140, '4') + put(215, 140, '6') + put(200, 178, '12');
+                s += put(290, 125, '8') + put(292, 165, '10');
+                s += put(40, 70, '5') + put(360, 60, '7') + put(35, 240, '9') + put(370, 245, '11');
+                document.getElementById('venn-scene').innerHTML = s;
+                const out = document.getElementById('op-out');
+                out.innerHTML = `$${OPS[opNow][1]}$`;
+                document.getElementById('op-box').classList.toggle('shown', opShown);
+                typeset([out]);
+            };
+
+            // --- Слайд 5: проміжки ---
+            const LINE = [
+                ['$A = [-2;\\,3)$, $\\;B = (1;\\,5]$', 'Зобразимо обидва проміжки на одній прямій', null],
+                ['$A \\cap B =$ [[$(1;\\,3)$]]', 'Спільна частина: $1 \\notin B$, $3 \\notin A$ — обидва кінці не входять', [1, 3, false, false]],
+                ['$A \\cup B =$ [[$[-2;\\,5]$]]', 'Усе, що покрите хоча б одним проміжком', [-2, 5, true, true]],
+                ['$A \\setminus B =$ [[$[-2;\\,1]$]]', 'Від $A$ відкидаємо $B$; точка $1 \\notin B$, тому лишається', [-2, 1, true, true]],
+                ['$B \\setminus A =$ [[$[3;\\,5]$]]', 'Точка $3 \\notin A$, тому вона в різниці', [3, 5, true, true]],
+            ];
+            const ev = stepper('eval-lines', 'eval-note', LINE, (k) => renderLine(k));
+            window.evalNext = ev.next; window.evalReset = ev.reset;
+            window.renderLine = function (k) {
+                const X = (x) => 40 + (x + 3) * 40, y0 = 140;
+                const bar = (a, b, ia, ib, y, c) => `<line x1="${X(a)}" y1="${y}" x2="${X(b)}" y2="${y}" class="bar ${c}"/>`
+                    + `<circle cx="${X(a)}" cy="${y}" r="6" class="${ia ? 'end-fill' : 'end-hole'} ${c}"/><circle cx="${X(b)}" cy="${y}" r="6" class="${ib ? 'end-fill' : 'end-hole'} ${c}"/>`;
+                let s = `<line x1="20" y1="${y0}" x2="385" y2="${y0}" class="num-line"/><path d="M385 ${y0} l-9 -4 v8 z" fill="currentColor"/>`;
+                for (let x = -3; x <= 5; x++) s += `<line x1="${X(x)}" y1="${y0 - 5}" x2="${X(x)}" y2="${y0 + 5}" class="num-line"/>` + label(X(x), y0 + 22, num(x), 'tick');
+                s += bar(-2, 3, true, false, 28, 'a') + label(X(-2) - 24, 35, 'A', 'set-name a');
+                s += bar(1, 5, false, true, 58, 'b') + label(X(5) + 18, 63, 'B', 'set-name b');
+                const res = LINE[k - 1][2];
+                if (res) s += bar(res[0], res[1], res[2], res[3], 100, 'r');
+                document.getElementById('line-scene').innerHTML = s;
+            };
+
+            // --- Слайд 6: футбол і баскетбол ---
+            window.renderSport = function () {
+                const k = document.querySelectorAll('#ex-n .step.shown').length;
+                let s = venn('sport', 300, 130, [120, 65], [180, 65], 52, k >= 3 ? 'notab' : 'none', { nameA: [78, 24], nameB: [222, 24] });
+                s = s.replace('>A</text>', '>Ф</text>').replace('>B</text>', '>Б</text>');
+                s += label(150, 71, '7', 'el');
+                if (k >= 1) s += label(100, 71, '11', 'el') + label(200, 71, '8', 'el');
+                if (k >= 3) s += label(30, 112, '4', 'el');
+                document.getElementById('sport-scene').innerHTML = s;
+            };
+
+            const RENDER = { 2: renderNested, 3: renderOps, 4: renderVenn, 5: ev.render, 6: renderSport };
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (RENDER[currentSlide]) RENDER[currentSlide]();
+                typeset();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Кроки прикладів з'являються по одному: <div id="ex-1"><div class="step">…</div>… <button onclick="nextStep('ex-1')">
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+                typeset();
+            };
+            // Відповідь по кліку
+            window.reveal = function (id) { document.getElementById(id).classList.add('shown'); typeset(); };
+
+            // Вкладки практики: кнопки id="tab-N", блоки id="task-N" class="practice-task" (перший на слайді — з класом on)
+            window.showTask = function (n) {
+                const tab = document.getElementById(`tab-${n}`), scope = tab ? tab.closest('.slide-card') : document;
+                scope.querySelectorAll('.practice-task').forEach((t) => t.classList.toggle('on', t.id === `task-${n}`));
+                scope.querySelectorAll('.task-tabs button').forEach((b) => b.classList.toggle('on', b.id === `tab-${n}`));
+                typeset();
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                typeset();
+            };
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

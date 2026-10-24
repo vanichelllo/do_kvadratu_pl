@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Третя ознака рівності трикутників | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; --violet: #8e44ad; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; --violet: #c39bd3; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 14px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.7rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 7px 0; line-height: 1.5; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; }
+        .box > p:first-of-type { margin-top: 0; } .box > p:last-child { margin-bottom: 0; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .math-widget > p:first-child { margin-top: 0; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); display: block; }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); min-width: 0; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 34px; text-align: right; }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+
+        .step, .hidden-answer { display: none; margin: 6px 0; line-height: 1.45; }
+        .step.shown, .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .task-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .readout { font-size: 1.12rem; font-weight: 700; min-height: 1.5em; }
+        .formula { font-size: 1.25rem; text-align: center; margin: 6px 0; }
+        .big-question { font-size: 1.25rem; font-weight: 700; text-align: center; margin-top: 12px; }
+        .muted { color: var(--text-muted); }
+        table.tbl { width: 100%; border-collapse: collapse; }
+        table.tbl th, table.tbl td { border-bottom: 1px solid var(--border-color); padding: 5px 8px; text-align: left; vertical-align: middle; }
+        table.tbl th { color: var(--brand-blue); }
+
+        /* Рисунки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.g { stroke: var(--brand-green); } .curve.y { stroke: var(--brand-yellow); } .curve.r { stroke: var(--warning-red); } .curve.v { stroke: var(--violet); }
+        .curve.thin { stroke-width: 2.4; }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .geo-line { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+        .geo-line.b { stroke: var(--brand-blue); } .geo-line.g { stroke: var(--brand-green); } .geo-line.y { stroke: var(--brand-yellow); } .geo-line.r { stroke: var(--warning-red); } .geo-line.v { stroke: var(--violet); }
+        .geo-line.thick { stroke-width: 4; }
+        .hidden-line { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 5; fill: none; }
+        .geo-dot { fill: currentColor; }
+        .dot-b { fill: var(--brand-blue); } .dot-g { fill: var(--brand-green); } .dot-y { fill: var(--brand-yellow); } .dot-r { fill: var(--warning-red); } .dot-v { fill: var(--violet); }
+        .fill-b { fill: var(--brand-blue); fill-opacity: 0.16; } .fill-g { fill: var(--brand-green); fill-opacity: 0.18; } .fill-y { fill: var(--brand-yellow); fill-opacity: 0.22; } .fill-r { fill: var(--warning-red); fill-opacity: 0.16; } .fill-v { fill: var(--violet); fill-opacity: 0.18; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .svg-note.b { fill: var(--brand-blue); } .svg-note.g { fill: var(--brand-green); } .svg-note.r { fill: var(--warning-red); } .svg-note.y { fill: var(--brand-yellow); } .svg-note.v { fill: var(--violet); }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); } .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; } .angle-arc.r { fill: var(--warning-red); opacity: 0.45; } .angle-arc.none { fill: var(--border-color); opacity: 0.7; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vec { stroke-width: 3.2; stroke-linecap: round; fill: none; stroke: currentColor; }
+        .vec.b { stroke: var(--brand-blue); } .head.b { fill: var(--brand-blue); }
+        .vec.y { stroke: var(--brand-yellow); } .head.y { fill: var(--brand-yellow); }
+        .vec.g { stroke: var(--brand-green); } .head.g { fill: var(--brand-green); }
+        .vec.r { stroke: var(--warning-red); } .head.r { fill: var(--warning-red); }
+        .vec.v { stroke: var(--violet); } .head.v { fill: var(--violet); }
+        .head.k { fill: currentColor; }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.4; }
+        .eval-line { font-size: 1.15rem; font-weight: 700; padding: 4px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 10px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        .fig-svg svg { max-height: 300px; }
+        .rule-tbl td:first-child { white-space: nowrap; font-weight: 700; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.3rem; }
+            .slide-body { font-size: 1rem; }
+            .formula { font-size: 1.1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            /* довгі формули на телефоні гортаються вбік у межах рядка */
+            .slide-body p, .step, .eval-line, .quiz-option, .slide-body li { overflow-x: auto; overflow-y: hidden; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (7-9 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Мотивація -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Мотивація</span>
+                <h1 class="slide-title">Чому ферми мостів складаються з трикутників? 🌉</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Скріпимо шарнірами чотири планки — рамка «складається», хоча довжини планок не змінюються. Рамка з трьох планок не змінює форми зовсім.</p>
+                    <div class="slider-control"><label for="hinge">кут</label><input type="range" id="hinge" min="35" max="145" step="1" value="70" oninput="renderHinge()"><span id="hinge-val"></span></div>
+                    <div class="box definition">
+                        <div class="box-title">Питання уроку</div>
+                        <p>Чи правда, що трикутник повністю визначається довжинами трьох сторін? Тобто: якщо в двох трикутників відповідно рівні три сторони, чи рівні самі трикутники?</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container fig-svg">
+                    <svg viewBox="0 0 380 260" id="hinge-scene" role="img" aria-label="Шарнірний чотирикутник змінює форму, трикутник — ні"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорема -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Третя ознака: за трьома сторонами</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема (третя ознака рівності трикутників)</div>
+                        <p>Якщо три сторони одного трикутника відповідно дорівнюють трьом сторонам другого трикутника, то такі трикутники рівні.</p>
+                        <p>$AB = A_1B_1$, $\;BC = B_1C_1$, $\;AC = A_1C_1$</p><p>$\Rightarrow\; \triangle ABC = \triangle A_1B_1C_1$.</p>
+                    </div>
+                    <div class="box remark">
+                        <p>Коротко: ознака <b>«за трьома сторонами»</b>. Кути при цьому порівнювати не потрібно — їхня рівність випливає з рівності трикутників.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container fig-svg">
+                    <svg viewBox="0 0 380 220" id="thm-scene" role="img" aria-label="Трикутники ABC і A1B1C1 з відповідно рівними сторонами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Доведення -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Доведення третьої ознаки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalNext()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="math-widget widget-svg-container fig-svg">
+                        <svg viewBox="0 0 360 280" id="proof-scene" role="img" aria-label="Трикутник ABC і прикладений до нього трикутник ABC2"></svg>
+                    </div>
+                    <div class="box remark">
+                        <p>Якщо відрізок $CC_2$ проходить через $A$ або $B$ чи не перетинає $AB$, міркування аналогічні (кути додаються або віднімаються).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Будуємо трикутник за трьома сторонами 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="slider-control"><label for="sa">$a = BC$</label><input type="range" id="sa" min="1" max="8" step="0.5" value="4" oninput="renderBuild()"><span id="sa-val"></span></div>
+                    <div class="slider-control"><label for="sb">$b = AC$</label><input type="range" id="sb" min="1" max="8" step="0.5" value="5" oninput="renderBuild()"><span id="sb-val"></span></div>
+                    <div class="slider-control"><label for="sc">$c = AB$</label><input type="range" id="sc" min="2" max="8" step="0.5" value="6" oninput="renderBuild()"><span id="sc-val"></span></div>
+                    <p>Коло з центром $A$ радіуса $b$ і коло з центром $B$ радіуса $a$ перетинаються в точках $C$ і $C'$.</p>
+                    <div class="box theorem" id="build-box"><p id="build-out" style="margin:0"></p></div>
+                </div>
+                <div class="math-widget widget-svg-container fig-svg">
+                    <svg viewBox="0 0 380 300" id="build-scene" role="img" aria-label="Побудова трикутника циркулем за трьома сторонами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Методи -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи</span>
+                <h2 class="slide-title">Яку ознаку вибрати?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="scrollable-math"><table class="tbl rule-tbl">
+                        <tr><th>Ознака</th><th>Що потрібно знати</th></tr>
+                        <tr><td>I (СКС)</td><td>дві сторони й кут <b>між ними</b></td></tr>
+                        <tr><td>II (КСК)</td><td>сторону й два <b>прилеглі</b> до неї кути</td></tr>
+                        <tr><td>III (ССС)</td><td>три сторони</td></tr>
+                    </table></div>
+                    <div class="box hack">
+                        <p>Про кути нічого не відомо, зате є рівні відрізки (за умовою, спільна сторона) — пробуйте третю ознаку.</p>
+                    </div>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Задача</div>
+                    <p>$AB = AD$, $CB = CD$. Доведіть, що $AC$ — бісектриса кута $BAD$.</p>
+                    <div class="widget-svg-container"><svg viewBox="0 0 320 170" id="kite-scene" style="max-height:160px" role="img" aria-label="Чотирикутник ABCD з діагоналлю AC"></svg></div>
+                    <div class="btn-row"><button class="btn-secondary" onclick="reveal('kite-sol')">Доведення</button></div>
+                    <div class="hidden-answer" id="kite-sol">
+                        <p>$\triangle ABC = \triangle ADC$ за трьома сторонами: $AB = AD$, $CB = CD$, $AC$ — спільна.</p>
+                        <p>Тому $\angle BAC = \angle DAC$, тобто $AC$ — бісектриса $\angle BAD$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклади -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Третя ознака в задачах</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example">
+                    <div class="box-title">1. Медіана рівнобедреного трикутника</div>
+                    <p>$AB = BC$, $M$ — середина $AC$. Доведіть, що $BM \perp AC$.</p>
+                    <div class="btn-row"><button class="btn-secondary" onclick="reveal('ex-1')">Доведення</button></div>
+                    <div class="hidden-answer" id="ex-1">
+                        <p>$\triangle ABM = \triangle CBM$ за трьома сторонами: $AB = CB$, $AM = CM$, $BM$ — спільна.</p>
+                        <p>Тому $\angle AMB = \angle CMB$. Вони суміжні, їх сума $180^\circ$, отже кожен $90^\circ$.</p>
+                    </div>
+                </div>
+                <div class="box example">
+                    <div class="box-title">2. Знайти кут</div>
+                    <p>У трикутниках $ABC$ і $KLM$: $AB = KL = 5$, $BC = LM = 7$, $AC = KM = 8$, $\angle B = 60^\circ$. Знайдіть $\angle L$.</p>
+                    <div class="btn-row"><button class="btn-secondary" onclick="reveal('ex-2')">Розв'язання</button></div>
+                    <div class="hidden-answer" id="ex-2">
+                        <p>$\triangle ABC = \triangle KLM$ за трьома сторонами, причому $A \leftrightarrow K$, $B \leftrightarrow L$, $C \leftrightarrow M$.</p>
+                        <p>$\angle L$ лежить проти сторони $KM = 8$, як $\angle B$ — проти $AC = 8$. Отже, $\angle L = \angle B = 60^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">«Три кути» — не ознака</div>
+                        <p>Трикутники з кутами $60^\circ$, $60^\circ$, $60^\circ$ можуть мати сторони $1$ і $10$. Рівність кутів не гарантує рівності трикутників.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Забули спільну сторону</div>
+                        <p>Часто третя пара рівних сторін — це <b>спільна</b> сторона двох трикутників. Її теж треба назвати в доведенні.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Не ті відповідні кути</div>
+                        <p>Рівні кути лежать <b>проти рівних сторін</b>. Якщо $AB = KM$, то $\angle C = \angle L$, а не $\angle C = \angle M$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Дві сторони й кут не між ними</div>
+                        <p>Дві сторони й кут, що <b>не лежить між ними</b>, — не ознака: такі трикутники можуть бути різними.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$\triangle ABC$ і $\triangle DEF$: $AB = DE$, $BC = EF$, $AC = DF$. Що можна стверджувати?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $\triangle ABC = \triangle DEF$ за третьою ознакою</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $\triangle ABC = \triangle DEF$ за першою ознакою</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) трикутники рівні, лише якщо рівні й кути</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) нічого стверджувати не можна</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Три пари відповідно рівних сторін — третя ознака. Для першої ознаки потрібен кут між сторонами; про кути нічого не відомо, і це не потрібно.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$\triangle MNK = \triangle PQR$ за трьома сторонами, $MN = PQ$, $NK = QR$, $MK = PR$, $\angle N = 70^\circ$, $\angle M = 50^\circ$. Знайдіть $\angle Q$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $50^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $70^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $60^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $120^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Відповідність вершин: $M \leftrightarrow P$, $N \leftrightarrow Q$, $K \leftrightarrow R$. Тому $\angle Q = \angle N = 70^\circ$.</p>
+                            <p>А — переплутали відповідні вершини.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Точки $B$ і $D$ лежать по різні боки від прямої $AC$, $AB = CD$, $BC = AD$. Яке твердження обов'язково правильне?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\angle BAC = \angle DAC$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $\angle BAC = \angle DCA$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $AC = BD$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $\angle ABC = 90^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\triangle ABC = \triangle CDA$ за трьома сторонами: $AB = CD$, $BC = DA$, $AC$ — спільна. Відповідність $A \leftrightarrow C$, $B \leftrightarrow D$, $C \leftrightarrow A$, тому $\angle BAC = \angle DCA$.</p>
+                            <p>А — неправильна відповідність вершин; В і Г не випливають з умови.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Якщо три сторони одного трикутника відповідно дорівнюють трьом сторонам другого, трикутники рівні.</p>
+                    <p>Трикутник — «жорстка» фігура: його форму й розміри визначають три сторони.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Метод ✍️</div>
+                        <p>Знайдіть три пари рівних сторін (не забудьте спільну), назвіть ознаку, а тоді робіть висновок про кути: рівні кути — проти рівних сторін.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Рівність трьох кутів — не ознака рівності трикутників.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 9</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            const deg = Math.PI / 180;
+            // Число для підпису: кома, справжній мінус
+            const num = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ',').replace('-', '−'); };
+            // Число для формули MathJax: десяткова кома в {,}
+            const tex = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', '{,}'); };
+            // Координатна площина: математичні координати → пікселі SVG
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad, k: (W - 2 * pad) / (x1 - x0) };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y', every = 1) {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 2}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                let i = 0;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX, i++) if (Math.abs(x) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${num(x)}</text>`;
+                i = 0;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY, i++) if (Math.abs(y) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${num(y)}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Графік функції f на [a; b]; розриви й вихід за рамку — розрив лінії
+            function curveSvg(P, f, a, b, cls = '', N = 300) {
+                let svg = '', d = '';
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.5 || y > P.y1 + 0.5) { if (d) svg += `<path d="${d}" class="curve ${cls}"/>`; d = ''; continue; }
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cls}"/>`;
+                return svg;
+            }
+            // Креслярські помічники (пікселі SVG; кути — проти годинникової стрілки, як у математиці)
+            const ln = (p, q, cls = 'geo-line') => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const poly = (pts, cls) => `<polygon points="${pts.map(p => p.join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p, cls = 'geo-dot', r = 4.5) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            function arrow(x1, y1, x2, y2, cls = 'b') {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(14, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            const angNorm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            // Сектор кута у вершині (cx; cy) від напрямку t1 до t2 (кути в радіанах, математичні)
+            function wedge(cx, cy, r, t1, t2, cls = '') {
+                const d = angNorm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            // Напрямок з точки p на точку q (математичний кут для wedge)
+            const dir = (p, q) => Math.atan2(p[1] - q[1], q[0] - p[0]);
+            // Сектор кута при вершині V між променями VA і VB (менший кут)
+            const angleAt = (V, A, B, r, cls = '') => wedge(V[0], V[1], r, dir(V, A), dir(V, B), cls);
+            // Підпис кута — на бісектрисі
+            const angleText = (V, A, B, r, t) => { const a = dir(V, A), m = a + angNorm(dir(V, B) - a) / 2; return label(V[0] + r * Math.cos(m), V[1] - r * Math.sin(m) + 5, t, 'angle-label'); };
+            function rightMark(V, A, B, s = 12) {
+                const t1 = dir(V, A), t2 = dir(V, B);
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${V[0] + ux * s} ${V[1] + uy * s} L${V[0] + (ux + vx) * s} ${V[1] + (uy + vy) * s} L${V[0] + vx * s} ${V[1] + vy * s}" class="right-mark"/>`;
+            }
+            // Риски рівності на відрізку pq (n рисок)
+            function ticks(p, q, n = 1, cls = 'geo-line') {
+                const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+                const ux = (q[0] - p[0]) / L, uy = (q[1] - p[1]) / L; let s = '';
+                for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 5; s += `<line x1="${mx + ux * o - uy * 7}" y1="${my + uy * o + ux * 7}" x2="${mx + ux * o + uy * 7}" y2="${my + uy * o - ux * 7}" class="${cls}" style="stroke-width:2"/>`; }
+                return s;
+            }
+            // Точка на відрізку pq з часткою t
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            // Покрокове розв'язання: STEPS = [[рядок, примітка], …]; [[…]] — підсвітка нового в останньому рядку
+            function stepper(linesId, noteId, STEPS, after) {
+                let shown = 1;
+                const render = () => {
+                    const box = document.getElementById(linesId);
+                    box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                        const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                        return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                    }).join('');
+                    document.getElementById(noteId).innerHTML = STEPS[shown - 1][1];
+                    if (after) after(shown);
+                    typeset([box, document.getElementById(noteId)]);
+                };
+                return { render, next: () => { shown = Math.min(shown + 1, STEPS.length); render(); }, reset: () => { shown = 1; render(); }, get shown() { return shown; } };
+            }
+
+            const tri = (P, cls) => poly(P, cls);
+            const nm = (p, dx, dy, t) => label(p[0] + dx, p[1] + dy, t);
+
+            // --- Слайд 1: шарнір ---
+            window.renderHinge = function () {
+                const t = parseFloat(document.getElementById('hinge').value);
+                document.getElementById('hinge-val').textContent = t + '°';
+                const r = t * deg, A = [30, 200], B = [150, 200];
+                const D = [A[0] + 90 * Math.cos(r), A[1] - 90 * Math.sin(r)], C = [D[0] + 120, D[1]];
+                let s = poly([A, B, C, D], 'fill-y') + ln(A, B, 'geo-line thick') + ln(B, C, 'geo-line thick') + ln(C, D, 'geo-line thick') + ln(D, A, 'geo-line thick');
+                [A, B, C, D].forEach((p) => { s += dot(p, 'dot-y', 5); });
+                const T = [[250, 200], [360, 200], [290, 100]];
+                s += poly(T, 'fill-g') + ln(T[0], T[1], 'geo-line thick') + ln(T[1], T[2], 'geo-line thick') + ln(T[2], T[0], 'geo-line thick');
+                T.forEach((p) => { s += dot(p, 'dot-g', 5); });
+                s += label(40, 240, 'форма змінюється', 'svg-note y') + label(250, 240, 'жорсткий', 'svg-note g');
+                document.getElementById('hinge-scene').innerHTML = s;
+            };
+
+            // --- Слайд 2: теорема ---
+            window.renderThm = function () {
+                const A = [20, 180], B = [170, 180], C = [60, 50];
+                const A1 = [210, 180], B1 = [360, 180], C1 = [250, 50];
+                let s = '';
+                [[A, B, C, 'b'], [A1, B1, C1, 'g']].forEach(([p, q, r, c]) => {
+                    s += tri([p, q, r], 'fill-' + c) + ln(p, q, 'geo-line ' + c) + ln(q, r, 'geo-line ' + c) + ln(r, p, 'geo-line ' + c);
+                    s += ticks(p, q, 1) + ticks(q, r, 2) + ticks(r, p, 3);
+                });
+                s += nm(A, -14, 18, 'A') + nm(B, 4, 18, 'B') + nm(C, -6, -10, 'C') + nm(A1, -14, 18, 'A₁') + nm(B1, -8, 18, 'B₁') + nm(C1, -6, -10, 'C₁');
+                document.getElementById('thm-scene').innerHTML = s;
+            };
+
+            // --- Слайд 3: доведення ---
+            const PA = [60, 140], PB = [300, 140], PC = [150, 30], PC2 = [150, 250];
+            const PROOF = [
+                ['Дано: $AB = A_1B_1$, $BC = B_1C_1$, $AC = A_1C_1$', 'Доведемо, що $\\triangle ABC = \\triangle A_1B_1C_1$'],
+                ['Прикладемо $\\triangle A_1B_1C_1$ до $AB$: $A_1 \\to A$, $B_1 \\to B$, $C_1 \\to C_2$', 'Вершину $C_2$ розміщуємо по інший бік від прямої $AB$, ніж $C$'],
+                ['$AC = AC_2$, $\\;BC = BC_2$; проведемо $CC_2$', 'Трикутники $ACC_2$ і $BCC_2$ — рівнобедрені'],
+                ['$\\angle ACC_2 = \\angle AC_2C$, $\\;\\angle BCC_2 = \\angle BC_2C$', 'Кути при основі рівнобедреного трикутника рівні'],
+                ['$\\angle ACB = \\angle AC_2B$', 'Додаємо рівні кути'],
+                ['[[$\\triangle ABC = \\triangle ABC_2$ за I ознакою]]', '$AC = AC_2$, $BC = BC_2$ і кут між ними. А $\\triangle ABC_2$ — це $\\triangle A_1B_1C_1$'],
+            ];
+            const ev = stepper('eval-lines', 'eval-note', PROOF, (k) => {
+                let s = tri([PA, PB, PC], 'fill-b') + ln(PA, PB, 'geo-line') + ln(PB, PC, 'geo-line b') + ln(PC, PA, 'geo-line b');
+                s += ticks(PB, PC, 2) + ticks(PC, PA, 1);
+                if (k >= 2) { s += tri([PA, PB, PC2], 'fill-g') + ln(PB, PC2, 'geo-line g') + ln(PC2, PA, 'geo-line g') + ticks(PB, PC2, 2) + ticks(PC2, PA, 1); }
+                if (k >= 3) s += ln(PC, PC2, 'geo-line y');
+                if (k >= 4) { s += angleAt(PC, PA, PC2, 26, 'g') + angleAt(PC2, PA, PC, 26, 'g') + angleAt(PC, PB, PC2, 34, 'b') + angleAt(PC2, PB, PC, 34, 'b'); }
+                s += nm(PA, -18, 6, 'A') + nm(PB, 8, 6, 'B') + nm(PC, -6, -8, 'C');
+                if (k >= 2) s += nm(PC2, -8, 22, 'C₂');
+                document.getElementById('proof-scene').innerHTML = s;
+            });
+            window.evalNext = ev.next; window.evalReset = ev.reset;
+
+            // --- Слайд 4: побудова ---
+            window.renderBuild = function () {
+                const a = parseFloat(document.getElementById('sa').value), b = parseFloat(document.getElementById('sb').value), c = parseFloat(document.getElementById('sc').value);
+                ['sa', 'sb', 'sc'].forEach((id, i) => { document.getElementById(id + '-val').textContent = num([a, b, c][i]); });
+                const k = 28, A = [190 - c * k / 2, 150], B = [190 + c * k / 2, 150];
+                let s = `<circle cx="${A[0]}" cy="${A[1]}" r="${b * k}" class="guide" style="fill:none"/><circle cx="${B[0]}" cy="${B[1]}" r="${a * k}" class="guide" style="fill:none"/>`;
+                s += ln(A, B, 'geo-line thick');
+                const out = document.getElementById('build-out');
+                if (a + b > c && a + c > b && b + c > a) {
+                    const x = (b * b - a * a + c * c) / (2 * c), h = Math.sqrt(Math.max(0, b * b - x * x));
+                    const C = [A[0] + x * k, 150 - h * k], C2 = [A[0] + x * k, 150 + h * k];
+                    s += tri([A, B, C], 'fill-b') + ln(A, C, 'geo-line b') + ln(B, C, 'geo-line b');
+                    s += tri([A, B, C2], 'fill-g') + ln(A, C2, 'geo-line g') + ln(B, C2, 'geo-line g');
+                    s += dot(C, 'dot-b', 5) + dot(C2, 'dot-g', 5) + nm(C, -5, -10, 'C') + nm(C2, -6, 22, "C'");
+                    out.innerHTML = 'Трикутник існує. $\\triangle ABC$ і $\\triangle ABC\'$ симетричні відносно $AB$ і рівні — за трьома сторонами форма визначена однозначно.';
+                } else {
+                    out.innerHTML = 'Кола не перетинаються (або лише дотикаються): трикутника не існує. Порушено нерівність трикутника — найбільша сторона має бути меншою від суми двох інших.';
+                }
+                s += dot(A, 'dot-y', 5) + dot(B, 'dot-y', 5) + nm(A, -18, 6, 'A') + nm(B, 8, 6, 'B');
+                document.getElementById('build-scene').innerHTML = s;
+                typeset([out]);
+            };
+
+            // --- Слайд 5: дельтоїд ---
+            window.renderKite = function () {
+                const A = [30, 85], B = [180, 20], C = [290, 85], D = [180, 150];
+                let s = poly([A, B, C, D], 'fill-b') + ln(A, B, 'geo-line') + ln(B, C, 'geo-line') + ln(C, D, 'geo-line') + ln(D, A, 'geo-line') + ln(A, C, 'geo-line y');
+                s += ticks(A, B, 1) + ticks(A, D, 1) + ticks(C, B, 2) + ticks(C, D, 2) + angleAt(A, B, C, 34, 'g') + angleAt(A, C, D, 40, 'b');
+                s += nm(A, -18, 6, 'A') + nm(B, -6, -6, 'B') + nm(C, 8, 6, 'C') + nm(D, -6, 18, 'D');
+                document.getElementById('kite-scene').innerHTML = s;
+            };
+
+            const RENDER = { 1: renderHinge, 2: renderThm, 3: ev.render, 4: renderBuild, 5: renderKite };
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (RENDER[currentSlide]) RENDER[currentSlide]();
+                typeset();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Кроки прикладів з'являються по одному: <div id="ex-1"><div class="step">…</div>… <button onclick="nextStep('ex-1')">
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+                typeset();
+            };
+            // Відповідь по кліку
+            window.reveal = function (id) { document.getElementById(id).classList.add('shown'); typeset(); };
+
+            // Вкладки практики: кнопки id="tab-N", блоки id="task-N" class="practice-task" (перший на слайді — з класом on)
+            window.showTask = function (n) {
+                const tab = document.getElementById(`tab-${n}`), scope = tab ? tab.closest('.slide-card') : document;
+                scope.querySelectorAll('.practice-task').forEach((t) => t.classList.toggle('on', t.id === `task-${n}`));
+                scope.querySelectorAll('.task-tabs button').forEach((b) => b.classList.toggle('on', b.id === `tab-${n}`));
+                typeset();
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                typeset();
+            };
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>

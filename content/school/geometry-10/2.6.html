@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геометрія: Побудова перерізів многогранників | ДО КВАДРАТУ</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        :root { --brand-blue: #344e86; --brand-green: #27ae60; --brand-yellow: #f39c12; --text-dark: #2c3e50; --text-muted: #7f8c8d; --bg-light: #f4f6fa; --card-bg: #ffffff; --border-color: #dce3ec; --shadow: 0 8px 24px rgba(52,78,134,0.08); --font-main: 'Segoe UI', system-ui, sans-serif; --warning-red: #e74c3c; --widget-bg: #eef3f9; --transition: all 0.3s ease; --violet: #8e44ad; }
+        body[data-theme="dark"] { --brand-blue: #6c8dfa; --brand-green: #2ecc71; --brand-yellow: #f1c40f; --text-dark: #ecf0f1; --text-muted: #a0aec0; --bg-light: #151c28; --card-bg: #1f2a3c; --border-color: #31425d; --shadow: 0 8px 30px rgba(0,0,0,0.4); --widget-bg: #182232; --violet: #c39bd3; }
+        * { box-sizing: border-box; }
+        html, body { height: 100vh; margin: 0; overflow: hidden; font-family: var(--font-main); background: var(--bg-light); color: var(--text-dark); }
+        body { display: flex; flex-direction: column; }
+
+        .navbar { background: var(--card-bg); border-bottom: 3px solid var(--brand-green); padding: 0 25px; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .brand-logo-container { font-weight: 800; color: var(--text-dark); text-decoration: none; }
+        .nav-controls { display: flex; gap: 10px; }
+        .btn-primary, .btn-secondary { padding: 7px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--brand-green); color: #fff; border: none; }
+        .btn-secondary { background: transparent; border: 1.5px solid var(--brand-blue); color: var(--text-dark); }
+        .progress-container { height: 5px; background: rgba(0,0,0,0.06); }
+        .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-green), var(--brand-yellow)); transition: width 0.3s; }
+
+        .presentation-viewport { flex: 1; overflow: hidden; padding: 20px; display: flex; justify-content: center; }
+        .slide-card { display: none; width: 100%; max-width: 1100px; background: var(--card-bg); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 30px; overflow-y: auto; }
+        .slide-card.active { display: block; animation: fade 0.3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .slide-header { margin-bottom: 14px; }
+        .slide-tag { display: inline-block; background: var(--widget-bg); color: var(--brand-blue); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+        .slide-title { margin: 8px 0 0; font-size: 1.7rem; color: var(--brand-blue); }
+        .slide-body { font-size: 1.1rem; }
+        .slide-body p { margin: 7px 0; line-height: 1.5; }
+
+        .box { border-left: 5px solid var(--brand-blue); background: var(--widget-bg); border-radius: 8px; padding: 10px 16px; margin-bottom: 12px; }
+        .box > p:first-of-type { margin-top: 0; } .box > p:last-child { margin-bottom: 0; }
+        .box-title { font-weight: 700; margin-bottom: 6px; }
+        .box.definition { border-color: var(--brand-blue); }
+        .box.theorem { border-color: var(--brand-green); }
+        .box.example { border-color: #8e44ad; }
+        .box.hack { border-color: var(--brand-yellow); }
+        .box.remark { border-color: var(--text-muted); }
+        .box.error { border-color: var(--warning-red); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-2 > *, .grid-3 > * { min-width: 0; }
+        .scrollable-math { overflow-x: auto; overflow-y: hidden; }
+
+        .math-widget { background: var(--widget-bg); border-radius: 10px; padding: 14px; }
+        .math-widget > p:first-child { margin-top: 0; }
+        .widget-svg-container svg { width: 100%; max-height: 320px; color: var(--text-dark); display: block; }
+        .slider-control { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .slider-control input[type=range] { flex: 1; accent-color: var(--brand-green); min-width: 0; }
+        .slider-control label { font-weight: 800; min-width: 26px; }
+        .slider-control span { font-weight: 700; min-width: 34px; text-align: right; }
+
+        .quiz-option { background: var(--bg-light); border: 2px solid var(--border-color); border-radius: 8px; padding: 8px 15px; margin: 6px 0; cursor: pointer; font-weight: 600; transition: var(--transition); }
+        .quiz-option:hover { border-color: var(--brand-blue); }
+        .quiz-option.correct { border-color: var(--brand-green); color: var(--brand-green); }
+        .quiz-option.wrong { border-color: var(--warning-red); color: var(--warning-red); }
+        .quiz-explanation, .quiz-hint { display: none; margin-top: 10px; }
+        .quiz-q { font-weight: 700; margin-bottom: 4px; }
+        .verdict { font-weight: 800; min-height: 1.4em; }
+
+        .step, .hidden-answer { display: none; margin: 6px 0; line-height: 1.45; }
+        .step.shown, .hidden-answer.shown { display: block; animation: fade 0.3s ease; }
+        .step-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .task-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .task-tabs .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+        .practice-task { display: none; }
+        .practice-task.on { display: grid; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+        .readout { font-size: 1.12rem; font-weight: 700; min-height: 1.5em; }
+        .formula { font-size: 1.25rem; text-align: center; margin: 6px 0; }
+        .big-question { font-size: 1.25rem; font-weight: 700; text-align: center; margin-top: 12px; }
+        .muted { color: var(--text-muted); }
+        table.tbl { width: 100%; border-collapse: collapse; }
+        table.tbl th, table.tbl td { border-bottom: 1px solid var(--border-color); padding: 5px 8px; text-align: left; vertical-align: middle; }
+        table.tbl th { color: var(--brand-blue); }
+
+        /* Рисунки */
+        .grid-line { stroke: var(--border-color); stroke-width: 1; }
+        .axis { stroke: currentColor; stroke-width: 1.6; }
+        .tick { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+        .axis-name { fill: currentColor; font-size: 15px; font-weight: 700; font-style: italic; }
+        .curve { fill: none; stroke: var(--brand-blue); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+        .curve.g { stroke: var(--brand-green); } .curve.y { stroke: var(--brand-yellow); } .curve.r { stroke: var(--warning-red); } .curve.v { stroke: var(--violet); }
+        .curve.thin { stroke-width: 2.4; }
+        .curve.ghost { stroke: var(--text-muted); stroke-width: 2; stroke-dasharray: 6 5; }
+        .geo-line { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+        .geo-line.b { stroke: var(--brand-blue); } .geo-line.g { stroke: var(--brand-green); } .geo-line.y { stroke: var(--brand-yellow); } .geo-line.r { stroke: var(--warning-red); } .geo-line.v { stroke: var(--violet); }
+        .geo-line.thick { stroke-width: 4; }
+        .hidden-line { stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 6 5; fill: none; }
+        .guide { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 5; fill: none; }
+        .geo-dot { fill: currentColor; }
+        .dot-b { fill: var(--brand-blue); } .dot-g { fill: var(--brand-green); } .dot-y { fill: var(--brand-yellow); } .dot-r { fill: var(--warning-red); } .dot-v { fill: var(--violet); }
+        .fill-b { fill: var(--brand-blue); fill-opacity: 0.16; } .fill-g { fill: var(--brand-green); fill-opacity: 0.18; } .fill-y { fill: var(--brand-yellow); fill-opacity: 0.22; } .fill-r { fill: var(--warning-red); fill-opacity: 0.16; } .fill-v { fill: var(--violet); fill-opacity: 0.18; }
+        .pt-name { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-note { fill: currentColor; font-size: 15px; font-weight: 700; }
+        .svg-note.b { fill: var(--brand-blue); } .svg-note.g { fill: var(--brand-green); } .svg-note.r { fill: var(--warning-red); } .svg-note.y { fill: var(--brand-yellow); } .svg-note.v { fill: var(--violet); }
+        .angle-arc { fill: var(--brand-yellow); opacity: 0.55; stroke: none; }
+        .angle-arc.g { fill: var(--brand-green); } .angle-arc.b { fill: var(--brand-blue); opacity: 0.4; } .angle-arc.r { fill: var(--warning-red); opacity: 0.45; } .angle-arc.none { fill: var(--border-color); opacity: 0.7; }
+        .angle-label { fill: currentColor; font-size: 15px; font-weight: 800; text-anchor: middle; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .vec { stroke-width: 3.2; stroke-linecap: round; fill: none; stroke: currentColor; }
+        .vec.b { stroke: var(--brand-blue); } .head.b { fill: var(--brand-blue); }
+        .vec.y { stroke: var(--brand-yellow); } .head.y { fill: var(--brand-yellow); }
+        .vec.g { stroke: var(--brand-green); } .head.g { fill: var(--brand-green); }
+        .vec.r { stroke: var(--warning-red); } .head.r { fill: var(--warning-red); }
+        .vec.v { stroke: var(--violet); } .head.v { fill: var(--violet); }
+        .head.k { fill: currentColor; }
+        .vec.dash { stroke-dasharray: 8 6; stroke-width: 2.4; }
+        .eval-line { font-size: 1.15rem; font-weight: 700; padding: 4px 0; }
+        .eval-line mark { background: var(--brand-yellow); color: #1b1b1b; border-radius: 6px; padding: 0 6px; }
+        .eval-line.done { color: var(--brand-green); }
+        .eval-note { color: var(--text-muted); font-size: 1rem; min-height: 1.4em; }
+        .bubble { background: var(--widget-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 10px 16px; margin: 10px 0; }
+        .bubble.right { border-color: var(--brand-green); margin-left: 12%; }
+        .bubble.left { border-color: var(--brand-blue); margin-right: 12%; }
+        .who { font-weight: 700; color: var(--brand-blue); }
+        .bubble.right .who { color: var(--brand-green); }
+
+        .controls-footer { height: 64px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-top: 1px solid var(--border-color); }
+        .slide-counter { font-weight: bold; color: var(--brand-blue); }
+        .nav-hint { font-size: 0.85rem; color: var(--text-muted); }
+        .nav-buttons { display: flex; gap: 10px; }
+        kbd { border: 1px solid var(--border-color); border-radius: 4px; padding: 0 5px; background: var(--bg-light); }
+
+        .cube-svg svg { max-height: 330px; }
+        .mid-svg svg { max-height: 260px; }
+        .section { fill: var(--brand-yellow); fill-opacity: 0.45; stroke: var(--warning-red); stroke-width: 3; stroke-linejoin: round; }
+        .trace { stroke: var(--violet); stroke-width: 2.2; stroke-dasharray: 7 5; fill: none; }
+        .pt-red { fill: var(--warning-red); }
+        .readout.big { font-size: 1.25rem; }
+        .tight p { margin: 4px 0; }
+        .rules p { margin: 5px 0; }
+
+        @media (max-width: 760px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .presentation-viewport { padding: 10px; }
+            .slide-card { padding: 16px; }
+            .slide-title { font-size: 1.3rem; }
+            .slide-body { font-size: 1rem; }
+            .formula { font-size: 1.1rem; }
+            .nav-hint { display: none; }
+            .navbar, .controls-footer { padding: 0 12px; }
+            .brand-logo-container { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; }
+            .btn-primary, .btn-secondary { padding: 6px 10px; }
+            .bubble.right { margin-left: 6%; }
+            .bubble.left { margin-right: 6%; }
+            /* довгі формули на телефоні гортаються вбік у межах рядка */
+            .slide-body p, .step, .eval-line, .quiz-option, .slide-body li { overflow-x: auto; overflow-y: hidden; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand-logo-container"><span>ДО КВАДРАТУ | Геометрія (10-11 класи)</span></a>
+        <div class="nav-controls">
+            <button class="btn-secondary" id="btn-theme">🌓 Тема</button>
+            <button class="btn-primary" id="btn-fullscreen">⛶</button>
+        </div>
+    </header>
+    <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+    <main class="presentation-viewport">
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Що таке переріз многогранника</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Січна площина</b> многогранника — площина, по обидва боки від якої є його точки. <b>Переріз</b> — многокутник, по якому січна площина перетинає многогранник.</p>
+                        <p>Сторони перерізу — відрізки, по яких січна площина перетинає <b>грані</b>.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Що з цього випливає</div>
+                        <p>На кожній грані — не більше однієї сторони перерізу. Тому в кубі переріз має від $3$ до $6$ сторін, у тетраедрі — $3$ або $4$.</p>
+                        <p>Переріз опуклого многогранника — опуклий многокутник.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container cube-svg">
+                    <svg viewBox="0 0 380 320" id="intro-scene" role="img" aria-label="Куб і його переріз-шестикутник площиною через середини шести ребер"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Правила -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Правила побудови перерізу</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem rules">
+                    <div class="box-title">Правила</div>
+                    <p><b>1.</b> Сполучати можна лише дві точки, що лежать в <b>одній грані</b>: тоді відрізок — сторона перерізу.</p>
+                    <p><b>2.</b> Якщо січна площина перетинає дві <b>паралельні грані</b>, то сторони перерізу в них паралельні (тема 2.4).</p>
+                    <p><b>3.</b> <b>Слід</b> — пряма, по якій січна площина перетинає площину грані (зазвичай основи). Точку сліду знаходимо як перетин прямої перерізу з прямою ребра в <b>одній</b> площині грані.</p>
+                    <p><b>4.</b> Точки сліду можуть лежати поза многогранником — на продовженнях ребер.</p>
+                </div>
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">На чому ґрунтується</div>
+                        <p>Через три точки, що не лежать на одній прямій, проходить одна площина. Якщо дві точки прямої лежать у площині, то вся пряма лежить у ній. Дві площини перетинаються по прямій.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Два методи</div>
+                        <p><b>Метод паралельних прямих</b> — коли є паралельні грані (куб, призма).</p>
+                        <p><b>Метод слідів</b> — коли дві точки в одній бічній грані, а третя — в основі (піраміда).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Які перерізи бувають у куба 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p style="margin-top:0">Площина проходить через точки $K \in AA_1$, $L \in BC$, $M \in C_1D_1$. Рухаємо точки — учні прогнозують, скільки сторін матиме переріз.</p>
+                    <div class="slider-control"><label for="t-k">$K$</label><input type="range" id="t-k" min="0.05" max="0.95" step="0.05" value="0.5" oninput="secInput()"><span id="t-k-val"></span></div>
+                    <div class="slider-control"><label for="t-l">$L$</label><input type="range" id="t-l" min="0.05" max="0.95" step="0.05" value="0.5" oninput="secInput()"><span id="t-l-val"></span></div>
+                    <div class="slider-control"><label for="t-m">$M$</label><input type="range" id="t-m" min="0.05" max="0.95" step="0.05" value="0.5" oninput="secInput()"><span id="t-m-val"></span></div>
+                    <div class="slider-control"><label for="t-phi">Поворот</label><input type="range" id="t-phi" min="-40" max="40" step="2" value="-24" oninput="renderSec()"><span id="t-phi-val"></span></div>
+                    <div class="btn-row"><button class="btn-primary" onclick="showSec()">Показати переріз</button></div>
+                    <p class="readout big" id="sec-name"></p>
+                    <p class="muted" style="margin:4px 0">Усі три точки посередині ребер — правильний шестикутник.</p>
+                </div>
+                <div class="math-widget widget-svg-container cube-svg">
+                    <svg viewBox="0 0 380 320" id="sec-scene" role="img" aria-label="Куб і переріз площиною через три точки на ребрах"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Метод слідів -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Метод</span>
+                <h2 class="slide-title">Метод слідів: тетраедр</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget">
+                    <p><b>Побудуйте переріз</b> тетраедра $DABC$ площиною $MNK$: $M \in DA$, $N \in DB$, $K \in AC$.</p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalNext()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container cube-svg">
+                    <svg viewBox="0 0 380 320" id="trace-scene" role="img" aria-label="Тетраедр DABC, точки M, N, K, слід X і переріз MNLK"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Метод паралельних прямих -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Метод</span>
+                <h2 class="slide-title">Паралельні грані: куб</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="math-widget" id="par">
+                    <p><b>Куб</b> $ABCDA_1B_1C_1D_1$ з ребром $4$. Побудуйте переріз площиною через $A$, $C$ і середину $M$ ребра $B_1C_1$. Знайдіть його площу.</p>
+                    <div class="step">1) $A$ і $C$ лежать у грані $ABCD$ — сполучаємо: $AC$.</div>
+                    <div class="step">2) Грань $A_1B_1C_1D_1 \parallel ABCD$, тож у ній сторона перерізу $\parallel AC$. Проводимо через $M$ пряму $\parallel A_1C_1$ — вона перетинає $A_1B_1$ у середині $N$.</div>
+                    <div class="step">3) $C$ і $M$ — в одній грані $BCC_1B_1$, $A$ і $N$ — у грані $ABB_1A_1$. Переріз — трапеція $ACMN$.</div>
+                    <div class="step">4) $AC = 4\sqrt2$, $NM = 2\sqrt2$ (середня лінія), $AN = CM = \sqrt{16 + 4} = 2\sqrt5$. Висота: $\sqrt{20 - (\sqrt2)^2} = 3\sqrt2$.</div>
+                    <div class="step">5) $S = \dfrac{4\sqrt2 + 2\sqrt2}{2} \cdot 3\sqrt2 = 18$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('par'); renderPar()">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget widget-svg-container cube-svg">
+                    <svg viewBox="0 0 380 320" id="par-scene" role="img" aria-label="Куб, переріз-трапеція ACMN"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Точки різних граней</div>
+                        <p>Не можна сполучати $M \in AA_1$ і $L \in BC$ навпростець: відрізок $ML$ проходить усередині куба, а не по грані.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Слід — у спільній площині</div>
+                        <p>Прямі $MN$ і $AB$ перетинаються, лише бо обидві лежать у площині $DAB$. Пряму $MN$ з прямою $BC$ «перетинати» не можна — вони мимобіжні.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Забута паралельність</div>
+                        <p>У кубі сторони перерізу в протилежних гранях паралельні. Якщо на рисунку вони не паралельні — переріз побудовано неправильно.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Точка сліду — не вершина</div>
+                        <p>Точка $X$ на продовженні ребра лише допоміжна. Вершини перерізу — тільки точки на ребрах многогранника.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика у форматі НМТ ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ: складніше</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Який многокутник <b>не може</b> бути перерізом куба?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) трикутник</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) квадрат</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) п'ятикутник</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) шестикутник</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Д) семикутник</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Кожна сторона перерізу лежить в окремій грані, а граней у куба $6$. Тож сторін не більше $6$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Усі ребра тетраедра дорівнюють $6$. Знайдіть периметр перерізу площиною, що проходить через середини трьох ребер, які виходять з однієї вершини.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $18$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $4{,}5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Сторони перерізу — середні лінії бічних граней: по $3$. Периметр $9$.</p>
+                            <p>$18$ — периметр грані; $12$ — узяли чотири сторони.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Ребро куба $ABCDA_1B_1C_1D_1$ дорівнює $2$. Знайдіть площу перерізу куба площиною $AB_1C$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $2\sqrt3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2\sqrt2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $4\sqrt3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\sqrt3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Переріз — трикутник $AB_1C$, його сторони — діагоналі граней: $2\sqrt2$. Він рівносторонній: $S = \dfrac{(2\sqrt2)^2\sqrt3}{4} = 2\sqrt3$.</p>
+                            <p>$4\sqrt3$ — забули поділити на $4$; $4$ — площа грані.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p>Сторони перерізу лежать у гранях — по одній на грань (куб: $3$–$6$ сторін, тетраедр: $3$–$4$).</p>
+                    <p>Сполучаємо лише точки однієї грані. У паралельних гранях — паралельні сторони.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Метод слідів ✍️</div>
+                        <p>Пряма перерізу в бічній грані $\cap$ пряма ребра основи (в одній площині!) $=$ точка сліду $X$. $X$ і точка основи дають слід — він перетинає ребра основи у нових вершинах перерізу.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Головна пастка ⚠️</div>
+                        <p>Не сполучати точки різних граней і не «перетинати» мимобіжні прямі.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="controls-footer">
+        <div class="slide-counter" id="slide-counter">Слайд 1 з 8</div>
+        <div class="nav-hint">Навігація: <kbd>←</kbd> <kbd>→</kbd> | Повний екран: <kbd>F</kbd></div>
+        <div class="nav-buttons">
+            <button class="btn-secondary" id="btn-prev">← Назад</button>
+            <button class="btn-primary" id="btn-next">Вперед →</button>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide-card');
+            const totalSlides = slides.length;
+            let currentSlide = 1;
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+
+            const deg = Math.PI / 180;
+            // Число для підпису: кома, справжній мінус
+            const num = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ',').replace('-', '−'); };
+            // Число для формули MathJax: десяткова кома в {,}
+            const tex = (v, d = 2) => { const r = Math.round(v * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', '{,}'); };
+            // Координатна площина: математичні координати → пікселі SVG
+            function plane(x0, x1, y0, y1, W = 420, H = 300, pad = 26) {
+                const sx = (x) => pad + (x - x0) / (x1 - x0) * (W - 2 * pad);
+                const sy = (y) => H - pad - (y - y0) / (y1 - y0) * (H - 2 * pad);
+                return { sx, sy, x0, x1, y0, y1, W, H, pad, k: (W - 2 * pad) / (x1 - x0) };
+            }
+            function axesSvg(P, stepX = 1, stepY = 1, labelX = 'x', labelY = 'y', every = 1) {
+                let svg = '';
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX) svg += `<line x1="${P.sx(x)}" y1="${P.sy(P.y0)}" x2="${P.sx(x)}" y2="${P.sy(P.y1)}" class="grid-line"/>`;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY) svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(y)}" x2="${P.sx(P.x1)}" y2="${P.sy(y)}" class="grid-line"/>`;
+                svg += `<line x1="${P.sx(P.x0)}" y1="${P.sy(0)}" x2="${P.sx(P.x1) + 8}" y2="${P.sy(0)}" class="axis"/>`
+                     + `<line x1="${P.sx(0)}" y1="${P.sy(P.y0)}" x2="${P.sx(0)}" y2="${P.sy(P.y1) - 8}" class="axis"/>`
+                     + `<path d="M${P.sx(P.x1) + 8} ${P.sy(0)} l-9 -4 v8 z" fill="currentColor"/>`
+                     + `<path d="M${P.sx(0)} ${P.sy(P.y1) - 8} l-4 9 h8 z" fill="currentColor"/>`
+                     + `<text x="${P.sx(P.x1) + 2}" y="${P.sy(0) + 18}" class="axis-name">${labelX}</text>`
+                     + `<text x="${P.sx(0) + 8}" y="${P.sy(P.y1) - 2}" class="axis-name">${labelY}</text>`;
+                let i = 0;
+                for (let x = Math.ceil(P.x0 / stepX) * stepX; x <= P.x1 + 1e-9; x += stepX, i++) if (Math.abs(x) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(x)}" y="${P.sy(0) + 15}" class="tick">${num(x)}</text>`;
+                i = 0;
+                for (let y = Math.ceil(P.y0 / stepY) * stepY; y <= P.y1 + 1e-9; y += stepY, i++) if (Math.abs(y) > 1e-9 && i % every === 0) svg += `<text x="${P.sx(0) - 10}" y="${P.sy(y) + 4}" class="tick">${num(y)}</text>`;
+                return svg + `<text x="${P.sx(0) - 9}" y="${P.sy(0) + 15}" class="tick">0</text>`;
+            }
+            // Графік функції f на [a; b]; розриви й вихід за рамку — розрив лінії
+            function curveSvg(P, f, a, b, cls = '', N = 300) {
+                let svg = '', d = '';
+                for (let i = 0; i <= N; i++) {
+                    const x = a + (b - a) * i / N, y = f(x);
+                    if (!isFinite(y) || y < P.y0 - 0.5 || y > P.y1 + 0.5) { if (d) svg += `<path d="${d}" class="curve ${cls}"/>`; d = ''; continue; }
+                    const pt = `${P.sx(x).toFixed(1)} ${P.sy(y).toFixed(1)}`;
+                    d = d ? `${d} L${pt}` : `M${pt}`;
+                }
+                if (d) svg += `<path d="${d}" class="curve ${cls}"/>`;
+                return svg;
+            }
+            // Креслярські помічники (пікселі SVG; кути — проти годинникової стрілки, як у математиці)
+            const ln = (p, q, cls = 'geo-line') => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const poly = (pts, cls) => `<polygon points="${pts.map(p => p.join(',')).join(' ')}" class="${cls}"/>`;
+            const dot = (p, cls = 'geo-dot', r = 4.5) => `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+            const label = (x, y, t, cls = 'pt-name') => `<text x="${x}" y="${y}" class="${cls}">${t}</text>`;
+            function arrow(x1, y1, x2, y2, cls = 'b') {
+                const L = Math.hypot(x2 - x1, y2 - y1);
+                if (L < 1e-6) return '';
+                const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(14, L * 0.6), w = h * 0.45;
+                const bx = x2 - ux * h, by = y2 - uy * h;
+                return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" class="vec ${cls}"/>`
+                     + `<path d="M${x2} ${y2} L${bx - uy * w} ${by + ux * w} L${bx + uy * w} ${by - ux * w} Z" class="head ${cls.split(' ')[0]}"/>`;
+            }
+            const angNorm = (d) => { while (d <= -Math.PI) d += 2 * Math.PI; while (d > Math.PI) d -= 2 * Math.PI; return d; };
+            // Сектор кута у вершині (cx; cy) від напрямку t1 до t2 (кути в радіанах, математичні)
+            function wedge(cx, cy, r, t1, t2, cls = '') {
+                const d = angNorm(t2 - t1);
+                const x1 = cx + r * Math.cos(t1), y1 = cy - r * Math.sin(t1), x2 = cx + r * Math.cos(t1 + d), y2 = cy - r * Math.sin(t1 + d);
+                return `<path d="M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 0 ${d > 0 ? 0 : 1} ${x2} ${y2} Z" class="angle-arc ${cls}"/>`;
+            }
+            // Напрямок з точки p на точку q (математичний кут для wedge)
+            const dir = (p, q) => Math.atan2(p[1] - q[1], q[0] - p[0]);
+            // Сектор кута при вершині V між променями VA і VB (менший кут)
+            const angleAt = (V, A, B, r, cls = '') => wedge(V[0], V[1], r, dir(V, A), dir(V, B), cls);
+            // Підпис кута — на бісектрисі
+            const angleText = (V, A, B, r, t) => { const a = dir(V, A), m = a + angNorm(dir(V, B) - a) / 2; return label(V[0] + r * Math.cos(m), V[1] - r * Math.sin(m) + 5, t, 'angle-label'); };
+            function rightMark(V, A, B, s = 12) {
+                const t1 = dir(V, A), t2 = dir(V, B);
+                const ux = Math.cos(t1), uy = -Math.sin(t1), vx = Math.cos(t2), vy = -Math.sin(t2);
+                return `<path d="M${V[0] + ux * s} ${V[1] + uy * s} L${V[0] + (ux + vx) * s} ${V[1] + (uy + vy) * s} L${V[0] + vx * s} ${V[1] + vy * s}" class="right-mark"/>`;
+            }
+            // Риски рівності на відрізку pq (n рисок)
+            function ticks(p, q, n = 1, cls = 'geo-line') {
+                const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, L = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+                const ux = (q[0] - p[0]) / L, uy = (q[1] - p[1]) / L; let s = '';
+                for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 5; s += `<line x1="${mx + ux * o - uy * 7}" y1="${my + uy * o + ux * 7}" x2="${mx + ux * o + uy * 7}" y2="${my + uy * o - ux * 7}" class="${cls}" style="stroke-width:2"/>`; }
+                return s;
+            }
+            // Точка на відрізку pq з часткою t
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            // Покрокове розв'язання: STEPS = [[рядок, примітка], …]; [[…]] — підсвітка нового в останньому рядку
+            function stepper(linesId, noteId, STEPS, after) {
+                let shown = 1;
+                const render = () => {
+                    const box = document.getElementById(linesId);
+                    box.innerHTML = STEPS.slice(0, shown).map(([line], k) => {
+                        const html = line.replace(/\[\[(.+?)\]\]/g, k === shown - 1 ? '<mark>$1</mark>' : '$1');
+                        return `<div class="eval-line${k === STEPS.length - 1 ? ' done' : ''}">${html}</div>`;
+                    }).join('');
+                    document.getElementById(noteId).innerHTML = STEPS[shown - 1][1];
+                    if (after) after(shown);
+                    typeset([box, document.getElementById(noteId)]);
+                };
+                return { render, next: () => { shown = Math.min(shown + 1, STEPS.length); render(); }, reset: () => { shown = 1; render(); }, get shown() { return shown; } };
+            }
+
+            // --- Просторові рисунки: x — вправо, y — вглиб, z — вгору ---
+            // Поворот навколо вертикальної осі на phi° і нахил погляду e° (паралельна проекція)
+            function view3(phi, e, S, cx, cy) {
+                const cp = Math.cos(phi * deg), sp = Math.sin(phi * deg), ce = Math.cos(e * deg), se = Math.sin(e * deg);
+                const rot = ([x, y, z]) => [x * cp - y * sp, x * sp + y * cp, z];
+                const P = (p) => { const [x, y, z] = rot(p); return [cx + S * x, cy - S * (z * ce + y * se)]; };
+                // Чи дивиться нормаль n на глядача
+                const facing = (n) => { const [, y, z] = rot(n); return -y * ce + z * se > 1e-9; };
+                return { P, facing };
+            }
+            // Те саме, але точка c3 простору — у центрі рисунка W×H
+            function view3c(phi, e, S, W, H, c3) {
+                const v = view3(phi, e, S, 0, 0), c = v.P(c3);
+                return view3(phi, e, S, W / 2 - c[0], H / 2 - c[1]);
+            }
+            const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+            const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+            const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+            const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+            const avg3 = (ps) => ps.reduce((s, p) => [s[0] + p[0] / ps.length, s[1] + p[1] / ps.length, s[2] + p[2] / ps.length], [0, 0, 0]);
+            // Многогранник: V = {A: [x, y, z], …}, F = [['A','B','C','D'], …] (грані); невидимі ребра — штрихом.
+            // opt.labels — підписи вершин (false — без них), opt.skip — назви вершин без підпису
+            function solid(view, V, F, opt = {}) {
+                const C = avg3(Object.values(V)), seen = {};
+                const vis = F.map((f) => {
+                    let n = cross3(sub3(V[f[1]], V[f[0]]), sub3(V[f[2]], V[f[0]]));
+                    if (dot3(n, sub3(avg3(f.map((k) => V[k])), C)) < 0) n = n.map((v) => -v);
+                    return view.facing(n);
+                });
+                F.forEach((f, i) => f.forEach((a, j) => {
+                    const b = f[(j + 1) % f.length], key = [a, b].sort().join('');
+                    seen[key] = seen[key] || { a, b, vis: false };
+                    seen[key].vis = seen[key].vis || vis[i];
+                }));
+                let s = '';
+                Object.values(seen).forEach(({ a, b, vis: v }) => { s += ln(view.P(V[a]), view.P(V[b]), v ? 'geo-line' : 'hidden-line'); });
+                if (opt.labels !== false) {
+                    const c = view.P(C);
+                    Object.entries(V).forEach(([k, p]) => {
+                        if ((opt.skip || []).includes(k)) return;
+                        const q = view.P(p), d = Math.hypot(q[0] - c[0], q[1] - c[1]) || 1;
+                        s += label(q[0] + (q[0] - c[0]) / d * 16, q[1] + (q[1] - c[1]) / d * 16 + 6, k.replace(/(\d)/, (m) => '₀₁₂₃₄₅₆₇₈₉'[m]));
+                    });
+                }
+                return s;
+            }
+            // Вершини куба / прямокутного паралелепіпеда ABCDA₁B₁C₁D₁ (основа ABCD внизу)
+            function boxV(a = 1, b = 1, c = 1) {
+                return { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], A1: [0, 0, c], B1: [a, 0, c], C1: [a, b, c], D1: [0, b, c] };
+            }
+            const BOX_F = [['A', 'B', 'C', 'D'], ['A1', 'B1', 'C1', 'D1'], ['A', 'B', 'B1', 'A1'], ['B', 'C', 'C1', 'B1'], ['C', 'D', 'D1', 'C1'], ['D', 'A', 'A1', 'D1']];
+            const polyP = (view, pts, cls) => poly(pts.map(view.P), cls);
+
+            const V = boxV(1, 1, 1);
+            const EDGES = [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['A1', 'B1'], ['B1', 'C1'], ['C1', 'D1'], ['D1', 'A1'], ['A', 'A1'], ['B', 'B1'], ['C', 'C1'], ['D', 'D1']];
+            // Переріз куба площиною через три точки: вершини многокутника, впорядковані по колу
+            function cubeSection(p1, p2, p3) {
+                const n = cross3(sub3(p2, p1), sub3(p3, p1));
+                if (Math.hypot(...n) < 1e-9) return [];
+                const f = (p) => dot3(n, sub3(p, p1)), pts = [];
+                const add = (p) => { if (!pts.some((q) => Math.hypot(...sub3(p, q)) < 1e-7)) pts.push(p); };
+                EDGES.forEach(([a, b]) => {
+                    const fa = f(V[a]), fb = f(V[b]);
+                    if (Math.abs(fa) < 1e-9) add(V[a]);
+                    if (Math.abs(fb) < 1e-9) add(V[b]);
+                    if (fa * fb < -1e-18) add(mix3(V[a], V[b], fa / (fa - fb)));
+                });
+                if (pts.length < 3) return pts;
+                const c = avg3(pts), u0 = sub3(pts[0], c), nu = Math.hypot(...u0), u = u0.map((x) => x / nu), w = cross3(n, u);
+                return pts.sort((p, q) => Math.atan2(dot3(w, sub3(p, c)), dot3(u, sub3(p, c))) - Math.atan2(dot3(w, sub3(q, c)), dot3(u, sub3(q, c))));
+            }
+            const NAMES = { 3: 'трикутник', 4: 'чотирикутник', 5: "п'ятикутник", 6: 'шестикутник' };
+            const lab3 = (v, p, t, dx = 0, dy = 0, cls = 'pt-name') => { const q = v.P(p); return label(q[0] + dx, q[1] + dy, t, cls); };
+
+            // --- Слайд 1: шестикутник ---
+            window.renderIntro = function () {
+                const v = view3c(-24, 22, 175, 380, 320, [0.5, 0.5, 0.5]);
+                const sec = cubeSection([0, 0, 0.5], [1, 0.5, 0], [0.5, 1, 1]);
+                document.getElementById('intro-scene').innerHTML = solid(v, V, BOX_F) + polyP(v, sec, 'section') + sec.map((p) => dot(v.P(p), 'pt-red', 4)).join('');
+            };
+
+            // --- Слайд 3: дослідження ---
+            let secShown = false;
+            const tv = (id) => parseFloat(document.getElementById(id).value);
+            window.secInput = function () { secShown = false; renderSec(); };
+            window.showSec = function () { secShown = true; renderSec(); };
+            window.renderSec = function () {
+                const a = tv('t-k'), b = tv('t-l'), c = tv('t-m'), phi = tv('t-phi');
+                ['t-k', 't-l', 't-m'].forEach((id) => { document.getElementById(`${id}-val`).textContent = num(tv(id)); });
+                document.getElementById('t-phi-val').textContent = `${num(phi)}°`;
+                const K = [0, 0, a], L = [1, b, 0], M = [1 - c, 1, 1];
+                const v = view3c(phi, 22, 175, 380, 320, [0.5, 0.5, 0.5]);
+                let s = solid(v, V, BOX_F);
+                const sec = cubeSection(K, L, M);
+                if (secShown && sec.length >= 3) s += polyP(v, sec, 'section') + sec.map((p) => dot(v.P(p), 'pt-red', 4)).join('');
+                s += [[K, 'K'], [L, 'L'], [M, 'M']].map(([p, t]) => dot(v.P(p), 'dot-b', 6) + lab3(v, p, t, 14, -8, 'svg-note b')).join('');
+                document.getElementById('sec-scene').innerHTML = s;
+                document.getElementById('sec-name').textContent = secShown ? `Переріз — ${NAMES[sec.length] || 'многокутник'} (${sec.length} сторін${sec.length === 3 || sec.length === 4 ? 'и' : ''})` : '';
+            };
+
+            // --- Слайд 4: метод слідів ---
+            // Перетин прямих P1P2 і Q1Q2, що лежать в одній площині
+            function meet(P1, P2, Q1, Q2) {
+                const d1 = sub3(P2, P1), d2 = sub3(Q2, Q1), r = sub3(Q1, P1);
+                const n = cross3(d1, d2), nn = dot3(n, n);
+                const s = dot3(cross3(r, d2), n) / nn;
+                return mix3(P1, P2, s);
+            }
+            const T = { A: [0, 0, 0], B: [4, 0, 0], C: [1.2, 2.8, 0], D: [1.6, 0.9, 3.2] };
+            const TM = mix3(T.D, T.A, 0.38), TN = mix3(T.D, T.B, 0.68), TK = mix3(T.A, T.C, 0.55);
+            const TX = meet(TM, TN, T.A, T.B), TL = meet(TX, TK, T.B, T.C);
+            const STEPS = [
+                ['Дано: $M \\in DA$, $\\;N \\in DB$, $\\;K \\in AC$', '$M$ і $N$ лежать в одній грані $DAB$'],
+                ['[[$MN$]] — сторона перерізу в грані $DAB$', 'Точки однієї грані сполучаємо'],
+                ['$MN \\cap AB = X$ — [[точка сліду]]', 'Обидві прямі лежать у площині $DAB$, тож перетинаються ($MN \\not\\parallel AB$)'],
+                ['$X$ і $K$ — у площині основи: $XK \\cap BC =$ [[$L$]]', 'Пряма $XK$ — слід січної площини на площині $ABC$'],
+                ['Переріз — [[чотирикутник $MNLK$]]', '$NL$ — у грані $DBC$, $LK$ — в основі, $KM$ — у грані $DAC$'],
+            ];
+            const ev = stepper('eval-lines', 'eval-note', STEPS, (k) => renderTrace(k));
+            window.evalNext = ev.next; window.evalReset = ev.reset;
+            window.renderTrace = function (k) {
+                const v = view3c(-8, 18, 62, 380, 320, [2.6, 1.2, 1.3]);
+                let s = solid(v, T, [['A', 'B', 'C'], ['A', 'B', 'D'], ['B', 'C', 'D'], ['A', 'C', 'D']]);
+                const seg = (p, q, cls) => ln(v.P(p), v.P(q), cls);
+                if (k >= 5) s += polyP(v, [TM, TN, TL, TK], 'section');
+                if (k >= 2) s += seg(TM, TN, 'geo-line r thick');
+                if (k >= 3) s += seg(TN, TX, 'trace') + seg(T.B, TX, 'trace') + dot(v.P(TX), 'dot-v', 5) + lab3(v, TX, 'X', 0, -10, 'svg-note v');
+                if (k >= 4) s += seg(TX, TK, 'trace') + seg(TK, TL, 'geo-line r thick') + dot(v.P(TL), 'pt-red', 5) + lab3(v, TL, 'L', 12, 14, 'svg-note r');
+                if (k >= 5) s += seg(TN, TL, 'geo-line r thick') + seg(TK, TM, 'geo-line r thick');
+                s += [[TM, 'M', -14, -4], [TN, 'N', 14, -4], [TK, 'K', -6, 18]].map(([p, t, dx, dy]) => dot(v.P(p), 'pt-red', 5) + lab3(v, p, t, dx, dy, 'svg-note r')).join('');
+                document.getElementById('trace-scene').innerHTML = s.replace(/class="svg-note/g, 'text-anchor="middle" class="svg-note');
+            };
+
+            // --- Слайд 5: трапеція ACMN ---
+            window.renderPar = function () {
+                const k = document.querySelectorAll('#par .step.shown').length;
+                const v = view3c(-24, 22, 175, 380, 320, [0.5, 0.5, 0.5]);
+                const M = mix3(V.B1, V.C1, 0.5), N = mix3(V.A1, V.B1, 0.5);
+                let s = solid(v, V, BOX_F);
+                const seg = (p, q, cls) => ln(v.P(p), v.P(q), cls);
+                if (k >= 3) s += polyP(v, [V.A, V.C, M, N], 'section');
+                if (k >= 1) s += seg(V.A, V.C, 'geo-line r thick');
+                if (k >= 2) s += seg(V.A1, V.C1, 'guide') + seg(N, M, 'geo-line r thick') + dot(v.P(N), 'pt-red', 5) + lab3(v, N, 'N', -2, -10, 'svg-note r');
+                if (k >= 3) s += seg(V.C, M, 'geo-line r thick') + seg(V.A, N, 'geo-line r thick');
+                s += dot(v.P(M), 'pt-red', 5) + lab3(v, M, 'M', 14, -6, 'svg-note r');
+                document.getElementById('par-scene').innerHTML = s.replace(/class="svg-note/g, 'text-anchor="middle" class="svg-note');
+            };
+
+            const RENDER = { 1: renderIntro, 3: renderSec, 4: ev.render, 5: renderPar };
+            window.goToSlide = function (index) {
+                currentSlide = Math.min(Math.max(index, 1), totalSlides);
+                slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide - 1));
+                document.getElementById('slide-counter').textContent = `Слайд ${currentSlide} з ${totalSlides}`;
+                document.getElementById('progress-bar').style.width = `${currentSlide / totalSlides * 100}%`;
+                document.getElementById('btn-prev').style.opacity = currentSlide === 1 ? '0.5' : '1';
+                document.getElementById('btn-next').style.opacity = currentSlide === totalSlides ? '0.5' : '1';
+
+                // Віджети малюються при вході на свій слайд
+                if (RENDER[currentSlide]) RENDER[currentSlide]();
+                typeset();
+            };
+
+            document.getElementById('btn-next').addEventListener('click', () => goToSlide(currentSlide + 1));
+            document.getElementById('btn-prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+            document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else document.exitFullscreen();
+            });
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                const dark = document.body.getAttribute('data-theme') === 'dark';
+                document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+            });
+            // Обов'язково: кнопки сайту надсилають сюди саме ці клавіші
+            document.addEventListener('keydown', (e) => {
+                // Стрілки на повзунку змінюють його значення, а не слайд
+                if (e.target && e.target.tagName === 'INPUT') return;
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goToSlide(currentSlide + 1); }
+                else if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+                else if (e.key.toLowerCase() === 'f') document.getElementById('btn-fullscreen').click();
+            });
+
+            // Кроки прикладів з'являються по одному: <div id="ex-1"><div class="step">…</div>… <button onclick="nextStep('ex-1')">
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+                typeset();
+            };
+            // Відповідь по кліку
+            window.reveal = function (id) { document.getElementById(id).classList.add('shown'); typeset(); };
+
+            // Вкладки практики: кнопки id="tab-N", блоки id="task-N" class="practice-task" (перший на слайді — з класом on)
+            window.showTask = function (n) {
+                const tab = document.getElementById(`tab-${n}`), scope = tab ? tab.closest('.slide-card') : document;
+                scope.querySelectorAll('.practice-task').forEach((t) => t.classList.toggle('on', t.id === `task-${n}`));
+                scope.querySelectorAll('.task-tabs button').forEach((b) => b.classList.toggle('on', b.id === `tab-${n}`));
+                typeset();
+            };
+
+            // Після будь-якої відповіді — позначаємо правильний варіант і показуємо повне розв'язання
+            window.checkAnswer = function (quizNum, element, isCorrect) {
+                const options = element.parentElement.querySelectorAll('.quiz-option');
+                options.forEach(o => {
+                    o.classList.remove('correct', 'wrong');
+                    if (o.getAttribute('onclick').includes('true')) o.classList.add('correct');
+                });
+                if (!isCorrect) element.classList.add('wrong');
+                const verdict = document.getElementById(`quiz-${quizNum}-verdict`);
+                if (verdict) verdict.textContent = isCorrect ? 'Правильно! ✅' : 'Не зовсім — подивись розв\'язання 👇';
+                const el = document.getElementById(`quiz-${quizNum}-explanation`);
+                if (el) el.style.display = 'block';
+                typeset();
+            };
+            goToSlide(1);
+        });
+    </script>
+</body>
+</html>
