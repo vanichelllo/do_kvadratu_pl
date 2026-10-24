@@ -1,0 +1,261 @@
+@@TITLE Розкладання многочлена на множники. Спосіб групування
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 8px 0; }
+        .g1 { background: rgba(39,174,96,0.2); border-radius: 6px; padding: 0 4px; }
+        .g2 { background: rgba(243,156,18,0.25); border-radius: 6px; padding: 0 4px; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Спільного множника немає. Що робити?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>У многочлені $ax + ay + 3x + 3y$ немає множника, спільного для <b>всіх</b> членів.</p>
+                    <p>Але перші два мають спільне $a$, а останні два — спільне $3$. Об'єднаємо їх у групи!</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Як далі?</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Тепер є спільний множник — дужка!</div>
+                        <p>$a(x + y) + 3(x + y) = (x + y)(a + 3)$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <p class="big-formula"><span class="g1">$ax + ay$</span> $+$ <span class="g2">$3x + 3y$</span></p>
+                    <p class="big-formula">$= a(x + y) + 3(x + y)$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Спосіб групування</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box hack">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Розбити члени на групи, що мають спільний множник.</p>
+                    <p>2) Винести спільний множник у кожній групі.</p>
+                    <p>3) Якщо в дужках вийшов однаковий вираз — винести його за дужки.</p>
+                    <p>4) Не вийшло — спробувати інше групування.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Чому працює</div>
+                    <p>Це двічі застосований розподільний закон: $ac + bc = (a + b)c$, де роль $c$ грає многочлен у дужках.</p>
+                    <p class="big-formula">$ax + bx + ay + by = (a + b)(x + y)$</p>
+                    <p>Перевірка — множення многочленів (тема 2.6).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Як згрупувати?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо многочлен. Учні пропонують, які члени об'єднати, — відкриваємо по кроку.</p>
+                    <p class="center">
+                        <button class="btn-secondary" id="pb-0" onclick="pickPoly(0)">1</button>
+                        <button class="btn-secondary" id="pb-1" onclick="pickPoly(1)">2</button>
+                        <button class="btn-secondary" id="pb-2" onclick="pickPoly(2)">3</button>
+                    </p>
+                    <p class="big-formula" id="poly-q"></p>
+                    <p class="center"><button class="btn-primary" onclick="polyStep()">Наступний крок ▸</button></p>
+                </div>
+                <div class="math-widget" id="poly-steps"></div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Знаки й «зайва» одиниця</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Приклади</div>
+                    <p>1) $x^3 - 2x^2 - 5x + 10$</p>
+                    <p>2) $ab - a + b - 1$</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Обчислення і рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Обчисліть: $27 \cdot 13 + 27 \cdot 7 - 13 \cdot 17 - 7 \cdot 17$</div>
+                    <div class="step">$27(13 + 7) - 17(13 + 7)$</div>
+                    <div class="step">$= 20 \cdot (27 - 17) = 20 \cdot 10 = 200$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'яжіть: $x^2 - 3x + 2x - 6 = 0$</div>
+                    <div class="step">$x(x - 3) + 2(x - 3) = 0$</div>
+                    <div class="step">$(x - 3)(x + 2) = 0$</div>
+                    <div class="step">$x = 3$ або $x = -2$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Мінус перед групою</div>
+                    <p>$ax - ay - bx + by = a(x - y) - b(x - y)$. Винісши $-b$: $-bx + by = -b(x - y)$, а не $-b(x + y)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Розклад не завершено</div>
+                    <p>$a(x + y) + 3(x + y)$ — ще <b>сума</b>, а не добуток. Треба винести $(x + y)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Загублена одиниця</div>
+                    <p>$x(y - 1) + (y - 1) = (y - 1)(x + 1)$, а не $(y - 1)x$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Перевірка</div>
+                    <p>Розкрийте дужки — має вийти початковий многочлен.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Розкладіть на множники: $mx + my + 5x + 5y$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $(x + y)(m + 5)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $(x + y)(m + 5y)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $m(x + y) + 5(x + y)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $5m(x + y)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$m(x + y) + 5(x + y) = (x + y)(m + 5)$. В — розклад не завершено.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Розкладіть на множники: $2a - 2b - ax + bx$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $(a - b)(2 + x)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $(a - b)(2 - x)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $(a + b)(2 - x)$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $(a - b)(x - 2)$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$2(a - b) - x(a - b) = (a - b)(2 - x)$. А — помилка в знаку при винесенні $-x$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння: $x^2 + 5x - 2x - 10 = 0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $2$ і $-5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $-2$ і $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $-5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$x(x + 5) - 2(x + 5) = (x + 5)(x - 2) = 0$: $x = -5$ або $x = 2$. В — переплутали знаки.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p class="big-formula">$ax + ay + bx + by = (x + y)(a + b)$</p>
+                    <p>Групуємо так, щоб у дужках вийшов однаковий вираз.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Групи. 2) Спільний множник у кожній. 3) Однакова дужка — за дужки. 4) Перевірка множенням.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Виносячи мінус, змінюйте знаки в дужках: $-bx + by = -b(x - y)$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 3) renderPoly();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const POLYS = [
+                ['$3a + 3b + ax + bx$', ['Групи: $(3a + 3b) + (ax + bx)$', '$= 3(a + b) + x(a + b)$', '$= (a + b)(3 + x)$']],
+                ['$x^2 + xy - 4x - 4y$', ['Групи: $(x^2 + xy) - (4x + 4y)$', '$= x(x + y) - 4(x + y)$', '$= (x + y)(x - 4)$']],
+                ['$6ab - 3a + 4b - 2$', ['Групи: $(6ab - 3a) + (4b - 2)$', '$= 3a(2b - 1) + 2(2b - 1)$', '$= (2b - 1)(3a + 2)$']],
+            ];
+            let polyK = 0, polyN = 0;
+            window.pickPoly = function (k) {
+                polyK = k; polyN = 0;
+                POLYS.forEach((_, i) => document.getElementById('pb-' + i).classList.toggle('on', i === k));
+                renderPoly();
+            };
+            window.polyStep = function () { polyN = Math.min(polyN + 1, POLYS[polyK][1].length); renderPoly(); };
+            window.renderPoly = function () {
+                const q = document.getElementById('poly-q'), box = document.getElementById('poly-steps');
+                q.innerHTML = POLYS[polyK][0];
+                document.getElementById('pb-' + polyK).classList.add('on');
+                box.innerHTML = POLYS[polyK][1].slice(0, polyN).map((t, k) => `<div class="eval-line${k === 2 ? ' done' : ''}">${t}</div>`).join('') || '<p class="eval-note">Які члени об\'єднаємо?</p>';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([q, box]);
+            };
+            const STEPS = [
+                ['$(x^3 - 2x^2) - (5x - 10)$', 'Приклад 1. Перед другою групою мінус — знак $+10$ змінився'],
+                ['$= x^2(x - 2) - 5(x - 2)$', 'У кожній групі — спільний множник'],
+                ['$= $ [[$(x - 2)(x^2 - 5)$]]', 'Однакова дужка $(x - 2)$'],
+                ['$ab - a + b - 1 = a(b - 1) + 1 \\cdot (b - 1)$', 'Приклад 2. Друга група: $b - 1 = 1 \\cdot (b - 1)$'],
+                ['$= $ [[$(b - 1)(a + 1)$]]', 'Одиниця не губиться!'],
+            ];
+@@INCLUDE steps.js
