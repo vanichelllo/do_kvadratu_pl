@@ -1,0 +1,305 @@
+@@TITLE Довжина кола. Довжина дуги кола
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .circ { fill: none; stroke: currentColor; stroke-width: 2.4; }
+        .arc-hl { fill: none; stroke: var(--brand-green); stroke-width: 7; stroke-linecap: round; }
+        .poly { fill: var(--brand-blue); fill-opacity: 0.1; stroke: var(--brand-blue); stroke-width: 2; }
+        .unroll { stroke: var(--brand-green); stroke-width: 6; stroke-linecap: round; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.3rem; text-align: center; margin: 8px 0; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .slider-control span { font-weight: 800; min-width: 44px; text-align: right; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки проїде колесо за один оберт?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Колесо велосипеда має діаметр $70$ см. За один оберт воно «розкочує» по дорозі свій обід — довжину кола.</p>
+                    <p>Відношення довжини кола до діаметра однакове для всіх кіл — це число $\pi \approx 3{,}14$.</p>
+                    <p class="center"><button class="btn-primary" onclick="rollWheel()">▶ Розкотити колесо</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$C = \pi d \approx 3{,}14 \cdot 70 \approx 220$ см</div>
+                        <p>За один оберт — приблизно $2{,}2$ м.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 220" id="wheel-scene" role="img" aria-label="Колесо котиться, розгортаючи коло у відрізок"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Довжина кола</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Формула</div>
+                        <p class="big-formula">$C = 2\pi R = \pi d$</p>
+                        <p>$\pi$ — ірраціональне число, $\pi = 3{,}14159\ldots$; у задачах часто беруть $\pi \approx 3{,}14$ або залишають $\pi$ у відповіді.</p>
+                    </div>
+                    <div class="box example">
+                        <div class="box-title">Звідки</div>
+                        <p>Довжина кола — границя периметрів вписаних правильних многокутників, коли кількість сторін необмежено зростає. Периметр $P_n = n \cdot 2R\sin\dfrac{180^\circ}{n}$ — пропорційний $R$, тому $C$ пропорційна $R$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="slider-control"><label for="w-n">Сторін $n$</label><input type="range" id="w-n" min="3" max="48" step="1" value="6" oninput="renderPoly()"><span id="w-n-val"></span></div>
+                    <div class="widget-svg-container"><svg viewBox="0 0 300 240" id="poly-scene" role="img" aria-label="Правильний многокутник, вписаний у коло"></svg></div>
+                    <p class="readout" id="poly-out"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія: дуга -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Довжина дуги</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Формула</div>
+                        <p>Дуга в $1^\circ$ має довжину $\dfrac{2\pi R}{360}$, тому дуга в $\alpha^\circ$:</p>
+                        <p class="big-formula">$l = \dfrac{\pi R \alpha}{180}$</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Дуга $\alpha$</label><input type="range" id="w-a" min="10" max="350" step="10" value="90" oninput="renderArc()"><span id="w-a-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealArc()">Обчислити для $R = 6$</button></p>
+                    <p class="readout hidden-answer" id="arc-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 300 260" id="arc-scene" role="img" aria-label="Дуга кола заданої градусної міри"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Довжина кола $18\pi$. Знайдіть радіус.</p>
+                    <p>2) Знайдіть довжину дуги $120^\circ$ кола радіуса $9$.</p>
+                    <p>3) Довжина дуги $5\pi$, радіус $15$. Знайдіть її градусну міру.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Коло і правильні многокутники</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Коло описане навколо квадрата зі стороною $6$. Знайдіть його довжину.</div>
+                    <div class="step">Діаметр описаного кола — діагональ квадрата: $d = 6\sqrt2$.</div>
+                    <div class="step">$C = \pi d = 6\sqrt2\,\pi$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Коло вписане в правильний трикутник зі стороною $6\sqrt3$. Знайдіть довжину кола.</div>
+                    <div class="step">$r = \dfrac{a}{2\sqrt3} = 3$ (з теми 4.1).</div>
+                    <div class="step">$C = 2\pi r = 6\pi$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Радіус і діаметр</div>
+                    <p>$C = 2\pi R = \pi d$. Якщо дано діаметр $10$, то $C = 10\pi$, а не $20\pi$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Градуси в дузі</div>
+                    <p>$l = \dfrac{\pi R \alpha}{180}$, а не $\dfrac{\pi R \alpha}{360}$ (там було б $2\pi R$).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Довжина дуги ≠ градусна міра</div>
+                    <p>Дуга $60^\circ$ кола радіуса $3$ має довжину $\pi$, а не $60$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Перевірка</div>
+                    <p>Дуга $180^\circ$ — половина кола: $\pi R$ ✓.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть довжину кола радіуса $7$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $7\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $14\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $49\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $3{,}5\pi$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$2\pi \cdot 7 = 14\pi$. В — площа круга.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Знайдіть довжину дуги $45^\circ$ кола радіуса $8$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $2\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $4\pi$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $45$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$\dfrac{\pi \cdot 8 \cdot 45}{180} = 2\pi$. Б — поділили на $360$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Колесо діаметром $0{,}5$ м зробило $200$ обертів. Яку відстань воно проїхало? ($\pi \approx 3{,}14$)</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $628$ м</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $314$ м</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $157$ м</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $100$ м</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $39{,}25$ м</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$\pi d = 1{,}57$ м за оберт; $200 \cdot 1{,}57 = 314$ м. А — узяли $0{,}5$ як радіус.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p class="big-formula">$C = 2\pi R = \pi d$</p>
+                    <p class="big-formula">$l = \dfrac{\pi R \alpha}{180}$</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Знайти $R$ (часто — з правильного многокутника). 2) Формула кола чи дуги. 3) Відповідь з $\pi$ або наближено.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Не плутайте радіус з діаметром і $180$ з $360$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderWheel(0);
+                if (currentSlide === 2) renderPoly();
+                if (currentSlide === 3) renderArc();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1);
+            // --- Колесо: t від 0 до 1 — частка оберту ---
+            window.renderWheel = function (t) {
+                const r = 32, L = 2 * Math.PI * r, x0 = 50, y = 170, cx = x0 + L * t, ang = t * 2 * Math.PI;
+                let s = `<line x1="20" y1="${y + r}" x2="410" y2="${y + r}" stroke="currentColor" stroke-width="1.5"/>`;
+                s += `<line x1="${x0}" y1="${y + r}" x2="${f1(cx)}" y2="${y + r}" class="unroll"/>`;
+                s += `<circle cx="${f1(cx)}" cy="${y}" r="${r}" class="circ"/>`;
+                // точка обода, що спершу торкалася землі
+                const px = cx - r * Math.sin(ang), py = y + r * Math.cos(ang);
+                s += `<circle cx="${f1(px)}" cy="${f1(py)}" r="5" fill="var(--warning-red)"/>`;
+                if (t >= 1) s += `<text x="${f1(x0 + L / 2)}" y="${y + r + 22}" class="svg-caption">C = πd</text>`;
+                document.getElementById('wheel-scene').innerHTML = s;
+            };
+            window.rollWheel = function () {
+                const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const t0 = performance.now(), dur = reduce ? 0 : 2000;
+                const step = (now) => {
+                    const t = dur ? Math.min((now - t0) / dur, 1) : 1;
+                    renderWheel(t);
+                    if (t < 1) requestAnimationFrame(step);
+                    else document.getElementById('answer-1').classList.add('shown');
+                };
+                requestAnimationFrame(step);
+            };
+            // --- Вписані многокутники ---
+            window.renderPoly = function () {
+                const n = +document.getElementById('w-n').value, R = 100, c = [150, 120];
+                document.getElementById('w-n-val').textContent = n;
+                const pts = Array.from({ length: n }, (_, k) => [c[0] + R * Math.cos(2 * Math.PI * k / n - Math.PI / 2), c[1] + R * Math.sin(2 * Math.PI * k / n - Math.PI / 2)]);
+                document.getElementById('poly-scene').innerHTML = `<circle cx="${c[0]}" cy="${c[1]}" r="${R}" class="circ"/><polygon points="${pts.map(p => p.map(f1).join(',')).join(' ')}" class="poly"/>`;
+                const P = n * 2 * Math.sin(Math.PI / n), o = document.getElementById('poly-out');
+                o.innerHTML = `$\\dfrac{P_{${n}}}{2R} \\approx ${(P / 2).toFixed(4).replace('.', '{,}')}$ → $\\pi = 3{,}1416\\ldots$`;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            // --- Дуга ---
+            window.renderArc = function () {
+                const a = +document.getElementById('w-a').value, R = 100, c = [150, 130];
+                document.getElementById('w-a-val').textContent = a + '°';
+                const s0 = [c[0] + R, c[1]], e = [c[0] + R * Math.cos(-a * Math.PI / 180), c[1] + R * Math.sin(-a * Math.PI / 180)];
+                let s = `<circle cx="${c[0]}" cy="${c[1]}" r="${R}" class="circ"/>`;
+                s += `<path d="M${f1(s0[0])} ${f1(s0[1])} A${R} ${R} 0 ${a > 180 ? 1 : 0} 0 ${f1(e[0])} ${f1(e[1])}" class="arc-hl"/>`;
+                s += `<line x1="${c[0]}" y1="${c[1]}" x2="${f1(s0[0])}" y2="${f1(s0[1])}" class="geo-line sec"/><line x1="${c[0]}" y1="${c[1]}" x2="${f1(e[0])}" y2="${f1(e[1])}" class="geo-line sec"/>`;
+                document.getElementById('arc-scene').innerHTML = s;
+                document.getElementById('arc-out').classList.remove('shown');
+            };
+            window.revealArc = function () {
+                const a = +document.getElementById('w-a').value, o = document.getElementById('arc-out'), g = (x, y) => y ? g(y, x % y) : x;
+                const num = 6 * a, k = g(num, 180), p = num / k, q = 180 / k;
+                o.innerHTML = `$l = \\dfrac{\\pi \\cdot 6 \\cdot ${a}}{180} = ${q === 1 ? (p === 1 ? '' : p) + '\\pi' : '\\dfrac{' + p + '\\pi}{' + q + '}'}$`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$2\\pi R = 18\\pi$ ⟹ [[$R = 9$]]', 'Задача 1'],
+                ['$l = \\dfrac{\\pi \\cdot 9 \\cdot 120}{180} = $ [[$6\\pi$]]', 'Задача 2: третина кола $18\\pi$'],
+                ['$\\dfrac{\\pi \\cdot 15 \\cdot \\alpha}{180} = 5\\pi$ ⟹ [[$\\alpha = 60^\\circ$]]', 'Задача 3: $15\\alpha = 900$'],
+            ];
+@@INCLUDE steps.js
