@@ -1,0 +1,277 @@
+@@TITLE Функція y = k/x та її графік
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 8px 0; }
+        .slider-control label { font-weight: 800; min-width: 90px; }
+        .slider-control span { font-weight: 800; min-width: 40px; text-align: right; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .val-table { border-collapse: collapse; margin: 6px auto; font-size: 1.05rem; }
+        .val-table td, .val-table th { border: 1px solid var(--border-color); padding: 6px 9px; text-align: center; }
+        .val-table th { color: var(--brand-blue); }
+        .pt { fill: var(--brand-yellow); stroke: currentColor; stroke-width: 1; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Обернена пропорційність</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Відстань $120$ км. Чим більша швидкість $v$, тим менший час у дорозі: $t = \dfrac{120}{v}$.</p>
+                    <p>Площа прямокутника $12$ см²: довжина $a$ і ширина $b = \dfrac{12}{a}$.</p>
+                    <p>Збільшили одну величину в $2$ рази — інша зменшилась у $2$ рази. Такі залежності задає функція $y = \dfrac{k}{x}$.</p>
+                </div>
+                <div class="math-widget">
+                    <table class="val-table">
+                        <tr><th>$v$, км/год</th><td>$20$</td><td>$40$</td><td>$60$</td><td>$120$</td></tr>
+                        <tr><th>$t$, год</th><td>$6$</td><td>$3$</td><td>$2$</td><td>$1$</td></tr>
+                    </table>
+                    <p class="center">Добуток $v \cdot t = 120$ — сталий.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Означення і графік</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Функцію $y = \dfrac{k}{x}$, де $k \ne 0$, називають <b>оберненою пропорційністю</b>. $k$ — коефіцієнт.</p>
+                        <p>$D(y)$: $x \ne 0$; $E(y)$: $y \ne 0$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Графік — гіпербола</div>
+                        <p>Дві вітки, симетричні відносно початку координат. Вітки наближаються до осей, але не перетинають їх.</p>
+                        <p>$k \gt 0$ — I і III чверті; $k \lt 0$ — II і IV.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="def-scene" role="img" aria-label="Гіпербола y = 6/x"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Як $k$ змінює гіперболу</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Змінюємо $k$. Учні передбачають, у яких чвертях будуть вітки і чи зростає функція, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-k">$k$</label><input type="range" id="w-k" min="-8" max="8" step="1" value="4" oninput="renderLab()"><span id="w-k-val"></span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Властивості</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="lab-scene" role="img" aria-label="Гіпербола y = k/x"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Теорія -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості функції $y = \dfrac{k}{x}$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">$k \gt 0$</div>
+                    <p>Значення додатні при $x \gt 0$, від'ємні при $x \lt 0$.</p>
+                    <p><b>Спадає</b> на кожному з проміжків $(-\infty; 0)$ і $(0; +\infty)$.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">$k \lt 0$</div>
+                    <p>Значення від'ємні при $x \gt 0$, додатні при $x \lt 0$.</p>
+                    <p><b>Зростає</b> на кожному з проміжків $(-\infty; 0)$ і $(0; +\infty)$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Чому так</div>
+                    <p>$x$ і $y$ пов'язані: $xy = k$. Для $k \gt 0$ — однакові знаки; більший $x \gt 0$ — менший $y$.</p>
+                </div>
+                <div class="box remark">
+                    <div class="box-title">Нулів немає</div>
+                    <p>$\dfrac{k}{x} \ne 0$, бо $k \ne 0$. Графік не перетинає осей.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Графік $y = \dfrac{k}{x}$ проходить через $A(-2; 6)$. Знайдіть $k$.</p>
+                    <p>2) Чи належить точка $B(4; -3)$ цьому графіку?</p>
+                    <p>3) Знайдіть точки перетину $y = \dfrac{-12}{x}$ і $y = -3x$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">«Спадає на всій області»</div>
+                    <p>$y = \dfrac{6}{x}$: $f(-1) = -6 \lt f(1) = 6$. Функція спадає на <b>кожному</b> проміжку окремо, а не на всій $D(y)$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Графік перетинає осі</div>
+                    <p>Ні! $x \ne 0$ і $y \ne 0$. Вітки лише наближаються до осей.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Пряма замість кривої</div>
+                    <p>Точки гіперболи не з'єднують відрізками — це плавна крива.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Знак $k$</div>
+                    <p>$k \lt 0$ — вітки у II і IV чвертях, функція <b>зростає</b> на кожному проміжку.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">У яких чвертях розташований графік $y = -\dfrac{5}{x}$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) I і III</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) II і IV</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) I і II</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) III і IV</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$k = -5 \lt 0$ — II і IV чверті ($x$ і $y$ різних знаків).</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Графік $y = \dfrac{k}{x}$ проходить через $(3; -4)$. Знайдіть $y(-6)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $-\dfrac12$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$k = 3 \cdot (-4) = -12$; $y(-6) = \dfrac{-12}{-6} = 2$. А — знак, В — помножили.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки спільних точок мають графіки $y = \dfrac{4}{x}$ і $y = x$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) жодної</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) одну</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) дві</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) чотири</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) безліч</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$\dfrac{4}{x} = x$ ⟹ $x^2 = 4$, $x = \pm 2$: точки $(2; 2)$ і $(-2; -2)$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>$y = \dfrac{k}{x}$, $k \ne 0$; $xy = k$. Графік — гіпербола, не перетинає осей.</p>
+                    <p>$k \gt 0$: I, III чверті, спадає на кожному проміжку. $k \lt 0$: II, IV, зростає.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>Знайти $k$: $k = x_0 y_0$. Точка на графіку: $x_0 y_0 = k$. Перетин з прямою: прирівняти й розв'язати.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Монотонність — на кожному проміжку окремо, не на всій області.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderDef();
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+            const hyper = (P, k) => curveSvg(P, (x) => k / x, P.x0, -0.05) + curveSvg(P, (x) => k / x, 0.05, P.x1);
+            window.renderDef = function () {
+                const P = plane(-7, 7, -7, 7, 420, 300);
+                let s = axesSvg(P, 1, 1) + hyper(P, 6);
+                [[1, 6], [2, 3], [3, 2], [6, 1], [-1, -6], [-2, -3], [-3, -2], [-6, -1]].forEach(([x, y]) => s += `<circle cx="${P.sx(x)}" cy="${P.sy(y)}" r="4" class="pt"/>`);
+                document.getElementById('def-scene').innerHTML = s;
+            };
+            window.renderLab = function () {
+                let k = +document.getElementById('w-k').value;
+                if (k === 0) { k = 1; document.getElementById('w-k').value = 1; }
+                document.getElementById('w-k-val').textContent = k;
+                const P = plane(-7, 7, -7, 7, 420, 300);
+                document.getElementById('lab-scene').innerHTML = axesSvg(P, 1, 1) + hyper(P, k);
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const k = +document.getElementById('w-k').value, o = document.getElementById('lab-out');
+                o.innerHTML = k > 0 ? `$k = ${k} \\gt 0$: вітки в I і III чвертях, функція спадає на $(-\\infty; 0)$ і на $(0; +\\infty)$`
+                    : `$k = ${k} \\lt 0$: вітки в II і IV чвертях, функція зростає на $(-\\infty; 0)$ і на $(0; +\\infty)$`;
+                o.innerHTML += `<br>Чим більше $|k|$, тим далі вітки від початку координат`;
+                o.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$k = x_0 \\cdot y_0 = -2 \\cdot 6 = $ [[$-12$]]', 'Задача 1: підставляємо координати точки'],
+                ['$4 \\cdot (-3) = -12 = k$ ⟹ [[так]]', 'Задача 2: точка належить графіку, якщо $x_0 y_0 = k$'],
+                ['$\\dfrac{-12}{x} = -3x$ ⟹ $x^2 = 4$', 'Задача 3: прирівнюємо праві частини, $x \\ne 0$'],
+                ['[[$(2; -6)$ і $(-2; 6)$]]', '$x = \\pm 2$, $y = -3x$'],
+            ];
+@@INCLUDE steps.js
