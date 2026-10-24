@@ -1,0 +1,350 @@
+@@TITLE Центральні та вписані кути
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .circ { fill: none; stroke: currentColor; stroke-width: 2.4; }
+        .arc-hl { fill: none; stroke: var(--brand-green); stroke-width: 6; stroke-linecap: round; }
+        .v-name { fill: currentColor; font-size: 18px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .svg-caption.ok { fill: var(--brand-green); }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .readout { font-size: 1.1rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        @media (max-width: 760px) { .slider-control label { min-width: 0; flex: 0 0 38%; font-size: 0.9rem; } }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Звідки краще бити по воротах?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Футболісти стоять у різних точках кола, що проходить через стійки воріт $A$ і $B$. Під яким кутом кожен «бачить» ворота?</p>
+                    <p>Здається, що кути різні. Але виявиться: для всіх точок однієї дуги кут <b>однаковий</b> — і дорівнює половині центрального кута.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Перевірити</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Відповідь</div>
+                        <p>$\angle AC_1B = \angle AC_2B = \angle AC_3B = \dfrac{1}{2}\angle AOB$. Сьогодні доведемо чому.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="goal-scene" role="img" aria-label="Коло з хордою AB і трьома точками C на дузі"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Центральний і вписаний кути</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p><b>Центральний кут</b> — кут з вершиною в центрі кола: $\angle AOB$.</p>
+                        <p><b>Вписаний кут</b> — кут, вершина якого лежить на колі, а сторони перетинають коло: $\angle ACB$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Градусна міра дуги</div>
+                        <p>Дуга $AB$ вимірюється центральним кутом, що на неї спирається: $\buildrel\frown\over{AB} = \angle AOB$. Усе коло — $360^\circ$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="def-scene" role="img" aria-label="Центральний кут AOB і вписаний кут ACB"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема про вписаний кут</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Вписаний кут дорівнює <b>половині</b> дуги, на яку він спирається:</p>
+                        <p class="big-formula">$\angle ACB = \dfrac{1}{2}\buildrel\frown\over{AB} = \dfrac{1}{2}\angle AOB$</p>
+                    </div>
+                    <div class="box example" id="proof">
+                        <div class="box-title">Ідея доведення (центр на стороні $CB$)</div>
+                        <div class="step">$OA = OC$ (радіуси) ⟹ $\triangle AOC$ рівнобедрений: $\angle OAC = \angle OCA = x$.</div>
+                        <div class="step">$\angle AOB$ — зовнішній кут $\triangle AOC$: $\angle AOB = x + x = 2x$.</div>
+                        <div class="step">Отже, $\angle ACB = x = \dfrac{1}{2}\angle AOB$. Інші випадки зводяться до цього проведенням діаметра $CD$. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('proof')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="proof-scene" role="img" aria-label="Вписаний кут ACB, сторона CB проходить через центр O"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Рухаємо вершину по колу</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Точки $A$ і $B$ закріплені, $C$ рухається по колу. Учні передбачають, як зміниться $\angle ACB$, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-c">Положення $C$</label><input type="range" id="w-c" min="0" max="355" step="5" value="270" oninput="renderLab()"></div>
+                    <div class="slider-control"><label for="w-ab">Дуга $AB$</label><input type="range" id="w-ab" min="40" max="160" step="10" value="100" oninput="renderLab()"></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Виміряти кути</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 300" id="lab-scene" role="img" aria-label="Коло, точки A, B і рухома C"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Наслідки -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Наслідки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">1. Вписані кути, що спираються на одну дугу, рівні</div>
+                    <p>Усі вони дорівнюють половині тієї самої дуги.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">2. Кут, що спирається на діаметр, — прямий</div>
+                    <p>Діаметр стягує півколо $180^\circ$, тож кут $= 90^\circ$.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">3. Кути по різні боки хорди</div>
+                    <p>Вписані кути, що спираються на одну хорду з різних боків, у сумі дають $180^\circ$ (дуги разом — $360^\circ$).</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Як запам'ятати</div>
+                    <p>Центральний — «повна дуга», вписаний — «половина дуги».</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Точки $A$, $B$, $C$ ділять коло на дуги $\buildrel\frown\over{AB} : \buildrel\frown\over{BC} : \buildrel\frown\over{CA} = 2 : 3 : 4$. Знайдіть кути $\triangle ABC$.</p>
+                    <p>2) $AB$ — діаметр, $\angle ABC = 35^\circ$, $C$ на колі. Знайдіть $\angle BAC$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Не та дуга</div>
+                    <p>Вписаний кут спирається на дугу, яка лежить <b>усередині</b> кута (не містить вершину). Якщо $\buildrel\frown\over{AB} = 100^\circ$ (без $C$), то $\angle ACB = 50^\circ$; для точки на цій дузі кут дорівнює $\dfrac{260^\circ}{2} = 130^\circ$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Подвоїли замість поділити</div>
+                    <p>Вписаний кут — половина центрального, а не навпаки: при $\angle ACB = 40^\circ$ маємо $\angle AOB = 80^\circ$, а не $20^\circ$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Центральний кут $AOB$ дорівнює $110^\circ$. Знайдіть вписаний кут $ACB$, що спирається на ту саму дугу.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $220^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $55^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $110^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $70^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\angle ACB = 110^\circ : 2 = 55^\circ$. А — подвоїли, В — прирівняли до центрального, Г — $180^\circ - 110^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$AB$ — діаметр кола, $C$ — точка кола, $\angle CAB = 28^\circ$. Знайдіть $\angle CBA$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $28^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $56^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $62^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $152^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\angle ACB = 90^\circ$ (спирається на діаметр). $\angle CBA = 90^\circ - 28^\circ = 62^\circ$. Б — подвоїли кут, Г — $180^\circ - 28^\circ$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">$O$ — центр кола, $A$ і $B$ — точки кола, $\angle OAB = 25^\circ$. Точка $C$ лежить на більшій дузі $AB$. Знайдіть $\angle ACB$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $25^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $130^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $65^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $50^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $115^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$OA = OB$, тож $\angle OBA = 25^\circ$, $\angle AOB = 180^\circ - 50^\circ = 130^\circ$. $\angle ACB = 130^\circ : 2 = 65^\circ$. Б — центральний кут, Д — кут для точки на меншій дузі.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Центральний кут $=$ дуга. Вписаний кут $= \dfrac{1}{2}$ дуги, на яку спирається.</p>
+                    <p>На одну дугу — рівні вписані кути. На діаметр — $90^\circ$. З різних боків хорди — разом $180^\circ$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Знайдіть дугу, на яку спирається кут (без вершини). 2) Вписаний — половина дуги, центральний — вся дуга. 3) Повне коло — $360^\circ$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Вибирайте дугу, що лежить усередині кута, а не ту, де вершина.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderGoal();
+                if (currentSlide === 2) renderDef();
+                if (currentSlide === 3) renderProof();
+                if (currentSlide === 4) renderLab();
+                if (currentSlide === 6) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1), R = 120, O = [200, 150];
+            // Точка на колі за кутом у градусах (0° — праворуч, проти годинникової)
+            const P = (deg) => [O[0] + R * Math.cos(deg * Math.PI / 180), O[1] - R * Math.sin(deg * Math.PI / 180)];
+            const seg = (p, q, cls = 'geo-line') => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const dot = (p) => `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="4.5" class="geo-dot"/>`;
+            const label = (p, s, off = 20) => {
+                const dx = p[0] - O[0], dy = p[1] - O[1], L = Math.hypot(dx, dy) || 1;
+                return `<text x="${f1(p[0] + dx / L * off)}" y="${f1(p[1] + dy / L * off + 6)}" class="v-name">${s}</text>`;
+            };
+            const circle = () => `<circle cx="${O[0]}" cy="${O[1]}" r="${R}" class="circ"/>`;
+            // Дуга від a до b (градуси, проти годинникової)
+            const arc = (a, b) => { const s = P(a), e = P(b), big = ((b - a + 360) % 360) > 180 ? 1 : 0; return `<path d="M${f1(s[0])} ${f1(s[1])} A${R} ${R} 0 ${big} 0 ${f1(e[0])} ${f1(e[1])}" class="arc-hl"/>`; };
+            function angleArc(V, A, B, r, cls) {
+                const a1 = Math.atan2(A[1] - V[1], A[0] - V[0]), a2 = Math.atan2(B[1] - V[1], B[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            const ang = (V, A, B) => { const a = [A[0] - V[0], A[1] - V[1]], b = [B[0] - V[0], B[1] - V[1]]; return Math.acos((a[0] * b[0] + a[1] * b[1]) / Math.hypot(...a) / Math.hypot(...b)) * 180 / Math.PI; };
+
+            window.renderGoal = function () {
+                const A = P(-40), B = P(-140);
+                let s = circle() + arc(-140, -40) + seg(A, B);
+                [70, 110, 150].forEach((d, k) => { const C = P(d); s += angleArc(C, A, B, 26, '') + seg(C, A, 'geo-line sec') + seg(C, B, 'geo-line sec') + dot(C) + label(C, `C${'₁₂₃'[k]}`); });
+                s += dot(A) + dot(B) + label(A, 'A') + label(B, 'B');
+                document.getElementById('goal-scene').innerHTML = s;
+            };
+            window.renderDef = function () {
+                const A = P(-30), B = P(-150), C = P(100);
+                let s = circle() + arc(-150, -30) + angleArc(O, A, B, 30, 'g') + angleArc(C, A, B, 30, '');
+                s += seg(O, A, 'geo-line sec') + seg(O, B, 'geo-line sec') + seg(C, A) + seg(C, B);
+                s += dot(O) + dot(A) + dot(B) + dot(C) + label(A, 'A') + label(B, 'B') + label(C, 'C') + `<text x="${O[0]}" y="${O[1] - 10}" class="v-name">O</text>`;
+                document.getElementById('def-scene').innerHTML = s;
+            };
+            window.renderProof = function () {
+                const C = P(150), B = P(-30), A = P(-90);
+                let s = circle() + arc(-90, -30) + angleArc(C, A, B, 34, '') + angleArc(O, A, B, 26, 'g') + angleArc(A, C, O, 30, 'b');
+                s += seg(C, B) + seg(C, A) + seg(O, A, 'geo-line sec');
+                s += dot(O) + dot(A) + dot(B) + dot(C) + label(A, 'A') + label(B, 'B') + label(C, 'C') + `<text x="${O[0] - 4}" y="${O[1] - 12}" class="v-name">O</text>`;
+                s += `<text x="${f1(C[0] + 52)}" y="${f1(C[1] + 30)}" class="svg-caption">x</text><text x="${f1(A[0] - 22)}" y="${f1(A[1] - 26)}" class="svg-caption">x</text><text x="${f1(O[0] + 30)}" y="${f1(O[1] + 30)}" class="svg-caption ok">2x</text>`;
+                document.getElementById('proof-scene').innerHTML = s;
+            };
+            const labVals = () => [+document.getElementById('w-c').value, +document.getElementById('w-ab').value];
+            window.renderLab = function () {
+                const [c, ab] = labVals(), a0 = -90 - ab / 2, b0 = -90 + ab / 2;
+                const A = P(a0), B = P(b0);
+                let cd = c;
+                // C не збігається з A чи B
+                if (Math.abs(((cd - a0) % 360 + 360) % 360) < 6 || Math.abs(((cd - b0) % 360 + 360) % 360) < 6) cd += 8;
+                const C = P(cd);
+                let s = circle() + arc(a0, b0) + angleArc(O, A, B, 24, 'g') + angleArc(C, A, B, 28, '');
+                s += seg(O, A, 'geo-line sec') + seg(O, B, 'geo-line sec') + seg(C, A) + seg(C, B);
+                s += dot(O) + dot(A) + dot(B) + dot(C) + label(A, 'A') + label(B, 'B') + label(C, 'C');
+                document.getElementById('lab-scene').innerHTML = s;
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const [c, ab] = labVals(), a0 = -90 - ab / 2, b0 = -90 + ab / 2;
+                let cd = c;
+                if (Math.abs(((cd - a0) % 360 + 360) % 360) < 6 || Math.abs(((cd - b0) % 360 + 360) % 360) < 6) cd += 8;
+                const v = Math.round(ang(P(cd), P(a0), P(b0))), out = document.getElementById('lab-out');
+                const onArc = ((cd - a0) % 360 + 360) % 360 < ab;
+                out.innerHTML = `$\\angle AOB = ${ab}^\\circ$, $\\angle ACB \\approx ${v}^\\circ$` + (onArc ? `<br>$C$ на виділеній дузі: $\\angle ACB = \\dfrac{360^\\circ - ${ab}^\\circ}{2} = ${(360 - ab) / 2}^\\circ$` : `<br>$= \\dfrac{1}{2} \\cdot ${ab}^\\circ$ ✓`);
+                out.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+            const STEPS = [
+                ['$2x + 3x + 4x = 360^\\circ$, [[$x = 40^\\circ$]]', 'Дуги: $80^\\circ$, $120^\\circ$, $160^\\circ$'],
+                ['$\\angle C = \\dfrac{80^\\circ}{2} = $ [[$40^\\circ$]]', 'Кут $C$ спирається на дугу $AB$'],
+                ['$\\angle A = \\dfrac{120^\\circ}{2} = $ [[$60^\\circ$]], $\\angle B = \\dfrac{160^\\circ}{2} = $ [[$80^\\circ$]]', 'Перевірка: $40 + 60 + 80 = 180$ ✓'],
+                ['$\\angle ACB = $ [[$90^\\circ$]]', 'Задача 2. Кут спирається на діаметр $AB$'],
+                ['$\\angle BAC = 90^\\circ - 35^\\circ = $ [[$55^\\circ$]]', 'Гострі кути трикутника з прямим кутом — разом $90^\\circ$'],
+            ];
+@@INCLUDE steps.js

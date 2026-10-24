@@ -1,0 +1,343 @@
+@@TITLE Відношення. Основна властивість відношення
+@@BRAND Математика (5-6 класи)
+@@SUBJECT Математика
+@@PROFILE A
+@@CSS
+@@INCLUDE steps.css
+        /* Склянки сиропу й води */
+        .cup { stroke: currentColor; stroke-width: 2; }
+        .cup.syrup { fill: var(--brand-yellow); fill-opacity: 0.75; }
+        .cup.water { fill: var(--brand-blue); fill-opacity: 0.35; }
+        .cup.pop { animation: grow 0.6s ease both; transform-box: fill-box; transform-origin: bottom; }
+        @keyframes grow { from { transform: scaleY(0); } to { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .cup.pop { animation: none; } }
+        .svg-caption { fill: currentColor; font-size: 17px; font-weight: 700; text-anchor: middle; }
+        .svg-small { fill: currentColor; font-size: 14px; font-weight: 600; text-anchor: middle; }
+        .ok-text { fill: var(--brand-green); }
+        .bad-text { fill: var(--warning-red); }
+        .seg { stroke-width: 9; stroke-linecap: round; }
+        .seg.a { stroke: var(--brand-yellow); }
+        .seg.b { stroke: var(--brand-blue); }
+        .tick { stroke: currentColor; stroke-width: 1.5; }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        .slider-control span { font-weight: 700; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.2rem; font-weight: 800; text-align: center; min-height: 1.6em; color: var(--brand-green); }
+        .ratio-big { font-size: 1.35rem; text-align: center; }
+        @media (max-width: 760px) { .readout { font-size: 1rem; } .slider-control label { min-width: 100px; } }
+@@SLIDES
+
+        <!-- 1. Цікаве питання -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Цікаве питання</span>
+                <h1 class="slide-title">Чий лимонад солодший? 🍋</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="bubble left"><span class="who">Оля:</span> Я змішала $1$ склянку сиропу з $3$ склянками води.</div>
+                    <div class="bubble right"><span class="who">Тарас:</span> А я — $2$ склянки сиропу і $6$ склянок води. У мене сиропу більше, отже, мій солодший!</div>
+                    <p class="big-question">Чи правий Тарас?</p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealLemon()">Перевірити</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Смак однаковий! 🎉</div>
+                        <p>В обох води <b>утричі більше</b>, ніж сиропу: $3 : 1 = 3$ і $6 : 2 = 3$. Важить не кількість, а <b>відношення</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="lemon-scene" role="img" aria-label="Склянки сиропу й води в Олі та Тараса"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Досліджуємо -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Досліджуємо</span>
+                <h2 class="slide-title">Більше лимонаду — той самий смак 🔍</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Подивись, як це працює</div>
+                        <p>Робимо кілька порцій за одним рецептом. Учні кажуть, у скільки разів води більше, ніж сиропу, — потім перевіряємо.</p>
+                    </div>
+                    <div class="slider-control"><label for="w-a">Сироп у рецепті</label><input type="range" id="w-a" min="1" max="3" step="1" value="2" oninput="renderMix()"><span id="w-a-val">2</span></div>
+                    <div class="slider-control"><label for="w-b">Вода в рецепті</label><input type="range" id="w-b" min="1" max="6" step="1" value="3" oninput="renderMix()"><span id="w-b-val">3</span></div>
+                    <div class="slider-control"><label for="w-k">Скільки порцій</label><input type="range" id="w-k" min="1" max="3" step="1" value="1" oninput="renderMix()"><span id="w-k-val">1</span></div>
+                    <p class="readout" id="mix-q"></p>
+                    <p style="text-align:center"><button class="btn-primary" onclick="revealMix()">У скільки разів?</button></p>
+                    <div class="hidden-answer" id="mix-answer"><div class="readout" id="mix-text"></div></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 250" id="mix-scene" role="img" aria-label="Склянки сиропу й води для кількох порцій"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Запам'ятай -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Запам'ятай</span>
+                <h2 class="slide-title">Відношення та його властивість</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Відношення</b> двох чисел — це їхня частка. Записують $a : b$ або $\dfrac{a}{b}$.</p>
+                    <p>Числа $a$ і $b$ — <b>члени відношення</b>.</p>
+                    <p>$6 : 2 = 3$ — води втричі більше, ніж сиропу.<br>$2 : 6 = \dfrac{1}{3}$ — сироп становить $\dfrac{1}{3}$ води.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Основна властивість відношення</div>
+                    <p>Якщо обидва члени відношення <b>помножити або поділити</b> на одне й те саме число (не нуль), відношення не зміниться.</p>
+                    <p class="ratio-big">$2 : 6 = 1 : 3 = 4 : 12$</p>
+                    <p>Так відношення <b>спрощують</b>: $18 : 24 = 3 : 4$ (поділили на $6$).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Як це робити -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Як це робити</span>
+                <h2 class="slide-title">Спрощуємо відношення ✍️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>Заміни відношенням натуральних чисел, яке вже не можна спростити:</p>
+                    <p>1) $36 : 48$ &nbsp;&nbsp; 2) $1{,}2 : 0{,}8$ &nbsp;&nbsp; 3) $\dfrac{2}{3} : \dfrac{5}{6}$</p>
+                    <p>Підказка: шукаємо НСД, позбуваємося коми, позбуваємося знаменників.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Пастка -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Пастка</span>
+                <h2 class="slide-title">Різні одиниці ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка!</div>
+                        <p>Знайди відношення $2$ м до $40$ см.</p>
+                        <p>Не $2 : 40 = 1 : 20$! Спершу — в однакові одиниці: $2$ м $= 200$ см.</p>
+                        <p>$200 : 40 = 5 : 1$ — перший відрізок у $5$ разів довший.</p>
+                    </div>
+                    <div class="box hack">
+                        <div class="box-title">Лайфхак</div>
+                        <p>Порядок членів важливий: $5 : 1$ і $1 : 5$ — різні відношення.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 440 220" id="trap-scene" role="img" aria-label="Відрізки 2 метри і 40 сантиметрів: довгий у 5 разів довший"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Перевір себе (1–2) -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">1. У класі $12$ хлопців і $16$ дівчат. Яке відношення кількості хлопців до кількості дівчат?</p>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $4 : 3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $3 : 4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $12 : 28$</div>
+                    <div class="box hack quiz-hint" id="quiz-1-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Перший член — хлопці, другий — дівчата. Поділи обидва на НСД.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                        <div class="box-title">Молодець! 🎉</div>
+                        <p>$12 : 16 = 3 : 4$ (поділили на $4$). А — члени переставлено, В — взяли всіх учнів.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">2. Яке відношення дорівнює $5 : 2$?</p>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $7 : 4$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $15 : 6$</div>
+                    <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $10 : 2$</div>
+                    <div class="box hack quiz-hint" id="quiz-2-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Обидва члени треба помножити на <b>одне й те саме</b> число.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                        <div class="box-title">Чудово! 🎉</div>
+                        <p>$5 \cdot 3 = 15$, $2 \cdot 3 = 6$. У А до членів додали $2$, у В помножили лише перший член.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Перевір себе (3–4) -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p class="quiz-q">3. Спрости відношення $\dfrac{3}{4} : \dfrac{1}{6}$.</p>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $9 : 2$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $3 : 1$</div>
+                    <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2 : 9$</div>
+                    <div class="box hack quiz-hint" id="quiz-3-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Помнож обидва члени на спільний знаменник $12$.</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                        <div class="box-title">Так! 🎉</div>
+                        <p>$\dfrac{3}{4} \cdot 12 = 9$, $\dfrac{1}{6} \cdot 12 = 2$. Отже, $9 : 2$. Б — відкинули знаменники, В — переставили члени.</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="quiz-q">4. Урок триває $45$ хв, а перерва — $\dfrac{1}{4}$ год. Знайди відношення тривалості уроку до тривалості перерви.</p>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">А) $180 : 1$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $1 : 3$</div>
+                    <div class="quiz-option" onclick="checkAnswer(4, this, true)">В) $3 : 1$</div>
+                    <div class="box hack quiz-hint" id="quiz-4-hint">
+                        <div class="box-title">Підказка 💡</div>
+                        <p>Скільки хвилин у $\dfrac{1}{4}$ години?</p>
+                    </div>
+                    <div class="box theorem quiz-explanation" id="quiz-4-explanation">
+                        <div class="box-title">Супер! 🎉</div>
+                        <p>$\dfrac{1}{4}$ год $= 15$ хв. $45 : 15 = 3 : 1$. А — не перевели в хвилини, Б — переставили члени.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко про тему -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Запам'ятай! ⭐</div>
+                    <p><b>Відношення</b> $a : b$ — частка чисел $a$ і $b$: у скільки разів $a$ більше за $b$ або яку частину $a$ становить від $b$.</p>
+                    <p>Члени відношення можна помножити або поділити на одне й те саме число (не нуль): $36 : 48 = 3 : 4$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Як спрощувати ✍️</div>
+                        <p>1) Величини — в однакові одиниці. 2) Десяткові дроби — множимо на $10$, $100$… 3) Звичайні дроби — множимо на спільний знаменник. 4) Ділимо на НСД.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Обережно, пастка! ⚠️</div>
+                        <p>$2$ м : $40$ см — це не $2 : 40$, а $200 : 40 = 5 : 1$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderLemon();
+                if (currentSlide === 2) renderMix();
+                if (currentSlide === 4) renderEval();
+                if (currentSlide === 5) renderTrap();
+@@JS
+
+            const typeset = (els) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(els); };
+            const gcd = (a, b) => b ? gcd(b, a % b) : a;
+            // Склянка: x, y — лівий верхній кут; kind — syrup / water
+            const cupSvg = (x, y, kind, pop = false) =>
+                `<path d="M${x} ${y} L${x + 28} ${y} L${x + 24} ${y + 40} L${x + 4} ${y + 40} Z" class="cup ${kind}${pop ? ' pop' : ''}"/>`;
+            // Ряд склянок: n штук, починаючи з x, крок step
+            function cupsRow(n, x, y, kind, step = 34, popFrom = n) {
+                let s = '';
+                for (let i = 0; i < n; i++) s += cupSvg(x + i * step, y, kind, i >= popFrom);
+                return s;
+            }
+
+            // --- Слайд 1: лимонад Олі й Тараса ---
+            let lemonShown = false;
+            window.renderLemon = function () {
+                let s = `<text x="210" y="24" class="svg-caption">Оля</text>`;
+                s += cupsRow(1, 70, 36, 'syrup') + cupsRow(3, 150, 36, 'water');
+                s += `<text x="210" y="134" class="svg-caption">Тарас</text>`;
+                s += cupsRow(2, 40, 146, 'syrup') + cupsRow(6, 130, 146, 'water');
+                s += `<text x="210" y="${lemonShown ? 226 : 240}" class="svg-small">жовті — сироп, сині — вода</text>`;
+                if (lemonShown) {
+                    s += `<text x="350" y="62" class="svg-caption ok-text">3 : 1 = 3</text>`;
+                    s += `<text x="380" y="172" class="svg-caption ok-text">6 : 2 = 3</text>`;
+                    s += `<text x="210" y="252" class="svg-caption ok-text">води втричі більше — смак однаковий</text>`;
+                }
+                document.getElementById('lemon-scene').innerHTML = s;
+            };
+            window.revealLemon = function () { lemonShown = true; renderLemon(); document.getElementById('answer-1').classList.add('shown'); };
+
+            // --- Слайд 2: k порцій рецепта a : b ---
+            let mixShown = false;
+            const mixVals = () => ['w-a', 'w-b', 'w-k'].map(id => parseInt(document.getElementById(id).value, 10));
+            window.renderMix = function () {
+                const [a, b, k] = mixVals();
+                document.getElementById('w-a-val').textContent = a;
+                document.getElementById('w-b-val').textContent = b;
+                document.getElementById('w-k-val').textContent = k;
+                mixShown = false;
+                document.getElementById('mix-answer').classList.remove('shown');
+                const q = document.getElementById('mix-q');
+                q.innerHTML = `Сироп : вода $= ${a * k} : ${b * k}$`;
+                typeset([q]);
+                drawMix(true);
+            };
+            function drawMix(animate) {
+                const [a, b, k] = mixVals();
+                // по 9 склянок у ряд; сироп і вода окремими рядами
+                const rows = (n, y0, kind) => {
+                    let s = '';
+                    for (let i = 0; i < n; i++) s += cupSvg(20 + (i % 9) * 44, y0 + Math.floor(i / 9) * 50, kind, animate && i >= n / k * (k - 1) && k > 1);
+                    return s;
+                };
+                let s = `<text x="210" y="18" class="svg-small">сироп: ${a * k}</text>` + rows(a * k, 26, 'syrup');
+                const yW = 26 + Math.ceil(a * k / 9) * 50 + 22;
+                s += `<text x="210" y="${yW - 8}" class="svg-small">вода: ${b * k}</text>` + rows(b * k, yW, 'water');
+                document.getElementById('mix-scene').innerHTML = s;
+            }
+            window.revealMix = function () {
+                const [a, b, k] = mixVals(), g = gcd(a, b), out = document.getElementById('mix-text');
+                const times = b % a === 0 ? `у ${b / a} ${b / a < 5 ? 'рази' : 'разів'}` : `у $\\dfrac{${b / g}}{${a / g}}$ раза`;
+                out.innerHTML = `$${a * k} : ${b * k} = ${a / g} : ${b / g}$ — води ${b === a ? 'стільки ж, скільки сиропу' : times + (b > a ? ' більше' : '')}.<br>Порцій більше — відношення те саме.`;
+                if (b < a) out.innerHTML = `$${a * k} : ${b * k} = ${a / g} : ${b / g}$ — сиропу більше, ніж води.<br>Порцій більше — відношення те саме.`;
+                mixShown = true;
+                document.getElementById('mix-answer').classList.add('shown');
+                typeset([out]);
+            };
+
+            // --- Слайд 5: 2 м і 40 см ---
+            window.renderTrap = function () {
+                const x0 = 30, u = 76;   // 40 см = 76 одиниць
+                let s = `<line x1="${x0}" y1="60" x2="${x0 + 5 * u}" y2="60" class="seg a"/>`;
+                for (let i = 0; i <= 5; i++) s += `<line x1="${x0 + i * u}" y1="48" x2="${x0 + i * u}" y2="72" class="tick"/>`;
+                s += `<text x="${x0 + 2.5 * u}" y="36" class="svg-caption">2 м = 200 см</text>`;
+                s += `<line x1="${x0}" y1="120" x2="${x0 + u}" y2="120" class="seg b"/>`;
+                s += `<line x1="${x0}" y1="108" x2="${x0}" y2="132" class="tick"/><line x1="${x0 + u}" y1="108" x2="${x0 + u}" y2="132" class="tick"/>`;
+                s += `<text x="${x0 + u + 60}" y="126" class="svg-caption">40 см</text>`;
+                s += `<text x="220" y="170" class="svg-caption ok-text">200 : 40 = 5 : 1 ✓</text>`;
+                s += `<text x="220" y="202" class="svg-caption bad-text">2 : 40 = 1 : 20 ✗</text>`;
+                document.getElementById('trap-scene').innerHTML = s;
+            };
+
+            // --- Слайд 4: кроки ---
+            const STEPS = [
+                ['$36 : 48 = $ [[$3 : 4$]]', 'НСД$(36, 48) = 12$: ділимо обидва члени на $12$'],
+                ['$1{,}2 : 0{,}8 = $ [[$12 : 8$]]', 'Множимо обидва члени на $10$ — коми зникли'],
+                ['$12 : 8 = $ [[$3 : 2$]]', 'Ділимо на НСД $= 4$. Перевірка: $1{,}2 : 0{,}8 = 1{,}5$ і $3 : 2 = 1{,}5$ ✓'],
+                ['$\\dfrac{2}{3} : \\dfrac{5}{6} = $ [[$4 : 5$]]', 'Множимо обидва члени на спільний знаменник $6$: $\\dfrac{2}{3} \\cdot 6 = 4$, $\\dfrac{5}{6} \\cdot 6 = 5$'],
+            ];
+@@INCLUDE steps.js

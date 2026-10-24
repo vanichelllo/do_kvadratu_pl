@@ -1,0 +1,334 @@
+@@TITLE Обернена функція
+@@BRAND Алгебра і початки аналізу (10-11 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE plot.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .curve.inv { stroke: var(--brand-green); }
+        .diag { stroke: var(--text-muted); stroke-width: 1.6; stroke-dasharray: 6 5; }
+        .pair { stroke: var(--brand-yellow); stroke-width: 1.6; stroke-dasharray: 3 4; }
+        .pt { fill: var(--brand-yellow); }
+        .fn-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
+        .fn-btns .btn-secondary.on { background: var(--brand-blue); color: #fff; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Оборотна функція</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Функцію $y = f(x)$ називають <b>оборотною</b>, якщо кожного свого значення вона набуває лише в одній точці: з $x_1 \ne x_2$ випливає $f(x_1) \ne f(x_2)$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Ознака</div>
+                        <p>Якщо функція <b>зростає</b> (або <b>спадає</b>) на області визначення, то вона оборотна.</p>
+                        <p>Геометрично: кожна горизонтальна пряма перетинає графік не більше ніж в одній точці.</p>
+                    </div>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Приклади</div>
+                    <p>$y = 2x + 1$ — зростає ⟹ оборотна.</p>
+                    <p>$y = x^2$ на $\mathbb{R}$ — <b>не</b> оборотна: $f(-2) = f(2) = 4$.</p>
+                    <p>$y = x^2$ на $[0; +\infty)$ — зростає ⟹ оборотна.</p>
+                    <p>$y = \dfrac{1}{x}$ — оборотна, хоч і не монотонна на всій області (спадає на кожному проміжку, значення не повторюються).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Обернена функція</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p>Нехай $f$ оборотна, $D(f)$ — область визначення, $E(f)$ — множина значень. Функцію $g$, яка кожному $y \in E(f)$ ставить у відповідність те єдине $x \in D(f)$, для якого $f(x) = y$, називають <b>оберненою</b> до $f$.</p>
+                    <p class="big-formula">$D(g) = E(f)$, $\;E(g) = D(f)$</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Властивості</div>
+                    <p>1) $g(f(x)) = x$ для $x \in D(f)$, $f(g(y)) = y$ для $y \in E(f)$.</p>
+                    <p>2) Графіки $f$ і $g$ (в одній системі координат) <b>симетричні відносно прямої $y = x$</b>.</p>
+                    <p>3) Якщо $f$ зростає, то й $g$ зростає (спадає — спадає).</p>
+                    <p>$f$ і $g$ — взаємно обернені.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Чому це так -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Чому графіки симетричні відносно $y = x$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="why">
+                    <div class="box-title">Ідея доведення</div>
+                    <div class="step">Точка $(a; b)$ лежить на графіку $f$ ⟺ $f(a) = b$.</div>
+                    <div class="step">⟺ $g(b) = a$ ⟺ точка $(b; a)$ лежить на графіку $g$.</div>
+                    <div class="step">Точки $(a; b)$ і $(b; a)$ симетричні відносно $y = x$: пряма $y = x$ — серединний перпендикуляр до відрізка між ними.</div>
+                    <div class="step">Отже, графік $g$ — образ графіка $f$ при симетрії відносно $y = x$. ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="sym-scene" role="img" aria-label="Точки (a; b) і (b; a), симетричні відносно y = x"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Віддзеркалюємо графік</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо функцію. Учні називають обернену і її область визначення, потім віддзеркалюємо графік у прямій $y = x$.</p>
+                    <div class="fn-btns">
+                        <button class="btn-secondary on" id="fb-0" onclick="pickFn(0)">$y = 2x + 1$</button>
+                        <button class="btn-secondary" id="fb-1" onclick="pickFn(1)">$y = x^2,\; x \ge 0$</button>
+                        <button class="btn-secondary" id="fb-2" onclick="pickFn(2)">$y = x^3$</button>
+                        <button class="btn-secondary" id="fb-3" onclick="pickFn(3)">$y = \sqrt{x} + 1$</button>
+                    </div>
+                    <p class="center"><button class="btn-primary" onclick="revealInv()">Показати обернену</button></p>
+                    <div class="box theorem hidden-answer" id="inv-answer"><p id="inv-text"></p></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 300" id="inv-scene" role="img" aria-label="Графік функції, пряма y = x і графік оберненої функції"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Методи -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Методи розв'язування</span>
+                <h2 class="slide-title">Як знайти обернену функцію</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box hack">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Переконайтеся, що $f$ оборотна (монотонна), знайдіть $E(f)$.</p>
+                    <p>2) З рівності $y = f(x)$ виразіть $x$ через $y$.</p>
+                    <p>3) Поміняйте позначення: $x \leftrightarrow y$.</p>
+                    <p>4) Запишіть $D(g) = E(f)$ — це обов'язково!</p>
+                </div>
+                <div class="math-widget">
+                    <p><b>$y = \dfrac{2x - 1}{x + 3}$</b></p>
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклади -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Обернена з обмеженням</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">$y = x^2 - 4x + 1$, $x \ge 2$</div>
+                    <div class="step">$y = (x - 2)^2 - 3$ — зростає на $[2; +\infty)$, $E(f) = [-3; +\infty)$.</div>
+                    <div class="step">$(x - 2)^2 = y + 3$; $x - 2 \ge 0$ ⟹ $x = 2 + \sqrt{y + 3}$.</div>
+                    <div class="step">$g(x) = 2 + \sqrt{x + 3}$, $D(g) = [-3; +\infty)$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'яжіть $x^3 + x = 10$</div>
+                    <div class="step">$f(x) = x^3 + x$ зростає (сума зростаючих) ⟹ оборотна: кожного значення набуває один раз.</div>
+                    <div class="step">Підбором: $f(2) = 8 + 2 = 10$.</div>
+                    <div class="step">Інших коренів немає: $x = 2$. (Наслідок оборотності!)</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Обернена ≠ «1 поділити на»</div>
+                    <p>Для $f(x) = 2x$ обернена $g(x) = \dfrac{x}{2}$, а не $\dfrac{1}{2x}$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Забули $D(g)$</div>
+                    <p>$f(x) = \sqrt{x - 1}$: $g(x) = x^2 + 1$ лише при $x \ge 0$. Без умови $x \ge 0$ — це інша функція (з парабол).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Немонотонна функція</div>
+                    <p>$y = x^2$ на $\mathbb{R}$ оберненої не має. Треба звузити область: $x \ge 0$ або $x \le 0$ (тоді $g(x) = -\sqrt{x}$).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Не та пряма</div>
+                    <p>Симетрія — відносно $y = x$, а не відносно осі $Ox$ чи $Oy$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ+</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть функцію, обернену до $y = 3x - 6$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $y = \dfrac{1}{3x - 6}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $y = \dfrac{x}{3} + 2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $y = \dfrac{x}{3} - 6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $y = -3x + 6$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x = \dfrac{y + 6}{3} = \dfrac{y}{3} + 2$; міняємо: $y = \dfrac{x}{3} + 2$. Перевірка: $g(f(1)) = g(-3) = -1 + 2 = 1$ ✓. А — «обернене число», В — не поділили $6$ на $3$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Яка з функцій <b>не має</b> оберненої?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $y = x^3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $y = \sqrt{x}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $y = |x|$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $y = \dfrac{1}{x}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $y = 5 - x$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$|-1| = |1|$ — значення повторюється, функція необоротна. $x^3$, $\sqrt{x}$ зростають, $5 - x$ спадає; $\dfrac{1}{x}$ не повторює значень.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">$f(x) = \dfrac{2x + 1}{x - 1}$. Знайдіть $g(5)$, де $g$ — функція, обернена до $f$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\dfrac{11}{4}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $\dfrac{4}{11}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) не існує</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$g(5) = x$ ⟺ $f(x) = 5$: $2x + 1 = 5x - 5$, $x = 2$. Знаходити саму $g$ не потрібно! А — це $f(5)$, В — $\dfrac{1}{f(5)}$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Оборотна — кожне значення один раз (монотонна — оборотна).</p>
+                    <p>$g$ обернена до $f$: $f(a) = b$ ⟺ $g(b) = a$; $D(g) = E(f)$, $E(g) = D(f)$.</p>
+                    <p>Графіки симетричні відносно $y = x$, монотонність однакова.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) $E(f)$. 2) $x$ через $y$. 3) $x \leftrightarrow y$. 4) $D(g) = E(f)$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Обернена функція — не $\dfrac{1}{f(x)}$; і не забувайте область визначення.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 3) renderSym();
+                if (currentSlide === 4) renderInv();
+                if (currentSlide === 5) renderEval();
+@@JS
+@@INCLUDE plot.js
+            const pathPts = (P, pts, cls) => `<path d="${pts.map((p, k) => (k ? 'L' : 'M') + P.sx(p[0]).toFixed(1) + ' ' + P.sy(p[1]).toFixed(1)).join(' ')}" class="${cls}"/>`;
+            // Параметрична крива (x(t), y(t))
+            function paramSvg(P, fx, fy, a, b, cls) {
+                const pts = [];
+                for (let i = 0; i <= 200; i++) { const t = a + (b - a) * i / 200, x = fx(t), y = fy(t); if (x >= P.x0 && x <= P.x1 && y >= P.y0 && y <= P.y1) pts.push([x, y]); }
+                return pts.length > 1 ? pathPts(P, pts, 'curve ' + cls) : '';
+            }
+            window.renderSym = function () {
+                const P = plane(-1, 6, -1, 6, 420, 300);
+                let s = axesSvg(P) + `<line x1="${P.sx(-1)}" y1="${P.sy(-1)}" x2="${P.sx(6)}" y2="${P.sy(6)}" class="diag"/>`;
+                s += `<line x1="${P.sx(1)}" y1="${P.sy(4)}" x2="${P.sx(4)}" y2="${P.sy(1)}" class="pair"/>`;
+                s += `<circle cx="${P.sx(1)}" cy="${P.sy(4)}" r="6" class="pt"/><circle cx="${P.sx(4)}" cy="${P.sy(1)}" r="6" class="pt"/>`;
+                s += `<text x="${P.sx(1) - 6}" y="${P.sy(4) - 12}" class="axis-name">(a; b)</text><text x="${P.sx(4) + 4}" y="${P.sy(1) - 12}" class="axis-name">(b; a)</text>`;
+                s += `<text x="${P.sx(5.2)}" y="${P.sy(5.6)}" class="axis-name">y = x</text>`;
+                document.getElementById('sym-scene').innerHTML = s;
+            };
+            const FNS = [
+                { f: (t) => 2 * t + 1, a: -3, b: 2, inv: '$g(x) = \\dfrac{x - 1}{2}$, $D(g) = \\mathbb{R}$' },
+                { f: (t) => t * t, a: 0, b: 2.3, inv: '$g(x) = \\sqrt{x}$, $D(g) = [0; +\\infty)$' },
+                { f: (t) => t ** 3, a: -1.7, b: 1.7, inv: '$g(x) = \\sqrt[3]{x}$, $D(g) = \\mathbb{R}$' },
+                { f: (t) => Math.sqrt(t) + 1, a: 0, b: 4, inv: '$g(x) = (x - 1)^2$, $D(g) = [1; +\\infty)$' },
+            ];
+            let fnK = 0, invShown = false;
+            window.pickFn = function (k) {
+                fnK = k; invShown = false;
+                FNS.forEach((_, i) => document.getElementById('fb-' + i).classList.toggle('on', i === k));
+                document.getElementById('inv-answer').classList.remove('shown');
+                renderInv();
+            };
+            window.renderInv = function () {
+                const P = plane(-4, 5, -4, 5, 420, 300), F = FNS[fnK];
+                let s = axesSvg(P) + `<line x1="${P.sx(-4)}" y1="${P.sy(-4)}" x2="${P.sx(5)}" y2="${P.sy(5)}" class="diag"/>`;
+                s += paramSvg(P, (t) => t, F.f, F.a, F.b, '');
+                if (invShown) s += paramSvg(P, F.f, (t) => t, F.a, F.b, 'inv');
+                document.getElementById('inv-scene').innerHTML = s;
+            };
+            window.revealInv = function () {
+                invShown = true; renderInv();
+                const t = document.getElementById('inv-text');
+                t.innerHTML = 'Обернена (зелена): ' + FNS[fnK].inv;
+                document.getElementById('inv-answer').classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([t]);
+            };
+            const STEPS = [
+                ['$y(x + 3) = 2x - 1$', 'Множимо на $x + 3 \\ne 0$; $E(f)$: $y = 2 - \\dfrac{7}{x + 3} \\ne 2$'],
+                ['$xy - 2x = -1 - 3y$', 'Збираємо $x$ в одному боці'],
+                ['$x = $ [[$\\dfrac{3y + 1}{2 - y}$]]', 'Ділимо на $2 - y \\ne 0$'],
+                ['$g(x) = $ [[$\\dfrac{3x + 1}{2 - x}$]], $x \\ne 2$', 'Міняємо $x \\leftrightarrow y$. Перевірка: $f(0) = -\\dfrac13$, $g\\left(-\\dfrac13\\right) = \\dfrac{0}{7/3} = 0$ ✓'],
+            ];
+@@INCLUDE steps.js

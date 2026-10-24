@@ -1,0 +1,242 @@
+@@TITLE Узагальнення: Вступ до стереометрії
+@@BRAND Геометрія (10-11 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+@@SLIDES
+
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 1 — $3$ теми. Клацаємо на тему — учні пригадують головне, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 100" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Оберіть тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Аксіоми стереометрії</div>
+                    <p>С1: через три точки, що не лежать на одній прямій, проходить єдина площина.</p>
+                    <p>С2: якщо дві точки прямої лежать у площині, то вся пряма лежить у ній.</p>
+                    <p>С3: якщо дві площини мають спільну точку, то перетинаються по прямій.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Наслідки</div>
+                    <p>Через пряму і точку поза нею — єдина площина.</p>
+                    <p>Через дві прямі, що перетинаються, — єдина площина.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Многогранники</div>
+                    <p>Призма: дві рівні основи, бічні грані — паралелограми.</p>
+                    <p>Піраміда: основа — многокутник, бічні грані — трикутники зі спільною вершиною.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Перерізи (перший крок)</div>
+                    <p>Пряма перетину двох площин проходить через <b>дві</b> їхні спільні точки — знайдіть їх.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні називають аксіому чи наслідок, який тут працює, потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Підрахунок елементів</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Скільки вершин, ребер і граней має $n$-кутна піраміда? Перевірте формулу Ейлера $В - Р + Г = 2$.</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Вершини: $n$ в основі + вершина піраміди $= n + 1$.</div>
+                    <div class="step">Ребра: $n$ в основі + $n$ бічних $= 2n$. Грані: $n$ бічних + основа $= n + 1$.</div>
+                    <div class="step">$(n + 1) - 2n + (n + 1) = 2$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Лінія перетину площин</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>$ABCDA_1B_1C_1D_1$ — куб. Знайдіть пряму, по якій перетинаються площини $(A_1BD)$ і $(AA_1C_1)$.</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Точка $A_1$ належить обом площинам — перша спільна точка.</div>
+                    <div class="step">$O = AC \cap BD$: $O \in BD \subset (A_1BD)$ і $O \in AC \subset (AA_1C_1)$ — друга спільна точка.</div>
+                    <div class="step">За аксіомою С3 площини перетинаються по прямій $A_1O$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>1.1:</b> через три точки на <b>одній прямій</b> проходить безліч площин — аксіома С1 вимагає, щоб вони не лежали на одній прямій.</div>
+                <div class="trap-card"><b>1.2:</b> дві <b>мимобіжні</b> прямі не лежать в одній площині — наслідок лише для прямих, що перетинаються (і паралельних).</div>
+                <div class="trap-card"><b>1.3:</b> у піраміди $2n$ ребер, а не $n + 1$; у призми — $3n$.</div>
+                <div class="trap-card"><b>1.1:</b> дві площини не можуть мати лише одну спільну точку — <span class="ok">тільки цілу пряму</span>.</div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Скільки площин можна провести через чотири точки, жодні три з яких не лежать на одній прямій, якщо точки не лежать в одній площині?</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) безліч</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $6$</div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>Кожна трійка задає площину: $4$ трійки — $4$ площини (грані тетраедра).</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. Скільки граней у п'ятикутної призми?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $15$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $6$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$5$ бічних + $2$ основи $= 7$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. Прямі $a$ і $b$ перетинаються в точці $O$, пряма $c$ перетинає обидві в різних точках, але не проходить через $O$. Що можна сказати про $c$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) лежить у площині прямих $a$ і $b$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) перпендикулярна до неї</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) паралельна їй</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) мимобіжна з $a$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) нічого</div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Дві точки $c$ лежать у площині $(a, b)$ ⟹ за С2 уся $c$ у цій площині.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. У многогранника $12$ вершин і $30$ ребер. Скільки в нього граней?</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $20$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $18$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $42$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $22$</div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Розв'язання</div><p>Формула Ейлера: $12 - 30 + Г = 2$, $Г = 20$ (ікосаедр).</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>С1 — три точки, С2 — пряма в площині, С3 — перетин площин по прямій.</p>
+                    <p>Площину задають: три точки поза прямою; пряма і точка; дві прямі, що перетинаються або паралельні.</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Треба лінію перетину площин — шукаємо дві спільні точки (С3). Треба довести, що пряма в площині, — дві її точки в площині (С2).</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>Три точки на одній прямій площини не задають; мимобіжні прямі в одній площині не лежать.</p></div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+@@JS
+
+            const TOPICS = [{"g": 0, "n": "1.1", "t": "Аксіоми", "d": "Через три точки, що не лежать на одній прямій, — єдина площина. Дві точки прямої в площині ⇒ уся пряма в ній. Спільна точка двох площин ⇒ спільна пряма."}, {"g": 1, "n": "1.2", "t": "Наслідки", "d": "Площину задають: пряма і точка поза нею; дві прямі, що перетинаються."}, {"g": 2, "n": "1.3", "t": "Многогранники", "d": "Куб, прямокутний паралелепіпед, призма, піраміда: грані, ребра, вершини."}];
+            const GROUPS = ["Аксіоми", "Наслідки", "Многогранники"];
+            const GW = 226;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["Чому стілець на трьох ніжках не хитається?", "С1: три точки задають площину"], ["Чи лежить пряма $AB$ у площині $ABC$?", "С2: так — дві її точки в площині"], ["Площини $(ABC)$ і $(ABD)$ тетраедра. По якій прямій перетинаються?", "С3: по прямій $AB$ (дві спільні точки)"], ["Скільки площин можна провести через дві прямі, що перетинаються?", "Наслідок: одну"], ["Скільки ребер у шестикутної призми?", "$6 + 6 + 6 = 18$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };

@@ -1,0 +1,289 @@
+@@TITLE Множення многочлена на многочлен
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 8px 0; }
+        .area td { border: 2px solid var(--border-color); padding: 10px 14px; text-align: center; font-weight: 700; }
+        .area th { padding: 6px 10px; color: var(--brand-blue); }
+        .area { border-collapse: collapse; margin: 8px auto; font-size: 1.15rem; }
+        .area td.c1 { background: rgba(52,78,134,0.15); } .area td.c2 { background: rgba(39,174,96,0.18); }
+        .area td.c3 { background: rgba(243,156,18,0.2); } .area td.c4 { background: rgba(231,76,60,0.15); }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Площа розширеної ділянки</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Квадратну ділянку зі стороною $a$ м розширили: довжину — на $3$ м, ширину — на $2$ м. Яка тепер площа?</p>
+                    <p class="big-formula">$S = (a + 3)(a + 2)$</p>
+                    <p>Ми вміємо множити одночлен на многочлен. А як помножити <b>два многочлени</b> і записати площу многочленом стандартного вигляду?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Подивитися</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Розріжемо на 4 частини</div>
+                        <p>$S = a^2 + 2a + 3a + 6 = a^2 + 5a + 6$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <table class="area">
+                        <tr><th></th><th>$a$</th><th>$3$</th></tr>
+                        <tr><th>$a$</th><td class="c1">$a^2$</td><td class="c2">$3a$</td></tr>
+                        <tr><th>$2$</th><td class="c3">$2a$</td><td class="c4">$6$</td></tr>
+                    </table>
+                    <p class="center">Сторони: $a + 3$ і $a + 2$. Кожна частина — добуток «рядок × стовпчик».</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Правило множення многочленів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Правило</div>
+                    <p>Щоб помножити многочлен на многочлен, треба <b>кожний член</b> першого многочлена помножити на <b>кожний член</b> другого і отримані добутки додати.</p>
+                    <p class="big-formula">$(a + b)(c + d) = ac + ad + bc + bd$</p>
+                    <p>Потім зводимо подібні доданки.</p>
+                </div>
+                <div class="box example" id="why">
+                    <div class="box-title">Чому це так</div>
+                    <div class="step">Позначимо $c + d = m$: $(a + b)\,m = am + bm$ — множення многочлена на одночлен.</div>
+                    <div class="step">$am + bm = a(c + d) + b(c + d)$.</div>
+                    <div class="step">$= ac + ad + bc + bd$. ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    <p>Кількість добутків: (членів першого) × (членів другого). Для $2$ і $3$ членів — $6$ добутків.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Дослідження -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Таблиця добутків</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Множимо $(x + p)(x + q)$. Обираємо $p$ і $q$, учні заповнюють клітинки, потім перевіряємо.</p>
+                    <div class="slider-control"><label for="w-p">$p$</label><input type="range" id="w-p" min="-5" max="5" step="1" value="2" oninput="renderLab()"><span id="w-p-val"></span></div>
+                    <div class="slider-control"><label for="w-q">$q$</label><input type="range" id="w-q" min="-5" max="5" step="1" value="-3" oninput="renderLab()"><span id="w-q-val"></span></div>
+                    <p class="big-formula" id="lab-q"></p>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Перевірити</button></p>
+                    <p class="big-formula hidden-answer" id="lab-a"></p>
+                </div>
+                <div class="math-widget" id="lab-table"></div>
+            </div>
+        </section>
+
+        <!-- 4. Алгоритм -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Крок за кроком</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Приклади</div>
+                    <p>1) $(2x - 3)(x + 4)$</p>
+                    <p>2) $(a - 2)(a^2 + 2a + 4)$</p>
+                    <p>Алгоритм: 1) кожен член першого × кожен член другого (стежимо за знаками); 2) зводимо подібні; 3) записуємо в стандартному вигляді.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Спрощення і рівняння</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Спростіть: $(x + 3)(x - 1) - x(x + 2)$</div>
+                    <div class="step">$(x + 3)(x - 1) = x^2 - x + 3x - 3 = x^2 + 2x - 3$</div>
+                    <div class="step">$x(x + 2) = x^2 + 2x$</div>
+                    <div class="step">$x^2 + 2x - 3 - x^2 - 2x = -3$ — вираз не залежить від $x$!</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'яжіть: $(x - 2)(x + 5) = x^2 + 1$</div>
+                    <div class="step">$x^2 + 5x - 2x - 10 = x^2 + 1$</div>
+                    <div class="step">$x^2 + 3x - 10 = x^2 + 1$ ⟹ $3x = 11$</div>
+                    <div class="step">$x = \dfrac{11}{3} = 3\dfrac{2}{3}$</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Пропущені добутки</div>
+                    <p>$(x + 3)(x + 2) \ne x^2 + 6$. Добутків має бути $4$: $x^2 + 2x + 3x + 6 = x^2 + 5x + 6$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Знаки</div>
+                    <p>$(x - 4)(x - 1)$: $(-4) \cdot (-1) = +4$, а не $-4$. Результат: $x^2 - 5x + 4$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Мінус перед добутком</div>
+                    <p>$-(x + 1)(x - 2)$: спершу перемножте дужки, потім змініть знаки <b>всіх</b> членів: $-x^2 + x + 2$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Перевірка</div>
+                    <p>Підставте $x = 1$ в умову і відповідь: $(1 + 3)(1 + 2) = 12$ і $1 + 5 + 6 = 12$ ✓.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Виконайте множення: $(x + 5)(x - 2)$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $x^2 - 10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $x^2 + 3x - 10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $x^2 - 3x - 10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $x^2 + 7x - 10$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$x^2 - 2x + 5x - 10 = x^2 + 3x - 10$. А — пропущено два добутки, В — переплутано знак, Г — $5x + 2x$ замість $5x - 2x$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть: $(2a - 1)(a + 3) - 2a^2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $4a^2 + 5a - 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $7a - 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $5a - 3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $5a + 3$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2a^2 + 6a - a - 3 - 2a^2 = 5a - 3$. А — додали $2a^2$ замість віднімання, Б — $6a + a$, Г — $(-1) \cdot 3 = +3$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Розв'яжіть рівняння: $(x + 1)(x + 4) - (x - 2)(x + 3) = 22$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $2{,}5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) коренів немає</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$(x^2 + 5x + 4) - (x^2 + x - 6) = 4x + 10 = 22$, $x = 3$. Б — помилка в знаку: $-(-6)$ записали як $-6$ ($4x - 2 = 22$); В — змінили знак лише в $x^2$ ($6x - 2 = 22$); Г — забули $+10$ ($4x = 10$).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Правило</div>
+                    <p class="big-formula">$(a + b)(c + d) = ac + ad + bc + bd$</p>
+                    <p>Кожен член першого многочлена × кожен член другого, потім зводимо подібні.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Усі добутки (їх $m \cdot n$). 2) Знак добутку — за правилом знаків. 3) Подібні доданки. 4) Перевірка підстановкою.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$(x + 3)(x + 2) \ne x^2 + 6$ — не забувайте «перехресні» добутки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 3) renderLab();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const typeset = (el) => { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); };
+            const sg = (n) => n < 0 ? `- ${-n}` : `+ ${n}`;
+            const term = (k, v) => k === 0 ? '' : (k === 1 ? `+ ${v}` : k === -1 ? `- ${v}` : `${sg(k)}${v}`);
+            const vals = () => [+document.getElementById('w-p').value, +document.getElementById('w-q').value];
+            window.renderLab = function () {
+                const [p, q] = vals();
+                document.getElementById('w-p-val').textContent = p;
+                document.getElementById('w-q-val').textContent = q;
+                const head = (n) => n < 0 ? `-${-n}` : n;
+                const t = document.getElementById('lab-table');
+                t.innerHTML = `<table class="area"><tr><th></th><th>$x$</th><th>$${head(q)}$</th></tr>
+                    <tr><th>$x$</th><td class="c1">?</td><td class="c2">?</td></tr>
+                    <tr><th>$${head(p)}$</th><td class="c3">?</td><td class="c4">?</td></tr></table>`;
+                const lq = document.getElementById('lab-q');
+                lq.innerHTML = `$(x ${sg(p)})(x ${sg(q)}) = \\;?$`;
+                document.getElementById('lab-a').classList.remove('shown');
+                typeset(t); typeset(lq);
+            };
+            window.revealLab = function () {
+                const [p, q] = vals(), head = (n) => n < 0 ? `-${-n}` : n, cx = (n) => n === 0 ? '0' : n === 1 ? 'x' : n === -1 ? '-x' : `${n}x`;
+                const t = document.getElementById('lab-table');
+                t.innerHTML = `<table class="area"><tr><th></th><th>$x$</th><th>$${head(q)}$</th></tr>
+                    <tr><th>$x$</th><td class="c1">$x^2$</td><td class="c2">$${cx(q)}$</td></tr>
+                    <tr><th>$${head(p)}$</th><td class="c3">$${cx(p)}$</td><td class="c4">$${p * q}$</td></tr></table>`;
+                const a = document.getElementById('lab-a');
+                const free = p * q === 0 ? '' : ` ${sg(p * q)}`;
+                a.innerHTML = `$= x^2 ${term(p + q, 'x')}${free}$`.replace('$= x^2 $', '$= x^2$');
+                a.classList.add('shown');
+                typeset(t); typeset(a);
+            };
+            const STEPS = [
+                ['$(2x - 3)(x + 4) = $ [[$2x^2 + 8x - 3x - 12$]]', '$2x \\cdot x$, $2x \\cdot 4$, $(-3) \\cdot x$, $(-3) \\cdot 4$ — чотири добутки'],
+                ['$= $ [[$2x^2 + 5x - 12$]]', 'Звели подібні: $8x - 3x = 5x$'],
+                ['$(a - 2)(a^2 + 2a + 4) = $ [[$a^3 + 2a^2 + 4a - 2a^2 - 4a - 8$]]', '$2 \\cdot 3 = 6$ добутків: спершу $a$ на кожен член, потім $-2$ на кожен член'],
+                ['$= $ [[$a^3 - 8$]]', 'Подібні знищилися: $2a^2 - 2a^2 = 0$, $4a - 4a = 0$'],
+            ];
+@@INCLUDE steps.js

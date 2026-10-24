@@ -1,0 +1,239 @@
+@@TITLE Узагальнення: Лінійні рівняння з однією змінною
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+@@SLIDES
+
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 1 — $3$ теми. Клацаємо на тему — учні пригадують головне, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 100" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Оберіть тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Рівняння і корінь</div>
+                    <p>Корінь — значення змінної, при якому рівність правильна.</p>
+                    <p>Рівносильні рівняння мають однакові корені.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Властивості рівнянь</div>
+                    <p>Доданок переносимо в іншу частину зі зміною знака.</p>
+                    <p>Обидві частини множимо або ділимо на одне число $\ne 0$.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Лінійне рівняння $ax = b$</div>
+                    <p>$a \ne 0$: $x = \dfrac{b}{a}$.</p>
+                    <p>$a = 0$, $b \ne 0$: коренів немає; $a = 0$, $b = 0$: коренем є будь-яке число.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Задачі за допомогою рівнянь</div>
+                    <p>1) Позначити $x$. 2) Виразити інші величини через $x$. 3) Скласти рівняння. 4) Розв'язати. 5) Перевірити, чи відповідь має зміст.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні визначають, скільки коренів має рівняння, або яке рівняння скласти. Потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Рівняння з дужками й дробами</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Розв'яжіть рівняння $\dfrac{x - 1}{3} - \dfrac{x + 2}{4} = 1$.</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Множимо обидві частини на $12$ (властивість 1.1): $4(x - 1) - 3(x + 2) = 12$.</div>
+                    <div class="step">$4x - 4 - 3x - 6 = 12$ ⟹ $x - 10 = 12$.</div>
+                    <div class="step">$x = 22$. Перевірка: $\dfrac{21}{3} - \dfrac{24}{4} = 7 - 6 = 1$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Задача на рух</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Із двох міст, відстань між якими $270$ км, одночасно назустріч виїхали два автомобілі. Швидкість одного на $10$ км/год більша. Вони зустрілися через $1{,}5$ год. Знайдіть швидкості.</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Нехай швидкість першого $x$ км/год, другого $x + 10$ (1.3).</div>
+                    <div class="step">За $1{,}5$ год разом проїхали $270$ км: $1{,}5(x + x + 10) = 270$.</div>
+                    <div class="step">$2x + 10 = 180$, $x = 85$. Швидкості: $85$ і $95$ км/год ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>1.1:</b> переносячи доданок, змінюємо його знак: $x + 5 = 9$ ⟹ $x = 9 - 5$, <span class="ok">а не $9 + 5$</span>.</div>
+                <div class="trap-card"><b>1.1:</b> мінус перед дужками змінює знаки <b>всіх</b> доданків: $-(x - 3) = -x + 3$.</div>
+                <div class="trap-card"><b>1.2:</b> $0x = 5$ — коренів <b>немає</b>; $0x = 0$ — коренів <b>безліч</b>, а не «$x = 0$».</div>
+                <div class="trap-card"><b>1.3:</b> перевіряйте зміст: кількість людей не може бути дробовою чи від'ємною.</div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Розв'яжіть рівняння $7 - 2(x - 3) = 5$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $-4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $1$</div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$7 - 2x + 6 = 5$, $-2x = -8$, $x = 4$. Б — забули змінити знак при $-3$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. Скільки коренів має рівняння $4x - 3 = 2(2x - 1)$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) жодного</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) один</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) два</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) безліч</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$4x - 3 = 4x - 2$ ⟹ $0x = 1$ — коренів немає.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. При якому $a$ рівняння $ax = 2x + 3$ не має коренів?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $0$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $-3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $-2$</div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$(a - 2)x = 3$ — коренів немає при $a - 2 = 0$, $a = 2$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. У трьох класах $98$ учнів. У другому на $4$ більше, ніж у першому, а в третьому — на $2$ менше, ніж у першому. Скільки учнів у першому класі?</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $32$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $34$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $30$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $33$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $31$</div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Розв'язання</div><p>$x + (x + 4) + (x - 2) = 98$, $3x + 2 = 98$, $x = 32$. Б — це другий клас, В — третій.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>Корінь — число, що дає правильну рівність. Переносимо зі зміною знака, ділимо на число $\ne 0$.</p>
+                    <p>$ax = b$: $a \ne 0$ — один корінь, $a = 0$ — немає або безліч.</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Спрощуємо (розкриваємо дужки, позбуваємося дробів), зводимо до $ax = b$, аналізуємо $a$. У задачах — позначаємо $x$ і перевіряємо зміст відповіді.</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>$0x = 0$ — будь-яке число є коренем; $0x = 5$ — коренів немає.</p></div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+@@JS
+
+            const TOPICS = [{"g": 0, "n": "1.1", "t": "Властивості", "d": "Корінь — число, що перетворює рівняння на правильну рівність. Переносимо доданки зі зміною знака, ділимо на число ≠ 0."}, {"g": 1, "n": "1.2", "t": "ax = b", "d": "a ≠ 0: один корінь b/a; a = 0, b ≠ 0: коренів немає; a = b = 0: безліч."}, {"g": 2, "n": "1.3", "t": "Задачі", "d": "Позначаємо невідоме x, складаємо рівняння за умовою, розв'язуємо, перевіряємо зміст."}];
+            const GROUPS = ["Рівняння", "Лінійні рівняння", "Задачі"];
+            const GW = 226;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["$3(x - 2) = 3x - 6$", "Тотожність $0x = 0$: коренем є будь-яке число"], ["$2x + 5 = 2(x + 1)$", "$0x = -3$: коренів немає"], ["$5x - 7 = 2x + 8$", "$3x = 15$, $x = 5$ — один корінь"], ["Сума трьох послідовних чисел — $72$", "$x + (x + 1) + (x + 2) = 72$, $x = 23$"], ["В Олі вдвічі більше марок, ніж у Тараса, разом $36$", "$x + 2x = 36$, $x = 12$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };

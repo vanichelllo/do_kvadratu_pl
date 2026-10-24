@@ -1,0 +1,314 @@
+@@TITLE Числові послідовності
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .seq-table { border-collapse: collapse; margin: 8px auto; font-size: 1.1rem; }
+        .seq-table td, .seq-table th { border: 1px solid var(--border-color); padding: 7px 10px; text-align: center; min-width: 42px; }
+        .seq-table th { color: var(--brand-blue); }
+        .seq-table td.on { color: var(--brand-green); font-weight: 800; }
+        .slider-control label { font-weight: 800; min-width: 130px; }
+        .slider-control span { font-weight: 800; min-width: 30px; text-align: right; }
+        .sq { fill: var(--brand-blue); fill-opacity: 0.35; stroke: currentColor; stroke-width: 1.2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Скільки сірників на 50-й фігурі?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>З сірників викладають ряд квадратиків: $1$ квадрат — $4$ сірники, $2$ — $7$, $3$ — $10$…</p>
+                    <p>Малювати $50$ квадратів довго. Потрібна <b>формула</b>, яка за номером фігури одразу дає кількість сірників.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Формула</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">$a_n = 3n + 1$</div>
+                        <p>Перший квадрат — $4$ сірники, кожен наступний додає $3$. Для $n = 50$: $3 \cdot 50 + 1 = 151$.</p>
+                    </div>
+                </div>
+                <div class="math-widget">
+                    <div class="slider-control"><label for="w-n">Квадратів $n$</label><input type="range" id="w-n" min="1" max="7" step="1" value="3" oninput="renderMatch()"><span id="w-n-val">3</span></div>
+                    <div class="widget-svg-container"><svg viewBox="0 0 420 120" id="match-scene" role="img" aria-label="Ряд квадратиків із сірників"></svg></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Що таке послідовність</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p><b>Числова послідовність</b> — числа, записані в певному порядку й пронумеровані натуральними числами: $a_1, a_2, a_3, \ldots, a_n, \ldots$</p>
+                    <p>$a_n$ — <b>$n$-й член</b> послідовності, $n$ — його номер.</p>
+                    <p>Послідовність буває <b>скінченною</b> (двоцифрові числа) і <b>нескінченною</b> (усі парні числа).</p>
+                </div>
+                <div class="box example">
+                    <div class="box-title">Приклад</div>
+                    <p>Квадрати натуральних чисел: $1, 4, 9, 16, 25, \ldots$</p>
+                    <p>$a_1 = 1$, $a_4 = 16$, $a_n = n^2$.</p>
+                    <p>Номер $n$ — завжди натуральне число: $a_{2{,}5}$ чи $a_0$ не існують.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Способи задання послідовності</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">1. Формулою $n$-го члена</div>
+                        <p>$a_n = 3n + 1$: будь-який член одразу, $a_{50} = 151$.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">2. Рекурентно</div>
+                        <p>Задано перший член і правило переходу: $a_1 = 4$, $a_{n+1} = a_n + 3$.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">3. Описом (словесно)</div>
+                        <p>«Прості числа в порядку зростання»: $2, 3, 5, 7, 11, \ldots$ — формули немає.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">4. Таблицею чи переліком</div>
+                        <p>Температура щодня о 12:00: $3, 5, 4, 6$ — скінченна.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Одна послідовність — два записи</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Обираємо послідовність. Учні називають наступний член за рекурентною формулою, потім перевіряємо формулою $n$-го члена.</p>
+                    <p class="center">
+                        <button class="btn-secondary" onclick="pickSeq(0)">$a_n = 2n - 1$</button>
+                        <button class="btn-secondary" onclick="pickSeq(1)">$a_n = 3 \cdot 2^{n-1}$</button>
+                        <button class="btn-secondary" onclick="pickSeq(2)">$a_n = \dfrac{1}{n}$</button>
+                    </p>
+                    <p class="big-formula" id="seq-rec"></p>
+                    <p class="center"><button class="btn-primary" onclick="nextTerm()">Наступний член ▸</button> <button class="btn-secondary" onclick="pickSeq(cur)">Спочатку</button></p>
+                </div>
+                <div class="math-widget" id="seq-box"></div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Типові задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) $a_n = n^2 - 3n$. Знайдіть $a_5$.</p>
+                    <p>2) Чи є число $43$ членом послідовності $a_n = 4n + 3$?</p>
+                    <p>3) $b_1 = 2$, $b_{n+1} = 3b_n - 1$. Знайдіть $b_4$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Скільки членів менші за число?</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Скільки членів послідовності $a_n = 5n - 2$ менші за $60$?</div>
+                    <div class="step">$5n - 2 \lt 60$ ⟹ $5n \lt 62$ ⟹ $n \lt 12{,}4$.</div>
+                    <div class="step">$n$ — натуральне: $n = 1, 2, \ldots, 12$.</div>
+                    <div class="step">Відповідь: $12$ членів. Перевірка: $a_{12} = 58 \lt 60$, $a_{13} = 63 \gt 60$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Знайдіть формулу: $\dfrac{1}{2}, \dfrac{2}{3}, \dfrac{3}{4}, \dfrac{4}{5}, \ldots$</div>
+                    <div class="step">Чисельник збігається з номером: $n$.</div>
+                    <div class="step">Знаменник на $1$ більший: $n + 1$.</div>
+                    <div class="step">$a_n = \dfrac{n}{n + 1}$. Перевірка: $a_3 = \dfrac{3}{4}$ ✓</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Номер — лише натуральний</div>
+                    <p>$4n + 3 = 45$ дає $n = 10{,}5$ — отже, $45$ <b>не є</b> членом послідовності, а не «$10{,}5$-й член».</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">$a_{n+1}$ ≠ $a_n + 1$</div>
+                    <p>Для $a_n = n^2$: $a_{n+1} = (n + 1)^2$, а не $n^2 + 1$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Рекурентна формула — крок за кроком</div>
+                    <p>Щоб знайти $b_4$ з $b_{n+1} = 3b_n - 1$, треба знайти $b_2$ і $b_3$; підставляти $n = 4$ у праву частину не можна.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Перевірка формули</div>
+                    <p>Знайдену формулу перевіряйте на 2–3 перших членах.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">$a_n = 2n^2 - 1$. Знайдіть $a_3$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $11$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $17$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $35$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$2 \cdot 9 - 1 = 17$. А — $2 \cdot 3 \cdot 2 - 1$, В — $(2 \cdot 3)^2 - 1$, Г — $2 \cdot 3 - 1$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$c_1 = 5$, $c_{n+1} = c_n - 2n$. Знайдіть $c_4$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $-13$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $-7$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $-1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $1$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$c_2 = 5 - 2 = 3$, $c_3 = 3 - 4 = -1$, $c_4 = -1 - 6 = -7$. В — це $c_3$; А — віднімали $2(n + 1)$ замість $2n$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Скільки від'ємних членів має послідовність $a_n = 3n - 40$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $14$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $13$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $12$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $40$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) безліч</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$3n - 40 \lt 0$ ⟹ $n \lt 13\dfrac{1}{3}$: $n = 1, \ldots, 13$. $a_{13} = -1$, $a_{14} = 2$. А — округлили вгору; Д — забули, що члени зростають.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Послідовність $a_1, a_2, \ldots, a_n, \ldots$ — числа з натуральними номерами.</p>
+                    <p>Задання: формулою $n$-го члена ($a_n = 3n + 1$), рекурентно ($a_1 = 4$, $a_{n+1} = a_n + 3$), описом, таблицею.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм «чи є число членом»</div>
+                        <p>1) Прирівняйте $a_n$ до числа. 2) Знайдіть $n$. 3) $n$ натуральне — так; інакше — ні.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$a_{n+1}$ — підставити $n + 1$ замість $n$, а не додати $1$ до $a_n$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMatch();
+                if (currentSlide === 4) renderSeq();
+                if (currentSlide === 5) renderEval();
+@@JS
+            // --- Слайд 1: сірники ---
+            window.renderMatch = function () {
+                const n = +document.getElementById('w-n').value, a = 52, x0 = (420 - n * a) / 2, y0 = 20;
+                document.getElementById('w-n-val').textContent = n;
+                let s = '';
+                for (let i = 0; i < n; i++) s += `<rect x="${x0 + i * a}" y="${y0}" width="${a}" height="${a}" class="sq"/>`;
+                s += `<text x="210" y="${y0 + a + 32}" class="svg-caption">сірників: ${3 * n + 1}</text>`;
+                document.getElementById('match-scene').innerHTML = s;
+            };
+            // --- Слайд 4: формула n-го члена і рекурентна ---
+            const SEQS = [
+                { rec: '$a_1 = 1,\\; a_{n+1} = a_n + 2$', f: (n) => String(2 * n - 1) },
+                { rec: '$a_1 = 3,\\; a_{n+1} = 2a_n$', f: (n) => String(3 * 2 ** (n - 1)) },
+                { rec: '$a_1 = 1,\\; a_{n+1} = \\dfrac{a_n}{1 + a_n}$', f: (n) => n === 1 ? '1' : `\\dfrac{1}{${n}}` },
+            ];
+            let cur = 0, shownN = 1;
+            window.pickSeq = function (k) { cur = k; shownN = 1; renderSeq(); };
+            window.nextTerm = function () { shownN = Math.min(shownN + 1, 6); renderSeq(); };
+            window.renderSeq = function () {
+                const S = SEQS[cur], box = document.getElementById('seq-box'), rec = document.getElementById('seq-rec');
+                rec.innerHTML = 'Рекурентно: ' + S.rec;
+                box.innerHTML = '<table class="seq-table"><tr><th>$n$</th>' + [1, 2, 3, 4, 5, 6].map(n => `<td>$${n}$</td>`).join('')
+                    + '</tr><tr><th>$a_n$</th>' + [1, 2, 3, 4, 5, 6].map(n => `<td class="${n === shownN ? 'on' : ''}">${n <= shownN ? '$' + S.f(n) + '$' : '?'}</td>`).join('') + '</tr></table>';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box, rec]);
+            };
+            const STEPS = [
+                ['$a_5 = 5^2 - 3 \\cdot 5 = $ [[$10$]]', 'Задача 1: підставляємо $n = 5$'],
+                ['$4n + 3 = 43$ ⟹ [[$n = 10$]]', 'Задача 2: $n = 10$ — натуральне, тож $43 = a_{10}$ — член послідовності'],
+                ['$b_2 = 3 \\cdot 2 - 1 = $ [[$5$]]', 'Задача 3: рекурентно — по одному кроку'],
+                ['$b_3 = 3 \\cdot 5 - 1 = $ [[$14$]]', '$n = 2$: $b_3 = 3b_2 - 1$'],
+                ['$b_4 = 3 \\cdot 14 - 1 = $ [[$41$]]', '$n = 3$: $b_4 = 3b_3 - 1$'],
+            ];
+@@INCLUDE steps.js

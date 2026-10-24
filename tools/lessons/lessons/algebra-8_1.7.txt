@@ -1,0 +1,259 @@
+@@TITLE Степінь із цілим від'ємним показником
+@@BRAND Алгебра (7-9 класи)
+@@SUBJECT Алгебра
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .big-formula { font-size: 1.25rem; text-align: center; margin: 8px 0; }
+        .pow-table { border-collapse: collapse; margin: 8px auto; font-size: 1.1rem; }
+        .pow-table td, .pow-table th { border: 1px solid var(--border-color); padding: 8px 10px; text-align: center; }
+        .pow-table th { color: var(--brand-blue); }
+        .pow-table td.new { color: var(--brand-green); font-weight: 800; }
+        .arrow-note { text-align: center; font-weight: 700; color: var(--text-muted); }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Дуже малі числа</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Маса пилинки — $0{,}000\,000\,001$ г, діаметр бактерії — $0{,}000\,002$ м. Великі числа ми коротко записуємо степенями: $3\,000\,000 = 3 \cdot 10^6$.</p>
+                    <p>А як коротко записати дуже мале число? Потрібні степені з <b>від'ємним</b> показником: $0{,}000\,002 = 2 \cdot 10^{-6}$.</p>
+                    <p>Ще одна причина: ми хочемо, щоб $\dfrac{a^m}{a^n} = a^{m-n}$ працювало й тоді, коли $m \lt n$.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Питання</div>
+                    <p>$\dfrac{2^3}{2^5} = \dfrac{8}{32} = \dfrac{1}{4}$. А за правилом ділення степенів — $2^{3-5} = 2^{-2}$.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Що таке $2^{-2}$?</button></p>
+                    <div class="hidden-answer" id="answer-1">
+                        <p class="big-formula">$2^{-2} = \dfrac{1}{2^2} = \dfrac{1}{4}$</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Дослідження -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Продовжуємо таблицю степенів</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Зменшуючи показник на $1$, ділимо значення на $2$. Учні продовжують закономірність уліво, потім відкриваємо по одній клітинці.</p>
+                    <p class="center"><button class="btn-primary" onclick="revealPow()">Наступна клітинка ▸</button> <button class="btn-secondary" onclick="resetPow()">Спочатку</button></p>
+                    <p class="arrow-note">← кожен крок: $: 2$</p>
+                </div>
+                <div class="math-widget" id="pow-box"></div>
+            </div>
+        </section>
+
+        <!-- 3. Основи -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Означення</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p>Якщо $a \ne 0$ і $n$ — натуральне число, то</p>
+                    <p class="big-formula">$a^{-n} = \dfrac{1}{a^n}$, &nbsp; $a^0 = 1$</p>
+                    <p>Вираз $0^{-n}$ і $0^0$ <b>не має змісту</b>.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Корисні наслідки</div>
+                    <p>$\left(\dfrac{a}{b}\right)^{-n} = \left(\dfrac{b}{a}\right)^n$: $\left(\dfrac{2}{3}\right)^{-2} = \dfrac{9}{4}$</p>
+                    <p>$\dfrac{1}{a^{-n}} = a^n$: $\dfrac{1}{5^{-2}} = 25$</p>
+                    <p>$10^{-3} = \dfrac{1}{1000} = 0{,}001$</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Теорія -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Властивості степенів — ті самі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Для $a \ne 0$, $b \ne 0$ і цілих $m$, $n$</div>
+                    <p>$a^m \cdot a^n = a^{m+n}$ &nbsp;&nbsp; $a^m : a^n = a^{m-n}$</p>
+                    <p>$(a^m)^n = a^{mn}$ &nbsp;&nbsp; $(ab)^n = a^n b^n$ &nbsp;&nbsp; $\left(\dfrac{a}{b}\right)^n = \dfrac{a^n}{b^n}$</p>
+                </div>
+                <div class="box example" id="why">
+                    <div class="box-title">Чому це так (приклад)</div>
+                    <div class="step">$a^{-2} \cdot a^{5} = \dfrac{1}{a^2} \cdot a^5 = \dfrac{a^5}{a^2}$</div>
+                    <div class="step">$= a^3 = a^{-2+5}$ ✓</div>
+                    <div class="step">У загальному випадку — так само: від'ємний показник переносимо в знаменник і користуємося властивостями для натуральних показників.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Обчислюємо і спрощуємо</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Приклади</div>
+                    <p>1) $3^{-2} + \left(\dfrac{1}{2}\right)^{-3}$</p>
+                    <p>2) $\dfrac{5^{-4} \cdot 5^{7}}{5^{2}}$</p>
+                    <p>3) $(a^{-3})^2 \cdot a^{8}$</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Від'ємний показник ≠ від'ємне число</div>
+                    <p>$2^{-3} \ne -8$ і $2^{-3} \ne -6$. Правильно: $2^{-3} = \dfrac{1}{8}$ — <b>додатне</b> число.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Мінус перед степенем</div>
+                    <p>$-3^{-2} = -\dfrac{1}{9}$, а $(-3)^{-2} = \dfrac{1}{9}$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Нульовий показник</div>
+                    <p>$7^0 = 1$, а не $0$. І $(-5)^0 = 1$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Дріб у від'ємному степені</div>
+                    <p>$\left(\dfrac{2}{5}\right)^{-1} = \dfrac{5}{2}$, а не $-\dfrac{2}{5}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Обчисліть: $4^{-2}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $-16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $-8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">В) $\dfrac{1}{16}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\dfrac{1}{8}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$4^{-2} = \dfrac{1}{4^2} = \dfrac{1}{16}$. А — вирішили, що число від'ємне; Б — помножили $4 \cdot (-2)$; Г — $\dfrac{1}{4 \cdot 2}$.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Спростіть: $\dfrac{a^{-5} \cdot a^{3}}{a^{-4}}$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $a^2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $a^{-6}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $a^{-2}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $a^{60}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$a^{-5+3} = a^{-2}$; $a^{-2} : a^{-4} = a^{-2-(-4)} = a^{2}$. Б — $-2 + (-4)$; В — забули поділити; Г — перемножили показники.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Обчисліть: $\left(\dfrac{2}{3}\right)^{-2} - 3^{-1} \cdot 6 + 2023^0$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $\dfrac{1}{4}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $1\dfrac{1}{4}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2\dfrac{1}{4}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $-1\dfrac{5}{9}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $\dfrac{4}{9}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{9}{4} - \dfrac{1}{3} \cdot 6 + 1 = 2\dfrac{1}{4} - 2 + 1 = 1\dfrac{1}{4}$. А — $2023^0$ вважали нулем; В — забули відняти $2$; Г — взяли $\left(\dfrac{2}{3}\right)^{2}$ і $2023^0 = 0$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p class="big-formula">$a^{-n} = \dfrac{1}{a^n}$, $\;a^0 = 1$ $\;(a \ne 0)$</p>
+                    <p>$\left(\dfrac{a}{b}\right)^{-n} = \left(\dfrac{b}{a}\right)^n$. Усі властивості степенів діють для цілих показників.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Спрощуємо за властивостями (додаємо/віднімаємо показники). 2) Від'ємний показник — «перевертаємо» основу. 3) Обчислюємо.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>$2^{-3} = \dfrac{1}{8}$, а не $-8$: від'ємний показник не робить число від'ємним.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 2) renderPow();
+                if (currentSlide === 5) renderEval();
+@@JS
+            // Таблиця степенів двійки: показники 3…−3, відкриваємо від 0 уліво
+            const POW = [['3', '8'], ['2', '4'], ['1', '2'], ['0', '1'], ['-1', '\\dfrac{1}{2}'], ['-2', '\\dfrac{1}{4}'], ['-3', '\\dfrac{1}{8}']];
+            let powShown = 3;
+            window.renderPow = function () {
+                const box = document.getElementById('pow-box');
+                box.innerHTML = '<table class="pow-table"><tr><th>$n$</th>' + POW.map(p => `<td>$${p[0]}$</td>`).join('')
+                    + '</tr><tr><th>$2^n$</th>' + POW.map((p, k) => `<td class="${k >= 3 ? 'new' : ''}">${k < powShown ? '$' + p[1] + '$' : '?'}</td>`).join('') + '</tr></table>'
+                    + (powShown === POW.length ? '<p class="center">$2^{-n} = \\dfrac{1}{2^n}$, а $2^0 = 1$</p>' : '');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.revealPow = function () { powShown = Math.min(powShown + 1, POW.length); renderPow(); };
+            window.resetPow = function () { powShown = 3; renderPow(); };
+            const STEPS = [
+                ['$3^{-2} + \\left(\\dfrac{1}{2}\\right)^{-3} = $ [[$\\dfrac{1}{9} + 8$]]', '$3^{-2} = \\dfrac{1}{9}$; дріб у від\'ємному степені — перевертаємо: $2^3 = 8$'],
+                ['$= $ [[$8\\dfrac{1}{9}$]]', 'Відповідь до прикладу 1'],
+                ['$\\dfrac{5^{-4} \\cdot 5^{7}}{5^{2}} = 5^{-4+7-2} = $ [[$5^{1} = 5$]]', 'Показники: додаємо при множенні, віднімаємо при діленні'],
+                ['$(a^{-3})^2 \\cdot a^{8} = a^{-6} \\cdot a^{8} = $ [[$a^{2}$]]', 'Степінь степеня — множимо показники: $-3 \\cdot 2 = -6$'],
+            ];
+@@INCLUDE steps.js

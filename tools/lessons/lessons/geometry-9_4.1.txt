@@ -1,0 +1,319 @@
+@@TITLE Правильні многокутники та їх властивості
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .poly { fill: var(--brand-blue); fill-opacity: 0.12; stroke: currentColor; stroke-width: 2.6; stroke-linejoin: round; }
+        .circ-out { fill: none; stroke: var(--brand-green); stroke-width: 2; }
+        .circ-in { fill: none; stroke: var(--brand-yellow); stroke-width: 2; stroke-dasharray: 6 4; }
+        .rad { stroke: var(--brand-green); stroke-width: 2; }
+        .rad-in { stroke: var(--brand-yellow); stroke-width: 2; }
+        .svg-caption { fill: currentColor; font-size: 15px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        .slider-control span { font-weight: 800; min-width: 30px; text-align: right; }
+        .f-table { border-collapse: collapse; margin: 6px auto; font-size: 1.05rem; }
+        .f-table td, .f-table th { border: 1px solid var(--border-color); padding: 7px 10px; text-align: center; }
+        .f-table th { color: var(--brand-blue); }
+        @media (max-width: 760px) { .slider-control label { min-width: 0; flex: 0 0 38%; font-size: 0.9rem; } .f-table { font-size: 0.9rem; } }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Чому бджоли будують шестикутники?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Стільники, плитка на підлозі, гайки — усюди правильні многокутники. Плитку без щілин можна викласти лише з правильних трикутників, квадратів і шестикутників.</p>
+                    <p>Чому саме з них? Відповідь — у величині кута правильного многокутника.</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Чому?</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Кут має ділити $360^\circ$</div>
+                        <p>Кути: $60^\circ$, $90^\circ$, $120^\circ$ — і $360^\circ$ ділиться на них націло ($6$, $4$, $3$ плитки при вершині). У п'ятикутника $108^\circ$ — не ділить.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="hex-scene" role="img" aria-label="Стільники з правильних шестикутників"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Правильний многокутник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Означення</div>
+                    <p>Опуклий многокутник називають <b>правильним</b>, якщо в нього <b>всі сторони рівні і всі кути рівні</b>.</p>
+                    <p>Ромб (рівні сторони) і прямокутник (рівні кути) — не обов'язково правильні; правильний чотирикутник — квадрат.</p>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Кут правильного $n$-кутника</div>
+                    <p>Сума кутів опуклого $n$-кутника — $180^\circ(n - 2)$, тому кожен кут</p>
+                    <p class="big-formula">$\alpha_n = \dfrac{180^\circ(n - 2)}{n}$</p>
+                    <p>Зовнішній кут — $\dfrac{360^\circ}{n}$; центральний кут (між радіусами до сусідніх вершин) — теж $\dfrac{360^\circ}{n}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Вписане й описане кола</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Навколо будь-якого правильного многокутника можна описати коло і в нього можна вписати коло, причому їхні центри збігаються (<b>центр многокутника</b>).</p>
+                    </div>
+                    <div class="box example" id="why">
+                        <div class="box-title">Ідея доведення</div>
+                        <div class="step">Бісектриси кутів $A_1$ і $A_2$ перетинаються в точці $O$; $\triangle OA_1A_2$ рівнобедрений.</div>
+                        <div class="step">$\triangle OA_1A_2 = \triangle OA_2A_3 = \ldots$ (дві сторони і кут між ними) ⟹ $OA_1 = OA_2 = \ldots = R$.</div>
+                        <div class="step">Висоти цих рівних трикутників, проведені з $O$, рівні — це радіус $r$ вписаного кола. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="box theorem">
+                    <div class="box-title">Формули (зі $\triangle OA_1A_2$)</div>
+                    <p class="big-formula">$a = 2R\sin\dfrac{180^\circ}{n}$</p>
+                    <p class="big-formula">$r = R\cos\dfrac{180^\circ}{n}$</p>
+                    <p class="big-formula">$a = 2r\,\mathrm{tg}\,\dfrac{180^\circ}{n}$</p>
+                    <p>$a$ — сторона, $R$ — радіус описаного, $r$ — вписаного кола.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Дослідження -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Змінюємо кількість сторін</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Радіус описаного кола $R = 1$. Учні передбачають кут, сторону й $r$, потім перевіряємо. Що відбувається, коли $n$ росте?</p>
+                    <div class="slider-control"><label for="w-n">Кількість сторін $n$</label><input type="range" id="w-n" min="3" max="12" step="1" value="6" oninput="renderLab()"><span id="w-n-val">6</span></div>
+                    <p class="center"><button class="btn-primary" onclick="revealLab()">Обчислити</button></p>
+                    <p class="readout hidden-answer" id="lab-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 300 300" id="lab-scene" role="img" aria-label="Правильний многокутник з описаним і вписаним колами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Алгоритм -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Алгоритм</span>
+                <h2 class="slide-title">Три головні многокутники</h2>
+            </div>
+            <div class="slide-body">
+                <table class="f-table">
+                    <tr><th></th><th>Трикутник ($n = 3$)</th><th>Квадрат ($n = 4$)</th><th>Шестикутник ($n = 6$)</th></tr>
+                    <tr><th>Кут</th><td>$60^\circ$</td><td>$90^\circ$</td><td>$120^\circ$</td></tr>
+                    <tr><th>$a$ через $R$</th><td>$a = R\sqrt{3}$</td><td>$a = R\sqrt{2}$</td><td>$a = R$</td></tr>
+                    <tr><th>$r$ через $R$</th><td>$r = \dfrac{R}{2}$</td><td>$r = \dfrac{R\sqrt{2}}{2}$</td><td>$r = \dfrac{R\sqrt{3}}{2}$</td></tr>
+                    <tr><th>$a$ через $r$</th><td>$a = 2r\sqrt{3}$</td><td>$a = 2r$</td><td>$a = \dfrac{2r\sqrt{3}}{3}$</td></tr>
+                </table>
+                <div class="box hack">
+                    <div class="box-title">Алгоритм</div>
+                    <p>1) Визначте $n$ і що дано ($a$, $R$ чи $r$). 2) Візьміть рядок таблиці або загальну формулу з $\dfrac{180^\circ}{n}$. 3) Виразіть шукане. Шестикутник складається з $6$ правильних трикутників зі стороною $R$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Кут правильного многокутника $150^\circ$. Скільки в нього сторін?</p>
+                    <p>2) Сторона правильного трикутника $6$ см. Знайдіть $R$ і $r$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Рівні сторони — ще не правильний</div>
+                    <p>Ромб з кутом $60^\circ$ має рівні сторони, але не рівні кути — він не правильний.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">$R$ і $r$ переплутано</div>
+                    <p>Для трикутника $R = 2r$, а не навпаки: описане коло більше. $R = \dfrac{a\sqrt{3}}{3}$, $r = \dfrac{a\sqrt{3}}{6}$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Кут $n$-кутника</div>
+                    <p>$\dfrac{180^\circ(n - 2)}{n}$, а не $\dfrac{180^\circ n}{n - 2}$. Перевірка: при $n = 4$ має бути $90^\circ$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Половина центрального кута</div>
+                    <p>У формулах стоїть $\dfrac{180^\circ}{n}$ — половина центрального кута $\dfrac{360^\circ}{n}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Знайдіть кут правильного восьмикутника.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $45^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $135^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $1080^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $120^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$\dfrac{180^\circ \cdot 6}{8} = 135^\circ$. А — центральний (зовнішній) кут, В — сума кутів, Г — кут шестикутника.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">Радіус кола, вписаного в квадрат, $5$ см. Знайдіть радіус описаного кола.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $10$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $5\sqrt{2}$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $\dfrac{5\sqrt{2}}{2}$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>$a = 2r = 10$ см, $R$ — половина діагоналі: $\dfrac{10\sqrt{2}}{2} = 5\sqrt{2}$ см. А — сторона квадрата, В — поділили замість множити.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Відстань між протилежними сторонами правильного шестикутника — $12$ см. Знайдіть його сторону.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $6$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $12$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">В) $4\sqrt{3}$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $6\sqrt{3}$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $2\sqrt{3}$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation">
+                            <div class="box-title">Розв'язання</div>
+                            <p>Відстань між протилежними сторонами — $2r$, тож $r = 6$. $a = \dfrac{2r\sqrt{3}}{3} = \dfrac{12\sqrt{3}}{3} = 4\sqrt{3}$ см. А — прийняли $a = r$, Г — $a = r\sqrt{3}$.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Правильний: усі сторони і всі кути рівні. Кут $\dfrac{180^\circ(n - 2)}{n}$.</p>
+                    <p>$a = 2R\sin\dfrac{180^\circ}{n}$, $r = R\cos\dfrac{180^\circ}{n}$.</p>
+                    <p>Трикутник: $R = 2r$; квадрат: $a = 2r = R\sqrt{2}$; шестикутник: $a = R$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) $n$ і що дано. 2) Формула з $\dfrac{180^\circ}{n}$ або таблиця. 3) Перевірка: $R \gt r$.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Ромб чи прямокутник — не правильні многокутники (крім квадрата).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderHex();
+                if (currentSlide === 4) renderLab();
+                if (currentSlide === 6) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1);
+            const polyPts = (cx, cy, R, n, rot) => Array.from({ length: n }, (_, k) => {
+                const t = rot + 2 * Math.PI * k / n; return [cx + R * Math.cos(t), cy + R * Math.sin(t)];
+            });
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            window.renderHex = function () {
+                const R = 36, dx = R * 1.5, dy = R * Math.sqrt(3);
+                let s = '';
+                for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) {
+                    const cx = 50 + i * dx, cy = 40 + j * dy + (i % 2 ? dy / 2 : 0);
+                    if (cy < 250) s += poly(polyPts(cx, cy, R, 6, 0), 'poly');
+                }
+                document.getElementById('hex-scene').innerHTML = s;
+            };
+            window.renderLab = function () {
+                const n = +document.getElementById('w-n').value, R = 120, c = 150, rr = R * Math.cos(Math.PI / n), rot = -Math.PI / 2;
+                document.getElementById('w-n-val').textContent = n;
+                const P = polyPts(c, c, R, n, rot), M = [(P[0][0] + P[1][0]) / 2, (P[0][1] + P[1][1]) / 2];
+                let s = `<circle cx="${c}" cy="${c}" r="${R}" class="circ-out"/><circle cx="${c}" cy="${c}" r="${f1(rr)}" class="circ-in"/>` + poly(P, 'poly');
+                s += `<line x1="${c}" y1="${c}" x2="${f1(P[0][0])}" y2="${f1(P[0][1])}" class="rad"/><line x1="${c}" y1="${c}" x2="${f1(M[0])}" y2="${f1(M[1])}" class="rad-in"/>`;
+                s += `<circle cx="${c}" cy="${c}" r="4" class="geo-dot"/><text x="${c - 12}" y="${c + 18}" class="svg-caption">O</text>`;
+                document.getElementById('lab-scene').innerHTML = s;
+                document.getElementById('lab-out').classList.remove('shown');
+            };
+            window.revealLab = function () {
+                const n = +document.getElementById('w-n').value, ang = 180 * (n - 2) / n, a = 2 * Math.sin(Math.PI / n), r = Math.cos(Math.PI / n);
+                const out = document.getElementById('lab-out'), fmt = (v) => (Math.round(v * 1000) / 1000).toString().replace('.', '{,}');
+                out.innerHTML = `Кут: $\\dfrac{180^\\circ \\cdot ${n - 2}}{${n}} = ${fmt(ang)}^\\circ$<br>$a = 2\\sin ${fmt(180 / n)}^\\circ \\approx ${fmt(a)}$, $\\;r = \\cos ${fmt(180 / n)}^\\circ \\approx ${fmt(r)}$`
+                    + (n >= 9 ? '<br>Кут прямує до $180^\\circ$, $r$ — до $R$: многокутник «стає» колом' : '');
+                out.classList.add('shown');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+            };
+            const STEPS = [
+                ['$\\dfrac{180^\\circ(n - 2)}{n} = 150^\\circ$', 'Задача 1. Або через зовнішній кут: $180^\\circ - 150^\\circ = 30^\\circ$'],
+                ['$n = \\dfrac{360^\\circ}{30^\\circ} = $ [[$12$]]', 'Сума зовнішніх кутів — $360^\\circ$'],
+                ['$R = \\dfrac{a}{\\sqrt{3}} = \\dfrac{6}{\\sqrt{3}} = $ [[$2\\sqrt{3}$ см]]', 'Задача 2. Для трикутника $a = R\\sqrt{3}$'],
+                ['$r = \\dfrac{R}{2} = $ [[$\\sqrt{3}$ см]]', 'Перевірка: $a = 2r\\sqrt{3} = 2\\sqrt{3} \\cdot \\sqrt{3} = 6$ ✓'],
+            ];
+@@INCLUDE steps.js

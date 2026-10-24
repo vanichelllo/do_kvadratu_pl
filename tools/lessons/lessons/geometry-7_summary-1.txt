@@ -1,0 +1,240 @@
+@@TITLE Узагальнення: Елементарні геометричні фігури та їх властивості
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+@@SLIDES
+
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 1 — $2$ теми. Клацаємо на тему — учні пригадують головне, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 100" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Оберіть тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Точки, прямі, відрізки</div>
+                    <p>Через дві точки проходить єдина пряма.</p>
+                    <p>Точка $C$ лежить між $A$ і $B$ ⟺ $AC + CB = AB$.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Вимірювання відрізків</div>
+                    <p>Середина $M$ відрізка $AB$: $AM = MB = \dfrac{AB}{2}$.</p>
+                    <p>Довжина відрізка — додатне число; рівні відрізки мають рівні довжини.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Кути</div>
+                    <p>Гострий $\lt 90^\circ$, прямий $= 90^\circ$, тупий — від $90^\circ$ до $180^\circ$, розгорнутий $= 180^\circ$.</p>
+                    <p>Промінь усередині кута ділить його: $\angle AOB = \angle AOC + \angle COB$.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Бісектриса</div>
+                    <p>Бісектриса ділить кут навпіл: $\angle AOC = \angle COB = \dfrac12\angle AOB$.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні визначають, яку властивість застосувати, потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Відрізки на прямій</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Точки $A$, $B$, $C$ лежать на одній прямій, $AB = 12$ см, $BC = 5$ см. Знайдіть $AC$.</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Розміщення не задано — розглянемо випадки.</div>
+                    <div class="step">$C$ між $A$ і $B$: $AC = 12 - 5 = 7$ см.</div>
+                    <div class="step">$B$ між $A$ і $C$: $AC = 12 + 5 = 17$ см. ($A$ між $B$ і $C$ неможливо: $BC \lt AB$.)</div>
+                    <div class="step">Відповідь: $7$ см або $17$ см.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Кут між бісектрисами</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Промінь $OC$ лежить усередині $\angle AOB = 100^\circ$, $\angle AOC = 40^\circ$. $OM$ і $ON$ — бісектриси кутів $AOC$ і $COB$. Знайдіть $\angle MON$.</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">$\angle COB = 100^\circ - 40^\circ = 60^\circ$.</div>
+                    <div class="step">$\angle MOC = 20^\circ$, $\angle CON = 30^\circ$.</div>
+                    <div class="step">$\angle MON = 20^\circ + 30^\circ = 50^\circ$ — половина $\angle AOB$ (так завжди!).</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>1.1:</b> якщо розміщення точок не задано — <span class="ok">розгляньте всі випадки</span>: відповідей може бути дві.</div>
+                <div class="trap-card"><b>1.1:</b> $AC + CB = AB$ лише тоді, коли $C$ лежить <b>на відрізку</b> $AB$.</div>
+                <div class="trap-card"><b>1.2:</b> тупий кут — більший за $90^\circ$, але <b>менший</b> за $180^\circ$; $180^\circ$ — розгорнутий.</div>
+                <div class="trap-card"><b>1.2:</b> бісектриса ділить кут навпіл, а не «на два будь-які кути».</div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Точка $K$ — середина відрізка $AB$, $AK = 4{,}5$ см. Знайдіть $AB$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $9$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $4{,}5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $2{,}25$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $13{,}5$ см</div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$AB = 2 \cdot 4{,}5 = 9$ см.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. Кут між бісектрисою кута і його стороною дорівнює $35^\circ$. Знайдіть кут.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $70^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $17{,}5^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $35^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $145^\circ$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>Бісектриса ділить кут навпіл: $2 \cdot 35^\circ = 70^\circ$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. Точки $A$, $B$, $C$ на одній прямій, $AB = 6$, $AC = 10$. Якою може бути $BC$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $4$ або $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) лише $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) лише $16$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $5$ або $15$</div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$B$ між $A$ і $C$: $BC = 4$; $A$ між $B$ і $C$: $BC = 16$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. Промені $OB$ і $OC$ ділять розгорнутий кут $AOD$ на три кути, що відносяться як $2 : 3 : 4$. Знайдіть найбільший.</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $80^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $60^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $40^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $120^\circ$</div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Розв'язання</div><p>$9x = 180^\circ$, $x = 20^\circ$: кути $40^\circ$, $60^\circ$, $80^\circ$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>Через дві точки — єдина пряма. $C$ на відрізку $AB$ ⟺ $AC + CB = AB$.</p>
+                    <p>Кути: гострий, прямий, тупий, розгорнутий. Бісектриса ділить кут навпіл.</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Відрізки на прямій — додаємо або віднімаємо довжини; кути, розділені променем, — так само додаємо кути.</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>Розміщення точок не задано — розгляньте кілька випадків.</p></div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+@@JS
+
+            const TOPICS = [{"g": 0, "n": "1.1", "t": "Відрізки", "d": "Через дві точки — одна пряма. Якщо C лежить на AB, то AC + CB = AB."}, {"g": 1, "n": "1.2", "t": "Кути, бісектриса", "d": "Гострий < 90°, прямий = 90°, тупий > 90°, розгорнутий = 180°. Бісектриса ділить кут навпіл."}];
+            const GROUPS = ["Точки, прямі, відрізки", "Кути"];
+            const GW = 340;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["$C$ лежить на відрізку $AB$, $AC = 7$ см, $CB = 5$ см. Знайдіть $AB$.", "Додаємо: $AB = 12$ см"], ["$AB = 20$ см, $M$ — середина. Знайдіть $AM$.", "Середина: $10$ см"], ["$OC$ — бісектриса $\\angle AOB = 130^\\circ$. Знайдіть $\\angle AOC$.", "Бісектриса: $65^\\circ$"], ["Промінь $OC$ ділить прямий кут у відношенні $1 : 2$. Знайдіть менший кут.", "$3x = 90^\\circ$: $30^\\circ$"], ["$AB = 8$, $BC = 3$, $AC = 5$. Яка точка лежить між двома іншими?", "$AC + CB = AB$ ⟹ $C$ між $A$ і $B$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };

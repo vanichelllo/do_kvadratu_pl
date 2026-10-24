@@ -1,0 +1,239 @@
+@@TITLE Узагальнення: Взаємне розміщення прямих на площині
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+
+        .map-node { cursor: pointer; }
+        .map-node rect { fill: var(--card-bg); stroke: var(--brand-blue); stroke-width: 2; transition: var(--transition); }
+        .map-node.on rect { fill: var(--brand-blue); }
+        .map-node text { fill: currentColor; font-size: 12px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+        .map-node.on text { fill: #fff; }
+        .map-group { fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
+        text.map-group-name { font-size: 13px; font-weight: 800; stroke: none; }
+        .g0 { stroke: var(--brand-blue); fill: var(--brand-blue); }
+        .g1 { stroke: var(--brand-green); fill: var(--brand-green); }
+        .g2 { stroke: var(--brand-yellow); fill: var(--brand-yellow); }
+        .g3 { stroke: var(--warning-red); fill: var(--warning-red); }
+        .map-group.g0, .map-group.g1, .map-group.g2, .map-group.g3 { fill: none; }
+        .map-info { min-height: 3.2em; font-weight: 600; text-align: center; margin-top: 6px; }
+        .map-info b { color: var(--brand-blue); }
+        .which-card { background: var(--widget-bg); border-radius: 10px; padding: 8px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .which-card .rule { display: none; color: var(--brand-green); font-weight: 700; }
+        .which-card.shown .rule { display: block; }
+        .which-card.shown button { display: none; }
+        .trap-card { background: var(--widget-bg); border-left: 5px solid var(--warning-red); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 1rem; }
+        .trap-card b { color: var(--warning-red); }
+        .trap-card .ok { color: var(--brand-green); font-weight: 700; }
+        .know p { margin: 5px 0; }
+@@SLIDES
+
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Карта розділу</span>
+                <h1 class="slide-title">Що ми вивчили 🗺️</h1>
+            </div>
+            <div class="slide-body">
+                <p>Розділ 2 — $4$ теми. Клацаємо на тему — учні пригадують головне, потім читаємо підказку.</p>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 680 150" id="map-scene" role="img" aria-label="Карта тем розділу"></svg>
+                </div>
+                <p class="map-info" id="map-info">Оберіть тему на карті.</p>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Що треба знати</span>
+                <h2 class="slide-title">Шпаргалка розділу 📋</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition know">
+                    <div class="box-title">Суміжні і вертикальні кути</div>
+                    <p>Суміжні: $\angle 1 + \angle 2 = 180^\circ$.</p>
+                    <p>Вертикальні кути рівні.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Перпендикулярні прямі</div>
+                    <p>$a \perp b$ — при перетині утворюються прямі кути.</p>
+                    <p>Дві прямі, перпендикулярні до третьої, паралельні.</p>
+                </div>
+                <div class="box theorem know">
+                    <div class="box-title">Ознаки паралельності (січна $c$)</div>
+                    <p>Внутрішні різносторонні кути рівні, або відповідні рівні, або сума внутрішніх односторонніх $= 180^\circ$ ⟹ $a \parallel b$.</p>
+                </div>
+                <div class="box hack know">
+                    <div class="box-title">Властивості (обернені)</div>
+                    <p>$a \parallel b$ ⟹ різносторонні й відповідні рівні, односторонні — разом $180^\circ$.</p>
+                    <p>Ознака — щоб <b>довести</b> паралельність, властивість — щоб <b>знайти</b> кути.</p>
+                </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Зв'язки</span>
+                <h2 class="slide-title">Яке правило тут потрібне? 🔗</h2>
+            </div>
+            <div class="slide-body">
+                <p>Учні визначають, яка теорема потрібна: ознака чи властивість, суміжні чи вертикальні кути. Потім відкриваємо відповідь.</p>
+                <div id="which-list"></div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Ознака + властивість</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Прямі $a$ і $b$ перетнуто січною $c$, внутрішні різносторонні кути рівні: $\angle 1 = \angle 2 = 70^\circ$. Третя пряма $d$ перетинає $a$ і $b$ і утворює з $a$ кут $3 = 55^\circ$. Знайдіть внутрішній односторонній з ним кут $4$ при прямій $b$.</p></div>
+                <div class="box example" id="ex-1">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">$\angle 1 = \angle 2$ — внутрішні різносторонні ⟹ $a \parallel b$ (ознака, 2.3).</div>
+                    <div class="step">Для січної $d$ кути $3$ і $4$ — внутрішні односторонні ⟹ $\angle 3 + \angle 4 = 180^\circ$ (властивість, 2.4).</div>
+                    <div class="step">$\angle 4 = 180^\circ - 55^\circ = 125^\circ$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Розбір</span>
+                <h2 class="slide-title">Кути при перетині</h2>
+            </div>
+            <div class="slide-body">
+                <div class="box definition"><div class="box-title">Задача</div><p>Один з кутів, що утворилися при перетині двох прямих, у $4$ рази більший за інший. Знайдіть усі кути.</p></div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Розв'язання</div>
+                    <div class="step">Нерівні кути — суміжні (вертикальні рівні): $x + 4x = 180^\circ$ (2.1).</div>
+                    <div class="step">$x = 36^\circ$, $4x = 144^\circ$.</div>
+                    <div class="step">Кути: $36^\circ$, $144^\circ$, $36^\circ$, $144^\circ$ (вертикальні рівні).</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Наступний крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки розділу ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="trap-card"><b>2.1:</b> суміжні кути мають спільну сторону, а дві інші — доповняльні промені. Просто «сусідні» кути — не обов'язково суміжні.</div>
+                <div class="trap-card"><b>2.3–2.4:</b> ознаку і властивість не плутати: <span class="ok">ознака доводить $a \parallel b$, властивість ним користується</span>.</div>
+                <div class="trap-card"><b>2.4:</b> внутрішні <b>односторонні</b> кути не рівні — у сумі $180^\circ$.</div>
+                <div class="trap-card"><b>2.4:</b> якщо прямі <b>не</b> паралельні, рівність різносторонніх кутів не гарантована.</div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Перевір себе ✏️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">1. Один із суміжних кутів на $30^\circ$ більший за інший. Знайдіть більший кут.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">А) $105^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Б) $75^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $150^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Д) $120^\circ$</div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$x + x + 30^\circ = 180^\circ$, $x = 75^\circ$; більший $105^\circ$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">2. $a \parallel b$, січна утворює з $a$ кут $48^\circ$. Яким НЕ може бути кут між січною і $b$?</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $58^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $48^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $132^\circ$</div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>При паралельних прямих кути з $b$ — $48^\circ$ або $132^\circ$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Перевір себе</span>
+                <h2 class="slide-title">Ще складніше 🚀</h2>
+            </div>
+            <div class="slide-body grid-2">
+                    <div>
+                        <p class="quiz-q">3. $a \parallel b$, внутрішні односторонні кути відносяться як $2 : 7$. Знайдіть більший.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $140^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $40^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $126^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $70^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $160^\circ$</div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>$9x = 180^\circ$, $x = 20^\circ$: кути $40^\circ$ і $140^\circ$.</p></div>
+                    </div>
+                    <div>
+                        <p class="quiz-q">4. Кут між бісектрисами двох суміжних кутів дорівнює:</p>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">А) $90^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Б) $180^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">В) $45^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Г) залежить від кутів</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Д) $60^\circ$</div>
+                        <p class="verdict" id="quiz-4-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-4-explanation"><div class="box-title">Розв'язання</div><p>Половини суміжних кутів: $\dfrac{\alpha}{2} + \dfrac{180^\circ - \alpha}{2} = 90^\circ$.</p></div>
+                    </div>
+
+            </div>
+        </section>
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про розділ 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem"><div class="box-title">Головне</div>
+                    <p>Суміжні — $180^\circ$, вертикальні — рівні.</p>
+                    <p>Ознаки: рівні різносторонні / відповідні або односторонні разом $180^\circ$ ⟹ $a \parallel b$. Властивості — навпаки.</p>
+                </div>
+                <div>
+                    <div class="box hack"><div class="box-title">Як обрати правило</div><p>Треба довести, що прямі паралельні, — ознака (2.3). Відомо, що паралельні, а треба кут — властивість (2.4).</p></div>
+                    <div class="box error"><div class="box-title">Головна пастка</div><p>Односторонні кути рівні лише тоді, коли обидва по $90^\circ$; зазвичай вони разом дають $180^\circ$.</p></div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderMap();
+                if (currentSlide === 3) renderWhich();
+@@JS
+
+            const TOPICS = [{"g": 0, "n": "2.1", "t": "Суміжні, вертикальні", "d": "Суміжні кути разом 180°; вертикальні кути рівні."}, {"g": 1, "n": "2.2", "t": "Перпендикулярні", "d": "Прямі під кутом 90°; через точку — єдиний перпендикуляр до прямої."}, {"g": 2, "n": "2.3", "t": "Ознаки ‖", "d": "Рівні різносторонні або відповідні кути, сума односторонніх 180° ⇒ a ‖ b."}, {"g": 2, "n": "2.4", "t": "Властивості ‖", "d": "a ‖ b ⇒ різносторонні й відповідні кути рівні, односторонні — разом 180°."}];
+            const GROUPS = ["Кути", "Перпендикулярні", "Паралельні"];
+            const GW = 226;
+            let mapOn = -1;
+            window.renderMap = function () {
+                let svg = '';
+                GROUPS.forEach((name, g) => {
+                    const x = 4 + g * GW, cnt = TOPICS.filter(t => t.g === g).length;
+                    svg += `<rect x="${x}" y="10" width="${GW - 8}" height="${38 + cnt * 50}" rx="12" class="map-group g${g}"/><text x="${x + 10}" y="28" class="map-group-name g${g}">${name}</text>`;
+                });
+                TOPICS.forEach((tp, k) => {
+                    const x = 4 + tp.g * GW + 8, idx = TOPICS.filter(t => t.g === tp.g).indexOf(tp), y = 40 + idx * 50;
+                    svg += `<g class="map-node${mapOn === k ? ' on' : ''}" onclick="pickTopic(${k})"><rect x="${x}" y="${y}" width="${GW - 24}" height="40" rx="8"/>`
+                         + `<text x="${x + (GW - 24) / 2}" y="${y + 25}">${tp.n} ${tp.t}</text></g>`;
+                });
+                document.getElementById('map-scene').innerHTML = svg;
+            };
+            window.pickTopic = function (k) {
+                mapOn = k;
+                const tp = TOPICS[k], el = document.getElementById('map-info');
+                el.innerHTML = `<b>${tp.n} ${tp.t}.</b> ${tp.d}`;
+                renderMap();
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            };
+            const WHICH = [["Один із кутів при перетині двох прямих — $40^\\circ$. Знайдіть інші.", "2.1: вертикальний $40^\\circ$, суміжні по $140^\\circ$"], ["$a \\parallel b$, один з односторонніх кутів $65^\\circ$. Знайдіть другий.", "2.4 (властивість): $180^\\circ - 65^\\circ = 115^\\circ$"], ["Відповідні кути при прямих $a$, $b$ і січній — по $72^\\circ$. Чи $a \\parallel b$?", "2.3 (ознака): так"], ["$a \\perp c$, $b \\perp c$. Як розміщені $a$ і $b$?", "2.2: $a \\parallel b$"], ["Сума двох кутів, утворених при перетині прямих, — $100^\\circ$. Знайдіть їх.", "2.1: це вертикальні кути (суміжні дають $180^\\circ$): по $50^\\circ$"]];
+            window.renderWhich = function () {
+                const box = document.getElementById('which-list');
+                box.innerHTML = WHICH.map(([task, rule], k) =>
+                    `<div class="which-card" id="which-${k}"><span>${k + 1}. ${task}</span><button class="btn-secondary" onclick="document.getElementById('which-${k}').classList.add('shown')">Яке правило?</button><span class="rule">${rule}</span></div>`).join('');
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([box]);
+            };
+            window.nextStep = function (id) {
+                const next = document.querySelector(`#${id} .step:not(.shown)`);
+                if (next) next.classList.add('shown');
+            };
