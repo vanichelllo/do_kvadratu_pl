@@ -1,0 +1,276 @@
+@@TITLE Перпендикуляр і похила. Теорема про три перпендикуляри
+@@BRAND Геометрія (10-11 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .plane { fill: var(--brand-blue); fill-opacity: 0.13; stroke: var(--brand-blue); stroke-width: 1.5; }
+        .perp { stroke: var(--brand-green); stroke-width: 4; stroke-linecap: round; }
+        .slant { stroke: var(--warning-red); stroke-width: 4; stroke-linecap: round; }
+        .proj { stroke: var(--brand-yellow); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 8 5; }
+        .lineA { stroke: currentColor; stroke-width: 2.4; }
+        .dot { fill: currentColor; }
+        .v-name { fill: currentColor; font-size: 16px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .rm { fill: none; stroke: currentColor; stroke-width: 1.6; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+@@SLIDES
+
+        <!-- 1. Основи -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h1 class="slide-title">Перпендикуляр, похила, проекція</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>$A \notin \alpha$, $AO \perp \alpha$, $O \in \alpha$. $AO$ — <b>перпендикуляр</b>, $O$ — його основа.</p>
+                        <p>$AB$ ($B \in \alpha$, $B \ne O$) — <b>похила</b>; $OB$ — <b>проекція</b> похилої на площину.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивості (з точки $A$)</div>
+                        <p>1) Перпендикуляр коротший за будь-яку похилу.</p>
+                        <p>2) Рівні похилі мають рівні проекції, і навпаки.</p>
+                        <p>3) Більша похила має більшу проекцію, і навпаки.</p>
+                        <p>Усе — з теореми Піфагора: $AB^2 = AO^2 + OB^2$.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 280" id="def-scene" role="img" aria-label="Перпендикуляр AO, похила AB і її проекція OB"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема про три перпендикуляри</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Пряма $c$, проведена в площині через основу похилої, перпендикулярна до <b>проекції</b> похилої ⟺ вона перпендикулярна до самої <b>похилої</b>.</p>
+                        <p class="big-formula">$c \perp OB$ ⟺ $c \perp AB$</p>
+                    </div>
+                    <div class="box example" id="why">
+                        <div class="box-title">Доведення ($\Rightarrow$)</div>
+                        <div class="step">$c \perp AO$, бо $AO \perp \alpha$, а $c \subset \alpha$.</div>
+                        <div class="step">$c \perp OB$ (умова). $AO$ і $OB$ перетинаються ⟹ $c \perp (AOB)$.</div>
+                        <div class="step">$AB \subset (AOB)$ ⟹ $c \perp AB$. ∎ (Обернена — так само.)</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 280" id="ttp-scene" role="img" aria-label="Три перпендикуляри: AO, OB і пряма c"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Чому назва -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Чому це так</span>
+                <h2 class="slide-title">Чому «три перпендикуляри»</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box remark">
+                    <div class="box-title">Три прямі кути</div>
+                    <p>1) $AO \perp \alpha$ — перпендикуляр до площини;</p>
+                    <p>2) $OB \perp c$ — проекція перпендикулярна до прямої;</p>
+                    <p>3) $AB \perp c$ — похила перпендикулярна до прямої.</p>
+                    <p>Знаючи перший і один з двох інших, отримуємо третій.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Де застосовують</div>
+                    <p>Щоб знайти <b>відстань від точки до прямої</b> в площині: опускаємо перпендикуляр $AO$ на площину, з $O$ — перпендикуляр $OB$ на пряму; тоді $AB \perp c$ і $AB$ — шукана відстань.</p>
+                    <p>$AB = \sqrt{AO^2 + OB^2}$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Приклад -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Відстань від точки до сторони</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задача</div>
+                    <p>$ABCD$ — квадрат зі стороною $6$, $SA \perp (ABC)$, $SA = 8$. Знайдіть відстань від $S$ до прямої $BC$ і до прямої $BD$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад 2 -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклади</span>
+                <h2 class="slide-title">Похилі з однієї точки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="ex-1">
+                    <div class="box-title">З точки до площини проведено дві похилі $17$ і $10$. Різниця їхніх проекцій $9$. Знайдіть відстань від точки до площини.</div>
+                    <div class="step">Нехай $h$ — перпендикуляр, проекції $x + 9$ і $x$: $17^2 - (x + 9)^2 = 10^2 - x^2$.</div>
+                    <div class="step">$289 - x^2 - 18x - 81 = 100 - x^2$ ⟹ $18x = 108$, $x = 6$.</div>
+                    <div class="step">$h = \sqrt{100 - 36} = 8$.</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-1')">Крок ▸</button></div>
+                </div>
+                <div class="box example" id="ex-2">
+                    <div class="box-title">Точка рівновіддалена від вершин трикутника</div>
+                    <div class="step">Рівні похилі ⟹ рівні проекції: $OA = OB = OC$.</div>
+                    <div class="step">Основа перпендикуляра — <b>центр описаного кола</b> трикутника.</div>
+                    <div class="step">Аналогічно: точка, рівновіддалена від <b>сторін</b>, проектується в центр <b>вписаного</b> кола (за теоремою про три перпендикуляри).</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('ex-2')">Крок ▸</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Похилі з різних точок</div>
+                    <p>«Більша похила — більша проекція» — лише для похилих з <b>однієї</b> точки.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Пряма поза площиною</div>
+                    <p>Теорема працює для прямої $c$, що лежить у площині $\alpha$ (у якій береться проекція).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Не та відстань</div>
+                    <p>Відстань від $S$ до прямої $BC$ — це не $SB$, а перпендикуляр до $BC$ (у квадраті він випадково збігається з $SB$; у трикутнику — ні).</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Забули обґрунтувати</div>
+                    <p>Перш ніж назвати відрізок відстанню, доведіть перпендикулярність — теоремою про три перпендикуляри.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. НМТ</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. НМТ+</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">З точки до площини проведено перпендикуляр $12$ і похилу $13$. Знайдіть проекцію похилої.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $1$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $25$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $\sqrt{313}$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$\sqrt{169 - 144} = 5$. Г — додали квадрати.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$\triangle ABC$: $\angle C = 90^\circ$, $AC = 6$; $SA \perp (ABC)$, $SA = 8$. Знайдіть відстань від $S$ до прямої $BC$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">В) $10$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $14$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Д) $2\sqrt7$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$AC \perp BC$ — проекція; за ТТП $SC \perp BC$. $SC = \sqrt{64 + 36} = 10$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">Точка $S$ віддалена від усіх сторін правильного трикутника зі стороною $6\sqrt3$ на $5$. Знайдіть відстань від $S$ до площини трикутника.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">А) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Б) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $2$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $\sqrt{34}$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $5$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Проекція — центр вписаного кола, $r = \dfrac{a}{2\sqrt3} = 3$. $h = \sqrt{25 - 9} = 4$. Б — це $r$; Г — додали квадрати; Д — сплутали відстань до сторони з відстанню до площини.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Похила$^2$ = перпендикуляр$^2$ + проекція$^2$. З однієї точки: рівні похилі ⟺ рівні проекції.</p>
+                    <p><b>ТТП:</b> $c \subset \alpha$; $c \perp$ проекції ⟺ $c \perp$ похилої.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Відстань від точки до прямої</div>
+                        <p>Перпендикуляр на площину → з основи перпендикуляр на пряму → за ТТП маємо відстань; Піфагор.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Порівнюємо похилі лише з однієї точки.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderDef();
+                if (currentSlide === 2) renderTtp();
+                if (currentSlide === 4) renderEval();
+@@JS
+            const ln = (p, q, cls) => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" class="${cls}"/>`;
+            const nm = (p, s, dx = 0, dy = 0) => `<text x="${p[0] + dx}" y="${p[1] + dy}" class="v-name">${s}</text>`;
+            const PL = `<polygon points="30,250 290,250 380,150 120,150" class="plane"/>`;
+            window.renderDef = function () {
+                const A = [170, 30], O = [170, 210], B = [300, 190];
+                let s = PL + ln(A, O, 'perp') + ln(A, B, 'slant') + ln(O, B, 'proj');
+                s += `<path d="M170 196 h12 v14" class="rm"/>`;
+                s += `<circle cx="170" cy="30" r="4" class="dot"/><circle cx="170" cy="210" r="4" class="dot"/><circle cx="300" cy="190" r="4" class="dot"/>`;
+                s += nm(A, 'A', -16, 4) + nm(O, 'O', -16, 18) + nm(B, 'B', 14, 18) + `<text x="60" y="240" class="v-name">α</text>`;
+                document.getElementById('def-scene').innerHTML = s;
+            };
+            window.renderTtp = function () {
+                const A = [150, 30], O = [150, 215], B = [270, 190], C1 = [215, 240], C2 = [325, 140];
+                let s = PL + ln(C1, C2, 'lineA') + ln(A, O, 'perp') + ln(A, B, 'slant') + ln(O, B, 'proj');
+                s += nm(A, 'A', -16, 4) + nm(O, 'O', -16, 18) + nm(B, 'B', 8, 24) + nm(C2, 'c', 12, 4) + `<text x="60" y="240" class="v-name">α</text>`;
+                s += `<path d="M150 201 h12 v14" class="rm"/>`;
+                document.getElementById('ttp-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['$AB \\perp BC$, $\\;AB$ — проекція $SB$', 'Відстань до $BC$: $SA \\perp (ABC)$, проекція $SB$ на площину — $AB$'],
+                ['За ТТП $SB \\perp BC$: $SB = \\sqrt{64 + 36} = $ [[$10$]]', 'Отже, $SB$ — відстань від $S$ до $BC$'],
+                ['$AO \\perp BD$, $\\;AO = \\dfrac{6\\sqrt2}{2} = 3\\sqrt2$', 'Відстань до $BD$: $O$ — центр квадрата, $AO \\perp BD$ (діагоналі)'],
+                ['За ТТП $SO \\perp BD$: $SO = \\sqrt{64 + 18} = $ [[$\\sqrt{82}$]]', 'Проекція $SO$ — це $AO$'],
+            ];
+@@INCLUDE steps.js
