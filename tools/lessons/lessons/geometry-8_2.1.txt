@@ -1,0 +1,291 @@
+@@TITLE Теорема Фалеса
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .side { stroke: currentColor; stroke-width: 2.6; }
+        .par { stroke: var(--brand-blue); stroke-width: 2.2; }
+        .seg1 { stroke: var(--brand-green); stroke-width: 6; stroke-linecap: round; opacity: 0.8; }
+        .seg2 { stroke: var(--brand-yellow); stroke-width: 6; stroke-linecap: round; opacity: 0.8; }
+        .dot { fill: currentColor; }
+        .v-name { fill: currentColor; font-size: 16px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .slider-control label { font-weight: 800; min-width: 150px; }
+        .slider-control span { font-weight: 800; min-width: 30px; text-align: right; }
+        .readout { font-size: 1.05rem; font-weight: 700; min-height: 1.6em; text-align: center; }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Як поділити відрізок на 7 рівних частин?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Лінійкою поділити відрізок завдовжки $10$ см на $7$ рівних частин точно не вийде: $10 : 7 = 1{,}428\ldots$</p>
+                    <p>Але на іншому промені легко відкласти $7$ рівних відрізків по $1$ см! Як «перенести» їх на наш відрізок?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Ідея</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Паралельні прямі!</div>
+                        <p>З'єднаємо кінець останньої поділки з кінцем відрізка і проведемо паралельні прямі через інші поділки — вони поділять відрізок на $7$ рівних частин. Це гарантує <b>теорема Фалеса</b>.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="div-scene" role="img" aria-label="Поділ відрізка на рівні частини паралельними прямими"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Теорія -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема Фалеса</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Теорема</div>
+                        <p>Якщо паралельні прямі, які перетинають сторони кута, відтинають на одній його стороні <b>рівні</b> відрізки, то вони відтинають рівні відрізки і на другій стороні.</p>
+                    </div>
+                    <div class="box example" id="why">
+                        <div class="box-title">Ідея доведення</div>
+                        <div class="step">$A_1A_2 = A_2A_3$, $A_1B_1 \parallel A_2B_2 \parallel A_3B_3$. Через $B_2$ проведемо пряму $\parallel OA$.</div>
+                        <div class="step">Утворяться паралелограми: протилежні сторони рівні — відрізки на прямій дорівнюють $A_1A_2$ і $A_2A_3$.</div>
+                        <div class="step">Два трикутники рівні (сторона і прилеглі кути) ⟹ $B_1B_2 = B_2B_3$. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why')">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="th-scene" role="img" aria-label="Кут, перетнутий паралельними прямими"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорема про пропорційні відрізки -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Теорема про пропорційні відрізки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Узагальнення</div>
+                        <p>Паралельні прямі, що перетинають сторони кута, відтинають на сторонах <b>пропорційні</b> відрізки:</p>
+                        <p class="big-formula">$\dfrac{OA_1}{A_1A_2} = \dfrac{OB_1}{B_1B_2}$, $\quad \dfrac{OA_1}{OA_2} = \dfrac{OB_1}{OB_2}$</p>
+                    </div>
+                    <div class="slider-control"><label for="w-k">Пряма $A_1B_1$</label><input type="range" id="w-k" min="1" max="7" step="1" value="3" oninput="renderProp()"><span id="w-k-val"></span></div>
+                    <p class="readout" id="prop-out"></p>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 420 260" id="prop-scene" role="img" aria-label="Пропорційні відрізки на сторонах кута"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Наслідок -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Наслідки</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Середня лінія</div>
+                    <p>Пряма, що проходить через середину однієї сторони трикутника паралельно другій, проходить через середину третьої сторони.</p>
+                    <p>(Звідси — середня лінія трикутника, тема 1.4.)</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Поділ відрізка в заданому відношенні</div>
+                    <p>Щоб поділити $AB$ у відношенні $2 : 3$: на промені з $A$ відкладаємо $5$ рівних відрізків, з'єднуємо кінець $5$-го з $B$, через кінець $2$-го проводимо паралельну — вона поділить $AB$ як $2 : 3$.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Приклад -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) Сторону кута $OA$ поділено на відрізки $OA_1 = 4$, $A_1A_2 = 6$. Через $A_1$, $A_2$ проведено паралельні прямі, $OB_1 = 6$. Знайдіть $B_1B_2$.</p>
+                    <p>2) У $\triangle ABC$ $M \in AB$, $AM : MB = 2 : 3$, $MK \parallel BC$, $AC = 15$. Знайдіть $AK$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Пастки -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Прямі не паралельні</div>
+                    <p>Теорема працює лише для <b>паралельних</b> прямих.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Відрізки на паралельних</div>
+                    <p>Рівними (пропорційними) є відрізки на <b>сторонах кута</b>, а не самі відрізки паралельних прямих: $A_1B_1 \ne A_2B_2$.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Відповідні відрізки</div>
+                    <p>У пропорції $\dfrac{OA_1}{A_1A_2} = \dfrac{OB_1}{B_1B_2}$ — відповідні частини: від вершини до першої прямої і між прямими.</p>
+                </div>
+                <div class="box hack">
+                    <div class="box-title">Перевірка</div>
+                    <p>Для рівних частин відношення $1 : 1$ — збігається з теоремою Фалеса.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Практика -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Паралельні прямі відтинають на одній стороні кута рівні відрізки по $3$ см, а на другій перший з відрізків — $5$ см. Знайдіть другий.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $3$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $8$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $15$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>За теоремою Фалеса відрізки на другій стороні теж рівні: $5$ см.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">$OA_1 = 3$, $A_1A_2 = 9$, $OB_1 = 2$ (прямі $A_1B_1 \parallel A_2B_2$). Знайдіть $OB_2$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">А) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">Б) $8$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $13{,}5$</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $11$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>$\dfrac{3}{9} = \dfrac{2}{B_1B_2}$ ⟹ $B_1B_2 = 6$; $OB_2 = 2 + 6 = 8$. А — це $B_1B_2$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">У трапеції $ABCD$ ($BC \parallel AD$) пряма, паралельна основам, перетинає $AB$ у точці $M$, $CD$ — у точці $N$; $AM : MB = 3 : 1$, $CD = 12$. Знайдіть $DN$.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $3$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $9$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $4$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $6$</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $8$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Паралельні прямі ділять бічні сторони пропорційно: $DN : NC = AM : MB = 3 : 1$; $DN = \dfrac34 \cdot 12 = 9$.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Коротко -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p><b>Фалес:</b> паралельні прямі, що відтинають на одній стороні кута рівні відрізки, відтинають рівні й на другій.</p>
+                    <p><b>Узагальнення:</b> відрізки на сторонах кута пропорційні: $\dfrac{OA_1}{A_1A_2} = \dfrac{OB_1}{B_1B_2}$.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Застосування</div>
+                        <p>Поділ відрізка на $n$ рівних частин і в заданому відношенні; середня лінія.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Пропорційні відрізки — на сторонах кута, не на паралельних прямих.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderDiv();
+                if (currentSlide === 2) renderTh();
+                if (currentSlide === 3) renderProp();
+                if (currentSlide === 5) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1);
+            const ln = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+            window.renderDiv = function () {
+                const A = [30, 200], B = [390, 200], R = [330, 40], n = 7;
+                let s = ln(A, B, 'side') + ln(A, R, 'side');
+                const C = (k) => lerp(A, R, k / n);
+                for (let k = 1; k <= n; k++) {
+                    const c = C(k), b = lerp(A, B, k / n);
+                    s += `<circle cx="${f1(c[0])}" cy="${f1(c[1])}" r="3.5" class="dot"/>`;
+                    s += ln(c, b, 'par') + `<circle cx="${f1(b[0])}" cy="${f1(b[1])}" r="3.5" class="dot"/>`;
+                }
+                s += `<text x="${A[0] - 10}" y="${A[1] + 20}" class="v-name">A</text><text x="${B[0]}" y="${B[1] + 20}" class="v-name">B</text>`;
+                document.getElementById('div-scene').innerHTML = s;
+            };
+            window.renderTh = function () {
+                const O = [30, 220], P = [400, 220], Q = [330, 30];
+                let s = ln(O, P, 'side') + ln(O, Q, 'side');
+                const t = [0.35, 0.6, 0.85];
+                t.forEach((tt, k) => {
+                    const a = lerp(O, Q, tt), b = [O[0] + (a[0] - O[0]) + 140 * tt * 0.9, 220];
+                    const bb = [a[0] + (P[0] - Q[0]) * tt * 0.5 + 60 * tt, 220];
+                    s += ln(a, bb, 'par') + `<text x="${f1(a[0] - 14)}" y="${f1(a[1])}" class="v-name">A${'₁₂₃'[k]}</text><text x="${f1(bb[0])}" y="240" class="v-name">B${'₁₂₃'[k]}</text>`;
+                });
+                const A = t.map(tt => lerp(O, Q, tt)), Bx = t.map((tt, k) => [A[k][0] + (P[0] - Q[0]) * tt * 0.5 + 60 * tt, 220]);
+                s += ln(A[0], A[1], 'seg1') + ln(A[1], A[2], 'seg1') + ln(Bx[0], Bx[1], 'seg2') + ln(Bx[1], Bx[2], 'seg2');
+                s += `<text x="20" y="240" class="v-name">O</text>`;
+                document.getElementById('th-scene').innerHTML = s;
+            };
+            window.renderProp = function () {
+                const k = +document.getElementById('w-k').value, n = 8, O = [30, 220], Q = [300, 30], P = [400, 220];
+                document.getElementById('w-k-val').textContent = k;
+                const a1 = lerp(O, Q, k / n), a2 = Q, b1 = lerp(O, P, k / n), b2 = P;
+                let s = ln(O, P, 'side') + ln(O, Q, 'side') + ln(a1, b1, 'par') + ln(a2, b2, 'par');
+                s += ln(O, a1, 'seg1') + ln(O, b1, 'seg1') + ln(a1, a2, 'seg2') + ln(b1, b2, 'seg2');
+                s += `<text x="${f1(a1[0] - 16)}" y="${f1(a1[1])}" class="v-name">A₁</text><text x="${f1(a2[0] - 16)}" y="${f1(a2[1])}" class="v-name">A₂</text><text x="${f1(b1[0])}" y="240" class="v-name">B₁</text><text x="${f1(b2[0])}" y="240" class="v-name">B₂</text><text x="20" y="240" class="v-name">O</text>`;
+                document.getElementById('prop-scene').innerHTML = s;
+                const o = document.getElementById('prop-out');
+                o.innerHTML = `$\\dfrac{OA_1}{A_1A_2} = \\dfrac{OB_1}{B_1B_2} = \\dfrac{${k}}{${n - k}}$`;
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([o]);
+            };
+            const STEPS = [
+                ['$\\dfrac{OA_1}{A_1A_2} = \\dfrac{OB_1}{B_1B_2}$: $\\dfrac{4}{6} = \\dfrac{6}{B_1B_2}$', 'Задача 1: теорема про пропорційні відрізки'],
+                ['$B_1B_2 = \\dfrac{6 \\cdot 6}{4} = $ [[$9$]]', ''],
+                ['$\\dfrac{AK}{KC} = \\dfrac{AM}{MB} = \\dfrac{2}{3}$', 'Задача 2: $MK \\parallel BC$ — паралельні прямі перетинають сторони кута $A$'],
+                ['$AK = \\dfrac{2}{5} \\cdot 15 = $ [[$6$]]', '$AC$ ділиться у відношенні $2 : 3$, тобто $5$ частин по $3$'],
+            ];
+@@INCLUDE steps.js
