@@ -219,9 +219,10 @@ TASKS = [
     # ===== СХОДИНКА 3 =====
     # --- Моделювання ---
     {
-        "type": "EXPR", "difficulty": 3, "skill": "MODEL",
-        "text": r"Знайдіть формулу $n$-го члена: $1, -\dfrac{1}{2}, \dfrac{1}{3}, -\dfrac{1}{4}, \ldots$ (дробом через «/»).",
-        "answer": "(-1)^(n+1)/n", "vars": ["n"],
+        "type": "CHOICE", "difficulty": 3, "skill": "MODEL",
+        "text": r"Знайдіть формулу $n$-го члена: $1, -\dfrac{1}{2}, \dfrac{1}{3}, -\dfrac{1}{4}, \ldots$",
+        "options": [(r"$a_n = \dfrac{(-1)^{n+1}}{n}$", True), (r"$a_n = \dfrac{(-1)^{n}}{n}$", False), (r"$a_n = -\dfrac{1}{n}$", False),
+                    (r"$a_n = \dfrac{(-1)^{n+1}}{n + 1}$", False), (r"$a_n = (-1)^{n} n$", False)],
         "solution": r"Модуль — $\dfrac1n$, знак чергується, починаючи з $+$: $a_n = \dfrac{(-1)^{n+1}}{n}$.",
     },
     {
