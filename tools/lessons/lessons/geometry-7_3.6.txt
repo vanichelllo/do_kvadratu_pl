@@ -1,0 +1,335 @@
+@@TITLE Прямокутний трикутник. Ознаки рівності
+@@BRAND Геометрія (7-9 класи)
+@@SUBJECT Геометрія
+@@PROFILE B
+@@CSS
+@@INCLUDE geo.css
+@@INCLUDE steps.css
+        .center { text-align: center; }
+        .tri { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; fill: var(--brand-blue); fill-opacity: 0.1; }
+        .tri.g { fill: var(--brand-green); fill-opacity: 0.14; }
+        .hl { stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round; }
+        .hl2 { stroke: var(--brand-yellow); stroke-width: 5; stroke-linecap: round; }
+        .right-mark { fill: none; stroke: currentColor; stroke-width: 2; }
+        .v-name { fill: currentColor; font-size: 17px; font-weight: 800; font-style: italic; text-anchor: middle; }
+        .svg-caption { fill: currentColor; font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .big-formula { font-size: 1.2rem; text-align: center; margin: 8px 0; }
+        .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .sign-card { background: var(--widget-bg); border-radius: 10px; padding: 8px; text-align: center; font-weight: 700; }
+        .sign-card svg { width: 100%; max-height: 110px; color: var(--text-dark); }
+        @media (max-width: 760px) { .sign-grid { grid-template-columns: 1fr; } }
+@@SLIDES
+
+        <!-- 1. Навіщо це -->
+        <section class="slide-card active" data-slide="1">
+            <div class="slide-header">
+                <span class="slide-tag">Навіщо це</span>
+                <h1 class="slide-title">Чи однакові ці трикутники?</h1>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <p>Для звичайних трикутників потрібно знати три елементи (ознаки рівності). Але якщо обидва трикутники <b>прямокутні</b>, один кут — $90^\circ$ — уже відомий!</p>
+                    <p>Отже, вистачить <b>двох</b> елементів. Яких саме?</p>
+                    <p class="center"><button class="btn-primary" onclick="document.getElementById('answer-1').classList.add('shown')">Підказка</button></p>
+                    <div class="box hack hidden-answer" id="answer-1">
+                        <div class="box-title">Два елементи, хоча б один — сторона</div>
+                        <p>Два катети; катет і гіпотенуза; гіпотенуза і гострий кут; катет і гострий кут.</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 220" id="intro-scene" role="img" aria-label="Два прямокутні трикутники"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Основи -->
+        <section class="slide-card" data-slide="2">
+            <div class="slide-header">
+                <span class="slide-tag">Основи</span>
+                <h2 class="slide-title">Прямокутний трикутник</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box definition">
+                        <div class="box-title">Означення</div>
+                        <p>Трикутник з прямим кутом — <b>прямокутний</b>. Сторони, що утворюють прямий кут, — <b>катети</b>; сторона проти прямого кута — <b>гіпотенуза</b>.</p>
+                    </div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивості</div>
+                        <p>1) Сума гострих кутів — $90^\circ$.</p>
+                        <p>2) Гіпотенуза більша за кожен катет (проти більшого кута — більша сторона).</p>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="def-scene" role="img" aria-label="Прямокутний трикутник ABC з прямим кутом C"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Теорія -->
+        <section class="slide-card" data-slide="3">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Ознаки рівності прямокутних трикутників</h2>
+            </div>
+            <div class="slide-body">
+                <div class="sign-grid">
+                    <div class="sign-card"><svg viewBox="0 0 200 110" id="sg-0"></svg>1) За двома катетами</div>
+                    <div class="sign-card"><svg viewBox="0 0 200 110" id="sg-1"></svg>2) За катетом і прилеглим (або протилежним) гострим кутом</div>
+                    <div class="sign-card"><svg viewBox="0 0 200 110" id="sg-2"></svg>3) За гіпотенузою і гострим кутом</div>
+                    <div class="sign-card"><svg viewBox="0 0 200 110" id="sg-3"></svg>4) За гіпотенузою і катетом</div>
+                </div>
+                <p>1–3 випливають зі звичайних ознак (прямий кут уже рівний, а гострі кути — доповнюють до $90^\circ$). Четверту доводимо окремо.</p>
+            </div>
+        </section>
+
+        <!-- 4. Чому це так -->
+        <section class="slide-card" data-slide="4">
+            <div class="slide-header">
+                <span class="slide-tag">Теорія</span>
+                <h2 class="slide-title">Ознака за гіпотенузою і катетом</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box example" id="why">
+                    <div class="box-title">Ідея доведення: $AB = A_1B_1$, $BC = B_1C_1$</div>
+                    <div class="step">Прикладемо трикутники катетами $BC$ і $B_1C_1$ так, щоб $A$ і $A_1$ опинилися по різні боки від $BC$.</div>
+                    <div class="step">$\angle ACB + \angle A_1CB = 180^\circ$ — точки $A$, $C$, $A_1$ лежать на одній прямій.</div>
+                    <div class="step">$\triangle ABA_1$ рівнобедрений ($AB = A_1B$), $BC$ — висота, отже, і медіана: $AC = A_1C$.</div>
+                    <div class="step">Тоді трикутники рівні за трьома сторонами. ∎</div>
+                    <div class="step-controls"><button class="btn-primary" onclick="nextStep('why'); renderWhy()">Наступний крок ▸</button></div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="why-scene" role="img" aria-label="Два трикутники, прикладені катетами"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Теорія: 30° -->
+        <section class="slide-card" data-slide="5">
+            <div class="slide-header">
+                <span class="slide-tag">Дослідження</span>
+                <h2 class="slide-title">Катет проти кута $30^\circ$</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div>
+                    <div class="box theorem">
+                        <div class="box-title">Властивість</div>
+                        <p>Катет, що лежить проти кута $30^\circ$, дорівнює <b>половині гіпотенузи</b>. І навпаки: якщо катет — половина гіпотенузи, то протилежний кут — $30^\circ$.</p>
+                    </div>
+                    <div class="box example" id="why30">
+                        <div class="box-title">Чому так</div>
+                        <div class="step">Добудуємо трикутник, симетричний відносно катета $AC$.</div>
+                        <div class="step">Вийде трикутник $ABB'$ з кутами по $60^\circ$ — рівносторонній.</div>
+                        <div class="step">$BC = \dfrac{1}{2}BB' = \dfrac12 AB$. ∎</div>
+                        <div class="step-controls"><button class="btn-primary" onclick="nextStep('why30'); render30()">Наступний крок ▸</button></div>
+                    </div>
+                </div>
+                <div class="math-widget widget-svg-container">
+                    <svg viewBox="0 0 400 260" id="s30-scene" role="img" aria-label="Прямокутний трикутник з кутом 30 градусів і його дзеркальне відображення"></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Приклад -->
+        <section class="slide-card" data-slide="6">
+            <div class="slide-header">
+                <span class="slide-tag">Приклад</span>
+                <h2 class="slide-title">Розв'язуємо задачі</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box definition">
+                    <div class="box-title">Задачі</div>
+                    <p>1) У $\triangle ABC$ $\angle C = 90^\circ$, $\angle A = 30^\circ$, $AB + BC = 18$ см. Знайдіть $AB$.</p>
+                    <p>2) З точки $M$ бісектриси кута $O$ опущено перпендикуляри $MA$ і $MB$ на сторони. Доведіть, що $MA = MB$.</p>
+                </div>
+                <div class="math-widget">
+                    <div id="eval-lines"></div>
+                    <p class="eval-note" id="eval-note"></p>
+                    <div class="step-controls">
+                        <button class="btn-primary" onclick="evalStep()">Наступний крок ▸</button>
+                        <button class="btn-secondary" onclick="evalReset()">Спочатку</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Пастки -->
+        <section class="slide-card" data-slide="7">
+            <div class="slide-header">
+                <span class="slide-tag">Пастки</span>
+                <h2 class="slide-title">Типові помилки ⚠️</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box error">
+                    <div class="box-title">Не той катет</div>
+                    <p>Половині гіпотенузи дорівнює катет <b>проти</b> кута $30^\circ$, а не прилеглий до нього.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Два кути — не ознака</div>
+                    <p>Рівність двох гострих кутів не дає рівності трикутників: потрібна хоча б одна сторона.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Гіпотенуза — проти прямого кута</div>
+                    <p>Не плутайте: найбільша сторона прямокутного трикутника — завжди гіпотенуза.</p>
+                </div>
+                <div class="box error">
+                    <div class="box-title">Відповідні елементи</div>
+                    <p>Катет і гострий кут мають бути розміщені однаково: прилеглий з прилеглим, протилежний з протилежним.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. Практика -->
+        <section class="slide-card" data-slide="8">
+            <div class="slide-header">
+                <span class="slide-tag">Практика</span>
+                <h2 class="slide-title">Практика ✏️</h2>
+            </div>
+            <div class="slide-body">
+                <div class="task-tabs">
+                    <button class="btn-secondary on" id="tab-1" onclick="showTask(1)">1. Базове</button>
+                    <button class="btn-secondary" id="tab-2" onclick="showTask(2)">2. Середнє</button>
+                    <button class="btn-secondary" id="tab-3" onclick="showTask(3)">3. Підвищене</button>
+                </div>
+                <div class="practice-task on grid-2" id="task-1">
+                    <div>
+                        <p class="quiz-q">Один гострий кут прямокутного трикутника — $37^\circ$. Знайдіть другий.</p>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">А) $143^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">Б) $53^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">В) $63^\circ$</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Г) $37^\circ$</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-1-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-1-explanation"><div class="box-title">Розв'язання</div><p>$90^\circ - 37^\circ = 53^\circ$. А — відняли від $180^\circ$.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-2">
+                    <div>
+                        <p class="quiz-q">У прямокутному трикутнику гіпотенуза $14$ см, один гострий кут $60^\circ$. Знайдіть менший катет.</p>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">А) $7$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Б) $28$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">В) $14$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">Г) $4{,}7$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-2-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-2-explanation"><div class="box-title">Розв'язання</div><p>Другий гострий кут $30^\circ$; менший катет лежить проти нього: $14 : 2 = 7$ см.</p></div>
+                    </div>
+                </div>
+                <div class="practice-task grid-2" id="task-3">
+                    <div>
+                        <p class="quiz-q">У рівнобедреному трикутнику кут при вершині $120^\circ$, бічна сторона $10$ см. Знайдіть висоту, проведену до основи.</p>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">А) $10$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">Б) $5$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">В) $20$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Г) $6$ см</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">Д) $2{,}5$ см</div>
+                    </div>
+                    <div>
+                        <p class="verdict" id="quiz-3-verdict"></p>
+                        <div class="box theorem quiz-explanation" id="quiz-3-explanation"><div class="box-title">Розв'язання</div><p>Кути при основі по $30^\circ$. Висота — катет проти кута $30^\circ$ у прямокутному трикутнику з гіпотенузою $10$: $5$ см.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. Коротко -->
+        <section class="slide-card" data-slide="9">
+            <div class="slide-header">
+                <span class="slide-tag">Коротко</span>
+                <h2 class="slide-title">Коротко про тему 📌</h2>
+            </div>
+            <div class="slide-body grid-2">
+                <div class="box theorem">
+                    <div class="box-title">Головне</div>
+                    <p>Гострі кути — разом $90^\circ$; гіпотенуза — найбільша сторона; катет проти $30^\circ$ — половина гіпотенузи.</p>
+                    <p>Ознаки: два катети; катет і гострий кут; гіпотенуза і гострий кут; гіпотенуза і катет.</p>
+                </div>
+                <div>
+                    <div class="box hack">
+                        <div class="box-title">Алгоритм</div>
+                        <p>1) Знайдіть прямі кути. 2) Виберіть ознаку за відомими елементами. 3) З рівності — рівні відповідні елементи.</p>
+                    </div>
+                    <div class="box error">
+                        <div class="box-title">Пастка</div>
+                        <p>Половина гіпотенузи — катет <b>проти</b> кута $30^\circ$.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+@@RENDER
+                if (currentSlide === 1) renderIntro();
+                if (currentSlide === 2) renderDef();
+                if (currentSlide === 3) renderSigns();
+                if (currentSlide === 4) renderWhy();
+                if (currentSlide === 5) render30();
+                if (currentSlide === 6) renderEval();
+@@JS
+            const f1 = (v) => v.toFixed(1);
+            const seg = (p, q, cls) => `<line x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}" class="${cls}"/>`;
+            const poly = (P, cls) => `<polygon points="${P.map(p => p.map(f1).join(',')).join(' ')}" class="${cls}"/>`;
+            const txt = (p, s, cls = 'v-name') => `<text x="${f1(p[0])}" y="${f1(p[1])}" class="${cls}">${s}</text>`;
+            // Знак прямого кута при C між напрямками на P і Q
+            function rmark(C, P, Q, d = 14) {
+                const u = [(P[0] - C[0]) / Math.hypot(P[0] - C[0], P[1] - C[1]), (P[1] - C[1]) / Math.hypot(P[0] - C[0], P[1] - C[1])];
+                const w = [(Q[0] - C[0]) / Math.hypot(Q[0] - C[0], Q[1] - C[1]), (Q[1] - C[1]) / Math.hypot(Q[0] - C[0], Q[1] - C[1])];
+                const a = [C[0] + u[0] * d, C[1] + u[1] * d], b = [a[0] + w[0] * d, a[1] + w[1] * d], c = [C[0] + w[0] * d, C[1] + w[1] * d];
+                return `<path d="M${f1(a[0])} ${f1(a[1])} L${f1(b[0])} ${f1(b[1])} L${f1(c[0])} ${f1(c[1])}" class="right-mark"/>`;
+            }
+            function angleArc(V, P, Q, r, cls) {
+                const a1 = Math.atan2(P[1] - V[1], P[0] - V[0]), a2 = Math.atan2(Q[1] - V[1], Q[0] - V[0]);
+                let d = a2 - a1;
+                while (d > Math.PI) d -= 2 * Math.PI;
+                while (d < -Math.PI) d += 2 * Math.PI;
+                const s = [V[0] + r * Math.cos(a1), V[1] + r * Math.sin(a1)], e = [V[0] + r * Math.cos(a1 + d), V[1] + r * Math.sin(a1 + d)];
+                return `<path d="M${f1(V[0])} ${f1(V[1])} L${f1(s[0])} ${f1(s[1])} A${r} ${r} 0 0 ${d > 0 ? 1 : 0} ${f1(e[0])} ${f1(e[1])} Z" class="angle-arc ${cls}"/>`;
+            }
+            window.renderIntro = function () {
+                const T1 = [[30, 190], [30, 50], [170, 190]], T2 = [[230, 190], [370, 190], [370, 50]];
+                document.getElementById('intro-scene').innerHTML = poly(T1, 'tri') + rmark(T1[0], T1[1], T1[2]) + poly(T2, 'tri g') + rmark(T2[1], T2[0], T2[2]);
+            };
+            window.renderDef = function () {
+                const C = [80, 220], A = [80, 40], B = [340, 220];
+                let s = poly([A, B, C], 'tri') + rmark(C, A, B, 18) + seg(C, A, 'hl') + seg(C, B, 'hl') + seg(A, B, 'hl2');
+                s += txt([62, 36], 'A') + txt([354, 236], 'B') + txt([64, 240], 'C');
+                s += txt([50, 135], 'катет', 'svg-caption') + txt([210, 246], 'катет', 'svg-caption') + txt([238, 118], 'гіпотенуза', 'svg-caption');
+                document.getElementById('def-scene').innerHTML = s;
+            };
+            window.renderSigns = function () {
+                const T = [[50, 95], [50, 15], [160, 95]];
+                const marks = [
+                    seg(T[0], T[1], 'hl') + seg(T[0], T[2], 'hl'),
+                    seg(T[0], T[2], 'hl') + angleArc(T[2], T[0], T[1], 22, 'g'),
+                    seg(T[1], T[2], 'hl') + angleArc(T[2], T[0], T[1], 22, 'g'),
+                    seg(T[1], T[2], 'hl') + seg(T[0], T[1], 'hl'),
+                ];
+                marks.forEach((m, k) => { document.getElementById('sg-' + k).innerHTML = poly(T, 'tri') + rmark(T[0], T[1], T[2], 10) + m; });
+            };
+            window.renderWhy = function () {
+                const k = document.querySelectorAll('#why .step.shown').length;
+                const B = [200, 30], C = [200, 210], A = [80, 210], A1 = [320, 210];
+                let s = poly([A, B, C], 'tri') + rmark(C, B, A);
+                if (k >= 1) s += poly([A1, B, C], 'tri g') + rmark(C, B, A1);
+                s += seg(A, B, 'hl') + seg(B, C, 'hl2') + (k >= 1 ? seg(A1, B, 'hl') : '');
+                s += txt([66, 230], 'A') + txt([200, 22], 'B') + txt([212, 236], 'C') + (k >= 1 ? txt([336, 230], 'A₁') : '');
+                if (k >= 3) s += txt([140, 248], 'AC = A₁C', 'svg-caption');
+                document.getElementById('why-scene').innerHTML = s;
+            };
+            window.render30 = function () {
+                const k = document.querySelectorAll('#why30 .step.shown').length;
+                const A = [110, 130], C = [300, 130], B = [300, 20];
+                let s = poly([A, C, B], 'tri') + rmark(C, A, B) + angleArc(A, C, B, 50, '');
+                s += txt([178, 124], '30°', 'svg-caption') + txt([96, 136], 'A') + txt([314, 146], 'C') + txt([314, 22], 'B');
+                if (k >= 1) { const B2 = [300, 240]; s += poly([A, C, B2], 'tri g') + txt([314, 246], "B'"); }
+                s += seg(B, C, 'hl') + seg(A, B, 'hl2');
+                if (k >= 3) s += txt([350, 80], 'BC = AB/2', 'svg-caption');
+                document.getElementById('s30-scene').innerHTML = s;
+            };
+            const STEPS = [
+                ['$BC = \\dfrac{1}{2}AB$', 'Задача 1. $BC$ лежить проти кута $A = 30^\\circ$'],
+                ['$AB + \\dfrac{1}{2}AB = 18$ ⟹ [[$AB = 12$ см]]', '$1{,}5 \\cdot AB = 18$'],
+                ['$\\triangle OAM = \\triangle OBM$', 'Задача 2. Прямокутні: спільна гіпотенуза $OM$ і рівні гострі кути при $O$ (бісектриса)'],
+                ['[[$MA = MB$]]', 'Відповідні катети рівних трикутників'],
+            ];
+@@INCLUDE steps.js
